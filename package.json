@@ -1,7 +1,7 @@
 {
   "name": "mml",
   "scripts": {
-
+    "preinstall": "node check-node-version.js",
     "serve": "lerna run --parallel --stream serve",
     "serve-debug": "lerna run --parallel --stream serve-debug",
     "build": "lerna run --stream build",
