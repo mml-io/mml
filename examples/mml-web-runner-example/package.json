@@ -11,7 +11,7 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.0.39",
-    "@mml-io/mml-web-runner": "^0.0.39"
+    "mml-web": "^0.0.39",
+    "mml-web-runner": "^0.0.39"
   }
 }

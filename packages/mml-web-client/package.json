@@ -1,5 +1,5 @@
 {
-  "name": "@mml-io/mml-web-client",
+  "name": "mml-web-client",
   "version": "0.0.39",
   "files": [
     "/build",
@@ -10,12 +10,12 @@
     "type-check": "tsc --noEmit",
     "build": "node ./build.js --build",
     "iterate": "cross-env PORT=28891 node ./build.js --serve",
-    "private-publish": "npm run build && publish-if-not-exists --access=restricted",
+    "npm-publish": "npm run build && publish-if-not-exists",
     "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.0.39",
+    "mml-web": "^0.0.39",
     "three": "0.142.0"
   },
   "devDependencies": {

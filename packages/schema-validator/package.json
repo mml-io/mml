@@ -1,13 +1,17 @@
 {
-  "name": "mml-schema-validator",
+  "name": "@mml-io/mml-schema-validator",
   "version": "0.0.39",
-  "private": true,
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
+  "files": [
+    "/build",
+    "/src"
+  ],
   "scripts": {
     "type-check": "tsc --noEmit",
     "build": "node ./build.js --build",
     "iterate": "node ./build.js --watch",
+    "npm-publish": "npm run build && publish-if-not-exists",
     "test": "jest"
   },
   "dependencies": {
