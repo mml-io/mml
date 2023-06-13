@@ -1,19 +1,19 @@
-
-
-
-
-
-
-
-
-
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "target": "ES6",
+    "jsx": "react",
+    "lib": ["es2020"],
+    "allowJs": true,
     "types": ["node", "jest", "./jest-setup.d.ts"],
-
-
-
-
-
-
-
-
-
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "downlevelIteration": true,
+    "outDir": "./build"
+  },
+  "include": ["src/**/*", "src/custom.d.ts"],
+  "exclude": ["**/build/*", "**/build.js"]
+}

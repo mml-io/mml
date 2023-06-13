@@ -1,6 +1,6 @@
-
-
-
+import {
+  FromInstanceMessageTypes,
+  ToInstanceMessageTypes,
 } from "@mml-io/networked-dom-web-runner/src/message-types";
 import { ObservableDom } from "@mml-io/observable-dom/src/ObservableDom";
 import { ObservableDomMessage, ObservableDOMParameters } from "@mml-io/observable-dom-common";

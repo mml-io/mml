@@ -37,12 +37,12 @@ import { Audio, FullScreenMScene, registerCustomElementsToWindow, RemoteDocument
 
 
 
+    element.setAttribute("src", "http://example.com/some_asset_path");
 
 
-
-
-
-
+    expect((element as any).loadedAudioState.audioElement.src).toEqual(
+      "http://example.com/some_asset_path",
+    );
 
 
 

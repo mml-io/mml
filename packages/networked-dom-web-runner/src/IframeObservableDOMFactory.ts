@@ -6,7 +6,7 @@ import {
   RemoteEvent,
 } from "@mml-io/observable-dom-common";
 
-
+import { FromInstanceMessageTypes } from "./message-types";
 import { RunnerIframe } from "./RunnerIframe";
 
 export const IframeObservableDOMFactory: ObservableDomFactory = (

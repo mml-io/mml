@@ -4,7 +4,7 @@ import { ObservableDOMParameters } from "@mml-io/observable-dom-common";
 // eslint-disable-next-line import/no-unresolved
 import runnerText from "runner-iframe-js-text";
 
-
+import { FromInstanceMessageTypes, ToInstanceMessageTypes } from "./message-types";
 
 export class RunnerIframe {
   private iframe: HTMLIFrameElement;

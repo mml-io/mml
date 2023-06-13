@@ -7,7 +7,7 @@ const config: Config = {
   coverageReporters: ["lcov", "text"],
 
 
-
+  setupFilesAfterEnv: ["jest-expect-message", "./test/jest.setup.ts"],
 
     "^.+\\.(t|j)sx?$": ["@swc/jest", {}],
 

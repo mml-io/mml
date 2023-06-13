@@ -50,7 +50,7 @@ jobs:
       - name: Lint
         run: npm run lint-all
 
-
+      - name: End to End Test
         run: npm run ci:e2e-tests
 
       - name: Upload End to End Test Images
