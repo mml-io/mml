@@ -26,11 +26,11 @@ export abstract class MElement extends HTMLElement {
     super();
     this.container = new THREE.Group();
     this.container.name = this.constructor.name;
-
+    (this.container as any)[MELEMENT_PROPERTY_NAME] = this;
   }
 
   static getMElementFromObject(object: THREE.Object3D): MElement | null {
-
+    return (object as any)[MELEMENT_PROPERTY_NAME] || null;
   }
 
   public abstract isClickable(): boolean;

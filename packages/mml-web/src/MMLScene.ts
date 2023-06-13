@@ -63,7 +63,7 @@ export class MMLScene implements IMMLScene {
   private readonly threeScene: THREE.Scene;
   private renderer: THREE.WebGLRenderer;
   private readonly rootContainer: THREE.Group;
-
+  private controls: Controls;
   private colliders = new Set<THREE.Object3D>();
   private interactions = new Set<Interaction>();
   private interactionListeners = new Set<InteractionListener>();
@@ -142,11 +142,11 @@ export class MMLScene implements IMMLScene {
   }
 
   public setControlsEnabled(enabled: boolean): void {
-
-
-
-
-
+    if (enabled) {
+      this.controls.enable();
+    } else {
+      this.controls.disable();
+    }
   }
 
   public getAudioListener(): THREE.AudioListener {
@@ -182,13 +182,13 @@ export class MMLScene implements IMMLScene {
     const promptManager = PromptManager.init(container);
 
     this.renderer = this.createRenderer();
+    this.setControlsEnabled(true);
 
-
-
+    const clock = new THREE.Clock();
 
     const animationFrameCallback = () => {
       requestAnimationFrame(animationFrameCallback);
-
+      this.controls.update(clock.getDelta());
       this.renderer.render(this.threeScene, this.camera);
     };
     requestAnimationFrame(animationFrameCallback);

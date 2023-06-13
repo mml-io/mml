@@ -64,7 +64,7 @@ export class NetworkedDOM {
 
   private documentRoot!: StaticVirtualDomElement;
   private nodeIdToNode = new Map<number, StaticVirtualDomElement>();
-
+  private nodeIdToParentNodeId = new Map<number, number>();
 
   private observableDom: ObservableDomInterface;
 
@@ -120,7 +120,7 @@ export class NetworkedDOM {
             }
           }
 
-
+          this.addAndRemapNodeFromInstance(this.documentRoot, -1);
 
           onLoad(domDiff);
         } else if (message.mutation) {
@@ -333,13 +333,13 @@ export class NetworkedDOM {
     }
   }
 
-
-
-
-
-
+  private findParentNodeOfNodeId(targetNodeId: number): StaticVirtualDomElement | null {
+    const parentNodeId = this.nodeIdToParentNodeId.get(targetNodeId);
+    if (parentNodeId === undefined) {
+      throw new Error("Parent node ID not found");
+    }
     return this.getStaticVirtualDomElementByInternalNodeIdOrThrow(parentNodeId);
-
+  }
 
   private registerWebsocket(
     webSocket: WebSocket,
@@ -510,7 +510,7 @@ export class NetworkedDOM {
     );
 
     diffsByConnectionId.forEach((diffs, connectionId) => {
-
+      const parentNode = this.findParentNodeOfNodeId(mutationRecord.target.nodeId);
       if (mutationRecord.type === "attributes" && !parentNode) {
         console.error("parentNode not found for attribute mutationRecord", mutationRecord);
         console.error("this.documentRoot", JSON.stringify(this.documentRoot, null, 2));
@@ -554,7 +554,7 @@ export class NetworkedDOM {
 
   private removeVirtualDomElement(virtualDomElement: StaticVirtualDomElement): void {
     this.nodeIdToNode.delete(virtualDomElement.nodeId);
-
+    this.nodeIdToParentNodeId.delete(virtualDomElement.nodeId);
     for (const child of virtualDomElement.childNodes) {
       this.removeVirtualDomElement(child);
     }
@@ -642,7 +642,7 @@ export class NetworkedDOM {
         index += 1;
       }
       mutation.addedNodes.forEach((childVirtualDomElement: StaticVirtualDomElement) => {
-
+        this.addAndRemapNodeFromInstance(childVirtualDomElement, target.nodeId);
 
         if (target.childNodes.indexOf(childVirtualDomElement) === -1) {
           target.childNodes.splice(index, 0, childVirtualDomElement);
@@ -683,7 +683,7 @@ export class NetworkedDOM {
     return this.documentRoot;
   }
 
-
+  private addAndRemapNodeFromInstance(node: StaticVirtualDomElement, parentNodeId: number) {
     const remappedNodeId = this.internalNodeIdToClientNodeId.get(node.nodeId);
     if (remappedNodeId !== undefined) {
       node.nodeId = remappedNodeId;
@@ -702,11 +702,11 @@ export class NetworkedDOM {
     }
 
     this.nodeIdToNode.set(node.nodeId, node);
-
+    this.nodeIdToParentNodeId.set(node.nodeId, parentNodeId);
     this.maximumNodeId = Math.max(this.maximumNodeId, node.nodeId);
 
     for (const childNode of node.childNodes) {
-
+      this.addAndRemapNodeFromInstance(childNode, node.nodeId);
     }
   }
 

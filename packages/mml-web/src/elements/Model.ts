@@ -260,14 +260,14 @@ export class Model extends TransformableElement {
     return this.currentAnimation;
   }
 
-
-
-
-
+  async asyncLoadSourceAsset(url: string) {
+    const gltf = await loadGltfAsPromise(Model.gltfLoader, url);
+    gltf.scene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
         child.castShadow = this.props.castShadows;
         child.receiveShadow = true;
-
-
-
-
+      }
+    });
+    return gltf;
+  }
 }

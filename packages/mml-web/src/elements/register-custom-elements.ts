@@ -5,7 +5,7 @@ import { Cylinder } from "./Cylinder";
 import { Frame } from "./Frame";
 import { Group } from "./Group";
 import { Image } from "./Image";
-
+import { Interaction } from "./Interaction";
 import { Label } from "./Label";
 import { Light } from "./Light";
 import { MElement } from "./MElement";
@@ -35,5 +35,5 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Image.tagName, Image);
 
   targetWindow.customElements.define(Audio.tagName, Audio);
-
+  targetWindow.customElements.define(Interaction.tagName, Interaction);
 }

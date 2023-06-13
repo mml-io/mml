@@ -80,10 +80,10 @@ export class Label extends TransformableElement {
     return [...TransformableElement.observedAttributes, ...Label.attributeHandler.getAttributes()];
   }
 
-
-
-
-
+  private mesh: THREE.Mesh<
+    THREE.PlaneGeometry,
+    THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
+  >;
 
   constructor() {
     super();
@@ -110,8 +110,8 @@ export class Label extends TransformableElement {
     THREE.PlaneGeometry,
     THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
   > {
-
-
+    return this.mesh;
+  }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);

@@ -49,7 +49,7 @@ export class Cube extends TransformableElement {
     ];
   }
 
-
+  private mesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial | THREE.MeshBasicMaterial>;
   private collideableHelper = new CollideableHelper(this);
 
   constructor() {

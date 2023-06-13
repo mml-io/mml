@@ -303,7 +303,7 @@ export class Audio extends TransformableElement {
         // TODO - this should remove the frame - not just pause it
         tag.pause();
         tag.src = "";
-
+      }
     } else {
       // Muted allows autoplay immediately without the user needing to interact with the document
       // Audio will be unmuted when the audiocontext is available
@@ -341,7 +341,7 @@ export class Audio extends TransformableElement {
     super.connectedCallback();
     this.documentTimeListener = this.addDocumentTimeListener(() => {
       this.documentTimeChanged();
-
+    });
 
     this.updateAudio();
   }

@@ -7,21 +7,21 @@ import * as THREE from "three";
 
 import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
-
-
+import { Cube } from "../src/elements/Cube";
+import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 
 beforeAll(() => {
   (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
 });
 
-
+describe("m-cube", () => {
   test("observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-cube", Cube);
     expect(schema.name).toEqual(Cube.tagName);
   });
 
-
+  test("test attachment to scene", () => {
     const { scene, element } = createSceneAttachedElement<Cube>("m-cube");
     expect(
       scene.getThreeScene().children[0 /* root container */].children[0 /* attachment container */]
@@ -34,7 +34,7 @@ beforeAll(() => {
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
     expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
 
-
+    element.setAttribute("sx", "5");
     element.setAttribute("sy", "6");
     element.setAttribute("sz", "7");
 
@@ -59,7 +59,7 @@ beforeAll(() => {
     const { element } = createSceneAttachedElement<Cube>("m-cube");
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
     expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-
+    element.setAttribute("width", "5");
     element.setAttribute("height", "6");
     element.setAttribute("depth", "7");
 
@@ -78,7 +78,7 @@ beforeAll(() => {
     element.removeAttribute("depth");
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
     expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-
+  });
 
   test("width and scale", () => {
     const { element } = createSceneAttachedElement<Cube>("m-cube");
@@ -120,7 +120,7 @@ beforeAll(() => {
       g: 1,
       b: 1,
     });
-
+  });
 
   test("collide - add and remove", () => {
     const { element, scene } = createSceneAttachedElement<Cube>("m-cube");

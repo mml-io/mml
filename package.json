@@ -5,7 +5,7 @@
     "serve": "lerna run --parallel --stream serve",
     "serve-debug": "lerna run --parallel --stream serve-debug",
     "build": "lerna run --stream build",
-
+    "private-publish-all": "lerna run --no-bail --stream private-publish",
     "start": "npm run iterate",
     "iterate": "npm run build && npm run iterate-without-build",
     "iterate-without-build": "lerna run --parallel --stream iterate",

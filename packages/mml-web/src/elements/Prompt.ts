@@ -47,7 +47,7 @@ export class Prompt extends TransformableElement {
     Prompt.attributeHandler.handle(this, name, newValue);
   }
 
-
+  private trigger(): void {
     this.getScene().prompt(this.props, (result) => {
       if (!this.isConnected) {
         return;
@@ -58,5 +58,5 @@ export class Prompt extends TransformableElement {
         );
       }
     });
-
+  }
 }

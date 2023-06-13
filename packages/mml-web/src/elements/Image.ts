@@ -70,7 +70,7 @@ export class Image extends TransformableElement {
   private srcApplyPromise: Promise<void> | null = null;
 
   private collideableHelper = new CollideableHelper(this);
-
+  private static imageLoader = new THREE.ImageLoader();
   private mesh: THREE.Mesh<
     THREE.PlaneGeometry,
     THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
@@ -145,7 +145,7 @@ export class Image extends TransformableElement {
         // compute height
         this.mesh.scale.y = loadedHeight / loadedWidth;
       }
-
+    } else {
       this.mesh.scale.x = this.props.width !== null ? this.props.width : 1;
       this.mesh.scale.y = this.props.height !== null ? this.props.height : 1;
     }
