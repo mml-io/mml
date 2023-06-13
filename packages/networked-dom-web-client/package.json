@@ -1,20 +1,20 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{
+  "name": "@mml-io/networked-dom-web-client",
+  "version": "0.0.39",
+  "files": [
+    "/build",
+    "/src"
+  ],
+  "main": "build/index.js",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "node ./build.js --build",
+    "iterate": "cross-env PORT=28892 node ./build.js --serve",
+    "private-publish": "npm run build && publish-if-not-exists --access=restricted",
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "@mml-io/networked-dom-web": "^0.0.39"
+  }
+}

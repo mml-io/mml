@@ -1,3 +1,45 @@
+name: Pull Request Test
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+  checks: write
+
+jobs:
+  pr:
+    name: Pull Request Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache
+          key: ${{ runner.os }}
+
+      - name: Set up nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+
+
+
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
 
 
 
@@ -16,49 +58,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+          path: e2e-tests/test/__image_snapshots__/
 
 
 

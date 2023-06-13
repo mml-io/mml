@@ -1,51 +1,51 @@
+<m-plane color="violet" width="20" height="20" rx="-90"></m-plane>
+<m-light type="directional" ry="45" rx="45" debug="true" x="3" y="3" z="3"></m-light>
+<m-label id="my-label-1" content="First Prompt" x="-4" y="2" width="5" font-size="50"></m-label>
+<m-label id="my-label-2" content="Second Prompt" x="4" y="2" width="5" font-size="50"></m-label>
+<m-group y="2" id="my-group-1">
+  <m-cube id="my-cube-1" color="red"></m-cube>
+  <m-prompt message="First prompt" placeholder="Placeholder for 1" prefill="One" id="my-prompt-1">
+    <m-group y="2" id="my-group-2">
+      <m-cube id="my-cube-2" color="green"></m-cube>
+      <m-prompt message="Second prompt" placeholder="Placeholder for 2" prefill="Two" id="my-prompt-2">
+      <m-group y="2" id="my-group-3">
+        <m-cube id="my-cube-3" color="blue"></m-cube>
+      </m-group>
+      </m-prompt>
+    </m-group>
+  </m-prompt>
+</m-group>
 
+<script>
+  document.getElementById("my-prompt-1").addEventListener("prompt", (event) => {
+    document.getElementById("my-label-1").setAttribute("content", event.detail.value);
+  });
 
+  document.getElementById("my-prompt-2").addEventListener("prompt", (event) => {
+    document.getElementById("my-label-2").setAttribute("content", event.detail.value);
+  });
 
+  let toggle1 = false;
+  const myGroup1 = document.getElementById("my-group-1");
+  const myCube1 = document.getElementById("my-cube-1");
+  myGroup1.addEventListener("click", () => {
+    toggle1 = !toggle1;
+    myCube1.setAttribute("color", toggle1 ? "green" : "red");
+  });
 
+  let toggle2 = false;
+  const myGroup2 = document.getElementById("my-group-2");
+  const myCube2 = document.getElementById("my-cube-2");
+  myGroup2.addEventListener("click", () => {
+    toggle2 = !toggle2;
+    myCube2.setAttribute("color", toggle2 ? "yellow" : "green");
+  });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  let toggle3 = false;
+  const myGroup3 = document.getElementById("my-group-3");
+  const myCube3 = document.getElementById("my-cube-3");
+  myGroup3.addEventListener("click", () => {
+    toggle3 = !toggle3;
+    myCube3.setAttribute("color", toggle3 ? "orange" : "blue");
+  });
+</script>

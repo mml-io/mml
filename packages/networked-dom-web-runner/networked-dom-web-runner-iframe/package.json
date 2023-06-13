@@ -1,23 +1,23 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{
+  "name": "@mml-io/networked-dom-web-runner-iframe",
+  "private": true,
+  "version": "0.0.39",
+  "files": [
+    "/build",
+    "/src"
+  ],
+  "main": "build/index.js",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "node ./build.js --build",
+    "iterate": "node ./build.js --watch",
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "@mml-io/networked-dom-document": "^0.0.39",
+    "@mml-io/observable-dom": "^0.0.39",
+    "@mml-io/observable-dom-common": "^0.0.39",
+    "assert": "2.0.0"
+  }
+}

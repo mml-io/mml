@@ -1,18 +1,18 @@
+{
+  "name": "@mml-io/networked-dom-protocol",
+  "version": "0.0.39",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "files": [
+    "/build",
+    "/src"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "node ./build.js --build",
+    "iterate": "node ./build.js --watch",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+  }
+}

@@ -1,24 +1,24 @@
+<m-plane color="green" width="20" height="20" rx="-90"></m-plane>
+<m-light type="directional" ry="45" rx="45" x="3" y="3" z="3"></m-light>
+
+<!--https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/AnimatedMorphCube-->
+<m-model x="-2" y="2" ry="-45" id="my-model" src="/assets/AnimatedMorphCube.glb" anim="/assets/AnimatedMorphCube.glb"></m-model>
+
+<!--https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/BoxAnimated-->
+<!-- TODO - This box animation refers to node ids and when the animation is loaded as a separate file the node ids
+      aren't matched so the inner box does not animate up and out of the outer box (See link above)  -->
+<m-model x="2" y="2" ry="-45" src="/assets/BoxAnimated.glb" anim="/assets/BoxAnimated.glb"></m-model>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<script>
+  let toggle = true;
+  const myModel = document.getElementById("my-model");
+  myModel.addEventListener("click", () => {
+    toggle = !toggle;
+    if (!toggle) {
+      myModel.removeAttribute("anim");
+    } else {
+      myModel.setAttribute("anim", myModel.getAttribute("src"));
+    }
+  });
+</script>

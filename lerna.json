@@ -1,12 +1,12 @@
-
-
-
-
-
-
-
-
-
-
-
-
+{
+  "version": "0.0.39",
+  "npmClient": "npm",
+  "command": {
+    "bootstrap": {
+      "ignore": "component-*",
+      "npmClientArgs": ["--no-package-lock"]
+    }
+  },
+  "useWorkspaces": true,
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json"
+}

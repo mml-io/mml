@@ -1,46 +1,46 @@
+<m-plane id="my-plane" color="yellow" width="20" height="20" rx="-90" y="0.1"></m-plane>
+<m-light type="directional" ry="45" rx="45" debug="true" x="3" y="3" z="3"></m-light>
 
+<m-interaction
+  in-focus="true"
+  line-of-sight="true"
+  y="1"
+  z="-2"
+  id="my-interaction"
+  range="5"
+  debug="true"
+  in-focus="false"
+  prompt="Change Floor">
+</m-interaction>
 
+<m-cube id="my-cube" color="green" z="10" y="3"></m-cube>
 
+<m-sphere id="my-sphere" color="red" z="10" y="5"></m-sphere>
 
+<script>
+  const myPlane = document.getElementById("my-plane");
+  const originalColor = myPlane.getAttribute("color");
+  const myInteraction = document.getElementById("my-interaction");
+  const originalRange = myInteraction.getAttribute("range");
+  const toggledRange = 25;
+  const mySphere = document.getElementById("my-sphere");
+  const myCube = document.getElementById("my-cube");
 
+  let toggle = false;
+  mySphere.addEventListener("click", () => {
+    toggle = !toggle;
+    mySphere.setAttribute("x", toggle ? "2" : "0");
+  });
 
+  let rangeToggle = false;
+  myCube.addEventListener("click", () => {
+    rangeToggle = !rangeToggle;
+    myInteraction.setAttribute("range", rangeToggle ? toggledRange : originalRange);
+  });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  let interactionToggle = false;
+  myInteraction.addEventListener("interact", () => {
+    interactionToggle = !interactionToggle;
+    myPlane.setAttribute("color", interactionToggle ? "orange" : originalColor);
+  });
+</script>

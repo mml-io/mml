@@ -4,6 +4,18 @@
 
 
 
+import { Audio, FullScreenMScene, registerCustomElementsToWindow, RemoteDocument } from "../src";
+
+
+
+
+
+
+
+
+
+  const scene = new FullScreenMScene();
+  const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
 
 
 
@@ -16,19 +28,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    expect(scene.getThreeScene().children[0].children[0].children[0]).toBe(element.getContainer());
 
 
 

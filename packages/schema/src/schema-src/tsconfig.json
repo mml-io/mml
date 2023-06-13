@@ -1,11 +1,11 @@
-
-
-
-
-
-
-
-
-
-
-
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "module": "esnext",
+    "target": "ES6",
+    "lib": ["es2020", "dom"],
+    "strictNullChecks": true,
+    "moduleResolution": "node",
+  },
+  "include": ["./*"]
+}

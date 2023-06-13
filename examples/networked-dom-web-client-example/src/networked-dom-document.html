@@ -1,21 +1,21 @@
+<div id="my-div" style="width:50px; height: 50px; background-color:orange;">Init</div>
+<button id="my-button">Click me!</button>
+<script>
+  const myDiv = document.getElementById("my-div");
+  const myButton = document.getElementById("my-button");
 
+  let colorToggle = false;
+  myButton.addEventListener("click", () => {
+    colorToggle = !colorToggle;
+    myDiv.setAttribute(
+      "style",
+      `background-color: ${colorToggle ? "green" : "red"}; width: 50px; height: 50px;`,
+    );
+  });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  let textToggle = false;
+  setInterval(() => {
+    textToggle = !textToggle;
+    myDiv.textContent = textToggle ? "Hello" : "World";
+  }, 1000);
+</script>

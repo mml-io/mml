@@ -1,12 +1,12 @@
+<m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
+<m-light type="directional" ry="45" rx="45" debug="true" x="3" y="3" z="3"></m-light>
+<m-cube y="2" id="my-cube" color="red"></m-cube>
 
-
-
-
-
-
-
-
-
-
-
-
+<script>
+  let toggle = false;
+  const myCube = document.getElementById("my-cube");
+  myCube.addEventListener("click", () => {
+    toggle = !toggle;
+    myCube.setAttribute("color", toggle ? "green" : "red");
+  });
+</script>

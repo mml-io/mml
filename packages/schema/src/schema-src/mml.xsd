@@ -1,1087 +1,1087 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<?xml version='1.0'?>
+<?xml-stylesheet href="xsd.xsl" type="text/xsl"?>
+<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:annotation>
+    <xs:documentation>
+      Intro
+
+      This is a work-in-progress schema definition for MML v0.1.
+
+      Its primary purpose is to define the valid tags and attributes for reference.
+
+      Its secondary purpose is to serve as documentation for those creating content using the MML format.
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:annotation>
+    <xs:documentation>
+      Value Types
+
+      TODO: These are values whose formats are more specific than the primitive types allow, and therefore need to be defined separately with associated documentation.
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:simpleType name="ContentType">
+    <xs:annotation>
+      <xs:documentation>
+        media type, as per [RFC2045]
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="URI">
+    <xs:annotation>
+      <xs:documentation>
+        a Uniform Resource Identifier, see [RFC2396]
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:anyURI"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Script">
+    <xs:annotation>
+      <xs:documentation>
+        This is a string that is evaluated as a script expression.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:annotation>
+    <xs:documentation>
+      Attribute Sets
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:attributeGroup name="coreattrs">
+    <xs:annotation>
+      <xs:documentation>
+        Attributes common to all elements.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="id" type="xs:ID">
+      <xs:annotation>
+        <xs:documentation>
+          A unique identifier for the element, used for selection and manipulation through scripting. It must be unique within the document.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="class" type="xs:NMTOKENS">
+      <xs:annotation>
+        <xs:documentation>
+          A space-separated list of class names that can be used for scripting purposes.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="clickable">
+    <xs:annotation>
+      <xs:documentation>
+        This attribute group indicates that this element is clickable. The onclick attribute is a script expression that is executed when the element is clicked. Events are also dispatched to "click" listeners.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="onclick" type="Script">
+      <xs:annotation>
+        <xs:documentation>
+          A script expression that is executed when the element is clicked. Events are also dispatched to "click" event listeners.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="transformable">
+    <xs:annotation>
+      <xs:documentation>
+        Attributes for positioning, rotating and scaling in 3D.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="x" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The position of the element along the X-axis in meters. Default value is 0.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="y" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The position of the element along the Y-axis in meters. Default value is 0.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="z" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The position of the element along the Z-axis in meters. Default value is 0.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rx" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The rotation of the element around the X-axis in degrees. Default value is 0.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="ry" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The rotation of the element around the Y-axis in degrees. Default value is 0.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rz" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The rotation of the element around the Z-axis in degrees. Default value is 0.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="sx" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The scale of the element along the X-axis. Default value is 1.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="sy" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The scale of the element along the Y-axis. Default value is 1.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="sz" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>
+          The scale of the element along the Z-axis. Default value is 1.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="visible" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the element is visible (true) or hidden (false) in the scene. Default value is true.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="shadows">
+    <xs:annotation>
+      <xs:documentation>
+        Attributes for cast and receiving shadows
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="cast-shadows" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the element casts shadows onto other elements (true) or not (false). Default value is true.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="debuggable">
+    <xs:annotation>
+      <xs:documentation>
+        The debug attribute is a boolean that indicates whether the element should be drawn with debug information.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="debug" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>
+          A boolean that indicates whether the element should be drawn with debug information (e.g. axes helper). Default value is false.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="collideable">
+    <xs:annotation>
+      <xs:documentation>
+        The collide attribute is a boolean that indicates whether a collision test should be performed on this element.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="collide" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>
+          Whether or not this object should participate in collision detection by other systems. Default value is false. If set to true, the object will be considered for collision tests.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="colorable">
+    <xs:annotation>
+      <xs:documentation>
+        The color attribute is a string that indicates the color of the element.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="color" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          The color of the element. Accepts color values in formats such as "#FF0000", "red", or "rgb(255,0,0)". If not specified, the default color is "white".
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:annotation>
+    <xs:documentation>
+      Document Structure
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:element name="html">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="head"/>
+        <xs:element ref="body"/>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:ID"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="head">
+    <xs:annotation>
+      <xs:documentation>
+        The `head` element is used to define the document's metadata and can contain `script` elements.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="script"/>
+        </xs:choice>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:ID"/>
+      <xs:attribute name="profile" type="URI"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="script">
+    <xs:annotation>
+      <xs:documentation>
+        The `script` element is used to define script expressions that are executed when the document is loaded.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:attribute name="id" type="xs:ID"/>
+      <xs:attribute name="type" type="ContentType"/>
+      <xs:attribute name="src" type="URI"/>
+      <xs:attribute name="defer">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="defer"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="body">
+    <xs:annotation>
+      <xs:documentation>
+        The `body` element is used to define the document's content.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attribute name="onload" type="Script"/>
+          <xs:attribute name="onunload" type="Script"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="MMLContent" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        `MMLContent` defines the set of MML tags.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element ref="m-cube"/>
+
+      <xs:element ref="m-label"/>
+      <xs:element ref="m-light"/>
+      <xs:element ref="m-plane"/>
+      <xs:element ref="m-model"/>
+      <xs:element ref="m-character"/>
+      <xs:element ref="m-audio"/>
+      <xs:element ref="m-image"/>
+      <xs:element ref="m-video"/>
+      <xs:element ref="m-prompt"/>
+      <xs:element ref="m-frame"/>
+      <xs:element ref="m-cylinder"/>
+      <xs:element ref="m-group"/>
+      <xs:element ref="script"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:annotation >
+    <xs:documentation>
+      MML Elements
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:element name="m-group">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-group` element can contain other MML tags, allowing all of them to be transformed as single item.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-cube">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-cube` element is a primitive 3D cube that can be coloured. It is often used for debugging or initial development purposes.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="colorable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="width" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The width of the cube in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="height" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The height of the cube in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="depth" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The depth of the cube in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="opacity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The opacity of the cube, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+
+
+
+
+
+
+
+        The `m-sphere` element is a primitive 3D sphere that can be coloured. It is often used for debugging or initial development purposes.
+
+
+
+
+
+          <xs:attributeGroup ref="debuggable"/>
+
+
+
+
+
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="radius" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The radius of the sphere in meters. Default value is 0.5 meters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="opacity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The opacity of the sphere, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-cylinder">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-cube` element is a primitive 3D cylinder that can be coloured. It is often used for debugging or initial development purposes.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="colorable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attribute name="radius" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The radius of the cylinder in meters. Default value is 0.5 meters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="height" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The height of the cylinder in meters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-light">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-light` element is a light that supports various types (e.g. `point`, `directional`) and can be coloured.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="colorable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attribute name="intensity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The intensity of the light, ranging from 0 (no light) to 1 (full intensity). Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="distance" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The maximum distance in meters that the light will affect objects. Objects beyond this distance will not be illuminated. Default value is 0, which means the light has no maximum distance.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="angle" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The angle of the light in degrees (only applicable to spotlight type). Default value is 45.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the light is enabled (true) or disabled (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="type">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="ambient"/>
+                <xs:enumeration value="point"/>
+                <xs:enumeration value="directional"/>
+                <xs:enumeration value="spotlight"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-plane">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-plane` element is a primitive 3D plane that can be coloured.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="colorable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="width" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The width of the plane in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="height" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The height of the plane in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-model">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-model` element is a 3D model. It can be used to load and display various 3D model file formats, such as OBJ, FBX, or GLTF, depending on the rendering engine being used. The model can be positioned, rotated, and scaled within the 3D scene. It also supports animations.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="src" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the 3D model file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the animation file, if applicable. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim-loop" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the animation should loop (true) or play once (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim-enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the animation is enabled (true) or disabled (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim-start-time" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the animation should begin. Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim-pause-time" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the animation should pause. If there is no value the animation will not be paused.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-character">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-character` element is a 3D character. It supports containing other `m-model` elements, allowing for composing a character from multiple models.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="src" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the 3D character model file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the character animation file, if applicable. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim-loop" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the character animation should loop (true) or play once (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim-enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the character animation is enabled (true) or disabled (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim-start-time" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the character animation should begin. Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="anim-pause-time" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the character animation should pause. If there is no value the animation will not be paused.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-frame">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-frame` element is a 3D frame. It enables composing other MML documents into the document and transforming them as a unit.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attribute name="src" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the MML document to be embedded within the current document.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-audio">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-audio` element is used to play audio in a 3D scene.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="src" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the audio file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="loop" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the audio should loop (true) or play once (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the audio is enabled (true) or disabled (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="volume" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The volume of the audio, ranging from 0 (silent) to 1 (maximum volume). Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="roll-off" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The rate at which the audio volume decreases as the listener moves away from the source. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="ref-distance" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The reference distance in meters at which the audio volume is unaffected by the listener's distance from the source. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="start-time" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the audio should start playing. Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="pause-time" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the audio should pause. If there is no value the audio will not be paused.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-image">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-image` element is used to display an image in a 3D scene.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="src" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the image file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="width" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The width of the image in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="height" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The height of the image in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-video">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-video` element is used to display a video in a 3D scene.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="src" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the video file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="width" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The width of the video in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="height" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The height of the video in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="loop" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the video should loop (true) or play once (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the video is enabled (true) or disabled (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="volume" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The volume of the video's audio, ranging from 0 (silent) to 1 (maximum volume). Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="roll-off" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The rate at which the video's audio volume decreases as the listener moves away from the source. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="ref-distance" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The reference distance in meters at which the video's audio volume is unaffected by the listener's distance from the source. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="start-time" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the video should start playing. Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="pause-time" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the video should pause. If there is no value the video will not be paused.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="m-label">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-label` element is used to display text on a plane in a 3D scene.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="colorable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="content" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The text content to be displayed on the label.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="width" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The width of the label in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="height" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The height of the label in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="font-size" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The font size of the text in centimeters. Default value is 24 centimeters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="font-color" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The color of the text on the label. Accepts color values in formats such as "#FF0000", "red", or "rgb(255,0,0)". If not specified, the default color is "black".
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="padding" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The padding around the text in centimeters. Default value is 8 centimeters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="alignment">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="left"/>
+                <xs:enumeration value="center"/>
+                <xs:enumeration value="right"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-prompt">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-prompt` element is used to request a string from the user when the element is clicked in a 3D scene.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="message" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The message text to be displayed to the user when the prompt is activated.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="placeholder" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The hint text displayed in the input field when the prompt is activated.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="prefill" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The default text pre-populated in the input field when the prompt is activated.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="onprompt" type="Script">
+            <xs:annotation>
+              <xs:documentation>
+                A script expression to be executed when a user submits their input.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-interaction">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-interaction` element is used to describe an action that a user can take at a point in 3D space.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="range" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The range that this interaction can be used from in meters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="in-focus" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the interaction must be in the direction of the camera to be used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="line-of-sight" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the interaction must be visible to the camera to be used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="priority" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The priority of this interaction. Lower priority interactions will be shown first.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="prompt" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The prompt to be displayed when the interaction is presented to the user.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="oninteract" type="Script">
+            <xs:annotation>
+              <xs:documentation>
+                A script expression that is executed when the element is interacted with. Events are also dispatched to "interact" event listeners.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

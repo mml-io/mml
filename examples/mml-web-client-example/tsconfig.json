@@ -1,20 +1,20 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "target": "ES6",
+    "jsx": "react",
+    "lib": ["es2020","dom"],
+    "sourceMap": true,
+    "allowJs": true,
+    "types": ["node"],
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "downlevelIteration": true,
+    "outDir": "./build"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/build/*", "types-src", "**/build.js"]
+}
