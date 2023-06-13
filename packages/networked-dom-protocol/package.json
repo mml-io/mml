@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-protocol",
-  "version": "0.0.39",
+  "version": "0.0.42",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [

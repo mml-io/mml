@@ -1,6 +1,6 @@
 {
   "name": "mml-web",
-  "version": "0.0.39",
+  "version": "0.0.42",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -18,7 +18,7 @@
     "test-iterate": "jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web": "^0.0.39"
+    "@mml-io/networked-dom-web": "^0.0.42"
   },
   "peerDependencies": {
     "three": "*"

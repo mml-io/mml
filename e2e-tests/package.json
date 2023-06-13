@@ -11,11 +11,11 @@
     "wait-for-ports": "npx wait-on http://127.0.0.1:8079 -t 60000 && npx wait-on http://127.0.0.1:28891 -t 60000"
   },
   "dependencies": {
-    "networked-dom-server": "^0.0.39",
     "chokidar": "3.5.3",
     "express": "4.18.2",
     "express-ws": "5.0.2",
     "jest-image-snapshot": "^6.1.0",
+    "networked-dom-server": "^0.0.42",
     "puppeteer": "^20.3.0",
     "wait-on": "^7.0.1",
     "ws": "8.13.0"
@@ -26,5 +26,5 @@
     "@types/express-ws": "3.0.1",
     "@types/puppeteer": "^7.0.4"
   },
-  "version": "0.0.39"
+  "version": "0.0.42"
 }
