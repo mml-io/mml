@@ -1,6 +1,6 @@
+import * as THREE from "three";
 
-
-
+import { TransformableElement } from "./TransformableElement";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -21,19 +21,19 @@ const defaultVideoPauseTime = null;
 const defaultVideoSrc = null;
 const defaultVideoCastShadows = true;
 
-
-
+export class Video extends TransformableElement {
+  static tagName = "m-video";
   private documentTimeListener: { remove: () => void };
   private delayedStartTimer: NodeJS.Timeout | null = null;
   private delayedPauseTimer: NodeJS.Timeout | null = null;
 
   static get observedAttributes(): Array<string> {
-
-
+    return [
+      ...TransformableElement.observedAttributes,
       ...Video.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
-
-
+    ];
+  }
 
   private mesh: THREE.Mesh<
     THREE.PlaneGeometry,
@@ -119,20 +119,20 @@ const defaultVideoCastShadows = true;
     },
   });
 
+  constructor() {
+    super();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      side: THREE.DoubleSide,
+    });
+    this.mesh = new THREE.Mesh(geometry, material);
+    this.mesh.castShadow = true;
+    this.mesh.receiveShadow = false;
+    this.container.add(this.mesh);
+  }
 
   public parentTransformed(): void {
     this.collideableHelper.parentTransformed();
@@ -142,8 +142,8 @@ const defaultVideoCastShadows = true;
     return true;
   }
 
-
-
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    super.attributeChangedCallback(name, oldValue, newValue);
     Video.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
   }
@@ -245,7 +245,7 @@ const defaultVideoCastShadows = true;
         if (Math.abs(delta) > Math.abs(loopedDelta)) {
           delta = loopedDelta;
         }
-
+      }
 
       if (Math.abs(delta) < 0.1) {
         // Do nothing - this is close enough - set the playback rate to 1
@@ -334,7 +334,7 @@ const defaultVideoCastShadows = true;
       // Muted allows autoplay immediately without the user needing to interact with the document
       // Video will be unmuted when the audiocontext is available
       tag.muted = true;
-
+      tag.autoplay = true;
       tag.crossOrigin = "anonymous";
       tag.loop = this.props.loop;
 
@@ -362,19 +362,19 @@ const defaultVideoCastShadows = true;
     }
 
     this.syncVideoTime();
+  }
 
-
-
-
+  connectedCallback(): void {
+    super.connectedCallback();
     this.documentTimeListener = this.addDocumentTimeListener(() => {
       this.documentTimeChanged();
     });
 
     this.updateVideo();
     this.collideableHelper.updateCollider(this.mesh);
+  }
 
-
-
+  disconnectedCallback() {
     if (this.loadedVideoState) {
       this.loadedVideoState.paused = true;
       this.loadedVideoState.video.pause();
@@ -391,17 +391,17 @@ const defaultVideoCastShadows = true;
     }
     this.documentTimeListener.remove();
     this.collideableHelper.removeColliders();
-
-
+    super.disconnectedCallback();
+  }
 
   public getMesh(): THREE.Mesh<
     THREE.PlaneGeometry,
     THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
   > {
+    return this.mesh;
+  }
 
-
-
-
+  private updateHeightAndWidth() {
     if (this.loadedVideoState) {
       const height = this.props.height;
       const width = this.props.width;
@@ -413,21 +413,21 @@ const defaultVideoCastShadows = true;
         this.mesh.scale.y = height;
       } else if (height && !width) {
         this.mesh.scale.y = height;
-
-
+        // compute width
+        this.mesh.scale.x = (this.mesh.scale.y * loadedWidth) / loadedHeight;
       } else if (!height && width) {
         this.mesh.scale.x = width;
-
-
-
-
-
-
-
+        // compute height
+        this.mesh.scale.y = (this.mesh.scale.x * loadedHeight) / loadedWidth;
+      } else {
+        this.mesh.scale.x = 1;
+        // compute height
+        this.mesh.scale.y = loadedHeight / loadedWidth;
+      }
     } else {
       this.mesh.scale.x = this.props.width !== null ? this.props.width : 1;
       this.mesh.scale.y = this.props.height !== null ? this.props.height : 1;
-
+    }
     this.collideableHelper.updateCollider(this.mesh);
-
-
+  }
+}

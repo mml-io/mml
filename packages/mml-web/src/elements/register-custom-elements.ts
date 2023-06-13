@@ -14,7 +14,7 @@ import { Plane } from "./Plane";
 import { Prompt } from "./Prompt";
 import { RemoteDocument } from "./RemoteDocument";
 import { Sphere } from "./Sphere";
-
+import { Video } from "./Video";
 
 export function registerCustomElementsToWindow(targetWindow: Window) {
   // TODO - copy the classes to generate window-specific classes rather than overwriting the superclass on each call
@@ -33,7 +33,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Prompt.tagName, Prompt);
   targetWindow.customElements.define(Sphere.tagName, Sphere);
   targetWindow.customElements.define(Image.tagName, Image);
-
+  targetWindow.customElements.define(Video.tagName, Video);
   targetWindow.customElements.define(Audio.tagName, Audio);
   targetWindow.customElements.define(Interaction.tagName, Interaction);
 }

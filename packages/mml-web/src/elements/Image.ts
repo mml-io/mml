@@ -75,7 +75,7 @@ export class Image extends TransformableElement {
     THREE.PlaneGeometry,
     THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
   >;
-
+  private loadedImage: HTMLImageElement | HTMLVideoElement | null;
 
   constructor() {
     super();
