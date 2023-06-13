@@ -51,14 +51,14 @@ jobs:
 
 
 
+        run: npm run ci:e2e-tests
 
-
-
-
-
-
-
+      - name: Upload End to End Test Images
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: images
           path: e2e-tests/test/__image_snapshots__/
 
-
-
+            
+            
