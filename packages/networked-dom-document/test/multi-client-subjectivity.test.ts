@@ -1,5 +1,5 @@
 import { RemoteEvent } from "@mml-io/networked-dom-protocol";
-import { LocalObservableDomFactory } from "@mml-io/networked-dom-server";
+import { LocalObservableDomFactory } from "networked-dom-server";
 
 import { MockWebsocket } from "./mock.websocket";
 import { EditableNetworkedDOM } from "../src";

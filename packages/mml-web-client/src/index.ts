@@ -1,3 +1,4 @@
+import { NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 import {
   configureWindowForMML,
   FullScreenMScene,
@@ -7,8 +8,7 @@ import {
   NetworkedDOMWebsocket,
   registerCustomElementsToWindow,
   RemoteDocumentWrapper,
-} from "@mml-io/mml-web";
-import { NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
+} from "mml-web";
 
 const thisScript = document.currentScript as HTMLScriptElement;
 const scriptUrl = new URL(thisScript.src);

@@ -11,7 +11,7 @@
     "type-check": "tsc --noEmit",
     "build": "node ./build.js --build",
     "iterate": "node ./build.js --watch",
-    "private-publish": "npm run build && publish-if-not-exists --access=restricted",
+    "npm-publish": "npm run build && publish-if-not-exists",
     "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   }

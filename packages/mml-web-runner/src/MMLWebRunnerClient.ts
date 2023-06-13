@@ -1,6 +1,6 @@
-import { MMLScene, RemoteDocumentWrapper } from "@mml-io/mml-web";
 import { EditableNetworkedDOM, NetworkedDOM } from "@mml-io/networked-dom-document";
 import { NetworkedDOMWebRunnerClient } from "@mml-io/networked-dom-web-runner";
+import { MMLScene, RemoteDocumentWrapper } from "mml-web";
 
 export class MMLWebRunnerClient extends NetworkedDOMWebRunnerClient {
   private windowTarget: Window;

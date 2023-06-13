@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { registerCustomElementsToWindow } from "@mml-io/mml-web";
+import { registerCustomElementsToWindow } from "mml-web";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { IframeObservableDOMFactory } from "@mml-io/networked-dom-web-runner";
 import { AudioContext } from "standardized-audio-context-mock";

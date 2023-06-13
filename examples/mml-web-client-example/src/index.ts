@@ -3,10 +3,10 @@ import * as path from "path";
 import * as url from "url";
 
 import { NetworkedDOM } from "@mml-io/networked-dom-document";
-import { EditableNetworkedDOM, LocalObservableDomFactory } from "@mml-io/networked-dom-server";
 import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
+import { EditableNetworkedDOM, LocalObservableDomFactory } from "networked-dom-server";
 import ws from "ws";
 
 const port = process.env.PORT || 8080;
