@@ -65,8 +65,8 @@ export class JSDOMRunner {
 
   private documentStartTime = Date.now();
 
-
-
+  private isLoaded = false;
+  private logBuffer: LogMessage[] = [];
 
   constructor(
     htmlPath: string,
@@ -152,38 +152,38 @@ export class JSDOMRunner {
             characterData: true,
           });
 
-
+          this.isLoaded = true;
 
           this.callback({
             loaded: true,
           });
 
-
+          this.flushLogBuffer();
         });
       },
     });
   }
 
+  private flushLogBuffer() {
+    for (const logMessage of this.logBuffer) {
+      this.callback({
+        logMessage,
+      });
+    }
 
+    this.logBuffer = [];
+  }
 
+  private log(message: LogMessage) {
+    if (!this.isLoaded) {
+      this.logBuffer.push(message);
+      return;
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    this.callback({
+      logMessage: message,
+    });
+  }
 
   public getDocument(): Document {
     return this.domWindow.document;
@@ -265,34 +265,34 @@ export class JSDOMRunner {
   private createVirtualConsole(): VirtualConsole {
     const virtualConsole = new VirtualConsole();
     virtualConsole.on("jsdomError", (...args) => {
-
-
-
-
+      this.log({
+        level: "system",
+        content: args,
+      });
     });
     virtualConsole.on("error", (...args) => {
-
-
-
-
+      this.log({
+        level: "error",
+        content: args,
+      });
     });
     virtualConsole.on("warn", (...args) => {
-
-
-
-
+      this.log({
+        level: "warn",
+        content: args,
+      });
     });
     virtualConsole.on("log", (...args) => {
-
-
-
-
+      this.log({
+        level: "log",
+        content: args,
+      });
     });
     virtualConsole.on("info", (...args) => {
-
-
-
-
+      this.log({
+        level: "info",
+        content: args,
+      });
     });
     return virtualConsole;
   }

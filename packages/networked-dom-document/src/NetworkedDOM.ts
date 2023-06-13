@@ -8,7 +8,7 @@ import {
   SnapshotMessage,
 } from "@mml-io/networked-dom-protocol";
 import {
-
+  LogMessage,
   ObservableDomInterface,
   ObservableDomMessage,
   ObservableDOMParameters,
@@ -73,7 +73,7 @@ export class NetworkedDOM {
   private pingCounter = 1;
   private maximumNodeId = 0;
 
-
+  private logCallback?: (message: LogMessage) => void;
 
   constructor(
     observableDomFactory: ObservableDomFactory,
@@ -83,12 +83,12 @@ export class NetworkedDOM {
     onLoad: (domDiff: VirtualDOMDiffStruct | null) => void,
     params = {},
     ignoreTextNodes = true,
-
+    logCallback?: (message: LogMessage) => void,
   ) {
     this.htmlPath = htmlPath;
     this.ignoreTextNodes = ignoreTextNodes;
 
-
+    this.logCallback = logCallback || this.defaultLogCallback;
 
     this.observableDom = observableDomFactory(
       {
@@ -130,10 +130,10 @@ export class NetworkedDOM {
           const mutation = this.addKnownNodesInMutation(message.mutation);
           this.processModification(mutation);
           this.removeKnownNodesInMutation(mutation);
-
-
-
-
+        } else if (message.logMessage) {
+          if (this.logCallback) {
+            this.logCallback(message.logMessage);
+          }
         } else {
           if (message.documentTime) {
             // This is just a regular ping message to update the document time - send the document time to all connected clients
@@ -146,27 +146,27 @@ export class NetworkedDOM {
     );
   }
 
+  private defaultLogCallback(message: LogMessage) {
+    const getLogFn = (level: string) => {
+      switch (level) {
+        case "system":
+          return console.error;
+        case "error":
+          return console.error;
+        case "warn":
+          return console.warn;
+        case "log":
+          return console.log;
+        case "info":
+          return console.info;
+        default:
+          return console.log;
+      }
+    };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    const logFn = getLogFn(message.level);
+    logFn(`${message.level.toUpperCase()} (${this.htmlPath}):`, ...message.content);
+  }
 
   private addRemappedNodeId(clientFacingNodeId: number, internalNodeId: number) {
     this.internalNodeIdToClientNodeId.set(internalNodeId, clientFacingNodeId);

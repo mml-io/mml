@@ -27,15 +27,15 @@ export type ObservableDomInterface = {
   addIPCWebsocket(webSocket: WebSocket): void;
 };
 
-
-
-
-
+export type LogMessage = {
+  level: "system" | "error" | "warn" | "log" | "info";
+  content: any[];
+};
 
 export type ObservableDomMessage = {
   snapshot?: StaticVirtualDomElement;
   mutation?: StaticVirtualDomMutationIdsRecord;
-
+  logMessage?: LogMessage;
   documentTime: number;
 };
 

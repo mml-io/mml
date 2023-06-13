@@ -1,5 +1,5 @@
 import {
-
+  LogMessage,
   ObservableDomInterface,
   ObservableDomMessage,
   ObservableDOMParameters,
@@ -13,7 +13,7 @@ import { virtualDomElementToStatic } from "./utils";
 export type DOMRunnerMessage = {
   loaded?: boolean;
   mutationList?: Array<MutationRecord>;
-
+  logMessage?: LogMessage;
 };
 
 export type DOMRunnerInterface = {
@@ -97,11 +97,11 @@ export class ObservableDom implements ObservableDomInterface {
           });
         } else if (domRunnerMessage.mutationList) {
           this.processModificationList(domRunnerMessage.mutationList);
-
-
-
-
-
+        } else if (domRunnerMessage.logMessage) {
+          this.callback({
+            logMessage: domRunnerMessage.logMessage,
+            documentTime: this.getDocumentTime(),
+          });
         }
       },
     );

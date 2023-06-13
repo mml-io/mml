@@ -22,18 +22,18 @@ export class EditableNetworkedDOM {
   private observableDOMFactory: ObservableDomFactory;
   private ignoreTextNodes: boolean;
 
-
+  private logCallback?: (message: LogMessage) => void;
 
   constructor(
     htmlPath: string,
     observableDOMFactory: ObservableDomFactory,
     ignoreTextNodes = true,
-
+    logCallback?: (message: LogMessage) => void,
   ) {
     this.htmlPath = htmlPath;
     this.observableDOMFactory = observableDOMFactory;
     this.ignoreTextNodes = ignoreTextNodes;
-
+    this.logCallback = logCallback;
   }
 
   public isLoaded() {
@@ -74,7 +74,7 @@ export class EditableNetworkedDOM {
       },
       this.params,
       this.ignoreTextNodes,
-
+      this.logCallback,
     );
     this.loadedState = {
       htmlContents,
