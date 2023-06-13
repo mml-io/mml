@@ -382,7 +382,7 @@ export class NetworkedDOMWebsocket {
       this.elementToId.set(textNode, nodeId);
       return textNode;
     }
-    const { tag, nodeId, attributes, children } = message;
+    const { tag, nodeId, attributes, children, text } = message;
     if (nodeId === undefined || nodeId === null) {
       console.warn("No nodeId in handleNewElement message", message);
       return null;
@@ -393,6 +393,13 @@ export class NetworkedDOMWebsocket {
         nodeId,
         this.idToElement.get(nodeId),
       );
+    }
+    if (tag === "#text") {
+      const textNode = document.createTextNode("");
+      textNode.textContent = text || null;
+      this.idToElement.set(nodeId, textNode);
+      this.elementToId.set(textNode, nodeId);
+      return textNode;
     }
 
     const element = document.createElement(tag);
