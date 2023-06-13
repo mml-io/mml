@@ -1,4 +1,4 @@
-
+import * as THREE from "three";
 
 import { Model } from "./Model";
 
@@ -7,11 +7,11 @@ export class Character extends Model {
 
   static get observedAttributes(): Array<string> {
     return [...Model.observedAttributes];
-
+  }
 
   constructor() {
     super();
-
+  }
 
   public getCharacter(): THREE.Object3D | null {
     return this.gltfScene;
