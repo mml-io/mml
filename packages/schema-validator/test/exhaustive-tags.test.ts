@@ -6,7 +6,7 @@ test("exhaustive tags", () => {
   <m-light></m-light>
   <m-plane></m-plane>
   <m-cube></m-cube>
-
+  <m-sphere></m-sphere>
   <m-cylinder></m-cylinder>
   <m-prompt></m-prompt>
   <m-model></m-model>

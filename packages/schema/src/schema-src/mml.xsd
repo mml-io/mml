@@ -308,7 +308,7 @@
     </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:element ref="m-cube"/>
-
+      <xs:element ref="m-sphere"/>
       <xs:element ref="m-label"/>
       <xs:element ref="m-light"/>
       <xs:element ref="m-plane"/>
@@ -393,26 +393,26 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
 
-
-
-
-
-
-
-
+  <xs:element name="m-sphere">
+    <xs:annotation>
+      <xs:documentation>
         The `m-sphere` element is a primitive 3D sphere that can be coloured. It is often used for debugging or initial development purposes.
-
-
-
-
-
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
           <xs:attributeGroup ref="debuggable"/>
-
-
-
-
-
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="colorable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="shadows"/>
           <xs:attribute name="radius" type="xs:float">
             <xs:annotation>

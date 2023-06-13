@@ -13,7 +13,7 @@ import { Model } from "./Model";
 import { Plane } from "./Plane";
 import { Prompt } from "./Prompt";
 import { RemoteDocument } from "./RemoteDocument";
-
+import { Sphere } from "./Sphere";
 
 
 export function registerCustomElementsToWindow(targetWindow: Window) {
@@ -31,7 +31,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Label.tagName, Label);
   targetWindow.customElements.define(Group.tagName, Group);
   targetWindow.customElements.define(Prompt.tagName, Prompt);
-
+  targetWindow.customElements.define(Sphere.tagName, Sphere);
   targetWindow.customElements.define(Image.tagName, Image);
 
   targetWindow.customElements.define(Audio.tagName, Audio);
