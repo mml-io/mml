@@ -13,6 +13,7 @@ type InteractionState = {
 function createInteractionsHolder(
   onPrev: () => void,
   onNext: () => void,
+  onClose: () => void,
 ): {
   holderElement: HTMLDivElement;
   listElement: HTMLDivElement;
@@ -23,7 +24,7 @@ function createInteractionsHolder(
   const holderElement = document.createElement("div");
   holderElement.setAttribute("data-test-id", "interactions-holder");
   holderElement.style.zIndex = "100";
-  holderElement.style.position = "fixed";
+  holderElement.style.position = "absolute";
   holderElement.style.backgroundColor = "white";
   holderElement.style.padding = "10px";
   holderElement.style.display = "none";
@@ -32,9 +33,24 @@ function createInteractionsHolder(
   holderElement.style.top = "50%";
   holderElement.style.left = "50%";
   holderElement.style.transform = "translate(-50%, -50%)";
-  const title = document.createElement("h1");
+
+  const closeButtonHolder = document.createElement("div");
+  closeButtonHolder.style.display = "flex";
+  closeButtonHolder.style.justifyContent = "flex-end";
+  holderElement.appendChild(closeButtonHolder);
+
+  const title = document.createElement("h3");
+  title.style.textAlign = "center";
   title.textContent = "Interactions";
   holderElement.appendChild(title);
+
+  const closeButton = document.createElement("button");
+  closeButton.textContent = "Close";
+  closeButton.style.cursor = "pointer";
+  closeButton.addEventListener("click", () => {
+    onClose();
+  });
+  closeButtonHolder.appendChild(closeButton);
 
   const listElement = document.createElement("div");
   listElement.setAttribute("data-test-id", "interactions-list");
@@ -70,14 +86,14 @@ function createInteractionPrompt() {
   const interactionPrompt = document.createElement("div");
   interactionPrompt.setAttribute("data-test-id", "interactions-prompt");
   interactionPrompt.style.zIndex = "101";
-  interactionPrompt.style.position = "fixed";
+  interactionPrompt.style.position = "absolute";
   interactionPrompt.style.top = "10px";
   interactionPrompt.style.left = "10px";
   interactionPrompt.style.display = "none";
   interactionPrompt.style.padding = "12px 10px";
   interactionPrompt.style.fontFamily = "Helvetica";
   interactionPrompt.style.color = "white";
-  interactionPrompt.style.backgroundColor = "#002200b2";
+  interactionPrompt.style.backgroundColor = "#222222b2";
   interactionPrompt.innerHTML = "Press E to interact";
   return interactionPrompt;
 }
@@ -86,6 +102,7 @@ export class InteractionManager {
   private static pageLimit = 3;
   private pageOffset = 0;
 
+  private container: HTMLElement;
   private camera: THREE.Camera;
 
   private eventCollection = new EventHandlerCollection();
@@ -170,7 +187,8 @@ export class InteractionManager {
     return false;
   }
 
-  private constructor(camera: THREE.Camera, threeJSScene: THREE.Scene) {
+  private constructor(container: HTMLElement, camera: THREE.Camera, threeJSScene: THREE.Scene) {
+    this.container = container;
     this.threeJSScene = threeJSScene;
     this.camera = camera;
     const { holderElement, listElement, prevButton, statusHolder, nextButton } =
@@ -183,29 +201,32 @@ export class InteractionManager {
           this.pageOffset++;
           this.displayInteractions();
         },
+        () => {
+          this.hideHolder();
+        },
       );
     this.prevButton = prevButton;
     this.statusHolder = statusHolder;
     this.nextButton = nextButton;
     this.interactionListElement = listElement;
     this.interactionHolderElement = holderElement;
-    document.body.appendChild(this.interactionHolderElement);
+    this.container.appendChild(this.interactionHolderElement);
 
     this.interactionPromptElement = createInteractionPrompt();
-    document.body.appendChild(this.interactionPromptElement);
+    this.container.appendChild(this.interactionPromptElement);
 
     this.eventCollection.add(document, "keydown", (e: KeyboardEvent) => {
       // if the e key is pressed, show the UI
       if (e.code === "KeyE") {
         if (this.interactionHolderElement.style.display === "block") {
-          this.interactionHolderElement.style.display = "none";
+          this.hideHolder();
           return;
         }
         if (this.visibleActions.size > 0) {
-          this.interactionHolderElement.style.display = "block";
+          this.showHolder();
         }
       } else if (e.code === "Escape") {
-        this.interactionHolderElement.style.display = "none";
+        this.hideHolder();
       }
     });
   }
@@ -231,7 +252,7 @@ export class InteractionManager {
         if (this.visibleActions.has(interactionState)) {
           this.visibleActions.delete(interactionState);
           if (this.visibleActions.size === 0) {
-            this.interactionPromptElement.style.display = "none";
+            this.hidePrompt();
           }
         }
       },
@@ -268,13 +289,14 @@ export class InteractionManager {
   }
 
   static init(
+    container: HTMLElement,
     camera: THREE.Camera,
     threeJSScene: THREE.Scene,
   ): {
     interactionManager: InteractionManager;
     interactionListener: InteractionListener;
   } {
-    const interactionManager = new InteractionManager(camera, threeJSScene);
+    const interactionManager = new InteractionManager(container, camera, threeJSScene);
     interactionManager.startTick();
     return { interactionManager, interactionListener: interactionManager.getInteractionListener() };
   }
@@ -306,11 +328,11 @@ export class InteractionManager {
       });
 
       if (this.visibleActions.size === 0) {
-        this.interactionPromptElement.style.display = "none";
-        this.interactionHolderElement.style.display = "none";
+        this.hidePrompt();
+        this.hideHolder();
         return;
       } else {
-        this.interactionPromptElement.style.display = "block";
+        this.showPrompt();
       }
 
       this.sortedActions = Array.from(this.visibleActions).sort(
@@ -370,25 +392,40 @@ export class InteractionManager {
 
     pagedItems.forEach((interactionState) => {
       if (!interactionState.button) {
+        const interactionText = InteractionManager.createButtonText(interactionState.interaction);
         const button = document.createElement("button");
         button.style.display = "block";
-        button.style.margin = "5px";
+        button.style.marginBottom = "5px";
         button.style.cursor = "pointer";
         button.style.textOverflow = "ellipsis";
         button.style.overflow = "hidden";
         button.style.whiteSpace = "nowrap";
         button.style.maxWidth = "200px";
-        button.style.padding = "12px 10px";
-        button.style.fontFamily = "Helvetica";
-        button.style.color = "white";
-        button.style.backgroundColor = "#002200b2";
-        button.textContent = InteractionManager.createButtonText(interactionState.interaction);
-        button.onclick = () => {
+        button.setAttribute("data-test-id", `interaction-${interactionText}`);
+        button.textContent = interactionText;
+        button.addEventListener("click", () => {
           interactionState.interaction.trigger();
-        };
+          this.hideHolder();
+        });
         interactionState.button = button;
       }
       this.interactionListElement.appendChild(interactionState.button);
     });
+  }
+
+  private hideHolder() {
+    this.interactionHolderElement.style.display = "none";
+  }
+
+  private showHolder() {
+    this.interactionHolderElement.style.display = "block";
+  }
+
+  private hidePrompt() {
+    this.interactionPromptElement.style.display = "none";
+  }
+
+  private showPrompt() {
+    this.interactionPromptElement.style.display = "block";
   }
 }

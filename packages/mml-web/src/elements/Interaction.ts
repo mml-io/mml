@@ -8,7 +8,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 
-const defaultInteractionRange = 1;
+const defaultInteractionRange = 5;
 const defaultInteractionInFocus = true;
 const defaultInteractionLineOfSight = false;
 const defaultInteractionPriority = 1;

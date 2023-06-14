@@ -6,6 +6,7 @@ import { PointerLockFlyCameraControls } from "./camera/PointerLockFlyCameraContr
 import { MElement } from "./elements";
 import { Interaction } from "./elements/Interaction";
 import { MixerContext } from "./html/HTMLMixer";
+import { InteractionManager } from "./interaction-ui";
 import { MMLClickTrigger } from "./MMLClickTrigger";
 import { PromptManager } from "./prompt-ui";
 
@@ -76,6 +77,7 @@ export class MMLScene implements IMMLScene {
     resizeListener: () => void;
     clickTrigger: MMLClickTrigger;
     promptManager: PromptManager;
+    interactionManager: InteractionManager;
   } | null = null;
   private resizeObserver: ResizeObserver;
 
@@ -180,6 +182,12 @@ export class MMLScene implements IMMLScene {
 
     const clickTrigger = MMLClickTrigger.init(container, elementsHolder, this);
     const promptManager = PromptManager.init(container);
+    const { interactionManager, interactionListener } = InteractionManager.init(
+      container,
+      this.camera,
+      this.threeScene,
+    );
+    this.addInteractionListener(interactionListener);
 
     this.renderer = this.createRenderer();
     this.setControlsEnabled(true);
@@ -205,6 +213,7 @@ export class MMLScene implements IMMLScene {
       resizeListener,
       clickTrigger,
       promptManager,
+      interactionManager,
     };
     container.appendChild(this.css3dElement);
     this.fitContainer();
@@ -249,6 +258,7 @@ export class MMLScene implements IMMLScene {
     this.rootContainer.clear();
     this.initializedState.clickTrigger.dispose();
     this.initializedState.promptManager.dispose();
+    this.initializedState.interactionManager.dispose();
     this.initializedState = null;
   }
 
