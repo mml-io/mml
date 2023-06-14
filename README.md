@@ -59,15 +59,13 @@ The server and network components necessary to support the multi-user mode are i
   * [./packages/networked-dom-web-client](./packages/networked-dom-web-client) - Web Networked DOM Client
   * [./packages/networked-dom-web-runner](./packages/networked-dom-web-runner) - Web Networked DOM Runner (for running Networked DOM documents in a web browser rather than a server)
   * [./packages/networked-dom-protocol](./packages/networked-dom-protocol) - Networked DOM WebSocket Protocol TypeScript Definition
-  * [./packages/networked-dom](./packages/networked-dom) - Networked DOM Wrapper Library
-    * Comprised of:
-      * [./packages/observable-dom-common](./packages/observable-dom-common) - Observable DOM Common
-      * [./packages/observable-dom](./packages/observable-dom) - Observable DOM (JSDOM Execution) Library
-      * [./packages/networked-dom-document](./packages/networked-dom-document) - Networked DOM Document Library
+  * [./packages/observable-dom-common](./packages/observable-dom-common) - Observable DOM Common
+  * [./packages/observable-dom](./packages/observable-dom) - Observable DOM (JSDOM Execution) Library
+  * [./packages/networked-dom-document](./packages/networked-dom-document) - Networked DOM Document Library
 
 # Usage of this repo
 
-This repo contains libraries and schema definitions for MML. The most likely way to use this repo if cloning it is as libraries for other projects.
+This repo contains libraries and schema definitions for MML. The most likely way to use this repo is cloning it as libraries for other projects.
 
 1. Clone the repo
 1. `npm install`
@@ -76,7 +74,7 @@ This repo contains libraries and schema definitions for MML. The most likely way
      * [http://localhost:8080](http://localhost:8080) - MML Example Server
      * [http://localhost:8081](http://localhost:8081) - Networked DOM Example Server
 
-To use any of the libraries in this repo in another project, you can use `npm link` to make these dependencies linkable your other npm project.
+To use any of the libraries in this repo in another project, you can use `npm link` to make these dependencies linkable to your other npm project.
 * `npm run link-all` Runs `npm link` in all would-be-published packages to allow using as local dependencies to develop with. It will also print the commands to link the dependencies.
 
 
