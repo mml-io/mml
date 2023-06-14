@@ -195,6 +195,9 @@ export class DragFlyCameraControls {
   }
 
   private onMouseWheel(event: WheelEvent) {
+    if (!this.mouseDown) {
+      return;
+    }
     this.speed -= event.deltaY * 0.1;
 
     // restrict to a reasonable min and max
