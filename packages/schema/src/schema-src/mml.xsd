@@ -1045,28 +1045,28 @@
           <xs:attribute name="range" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                The range that this interaction can be used from in meters.
+                The range that this interaction can be used from in meters. Default value is 5 meters.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="in-focus" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                Whether the interaction must be in the direction of the camera to be used.
+                Whether the interaction must be in the direction of the camera to be used. Default value is true.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="line-of-sight" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                Whether the interaction must be visible to the camera to be used.
+                Whether the interaction must be visible to the camera to be used. Default value is false.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="priority" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                The priority of this interaction. Lower priority interactions will be shown first.
+                The priority of this interaction. Lower priority interactions will be shown first. Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

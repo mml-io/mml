@@ -3,7 +3,6 @@ import {
   configureWindowForMML,
   FullScreenMScene,
   IframeWrapper,
-  InteractionManager,
   MMLScene,
   NetworkedDOMWebsocket,
   registerCustomElementsToWindow,
@@ -53,12 +52,6 @@ function createStatusElement() {
   window.addEventListener("load", () => {
     // Make a fixed-position centered status element
     const fullScreenMScene = new FullScreenMScene();
-
-    const { interactionListener } = InteractionManager.init(
-      fullScreenMScene.getCamera(),
-      fullScreenMScene.getThreeScene(),
-    );
-    fullScreenMScene.addInteractionListener(interactionListener);
 
     const defineGlobals = scriptUrl.searchParams.get("defineGlobals") === "true";
     if (defineGlobals) {

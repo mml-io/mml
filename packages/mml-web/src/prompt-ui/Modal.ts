@@ -24,6 +24,10 @@ export class Modal {
     this.contentsElement.style.background = "rgba(255, 255, 255, 0.6)";
     this.contentsElement.style.padding = "8px";
     this.element.append(this.titleElement, this.contentsElement);
+
+    this.element.addEventListener("keydown", (e: KeyboardEvent) => {
+      e.stopPropagation();
+    });
   }
 
   dispose() {
