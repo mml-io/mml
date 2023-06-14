@@ -16,7 +16,7 @@
     "express-ws": "5.0.2",
     "jest-image-snapshot": "^6.1.0",
     "networked-dom-server": "^0.0.42",
-    "puppeteer": "^20.3.0",
+    "puppeteer": "^20.7.1",
     "wait-on": "^7.0.1",
     "ws": "8.13.0"
   },

@@ -22,10 +22,10 @@
   },
   "devDependencies": {
     "@mml-io/networked-dom-web-runner-iframe": "file:../networked-dom-web-runner-iframe",
-    "@types/three": "0.151.0",
-    "jest-canvas-mock": "2.5.0",
+    "@types/three": "0.152.1",
+    "jest-canvas-mock": "2.5.1",
     "jest-environment-jsdom": "29.5.0",
     "jest-expect-message": "1.1.3",
-    "standardized-audio-context-mock": "9.6.17"
+    "standardized-audio-context-mock": "9.6.24"
   }
 }

@@ -7,6 +7,5 @@
       "npmClientArgs": ["--no-package-lock"]
     }
   },
-  "useWorkspaces": true,
   "$schema": "node_modules/lerna/schemas/lerna-schema.json"
 }

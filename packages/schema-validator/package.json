@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "@mml-io/mml-schema": "^0.0.42",
-    "xsd-validator": "1.0.2"
+    "xsd-validator": "1.1.0"
   }
 }
