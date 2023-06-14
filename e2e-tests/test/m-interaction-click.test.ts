@@ -14,21 +14,21 @@ describe("m-interaction", () => {
 
     await page.waitForSelector("m-interaction");
 
-    await takeAndCompareScreenshot(page, 0.01);
+    await takeAndCompareScreenshot(page);
 
     await clickElement(page, "m-cube");
 
     await page.waitForSelector("m-interaction[range='25']");
 
-    await takeAndCompareScreenshot(page, 0.01);
+    await takeAndCompareScreenshot(page);
 
     await clickElement(page, "m-sphere");
-
-    await takeAndCompareScreenshot(page, 0.01);
 
     await page.waitForSelector("div[data-test-id='interactions-prompt']", {
       visible: true,
     });
+
+    await takeAndCompareScreenshot(page);
 
     await page.keyboard.down("e");
 
@@ -40,7 +40,7 @@ describe("m-interaction", () => {
 
     await page.waitForSelector("m-plane[color='orange']");
 
-    await takeAndCompareScreenshot(page, 0.01);
+    await takeAndCompareScreenshot(page);
 
     await page.keyboard.down("Escape");
 
@@ -48,7 +48,7 @@ describe("m-interaction", () => {
       hidden: false,
     });
 
-    await takeAndCompareScreenshot(page, 0.01);
+    await takeAndCompareScreenshot(page);
 
     await page.close();
   }, 60000);
