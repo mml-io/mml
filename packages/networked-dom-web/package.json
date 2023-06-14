@@ -21,7 +21,7 @@
     "@mml-io/networked-dom-protocol": "^0.0.42"
   },
   "devDependencies": {
-    "jest-canvas-mock": "2.5.0",
+    "jest-canvas-mock": "2.5.1",
     "jest-environment-jsdom": "29.5.0",
     "jest-expect-message": "1.1.3"
   }

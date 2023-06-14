@@ -16,9 +16,9 @@
   },
   "dependencies": {
     "mml-web": "^0.0.42",
-    "three": "0.142.0"
+    "three": "0.153.0"
   },
   "devDependencies": {
-    "@types/three": "0.151.0"
+    "@types/three": "0.152.1"
   }
 }
