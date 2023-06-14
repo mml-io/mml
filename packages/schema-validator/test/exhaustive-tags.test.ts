@@ -9,6 +9,7 @@ test("exhaustive tags", () => {
   <m-sphere></m-sphere>
   <m-cylinder></m-cylinder>
   <m-prompt></m-prompt>
+  <m-interaction></m-interaction>
   <m-model></m-model>
   <m-character></m-character>
   <m-frame></m-frame>

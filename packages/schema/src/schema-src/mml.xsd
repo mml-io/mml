@@ -16,8 +16,6 @@
   <xs:annotation>
     <xs:documentation>
       Value Types
-
-      TODO: These are values whose formats are more specific than the primitive types allow, and therefore need to be defined separately with associated documentation.
     </xs:documentation>
   </xs:annotation>
 
@@ -318,6 +316,7 @@
       <xs:element ref="m-image"/>
       <xs:element ref="m-video"/>
       <xs:element ref="m-prompt"/>
+      <xs:element ref="m-interaction"/>
       <xs:element ref="m-frame"/>
       <xs:element ref="m-cylinder"/>
       <xs:element ref="m-group"/>
@@ -436,7 +435,7 @@
   <xs:element name="m-cylinder">
     <xs:annotation>
       <xs:documentation>
-        The `m-cube` element is a primitive 3D cylinder that can be coloured. It is often used for debugging or initial development purposes.
+        The `m-cylinder` element is a primitive 3D cylinder that can be coloured. It is often used for debugging or initial development purposes.
       </xs:documentation>
     </xs:annotation>
     <xs:complexType mixed="true">
@@ -968,6 +967,11 @@
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="alignment">
+            <xs:annotation>
+              <xs:documentation>
+                The horizontal alignment of the text. Default value is left.
+              </xs:documentation>
+            </xs:annotation>
             <xs:simpleType>
               <xs:restriction base="xs:token">
                 <xs:enumeration value="left"/>
