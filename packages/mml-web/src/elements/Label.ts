@@ -10,25 +10,26 @@ import {
 } from "../utils/attribute-handling";
 import { THREECanvasTextTexture } from "../utils/CanvasText";
 
-const defaultLabelColor = new THREE.Color(0xffffff);
-const defaultFontColor = new THREE.Color(0x000000);
-const defaultLabelFontSize = 24;
-const defaultLabelPadding = 8;
-const defaultLabelWidth = 1;
-const defaultLabelHeight = 1;
-
 enum labelAlignment {
   left = "left",
   center = "center",
   right = "right",
 }
 
+const defaultLabelColor = new THREE.Color(0xffffff);
+const defaultFontColor = new THREE.Color(0x000000);
+const defaultLabelAlignment = labelAlignment.left;
+const defaultLabelFontSize = 24;
+const defaultLabelPadding = 8;
+const defaultLabelWidth = 1;
+const defaultLabelHeight = 1;
+
 export class Label extends TransformableElement {
   static tagName = "m-label";
 
   private props = {
     content: "",
-    alignment: labelAlignment.left as labelAlignment,
+    alignment: defaultLabelAlignment,
     width: defaultLabelWidth,
     height: defaultLabelHeight,
     fontSize: defaultLabelFontSize,
@@ -68,7 +69,11 @@ export class Label extends TransformableElement {
       instance.redrawText();
     },
     alignment: (instance, newValue) => {
-      instance.props.alignment = parseEnumAttribute(newValue, labelAlignment, labelAlignment.left);
+      instance.props.alignment = parseEnumAttribute(
+        newValue,
+        labelAlignment,
+        defaultLabelAlignment,
+      );
       instance.redrawText();
     },
     "cast-shadows": (instance, newValue) => {
