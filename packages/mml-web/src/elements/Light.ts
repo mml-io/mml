@@ -17,9 +17,7 @@ declare type LightHelper =
 
 enum lightTypes {
   spotlight = "spotlight",
-  ambient = "ambient",
   point = "point",
-  directional = "directional",
 }
 
 const debugSphereSize = 0.25;
@@ -148,20 +146,11 @@ export class Light extends TransformableElement {
         this.light = light;
         break;
       }
-      case lightTypes.ambient:
-        this.light = new THREE.AmbientLight(this.props.color, this.props.intensity);
-        break;
       case lightTypes.point:
         this.light = new THREE.PointLight(
           this.props.color,
           this.props.intensity,
           this.props.distance,
-        );
-        break;
-      case lightTypes.directional:
-        this.light = new THREE.DirectionalLight(
-          this.props.color,
-          THREE.MathUtils.degToRad(this.props.angleDeg),
         );
         break;
     }
@@ -202,8 +191,6 @@ export class Light extends TransformableElement {
       this.lightHelper = new THREE.PointLightHelper(this.light, debugSphereSize);
     } else if (this.light instanceof THREE.SpotLight) {
       this.lightHelper = new THREE.SpotLightHelper(this.light);
-    } else if (this.light instanceof THREE.DirectionalLight) {
-      this.lightHelper = new THREE.DirectionalLightHelper(this.light, debugSphereSize);
     }
 
     if (this.lightHelper) {
