@@ -100,8 +100,8 @@ export class MMLScene implements IMMLScene {
       document.addEventListener("touchstart", resumeAudio);
     }
     this.camera.add(this.audioListener);
-    this.camera.position.z = 20;
-    this.camera.position.y = 8;
+    this.camera.position.z = 10;
+    this.camera.position.y = 5;
 
     this.rootContainer = new THREE.Group();
     this.threeScene = new THREE.Scene();
