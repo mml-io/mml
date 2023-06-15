@@ -2,7 +2,7 @@ body:
   - type: textarea
     attributes:
       label: What is your idea?
-      description: Short list of what your feature request or idea aims to address?
+      description: Add a short list of what your feature request or idea aims to address.
       value: |
         1.
         2.
@@ -13,12 +13,12 @@ body:
     attributes:
       label: Why is it important?
       description:
-        Discuss prior art, why do you think this addition is needed? Are there current alternatives?
+        Discuss prior art and why you think this addition is needed. Are there current alternatives?
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Proposal
-      description: How should this be implemented? Are you interested in contributing?
+      label: What do you propose?
+      description: Describe how this should be implemented. Would you be interested in contributing?
     validations:
       required: true

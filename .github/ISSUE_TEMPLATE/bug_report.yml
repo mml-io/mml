@@ -40,7 +40,7 @@ body:
     attributes:
       label: Packages
       description: |
-        Which packages does the bug affect?
+        Which MML packages does the bug affect?
     validations:
       required: true
 
@@ -48,7 +48,7 @@ body:
     attributes:
       label: Package versions
       description: |
-        Which versions of the relevant packages are you using?
+        Which versions of the relevant MML packages are you using?
     validations:
       required: true
 

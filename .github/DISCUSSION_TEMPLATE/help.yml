@@ -1,14 +1,14 @@
 body:
   - type: textarea
     attributes:
-      label: Summary
-      description: What do you need help with?
+      label: What do you need help with?
+      description: Describe what you are trying to achieve or need help understanding.
     validations:
       required: true
   - type: textarea
     attributes:
       label: Additional information
       description:
-        Any extra details or references that may be helpful to understand the context?
+        Please add any extra details or references that may provide useful context for this discussion.
     validations:
       required: false
