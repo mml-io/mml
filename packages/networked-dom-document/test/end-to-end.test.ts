@@ -113,7 +113,7 @@ describe("end-to-end", () => {
       ],
     ]);
 
-    doc.load('<m-light type="directional"><m-cube></m-cube></m-light>');
+    doc.load('<m-light type="spotlight"><m-cube></m-cube></m-light>');
 
     expect(await clientWs.waitForTotalMessageCount(2, 1)).toEqual([
       [
@@ -129,7 +129,7 @@ describe("end-to-end", () => {
           addedNodes: [
             {
               attributes: {
-                type: "directional",
+                type: "spotlight",
               },
               children: [
                 {
