@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/observable-dom",
-  "version": "0.0.42",
+  "version": "0.1.0",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -16,7 +16,7 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/observable-dom-common": "^0.0.42",
+    "@mml-io/observable-dom-common": "^0.1.0",
     "@types/jsdom": "21.1.1",
     "jsdom": "22.1.0"
   }

@@ -2,6 +2,19 @@
 
 MML is a markup language for describing 3D multi-user interactive Metaversal objects and experiences based on HTML.
 
+## Announcements
+
+| MML v0.1 has been released! [Check out the blog post](https://mml.io/blog/introducing-mml) |
+|-|
+
+## Getting Started
+
+* Visit https://mml.io/ to get started with MML.
+* Check out https://github.com/mml-io/mml-starter-project to get started running an MML document for yourself.
+* Check out https://github.com/mml-io/mml-playground to find an example of a 3D web experience that can include MML documents.
+
+## What is MML?
+
 ### Language
 
 E.g.
