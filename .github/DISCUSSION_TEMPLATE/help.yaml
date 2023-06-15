@@ -1,0 +1,14 @@
+body:
+  - type: textarea
+    attributes:
+      label: Summary
+      description: What do you need help with?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional information
+      description:
+        Any extra details or references that may be helpful to understand the context?
+    validations:
+      required: false

@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a bug
+title: "[Bug]: "
+labels:
+  - "bug"
+body:
+
+  - type: textarea
+    attributes:
+      label: Describe the bug
+      description: Describe what is not working as expected.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected behavior
+      description: Describe what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: How to reproduce the bug
+      description:
+        Describe the steps to reproduce the bug, including screenshots where helpful.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Link to the code that reproduces this bug
+      description: |
+        Share a link to a GitHub repository or a CodeSandbox which demonstrates the incorrect behaviour.
+        If a minimal reproduction can't be created or would require sharing a private repository, please share a [replay](https://www.replay.io/) of the bug.
+    validations:
+      required: false
+
+  - type: input
+    attributes:
+      label: Packages
+      description: |
+        Which packages does the bug affect?
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Package versions
+      description: |
+        Which versions of the relevant packages are you using?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Extra details
+      description:
+        Please provide any additional details which could be helpful.
+    validations:
+      required: false

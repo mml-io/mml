@@ -1,0 +1,24 @@
+body:
+  - type: textarea
+    attributes:
+      label: What is your idea?
+      description: Short list of what your feature request or idea aims to address?
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Why is it important?
+      description:
+        Discuss prior art, why do you think this addition is needed? Are there current alternatives?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposal
+      description: How should this be implemented? Are you interested in contributing?
+    validations:
+      required: true
