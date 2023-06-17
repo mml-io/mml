@@ -42,7 +42,9 @@ export class MMLWebRunnerClient extends NetworkedDOMWebRunnerClient {
       this.connectedState.domWebsocket.handleEvent(element, event);
     };
 
-    super.connect(document);
+    super.connect(document, (time: number) => {
+      remoteDocumentWrapper.setDocumentTime(time);
+    });
     this.mScene.fitContainer();
   }
 
