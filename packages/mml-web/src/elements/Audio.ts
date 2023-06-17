@@ -362,6 +362,7 @@ export class Audio extends TransformableElement {
       this.delayedPauseTimer = null;
     }
     this.documentTimeListener.remove();
+    this.clearDebugVisualisation();
     super.disconnectedCallback();
   }
 
