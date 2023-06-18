@@ -283,8 +283,10 @@ export class Audio extends TransformableElement {
       });
 
       const positionalAudio = new THREE.PositionalAudio(audioListener);
-
       positionalAudio.setMediaElementSource(audio);
+      positionalAudio.setVolume(this.props.volume);
+      positionalAudio.setRefDistance(this.props.refDistance);
+      positionalAudio.setRolloffFactor(this.props.rolloffFactor);
 
       this.loadedAudioState = {
         paused: false,

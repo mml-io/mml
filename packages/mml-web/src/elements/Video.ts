@@ -312,6 +312,9 @@ export class Video extends TransformableElement {
 
       const audio = new THREE.PositionalAudio(audioListener);
       audio.setMediaElementSource(video);
+      audio.setVolume(this.props.volume);
+      audio.setRefDistance(this.props.refDistance);
+      audio.setRolloffFactor(this.props.rolloffFactor);
       this.loadedVideoState = {
         paused: false,
         video,
