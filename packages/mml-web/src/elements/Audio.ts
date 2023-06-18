@@ -26,7 +26,6 @@ export class Audio extends TransformableElement {
     return [...TransformableElement.observedAttributes, ...Audio.attributeHandler.getAttributes()];
   }
 
-  private timer: NodeJS.Timer | null = null;
   private debugMeshes: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = [];
 
   private loadedAudioState: {
@@ -344,6 +343,7 @@ export class Audio extends TransformableElement {
     });
 
     this.updateAudio();
+    this.updateDebugVisualisation();
   }
 
   disconnectedCallback() {
