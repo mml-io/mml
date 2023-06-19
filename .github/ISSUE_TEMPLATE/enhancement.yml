@@ -1,0 +1,44 @@
+name: Enhancement
+description: Suggest an enhancement or feature
+title: "[Enhancement]: "
+labels:
+  - "enhancement"
+body:
+
+  - type: textarea
+    attributes:
+      label: What is your suggestion?
+      description: Describe the enhancement or feature in detail.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Why is it important?
+      description: Why you think this addition or change is needed? Are there current alternatives or prior art?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: How would you implement it?
+      description:
+        Describe how this could be done. Would you be interested in contributing?
+    validations:
+      required: false
+
+  - type: input
+    attributes:
+      label: Packages
+      description: |
+        Which MML packages is this enhancement likely related to?
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Extra details
+      description:
+        Please provide any additional details which could be helpful.
+    validations:
+      required: false

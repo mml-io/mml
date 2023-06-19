@@ -4,7 +4,3 @@ contact_links:
   - name: Ask a question
     url: https://github.com/mml-io/mml/discussions
     about: Ask questions and discuss with other community members.
-
-  - name: Request a feature
-    url: https://github.com/mml-io/mml/discussions/new?category=ideas
-    about: Start a new discussion to request features and propose ideas.
