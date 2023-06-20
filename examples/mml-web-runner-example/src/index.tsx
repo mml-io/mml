@@ -31,7 +31,7 @@ const startingContent = `
 function createCloseableClient(
   clientsHolder: HTMLElement,
   windowTarget: Window,
-  remoteHolderElement: HTMLElement,
+  iframeBody: HTMLElement,
   networkedDOMDocument: NetworkedDOM | EditableNetworkedDOM,
 ) {
   const wrapperElement = document.createElement("div");
@@ -48,20 +48,17 @@ function createCloseableClient(
     wrapperElement.remove();
   });
   wrapperElement.append(closeButton);
-  const client = new MMLWebRunnerClient(windowTarget, remoteHolderElement);
+  const client = new MMLWebRunnerClient(windowTarget, iframeBody);
   wrapperElement.append(client.element);
   clientsHolder.append(wrapperElement);
   client.connect(networkedDOMDocument);
   return client;
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const iframeRemoteSceneWrapper = new IframeWrapper();
-  document.body.append(iframeRemoteSceneWrapper.iframe);
+window.addEventListener("DOMContentLoaded", async () => {
+  const { iframeWindow, iframeBody } = await IframeWrapper.create();
+  registerCustomElementsToWindow(iframeWindow);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const windowTarget = iframeRemoteSceneWrapper.iframe.contentWindow!;
-  registerCustomElementsToWindow(windowTarget);
-
   const networkedDOMDocument = new EditableNetworkedDOM(
     "http://example.com/index.html",
     IframeObservableDOMFactory,
@@ -79,7 +76,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const addButton = document.createElement("button");
   addButton.textContent = "Add client";
   addButton.addEventListener("click", () => {
-    createCloseableClient(clientsHolder, windowTarget, remoteHolderElement, networkedDOMDocument);
+    createCloseableClient(clientsHolder, iframeWindow, iframeBody, networkedDOMDocument);
   });
   document.body.append(addButton);
 
@@ -87,9 +84,6 @@ window.addEventListener("DOMContentLoaded", () => {
   clientsHolder.style.display = "flex";
   document.body.append(clientsHolder);
 
-  const remoteHolderElement = windowTarget.document.body;
-
-  createCloseableClient(clientsHolder, windowTarget, remoteHolderElement, networkedDOMDocument);
-
+  createCloseableClient(clientsHolder, iframeWindow, iframeBody, networkedDOMDocument);
   networkedDOMDocument.load(textArea.value);
 });
