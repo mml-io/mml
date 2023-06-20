@@ -469,7 +469,7 @@
   <xs:element name="m-light">
     <xs:annotation>
       <xs:documentation>
-        The `m-light` element is a light that supports various types (e.g. `point`, `directional`) and can be coloured.
+        The `m-light` element is a light that supports various types (e.g. `point`, `spotlight`) and can be coloured.
       </xs:documentation>
     </xs:annotation>
     <xs:complexType mixed="true">
@@ -511,9 +511,7 @@
           <xs:attribute name="type">
             <xs:simpleType>
               <xs:restriction base="xs:token">
-                <xs:enumeration value="ambient"/>
                 <xs:enumeration value="point"/>
-                <xs:enumeration value="directional"/>
                 <xs:enumeration value="spotlight"/>
               </xs:restriction>
             </xs:simpleType>

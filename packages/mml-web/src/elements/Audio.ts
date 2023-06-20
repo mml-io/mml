@@ -26,7 +26,6 @@ export class Audio extends TransformableElement {
     return [...TransformableElement.observedAttributes, ...Audio.attributeHandler.getAttributes()];
   }
 
-  private timer: NodeJS.Timer | null = null;
   private debugMeshes: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = [];
 
   private loadedAudioState: {
@@ -284,8 +283,10 @@ export class Audio extends TransformableElement {
       });
 
       const positionalAudio = new THREE.PositionalAudio(audioListener);
-
       positionalAudio.setMediaElementSource(audio);
+      positionalAudio.setVolume(this.props.volume);
+      positionalAudio.setRefDistance(this.props.refDistance);
+      positionalAudio.setRolloffFactor(this.props.rolloffFactor);
 
       this.loadedAudioState = {
         paused: false,
@@ -344,6 +345,7 @@ export class Audio extends TransformableElement {
     });
 
     this.updateAudio();
+    this.updateDebugVisualisation();
   }
 
   disconnectedCallback() {
@@ -362,6 +364,7 @@ export class Audio extends TransformableElement {
       this.delayedPauseTimer = null;
     }
     this.documentTimeListener.remove();
+    this.clearDebugVisualisation();
     super.disconnectedCallback();
   }
 

@@ -42,7 +42,10 @@ export class NetworkedDOMWebRunnerClient {
     this.element.remove();
   }
 
-  public connect(document: NetworkedDOM | EditableNetworkedDOM) {
+  public connect(
+    document: NetworkedDOM | EditableNetworkedDOM,
+    timeCallback?: (time: number) => void,
+  ) {
     if (this.connectedState) {
       this.disconnect();
     }
@@ -68,6 +71,7 @@ export class NetworkedDOMWebRunnerClient {
       "ws://localhost",
       () => fakeWebsocket.clientSideWebsocket as unknown as WebSocket,
       this.remoteDocumentHolder,
+      timeCallback,
     );
     overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
       domWebsocket.handleEvent(element, event);
