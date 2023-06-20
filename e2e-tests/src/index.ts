@@ -96,8 +96,8 @@ app.ws("/:pathName", (ws, req) => {
 
 app.get("/:documentPath/", (req, res) => {
   const html = `<html><script src="${req.secure ? "https" : "http"}://${
-    req.hostname
-  }${req.secure ? "/client/" : ":28891/"}/index.js?defineGlobals=true&websocketUrl=${getWebsocketUrl(req)}"></script></html>`;
+   req.get('host')
+  }/client/index.js?defineGlobals=true&websocketUrl=${getWebsocketUrl(req)}"></script></html>`;
 
   res.send(html);
 });
