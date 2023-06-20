@@ -9,11 +9,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 
-declare type LightHelper =
-  | THREE.PointLightHelper
-  | THREE.DirectionalLightHelper
-  | THREE.SpotLightHelper
-  | THREE.AmbientLight;
+declare type LightHelper = THREE.PointLightHelper | THREE.SpotLightHelper;
 
 enum lightTypes {
   spotlight = "spotlight",
@@ -155,7 +151,7 @@ export class Light extends TransformableElement {
         break;
     }
 
-    if (this.light.shadow && !(this.light instanceof THREE.AmbientLight)) {
+    if (this.light.shadow) {
       this.light.castShadow = true;
       this.light.shadow.mapSize.width = 512;
       this.light.shadow.mapSize.height = 512;
