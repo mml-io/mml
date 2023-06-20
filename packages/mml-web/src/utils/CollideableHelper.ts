@@ -45,7 +45,7 @@ export class CollideableHelper {
 
   private colliderUpdated() {
     if (this.props.collide && this.colliderState.scene && this.colliderState.collider) {
-      this.colliderState.scene.updateCollider(this.colliderState.collider);
+      this.colliderState.scene.updateCollider?.(this.colliderState.collider);
     }
   }
 
@@ -70,14 +70,14 @@ export class CollideableHelper {
 
     if (collide) {
       if (colliderChanged && previousCollider !== null) {
-        this.colliderState.scene.removeCollider(previousCollider);
+        this.colliderState.scene.removeCollider?.(previousCollider);
       }
       if (collider !== null) {
-        this.colliderState.scene.addCollider(collider);
+        this.colliderState.scene.addCollider?.(collider);
       }
     } else {
       if (previousCollider !== null) {
-        this.colliderState.scene.removeCollider(previousCollider);
+        this.colliderState.scene.removeCollider?.(previousCollider);
       }
     }
   }
@@ -94,7 +94,7 @@ export class CollideableHelper {
       return;
     }
 
-    scene.removeCollider(this.colliderState.collider);
+    scene.removeCollider?.(this.colliderState.collider);
 
     this.colliderState.scene = null;
   }

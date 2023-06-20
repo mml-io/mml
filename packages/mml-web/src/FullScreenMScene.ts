@@ -3,11 +3,7 @@ import { MMLScene } from "./MMLScene";
 export class FullScreenMScene extends MMLScene {
   constructor() {
     super();
-  }
-
-  public init() {
     this.configureWindowStyling();
-    super.init(document.body, document.body);
   }
 
   private configureWindowStyling() {

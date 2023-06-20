@@ -113,6 +113,6 @@ function createStatusElement() {
       };
     }
 
-    fullScreenMScene.init();
+    document.body.append(fullScreenMScene.element);
   });
 })();

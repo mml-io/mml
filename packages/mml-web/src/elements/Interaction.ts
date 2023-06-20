@@ -61,7 +61,7 @@ export class Interaction extends TransformableElement {
   }
 
   public parentTransformed(): void {
-    this.registeredScene?.updateInteraction(this);
+    this.registeredScene?.updateInteraction?.(this);
   }
 
   public isClickable(): boolean {
@@ -84,14 +84,14 @@ export class Interaction extends TransformableElement {
     super.attributeChangedCallback(name, oldValue, newValue);
     if (TransformableElement.observedAttributes.includes(name)) {
       if (this.registeredScene !== null) {
-        this.registeredScene.updateInteraction(this);
+        this.registeredScene.updateInteraction?.(this);
       }
       this.showDebug();
     }
     if (Interaction.attributeHandler.handle(this, name, newValue)) {
       this.showDebug();
       if (this.registeredScene !== null) {
-        this.registeredScene.updateInteraction(this);
+        this.registeredScene.updateInteraction?.(this);
       }
     }
   }
@@ -134,12 +134,12 @@ export class Interaction extends TransformableElement {
   private registerInteraction(int: Interaction) {
     const scene = this.getScene();
     this.registeredScene = scene;
-    scene.addInteraction(int);
+    scene.addInteraction?.(int);
   }
 
   private unregisterInteraction(int: Interaction) {
     if (this.registeredScene !== null) {
-      this.registeredScene.removeInteraction(int);
+      this.registeredScene.removeInteraction?.(int);
       this.registeredScene = null;
     }
   }
