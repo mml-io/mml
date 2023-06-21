@@ -1,6 +1,6 @@
 {
   "name": "mml-web-runner",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -18,7 +18,7 @@
     "test-iterate": "jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web-runner": "^0.1.0"
+    "@mml-io/networked-dom-web-runner": "^0.1.1"
   },
   "peerDependencies": {
     "three": "*"
