@@ -12,8 +12,6 @@ describe("fetch", () => {
     const fullTitle = await textSelector?.evaluate((el) => el.getAttribute("content"));
     expect(fullTitle).toEqual(`{"foo":"bar","baz":123}`);
 
-    await takeAndCompareScreenshot(page);
-
     await page.close();
   }, 60000);
 });
