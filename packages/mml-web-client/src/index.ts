@@ -49,7 +49,7 @@ function createStatusElement() {
     return;
   }
 
-  window.addEventListener("load", () => {
+  window.addEventListener("load", async () => {
     // Make a fixed-position centered status element
     const fullScreenMScene = new FullScreenMScene();
 
@@ -68,11 +68,9 @@ function createStatusElement() {
     let windowTarget: Window;
 
     if (useIframe) {
-      const iframeRemoteSceneWrapper = new IframeWrapper();
-      document.body.append(iframeRemoteSceneWrapper.iframe);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      windowTarget = iframeRemoteSceneWrapper.iframe.contentWindow!;
-      targetForWrappers = windowTarget.document.body;
+      const { iframeWindow, iframeBody } = await IframeWrapper.create();
+      windowTarget = iframeWindow;
+      targetForWrappers = iframeBody;
     } else {
       targetForWrappers = document.body;
       windowTarget = window;
