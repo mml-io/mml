@@ -1,0 +1,15 @@
+<m-plane color="pink" width="20" height="20" rx="-90"></m-plane>
+<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+
+<m-label id="json-content" content="loading" y="4.5" font-size="50" width="10" alignment="center" height="1" color="#dddddd"></m-label>
+
+<script>
+  const contentLabel = document.getElementById("json-content");
+  async function fetchData() {
+    const address = `http://localhost:8079/assets/some-data.json`;
+    const res = await fetch(address);
+    const json = await res.json();
+    contentLabel.setAttribute("content", `${JSON.stringify(json)}`);
+  }
+  fetchData();
+</script>
