@@ -95,12 +95,19 @@ app.ws("/:pathName", (ws, req) => {
 });
 
 app.get("/:documentPath/", (req, res) => {
-  const html = `<html><script src="http://${
-    req.hostname
-  }:28891/index.js?defineGlobals=true&websocketUrl=${getWebsocketUrl(req)}"></script></html>`;
+  const html = `<html><script src="${req.secure ? "https" : "http"}://${
+   req.get('host')
+  }/client/index.js?defineGlobals=true&websocketUrl=${getWebsocketUrl(req)}"></script></html>`;
 
   res.send(html);
 });
+
+app.use(
+    "/client/",
+    express.static(
+        path.resolve(__dirname, "../../node_modules/mml-web-client/build/")
+    )
+);
 
 app.get("/:documentPath/reset", (req, res) => {
   const { documentPath } = req.params;
