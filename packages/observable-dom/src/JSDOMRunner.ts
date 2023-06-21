@@ -108,6 +108,11 @@ export class JSDOMRunner {
       beforeParse: (window) => {
         this.domWindow = window;
 
+        this.domWindow.fetch = fetch;
+        this.domWindow.Headers = Headers;
+        this.domWindow.Request = Request;
+        this.domWindow.Response = Response;
+
         // This is a polyfill for https://developer.mozilla.org/en-US/docs/Web/API/Document/timeline
         const timeline = {};
         Object.defineProperty(timeline, "currentTime", {
