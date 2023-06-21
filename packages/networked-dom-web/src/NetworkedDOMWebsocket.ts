@@ -25,6 +25,26 @@ export enum NetworkedDOMWebsocketStatus {
   Disconnected,
 }
 
+function isHTMLElement(node: unknown): node is HTMLElement {
+  if (node instanceof HTMLElement) {
+    return true;
+  }
+  if (!this.parentElement.ownerDocument.defaultView) {
+    return false;
+  }
+  return node instanceof this.parentElement.ownerDocument.defaultView.HTMLElement;
+}
+
+function isText(node: unknown): node is Text {
+  if (node instanceof Text) {
+    return true;
+  }
+  if (!this.parentElement.ownerDocument.defaultView) {
+    return false;
+  }
+  return node instanceof this.parentElement.ownerDocument.defaultView.Text;
+}
+
 export class NetworkedDOMWebsocket {
   private idToElement = new Map<number, Node>();
   private elementToId = new Map<Node, number>();
@@ -199,7 +219,7 @@ export class NetworkedDOMWebsocket {
           if (!element) {
             throw new Error("Snapshot element not created");
           }
-          if (!(element instanceof HTMLElement)) {
+          if (!isHTMLElement(element)) {
             throw new Error("Snapshot element is not an HTMLElement");
           }
           this.currentRoot = element;
@@ -275,7 +295,7 @@ export class NetworkedDOMWebsocket {
     if (!node) {
       throw new Error("No node found for textChanged message");
     }
-    if (!(node instanceof Text)) {
+    if (!isText(node)) {
       throw new Error("Node for textChanged message is not a Text node");
     }
     node.textContent = text;
@@ -294,7 +314,7 @@ export class NetworkedDOMWebsocket {
     if (!parent.isConnected) {
       console.error("Parent is not connected", parent);
     }
-    if (!(parent instanceof HTMLElement)) {
+    if (!isHTMLElement(parent)) {
       throw new Error("Parent is not an HTMLElement (that supports children)");
     }
     let previousElement;
@@ -328,7 +348,7 @@ export class NetworkedDOMWebsocket {
       this.elementToId.delete(childElement);
       this.idToElement.delete(removedNode);
       parent.removeChild(childElement);
-      if (childElement instanceof HTMLElement) {
+      if (isHTMLElement(childElement)) {
         // If child is capable of supporting children then remove any that exist
         this.removeChildElementIds(childElement);
       }
@@ -357,7 +377,7 @@ export class NetworkedDOMWebsocket {
     }
     const element = this.idToElement.get(nodeId);
     if (element) {
-      if (element instanceof HTMLElement) {
+      if (isHTMLElement(element)) {
         if (newValue === null) {
           element.removeAttribute(attribute);
         } else {
