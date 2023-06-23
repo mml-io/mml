@@ -7,9 +7,18 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 
+const debugAudioSphereSize = 0.25;
+const debugAudioGeometry = new THREE.SphereGeometry(debugAudioSphereSize, 4, 2);
+const debugAudioMaterial = new THREE.MeshBasicMaterial({
+  wireframe: true,
+  fog: false,
+  toneMapped: false,
+  color: 0x00ff00,
+});
+const audioRefDistance = 1;
+const audioRolloffFactor = 1;
+
 const defaultAudioVolume = 1;
-const defaultAudioRefDistance = 1;
-const defaultAudioRolloffFactor = 1;
 const defaultAudioLoop = true;
 const defaultAudioEnabled = true;
 const defaultAudioStartTime = 0;
@@ -21,12 +30,11 @@ export class Audio extends TransformableElement {
   private documentTimeListener: { remove: () => void };
   private delayedStartTimer: NodeJS.Timeout | null = null;
   private delayedPauseTimer: NodeJS.Timeout | null = null;
+  private audioDebugHelper: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
 
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes, ...Audio.attributeHandler.getAttributes()];
   }
-
-  private debugMeshes: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = [];
 
   private loadedAudioState: {
     paused: boolean;
@@ -41,8 +49,6 @@ export class Audio extends TransformableElement {
     loop: defaultAudioLoop,
     enabled: defaultAudioEnabled,
     volume: defaultAudioVolume,
-    refDistance: defaultAudioRefDistance,
-    rolloffFactor: defaultAudioRolloffFactor,
     debug: false,
   };
 
@@ -93,20 +99,9 @@ export class Audio extends TransformableElement {
         instance.loadedAudioState?.positionalAudio.setVolume(instance.props.volume);
       }
     },
-    "ref-distance": (instance, newValue) => {
-      instance.props.refDistance = parseFloatAttribute(newValue, defaultAudioRefDistance);
-      if (instance.loadedAudioState) {
-        instance.loadedAudioState?.positionalAudio.setRefDistance(instance.props.refDistance);
-      }
-    },
-    "roll-off": (instance, newValue) => {
-      instance.props.rolloffFactor = parseFloatAttribute(newValue, defaultAudioRolloffFactor);
-      if (instance.loadedAudioState) {
-        instance.loadedAudioState?.positionalAudio.setRefDistance(instance.props.rolloffFactor);
-      }
-    },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, false);
+      instance.updateDebugVisualisation();
     },
   });
 
@@ -125,7 +120,6 @@ export class Audio extends TransformableElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Audio.attributeHandler.handle(this, name, newValue);
-    this.updateDebugVisualisation();
   }
 
   private syncAudioTime() {
@@ -285,8 +279,8 @@ export class Audio extends TransformableElement {
       const positionalAudio = new THREE.PositionalAudio(audioListener);
       positionalAudio.setMediaElementSource(audio);
       positionalAudio.setVolume(this.props.volume);
-      positionalAudio.setRefDistance(this.props.refDistance);
-      positionalAudio.setRolloffFactor(this.props.rolloffFactor);
+      positionalAudio.setRefDistance(audioRefDistance);
+      positionalAudio.setRolloffFactor(audioRolloffFactor);
 
       this.loadedAudioState = {
         paused: false,
@@ -369,9 +363,9 @@ export class Audio extends TransformableElement {
   }
 
   private clearDebugVisualisation() {
-    if (this.debugMeshes.length > 0) {
-      this.debugMeshes.forEach((m) => m.removeFromParent());
-      this.debugMeshes.length = 0;
+    if (this.audioDebugHelper) {
+      this.audioDebugHelper.removeFromParent();
+      this.audioDebugHelper = null;
     }
   }
 
@@ -379,32 +373,9 @@ export class Audio extends TransformableElement {
     if (!this.props.debug) {
       this.clearDebugVisualisation();
     } else {
-      if (this.isConnected && !this.debugMeshes.length) {
-        for (let i = 0; i < 2; ++i) {
-          const mesh = new THREE.Mesh(Audio.DebugGeometry, Audio.DebugMaterials[i]);
-          mesh.castShadow = false;
-          mesh.receiveShadow = false;
-          // add to scene so no parent-driven scaling occurs
-          this.getScene().getRootContainer().add(mesh);
-          this.debugMeshes.push(mesh);
-        }
-      }
-
-      if (this.debugMeshes.length === 2) {
-        const worldPos = new THREE.Vector3();
-        this.container.getWorldPosition(worldPos);
-
-        const outerRadius =
-          (this.props.refDistance / 0.5 + this.props.refDistance * (this.props.rolloffFactor - 1)) /
-          this.props.rolloffFactor;
-        this.debugMeshes[0].position.copy(worldPos);
-        this.debugMeshes[0].scale.set(
-          this.props.refDistance,
-          this.props.refDistance,
-          this.props.refDistance,
-        );
-        this.debugMeshes[1].position.copy(worldPos);
-        this.debugMeshes[1].scale.set(outerRadius, outerRadius, outerRadius);
+      if (!this.audioDebugHelper) {
+        this.audioDebugHelper = new THREE.Mesh(debugAudioGeometry, debugAudioMaterial);
+        this.container.add(this.audioDebugHelper);
       }
     }
   }
