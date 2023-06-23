@@ -745,20 +745,6 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="roll-off" type="xs:float">
-            <xs:annotation>
-              <xs:documentation>
-                The rate at which the audio volume decreases as the listener moves away from the source. Default value is 1.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="ref-distance" type="xs:float">
-            <xs:annotation>
-              <xs:documentation>
-                The reference distance in meters at which the audio volume is unaffected by the listener's distance from the source. Default value is 1 meter.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
           <xs:attribute name="start-time" type="xs:int">
             <xs:annotation>
               <xs:documentation>
@@ -871,20 +857,6 @@
             <xs:annotation>
               <xs:documentation>
                 The volume of the video's audio, ranging from 0 (silent) to 1 (maximum volume). Default value is 1.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="roll-off" type="xs:float">
-            <xs:annotation>
-              <xs:documentation>
-                The rate at which the video's audio volume decreases as the listener moves away from the source. Default value is 1.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="ref-distance" type="xs:float">
-            <xs:annotation>
-              <xs:documentation>
-                The reference distance in meters at which the video's audio volume is unaffected by the listener's distance from the source. Default value is 1 meter.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

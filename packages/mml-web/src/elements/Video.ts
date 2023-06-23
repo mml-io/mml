@@ -8,12 +8,13 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 
+const audioRefDistance = 1;
+const audioRolloffFactor = 1;
+
 const disabledVideoMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
 const defaultVideoWidth = null;
 const defaultVideoHeight = null;
 const defaultVideoVolume = 1;
-const defaultVideoRefDistance = 1;
-const defaultVideoRolloffFactor = 1;
 const defaultVideoLoop = true;
 const defaultVideoEnabled = true;
 const defaultVideoStartTime = 0;
@@ -57,8 +58,6 @@ export class Video extends TransformableElement {
     loop: defaultVideoLoop,
     enabled: defaultVideoEnabled,
     volume: defaultVideoVolume,
-    refDistance: defaultVideoRefDistance,
-    rolloffFactor: defaultVideoRolloffFactor,
     width: defaultVideoWidth as number | null,
     height: defaultVideoHeight as number | null,
   };
@@ -100,18 +99,6 @@ export class Video extends TransformableElement {
       instance.props.volume = parseFloatAttribute(newValue, defaultVideoVolume);
       if (instance.loadedVideoState) {
         instance.loadedVideoState?.audio.setVolume(instance.props.volume);
-      }
-    },
-    "ref-distance": (instance, newValue) => {
-      instance.props.refDistance = parseFloatAttribute(newValue, defaultVideoRefDistance);
-      if (instance.loadedVideoState) {
-        instance.loadedVideoState?.audio.setRefDistance(instance.props.refDistance);
-      }
-    },
-    "roll-off": (instance, newValue) => {
-      instance.props.rolloffFactor = parseFloatAttribute(newValue, defaultVideoRolloffFactor);
-      if (instance.loadedVideoState) {
-        instance.loadedVideoState?.audio.setRefDistance(instance.props.rolloffFactor);
       }
     },
     "cast-shadows": (instance, newValue) => {
@@ -313,8 +300,8 @@ export class Video extends TransformableElement {
       const audio = new THREE.PositionalAudio(audioListener);
       audio.setMediaElementSource(video);
       audio.setVolume(this.props.volume);
-      audio.setRefDistance(this.props.refDistance);
-      audio.setRolloffFactor(this.props.rolloffFactor);
+      audio.setRefDistance(audioRefDistance);
+      audio.setRolloffFactor(audioRolloffFactor);
       this.loadedVideoState = {
         paused: false,
         video,
