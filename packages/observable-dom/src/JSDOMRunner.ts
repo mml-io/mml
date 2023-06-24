@@ -55,11 +55,11 @@ export class JSDOMRunner {
 
   private ipcWebsockets = new Set<WebSocket>();
 
-  public domWindow: DOMWindow;
+  public domWindow: DOMWindow | null = null;
   private jsDom: JSDOM;
 
   private callback: (message: DOMRunnerMessage) => void;
-  private mutationObserver: MutationObserver;
+  private mutationObserver: MutationObserver | null = null;
   private htmlPath: string;
   private ipcListeners = new Set<(event: any) => void>();
 
@@ -87,12 +87,12 @@ export class JSDOMRunner {
        This is called before every creation of a MutationRecord so that it can be used to process an existing record to
        avoid handling multiple MutationRecords at a time (see comment at the top of this file).
       */
-      const records = this.mutationObserver.takeRecords();
-      if (records.length > 1) {
+      const records = this.mutationObserver?.takeRecords();
+      if (records && records.length > 1) {
         throw new Error(
           "The monkey patching should have prevented more than one record being handled at a time",
         );
-      } else if (records.length > 0) {
+      } else if (records && records.length > 0) {
         this.callback({
           mutationList: records,
         });
@@ -126,7 +126,7 @@ export class JSDOMRunner {
         window.params = JSON.parse(JSON.stringify(params));
 
         const oldDocumentAddEventListener = window.document.addEventListener;
-        window.document.addEventListener = (...args: Array<any>) => {
+        window.document.addEventListener = (...args: [string, EventListener, ...any[]]) => {
           const [eventName, listener] = args;
           if (eventName === "ipc") {
             this.ipcListeners.add(listener);
@@ -135,7 +135,7 @@ export class JSDOMRunner {
         };
 
         const oldDocumentRemoveEventListener = window.document.addEventListener;
-        window.document.removeEventListener = (...args: Array<any>) => {
+        window.document.removeEventListener = (...args: [string, EventListener, ...any[]]) => {
           const [eventName, listener] = args;
           if (eventName === "ipc") {
             this.ipcListeners.delete(listener);
@@ -150,7 +150,7 @@ export class JSDOMRunner {
         });
 
         window.addEventListener("load", () => {
-          this.mutationObserver.observe(window.document, {
+          this.mutationObserver?.observe(window.document, {
             attributes: true,
             childList: true,
             subtree: true,
@@ -191,7 +191,7 @@ export class JSDOMRunner {
   }
 
   public getDocument(): Document {
-    return this.domWindow.document;
+    return this.domWindow!.document;
   }
 
   public getWindow(): any {
@@ -205,7 +205,7 @@ export class JSDOMRunner {
       return;
     }
     this.ipcWebsockets.add(webSocket);
-    const event = new this.domWindow.CustomEvent("ipc", {
+    const event = new this.domWindow!.CustomEvent("ipc", {
       detail: {
         webSocket,
       },
@@ -220,12 +220,12 @@ export class JSDOMRunner {
   }
 
   public dispose() {
-    const records = this.mutationObserver.takeRecords();
+    const records = this.mutationObserver?.takeRecords();
     this.callback({
       mutationList: records,
     });
     monkeyPatchedMutationRecordCallbacks.delete(this.monkeyPatchMutationRecordCallback);
-    this.mutationObserver.disconnect();
+    this.mutationObserver?.disconnect();
     this.jsDom.window.close();
   }
 
@@ -239,7 +239,7 @@ export class JSDOMRunner {
     remoteEvent: RemoteEvent,
   ) {
     const bubbles = remoteEvent.bubbles || false;
-    const remoteEventObject = new this.domWindow.CustomEvent(remoteEvent.name, {
+    const remoteEventObject = new this.domWindow!.CustomEvent(remoteEvent.name, {
       bubbles,
       detail: { ...remoteEvent.params, connectionId },
     });
