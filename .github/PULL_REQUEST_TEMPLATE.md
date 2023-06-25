@@ -1,7 +1,7 @@
 <!--
 Thank you for your Pull Request!
 
-Before submitting, please review the contibutor guidelines: https://github.com/mml-io/mml/blob/main/CONTRIBUTING.md.
+Before submitting, please review the contributor guidelines: https://github.com/mml-io/mml/blob/main/CONTRIBUTING.md.
 -->
 
 <!-- PLEASE DESCRIBE THE PURPOSE OF YOUR PR IN DETAIL HERE -->
