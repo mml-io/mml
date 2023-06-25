@@ -5,6 +5,8 @@ import { AbortablePromise, DOMWindow, JSDOM, ResourceLoader, VirtualConsole } fr
 
 import { DOMRunnerFactory, DOMRunnerInterface, DOMRunnerMessage } from "./ObservableDom";
 
+const ErrDomWindowNotInitialized = "DOMWindow not initialized";
+
 // TODO - remove this monkeypatching if it's possible to avoid the race conditions in naive MutationObserver usage
 const monkeyPatchedMutationRecordCallbacks = new Set<() => void>();
 function installMutationObserverMonkeyPatch() {
@@ -191,7 +193,11 @@ export class JSDOMRunner {
   }
 
   public getDocument(): Document {
-    return this.domWindow!.document;
+    if (!this.domWindow) {
+      throw new Error(ErrDomWindowNotInitialized);
+    }
+
+    return this.domWindow.document;
   }
 
   public getWindow(): any {
@@ -199,13 +205,16 @@ export class JSDOMRunner {
   }
 
   public addIPCWebsocket(webSocket: WebSocket) {
+    if (!this.domWindow) {
+      throw new Error(ErrDomWindowNotInitialized);
+    }
     if (this.ipcListeners.size === 0) {
       console.error("ipc requested, but no ipc listeners registered on document:", this.htmlPath);
       webSocket.close();
       return;
     }
     this.ipcWebsockets.add(webSocket);
-    const event = new this.domWindow!.CustomEvent("ipc", {
+    const event = new this.domWindow.CustomEvent("ipc", {
       detail: {
         webSocket,
       },
@@ -238,8 +247,12 @@ export class JSDOMRunner {
     domNode: Element,
     remoteEvent: RemoteEvent,
   ) {
+    if (!this.domWindow) {
+      throw new Error(ErrDomWindowNotInitialized);
+    }
+
     const bubbles = remoteEvent.bubbles || false;
-    const remoteEventObject = new this.domWindow!.CustomEvent(remoteEvent.name, {
+    const remoteEventObject = new this.domWindow.CustomEvent(remoteEvent.name, {
       bubbles,
       detail: { ...remoteEvent.params, connectionId },
     });
