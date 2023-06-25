@@ -576,11 +576,6 @@ export class NetworkedDOM {
       return;
     }
 
-    const remappedNode = this.clientNodeIdToInternalNodeId.get(remoteEvent.nodeId);
-    if (remappedNode) {
-      remoteEvent.nodeId = remappedNode;
-    }
-
     const visibleNodes = this.visibleNodeIdsByConnectionId.get(connectionId);
     if (!visibleNodes) {
       console.error("No visible nodes for connection: " + connectionId);
@@ -591,6 +586,11 @@ export class NetworkedDOM {
       // TODO - do a pass through the hierarchy to determine if this node should be visible to this connection id to prevent clients submitting events for nodes they can't (currently) see
       console.error("Node not visible for connection: " + remoteEvent.nodeId);
       return;
+    }
+
+    const remappedNode = this.clientNodeIdToInternalNodeId.get(remoteEvent.nodeId);
+    if (remappedNode) {
+      remoteEvent.nodeId = remappedNode;
     }
 
     this.observableDom.dispatchRemoteEventFromConnectionId(connectionId, remoteEvent);
