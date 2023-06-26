@@ -38,18 +38,22 @@ function createCloseableClient(
   wrapperElement.style.position = "relative";
   wrapperElement.style.width = "400px";
   wrapperElement.style.height = "400px";
+  wrapperElement.style.border = "1px solid black";
   wrapperElement.style.flexShrink = "0";
   wrapperElement.style.flexGrow = "0";
+  const client = new MMLWebRunnerClient(windowTarget, iframeBody);
+  wrapperElement.append(client.element);
   const closeButton = document.createElement("button");
   closeButton.textContent = "Close";
+  closeButton.style.position = "absolute";
+  closeButton.style.bottom = "0";
+  closeButton.style.right = "0";
   closeButton.addEventListener("click", () => {
     client.dispose();
     closeButton.remove();
     wrapperElement.remove();
   });
   wrapperElement.append(closeButton);
-  const client = new MMLWebRunnerClient(windowTarget, iframeBody);
-  wrapperElement.append(client.element);
   clientsHolder.append(wrapperElement);
   client.connect(networkedDOMDocument);
   return client;
