@@ -19,8 +19,6 @@ test("<m-audio>", () => {
   loop="true"
   enabled="true"
   volume="1.5"
-  ref-distance="1.23"
-  roll-off="5.0"
 ></m-audio>
 `);
   expect(validationErrors).toBeNull();
