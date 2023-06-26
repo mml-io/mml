@@ -350,4 +350,175 @@ describe("reloading", () => {
       ],
     ]);
   });
+
+  test("remapping-on-reload-and-click", async () => {
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    currentDoc = doc;
+    doc.load(
+      `
+<m-model></m-model>
+<m-cube></m-cube>`,
+    );
+
+    const clientWs = new MockWebsocket();
+    doc.addWebSocket(clientWs as unknown as WebSocket);
+
+    expect(await clientWs.waitForTotalMessageCount(1)).toEqual([
+      [
+        {
+          documentTime: expect.any(Number),
+          snapshot: {
+            attributes: {},
+            children: [
+              {
+                attributes: {},
+                children: [
+                  {
+                    attributes: {},
+                    children: [],
+                    nodeId: 3,
+                    tag: "HEAD",
+                    type: "element",
+                  },
+                  {
+                    attributes: {},
+                    children: [
+                      {
+                        attributes: {},
+                        children: [],
+                        nodeId: 5,
+                        tag: "M-MODEL",
+                        type: "element",
+                      },
+                      {
+                        attributes: {},
+                        children: [],
+                        nodeId: 6,
+                        tag: "M-CUBE",
+                        type: "element",
+                      },
+                    ],
+                    nodeId: 4,
+                    tag: "BODY",
+                    type: "element",
+                  },
+                ],
+                nodeId: 2,
+                tag: "HTML",
+                type: "element",
+              },
+            ],
+            nodeId: 1,
+            tag: "DIV",
+            type: "element",
+          },
+          type: "snapshot",
+        },
+      ],
+    ]);
+
+    doc.load(`
+<m-group z="-20" y="10">
+  <m-label onclick="this.setAttribute('content','new-content')" content="click me"></m-label>
+</m-group>
+<m-model></m-model>
+<m-cube></m-cube>`);
+
+    expect(await clientWs.waitForTotalMessageCount(2, 1)).toEqual([
+      [
+        {
+          addedNodes: [],
+          documentTime: expect.any(Number),
+          nodeId: 4,
+          previousNodeId: null,
+          removedNodes: [5],
+          type: "childrenChanged",
+        },
+        {
+          addedNodes: [
+            {
+              attributes: {
+                y: "10",
+                z: "-20",
+              },
+              children: [
+                {
+                  attributes: {
+                    content: "click me",
+                  },
+                  children: [],
+                  nodeId: 9,
+                  tag: "M-LABEL",
+                  type: "element",
+                },
+              ],
+              nodeId: 5,
+              tag: "M-GROUP",
+              type: "element",
+            },
+          ],
+          nodeId: 4,
+          previousNodeId: null,
+          removedNodes: [],
+          type: "childrenChanged",
+        },
+        {
+          addedNodes: [],
+          nodeId: 4,
+          previousNodeId: 5,
+          removedNodes: [6],
+          type: "childrenChanged",
+        },
+        {
+          addedNodes: [
+            {
+              attributes: {},
+              children: [],
+              nodeId: 7,
+              tag: "M-MODEL",
+              type: "element",
+            },
+          ],
+          nodeId: 4,
+          previousNodeId: 5,
+          removedNodes: [],
+          type: "childrenChanged",
+        },
+        {
+          addedNodes: [
+            {
+              attributes: {},
+              children: [],
+              nodeId: 8,
+              tag: "M-CUBE",
+              type: "element",
+            },
+          ],
+          nodeId: 4,
+          previousNodeId: null,
+          removedNodes: [],
+          type: "childrenChanged",
+        },
+      ],
+    ]);
+
+    clientWs.sendToServer({
+      type: "event",
+      nodeId: 9,
+      name: "click",
+      bubbles: true,
+      params: {},
+    });
+
+    expect(await clientWs.waitForTotalMessageCount(3, 2)).toEqual([
+      [
+        {
+          attribute: "content",
+          newValue: "new-content",
+          nodeId: 9,
+          type: "attributeChange",
+        },
+      ],
+    ]);
+  });
 });
