@@ -46,12 +46,14 @@ export class WebBrowserDOMRunner implements DOMRunnerInterface {
       callback({
         logMessage: {
           level: "system",
-          content: {
-            message,
-            type: error?.name,
-            line,
-            column,
-          },
+          content: [
+            {
+              message,
+              type: error?.name,
+              line,
+              column,
+            },
+          ],
         },
       });
       return false;
