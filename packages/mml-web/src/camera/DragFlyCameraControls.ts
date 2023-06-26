@@ -21,7 +21,7 @@ let startY: number;
 let startTime: number;
 
 // Zoom parameters
-let zoomTimestamp: Date;
+let zoomTimestamp: number;
 const debounceTime = 20;
 
 // Creates a set of 5DOF flight controls that requires dragging the mouse to move the rotation and position of the camera
@@ -250,7 +250,6 @@ export class DragFlyCameraControls {
 
   // Function to handle touch end event
   private handleTouchEnd(event: TouchEvent) {
-    event.preventDefault();
     if (this.forward == true || this.backward == true){
       zoomTimestamp = Date.now();
     }
@@ -261,7 +260,6 @@ export class DragFlyCameraControls {
 
   // Function to handle touch move event
   private handleTouchMove(event: TouchEvent) {
-    event.preventDefault();
     const touch = event.touches[0];
     const currentX = touch.clientX;
     const currentY = touch.clientY;
