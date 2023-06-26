@@ -8,17 +8,9 @@ const WorldUp = new Vector3(0, 1, 0);
 let initialDistance = 0;
 let currentDistance = 0;
 
-enum SwipeDirection {
-  Left = 'left',
-  Right = 'right',
-  Up = 'up',
-  Down = 'down',
-}
-
 // Variables to track touch coordinates and time
 let startX: number;
 let startY: number;
-let startTime: number;
 
 // Zoom parameters
 let zoomTimestamp: number;
@@ -69,9 +61,11 @@ export class DragFlyCameraControls {
       return;
     }
 
-    document.addEventListener("touchstart", function(e){
+    document.addEventListener(
+        "touchstart",
+        function(e){
       e.preventDefault();
-    },{passive: false});
+    },{ passive: false });
 
     this.enabled = true;
     this.eventHandlerCollection.add(document, "keydown", this.onKeyDown.bind(this));
@@ -239,7 +233,6 @@ export class DragFlyCameraControls {
     const touch = event.touches[0];
     startX = touch.clientX;
     startY = touch.clientY;
-    startTime = Date.now();
 
     const touchPoints = event.touches;
     if (touchPoints.length === 2) {
@@ -252,7 +245,7 @@ export class DragFlyCameraControls {
 
   // Function to handle touch end event
   private handleTouchEnd(event: TouchEvent) {
-    if (this.forward == true || this.backward == true){
+    if (this.forward === true || this.backward === true){
       zoomTimestamp = Date.now();
     }
     this.forward = false;
@@ -268,11 +261,6 @@ export class DragFlyCameraControls {
 
     const deltaX = currentX - startX;
     const deltaY = currentY - startY;
-
-    // Calculate the distance and direction of the drag
-    const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-    const angle = Math.atan2(deltaY, deltaX);
-    const angleInDegrees = angle * (180 / Math.PI);
 
     const touchPoints = event.touches;
     if (touchPoints.length === 2) {
