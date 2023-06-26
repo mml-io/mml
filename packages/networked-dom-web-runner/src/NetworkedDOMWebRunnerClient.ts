@@ -20,7 +20,6 @@ export class NetworkedDOMWebRunnerClient {
     this.element.style.position = "relative";
     this.element.style.width = "100%";
     this.element.style.height = "100%";
-    this.element.style.border = "1px solid black";
 
     this.remoteDocumentHolder = document.createElement("div");
     this.element.append(this.remoteDocumentHolder);
