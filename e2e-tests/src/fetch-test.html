@@ -4,6 +4,20 @@
 <m-label id="json-content" content="loading" y="4.5" font-size="50" width="10" alignment="center" height="1" color="#dddddd"></m-label>
 
 <script>
+
+  if (!Request) {
+    throw new Error("fetch's Request class is not defined.");
+  }
+  if (!Response) {
+    throw new Error("fetch's Response class is not defined.");
+  }
+  if (!Headers) {
+    throw new Error("fetch's Headers class is not defined.");
+  }
+  if (!fetch) {
+    throw new Error("fetch is not defined.");
+  }
+
   const contentLabel = document.getElementById("json-content");
   async function fetchData() {
     const address = `http://localhost:8079/assets/some-data.json`;

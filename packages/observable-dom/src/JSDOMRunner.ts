@@ -2,6 +2,8 @@ import vm from "vm";
 
 import { LogMessage, RemoteEvent } from "@mml-io/observable-dom-common";
 import { AbortablePromise, DOMWindow, JSDOM, ResourceLoader, VirtualConsole } from "jsdom";
+import * as nodeFetch from "node-fetch";
+import nodeFetchFn from "node-fetch";
 
 import { DOMRunnerFactory, DOMRunnerInterface, DOMRunnerMessage } from "./ObservableDom";
 
@@ -110,10 +112,10 @@ export class JSDOMRunner {
       beforeParse: (window) => {
         this.domWindow = window;
 
-        this.domWindow.fetch = fetch;
-        this.domWindow.Headers = Headers;
-        this.domWindow.Request = Request;
-        this.domWindow.Response = Response;
+        this.domWindow.fetch = nodeFetchFn as unknown as typeof fetch;
+        this.domWindow.Headers = nodeFetch.Headers as unknown as typeof Headers;
+        this.domWindow.Request = nodeFetch.Request as unknown as typeof Request;
+        this.domWindow.Response = nodeFetch.Response as unknown as typeof Response;
 
         // This is a polyfill for https://developer.mozilla.org/en-US/docs/Web/API/Document/timeline
         const timeline = {};

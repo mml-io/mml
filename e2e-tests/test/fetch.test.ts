@@ -1,5 +1,3 @@
-import { takeAndCompareScreenshot } from "./testing-utils";
-
 describe("fetch", () => {
   test("fetch-ed content", async () => {
     const page = await globalThis.__BROWSER_GLOBAL__.newPage();
