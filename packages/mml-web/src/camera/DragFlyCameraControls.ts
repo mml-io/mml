@@ -21,7 +21,7 @@ let startY: number;
 let startTime: number;
 
 // Zoom parameters
-let zoomTimestamp;
+let zoomTimestamp: Date;
 const debounceTime = 20;
 
 // Creates a set of 5DOF flight controls that requires dragging the mouse to move the rotation and position of the camera
