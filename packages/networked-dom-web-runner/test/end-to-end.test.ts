@@ -86,10 +86,12 @@ test("networked-dom-web-runner end-to-end", async () => {
   expect(logs).toContainEqual(
     expect.objectContaining({
       level: "system",
-      content: expect.objectContaining({
-        message: "undef is not defined",
-        type: "ReferenceError",
-      }),
+      content: [
+        expect.objectContaining({
+          message: "undef is not defined",
+          type: "ReferenceError",
+        }),
+      ],
     }),
   );
 
