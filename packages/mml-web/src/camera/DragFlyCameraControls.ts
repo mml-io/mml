@@ -62,10 +62,12 @@ export class DragFlyCameraControls {
     }
 
     document.addEventListener(
-        "touchstart",
-        function(e){
-      e.preventDefault();
-    },{ passive: false });
+      "touchstart",
+      function (e) {
+        e.preventDefault();
+      },
+      { passive: false },
+    );
 
     this.enabled = true;
     this.eventHandlerCollection.add(document, "keydown", this.onKeyDown.bind(this));
@@ -242,8 +244,8 @@ export class DragFlyCameraControls {
   }
 
   // Function to handle touch end event
-  private handleTouchEnd(event: TouchEvent) {
-    if (this.forward === true || this.backward === true){
+  private handleTouchEnd() {
+    if (this.forward || this.backward) {
       zoomTimestamp = Date.now();
     }
     this.forward = false;
@@ -306,16 +308,12 @@ export class DragFlyCameraControls {
         this.tempEuler.x -= movementY * 0.002;
 
         this.tempEuler.x = Math.max(
-            Math.PI / 2 - this.maxPolarAngle,
-            Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
+          Math.PI / 2 - this.maxPolarAngle,
+          Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
         );
 
         this.camera.quaternion.setFromEuler(this.tempEuler);
       }
     }
   }
-
-
-
-
 }
