@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-schema-validator",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -15,7 +15,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@mml-io/mml-schema": "^0.1.1",
+    "@mml-io/mml-schema": "^0.1.2",
     "xsd-validator": "1.1.0"
   }
 }
