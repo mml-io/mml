@@ -422,7 +422,13 @@ export class NetworkedDOMWebsocket {
       return textNode;
     }
 
-    const element = document.createElement(tag);
+    let element;
+    try {
+      element = document.createElement(tag);
+    } catch (e) {
+      console.error(`Error creating element: (${tag})`, e);
+      element = document.createElement("div");
+    }
     this.idToElement.set(nodeId, element);
     this.elementToId.set(element, nodeId);
     for (const key in attributes) {
