@@ -26,6 +26,39 @@ export class WebBrowserDOMRunner implements DOMRunnerInterface {
     this.htmlPath = htmlPath;
     this.callback = callback;
 
+    // Forward console messages
+    for (const level of ["error", "warn", "info", "log"] as const) {
+      const defaultFn = window.console[level];
+
+      window.console[level] = (...args) => {
+        callback({
+          logMessage: {
+            level,
+            content: args,
+          },
+        });
+        defaultFn(...args);
+      };
+    }
+
+    // Forward uncaught errors
+    window.onerror = (message, source, line, column, error) => {
+      callback({
+        logMessage: {
+          level: "system",
+          content: [
+            {
+              message,
+              type: error?.name,
+              line,
+              column,
+            },
+          ],
+        },
+      });
+      return false;
+    };
+
     let didSendLoad = false;
 
     this.mutationObserver = new window.MutationObserver((mutationList) => {
