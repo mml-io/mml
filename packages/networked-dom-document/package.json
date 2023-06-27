@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-document",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -17,8 +17,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@mml-io/networked-dom-protocol": "^0.1.0",
-    "@mml-io/observable-dom-common": "^0.1.0",
+    "@mml-io/networked-dom-protocol": "^0.1.3",
+    "@mml-io/observable-dom-common": "^0.1.3",
     "rfc6902": "https://github.com/marcuslongmuir/rfc6902.git#7b81b044d7c2cd36f34f9f30d106e7f5db8a0589"
   }
 }
