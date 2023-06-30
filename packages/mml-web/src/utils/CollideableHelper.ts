@@ -7,7 +7,7 @@ import { IMMLScene } from "../MMLScene";
 
 const collideAttributeName = "collide";
 const debugAttributeName = "debug";
-const defaultCollideable = false;
+const defaultCollideable = true;
 const defaultDebug = false;
 
 export class CollideableHelper {
@@ -15,7 +15,7 @@ export class CollideableHelper {
   private element: MElement;
 
   private props = {
-    collide: false,
+    collide: defaultCollideable,
     debug: false,
   };
 

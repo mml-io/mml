@@ -206,7 +206,7 @@
     <xs:attribute name="collide" type="xs:boolean">
       <xs:annotation>
         <xs:documentation>
-          Whether or not this object should participate in collision detection by other systems. Default value is false. If set to true, the object will be considered for collision tests.
+          Whether or not this object should participate in collision detection by other systems. Default value is true. If set to true, the object will be considered for collision tests.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
