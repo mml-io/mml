@@ -4,6 +4,8 @@ import { EventHandlerCollection } from "../utils/events/EventHandlerCollection";
 
 const WorldUp = new Vector3(0, 1, 0);
 
+type TouchState = {touch: Touch, startX: number, startY: number, currentX: number, currentY: number};
+
 // Creates a set of 5DOF flight controls that requires dragging the mouse to move the rotation and position of the camera
 export class DragFlyCameraControls {
   private enabled = false;
@@ -38,6 +40,8 @@ export class DragFlyCameraControls {
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
   private mouseDown = false;
 
+  private touchesMap = new Map<number, TouchState> ()
+
   constructor(camera: Camera, domElement: HTMLElement, speed = 15.0) {
     this.camera = camera;
     this.domElement = domElement;
@@ -48,6 +52,15 @@ export class DragFlyCameraControls {
     if (this.enabled) {
       return;
     }
+
+    document.addEventListener(
+        "touchstart",
+        function (e) {
+          e.preventDefault();
+        },
+        { passive: false },
+    );
+
     this.enabled = true;
     this.eventHandlerCollection.add(document, "keydown", this.onKeyDown.bind(this));
     this.eventHandlerCollection.add(document, "keyup", this.onKeyUp.bind(this));
@@ -56,6 +69,9 @@ export class DragFlyCameraControls {
     this.eventHandlerCollection.add(this.domElement, "mousedown", this.onMouseDown.bind(this));
     this.eventHandlerCollection.add(document, "mouseup", this.onMouseUp.bind(this));
     this.eventHandlerCollection.add(document, "wheel", this.onMouseWheel.bind(this));
+    this.eventHandlerCollection.add(document, "touchstart", this.handleTouchStart.bind(this));
+    this.eventHandlerCollection.add(document, "touchend", this.handleTouchEnd.bind(this));
+    this.eventHandlerCollection.add(document, "touchmove", this.handleTouchMove.bind(this));
   }
 
   public disable() {
@@ -184,8 +200,8 @@ export class DragFlyCameraControls {
     this.tempEuler.x -= movementY * 0.002;
 
     this.tempEuler.x = Math.max(
-      Math.PI / 2 - this.maxPolarAngle,
-      Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
+        Math.PI / 2 - this.maxPolarAngle,
+        Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
     );
 
     this.camera.quaternion.setFromEuler(this.tempEuler);
@@ -202,5 +218,100 @@ export class DragFlyCameraControls {
 
     // restrict to a reasonable min and max
     this.speed = Math.max(5, Math.min(this.speed, 1000));
+  }
+
+  // Function to handle touch start event
+  private handleTouchStart(event: TouchEvent) {
+    let startX: number;
+    let startY: number;
+
+    for (const touch of Array.from(event.touches)) {
+      if (!this.touchesMap.has(touch.identifier)) {
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        this.touchesMap.set(touch.identifier, {touch, startX, startY, currentX: startX, currentY: startY});
+      }
+    }
+  }
+
+  // Function to handle touch end event
+  private handleTouchEnd(event: TouchEvent) {
+
+    const remainingTouches = new Set(Array.from(event.touches).map(touch => touch.identifier));
+
+    for (const[touchId] of this.touchesMap){
+      if (!remainingTouches.has(touchId)) {
+        this.touchesMap.delete(touchId);
+      }
+    }
+  }
+
+  // Function to handle touch move event
+  private handleTouchMove(event: TouchEvent) {
+
+    for (const touch of Array.from(event.touches)) {
+      const touchState = this.touchesMap.get(touch.identifier);
+      if (!touchState) {
+        throw new Error("Touch identifier not found.")
+      }
+      touchState.touch = touch;
+    }
+
+    if (this.touchesMap.size > 1) {
+      let currentAverageX = 0;
+      let latestAverageX = 0;
+      let currentAverageY = 0;
+      let latestAverageY = 0;
+      for (const [touchId, touch] of this.touchesMap){
+        currentAverageX += touch.currentX;
+        currentAverageY += touch.currentY;
+        latestAverageX += touch.touch.clientX;
+        latestAverageY += touch.touch.clientY;
+      }
+
+      currentAverageX = currentAverageX/this.touchesMap.size;
+      currentAverageY = currentAverageY/this.touchesMap.size;
+      latestAverageX = latestAverageX/this.touchesMap.size;
+      latestAverageY = latestAverageY/this.touchesMap.size;
+      let currentAverageDX = 0;
+      let currentAverageDY = 0;
+      let latestAverageDX = 0;
+      let latestAverageDY = 0;
+      for (const [touchId, touch] of this.touchesMap){
+        currentAverageDX += Math.abs(touch.currentX - currentAverageX);
+        currentAverageDY += Math.abs(touch.currentY - currentAverageY);
+        latestAverageDX += Math.abs(touch.touch.clientX - latestAverageX);
+        latestAverageDY += Math.abs(touch.touch.clientY - latestAverageY);
+      }
+
+      const currentDistance = Math.hypot(currentAverageDX, currentAverageDY);
+      const latestDistance = Math.hypot(latestAverageDX, latestAverageDY);
+      const deltaDistance = latestDistance - currentDistance;
+
+      this.camera.getWorldDirection(this.vForward);
+      this.vRight.crossVectors(this.vForward, WorldUp);
+      this.vRight.normalize();
+      this.vUp.crossVectors(this.vRight, this.vForward);
+      this.vUp.normalize();
+
+      this.vMovement.set(0, 0, 0);
+      this.vMovement.addScaledVector(this.vForward, deltaDistance);
+      this.vMovement.multiplyScalar(0.01);
+
+      this.camera.position.add(this.vMovement);
+
+    } else {
+      // do panning
+    }
+
+    for (const touch of Array.from(event.touches)) {
+      const touchState = this.touchesMap.get(touch.identifier);
+      if (!touchState) {
+        throw new Error("Touch identifier not found.")
+      }
+      touchState.currentX = touch.clientX;
+      touchState.currentY = touch.clientY;
+    }
   }
 }
