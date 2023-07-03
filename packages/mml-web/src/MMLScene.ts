@@ -3,9 +3,8 @@ import * as THREE from "three";
 import { Controls } from "./camera/Controls";
 import { DragFlyCameraControls } from "./camera/DragFlyCameraControls";
 import { PointerLockFlyCameraControls } from "./camera/PointerLockFlyCameraControls";
-import { MElement } from "./elements";
 import { Interaction } from "./elements/Interaction";
-import { MixerContext } from "./html/HTMLMixer";
+import { MElement } from "./elements/MElement";
 import { InteractionManager } from "./interaction-ui";
 import { MMLClickTrigger } from "./MMLClickTrigger";
 import { PromptManager } from "./prompt-ui";
@@ -28,66 +27,73 @@ export type PromptProps = {
 };
 
 export type IMMLScene = {
-  getAudioListener(): THREE.AudioListener;
-  getRenderer(): THREE.Renderer;
-  getThreeScene(): THREE.Scene;
-  getCSSMixerContext(): MixerContext;
-  getRootContainer(): THREE.Group;
-  getCamera(): THREE.Camera;
+  getAudioListener: () => THREE.AudioListener;
+  getRenderer: () => THREE.Renderer;
 
-  addCollider(collider: THREE.Object3D): void;
-  updateCollider(collider: THREE.Object3D): void;
-  removeCollider(collider: THREE.Object3D): void;
+  getThreeScene: () => THREE.Scene;
+  getCamera: () => THREE.Camera;
+  getRootContainer: () => THREE.Group;
 
-  addInteraction(interaction: Interaction): void;
-  updateInteraction(interaction: Interaction): void;
-  removeInteraction(interaction: Interaction): void;
+  addCollider?: (collider: THREE.Object3D) => void;
+  updateCollider?: (collider: THREE.Object3D) => void;
+  removeCollider?: (collider: THREE.Object3D) => void;
 
-  setControlsEnabled(enabled: boolean): void;
-  getUserPosition(): ScenePosition;
+  addInteraction?: (interaction: Interaction) => void;
+  updateInteraction?: (interaction: Interaction) => void;
+  removeInteraction?: (interaction: Interaction) => void;
+
+  getUserPosition: () => ScenePosition;
 
   prompt: (promptProps: PromptProps, callback: (message: string | null) => void) => void;
 };
 
-export enum CameraType {
+export enum ControlsType {
+  None,
   DragFly,
   PointerLockFly,
 }
 
 export type MMLSceneOptions = {
-  controlsType?: CameraType;
+  controlsType?: ControlsType;
 };
 
 export class MMLScene implements IMMLScene {
+  public readonly element: HTMLDivElement;
+
   private readonly camera: THREE.PerspectiveCamera;
   private readonly audioListener: THREE.AudioListener;
   private readonly threeScene: THREE.Scene;
   private renderer: THREE.WebGLRenderer;
   private readonly rootContainer: THREE.Group;
-  private controls: Controls;
+  private controls: Controls | null = null;
   private colliders = new Set<THREE.Object3D>();
   private interactions = new Set<Interaction>();
   private interactionListeners = new Set<InteractionListener>();
-  private readonly css3dElement: HTMLElement;
-  private readonly mixerContext: MixerContext;
 
-  private initializedState: {
-    animationFrameCallback: () => void;
-    container: HTMLElement;
-    resizeListener: () => void;
-    clickTrigger: MMLClickTrigger;
-    promptManager: PromptManager;
-    interactionManager: InteractionManager;
-  } | null = null;
+  private animationFrameCallback: () => void;
+  private resizeListener: () => void;
+  private clickTrigger: MMLClickTrigger;
+  private promptManager: PromptManager;
+  private interactionManager: InteractionManager;
   private resizeObserver: ResizeObserver;
 
   constructor(mmlSceneOptions: MMLSceneOptions = {}) {
+    this.element = document.createElement("div");
+    this.element.style.width = "100%";
+    this.element.style.height = "100%";
+    this.element.style.position = "relative";
+
+    this.rootContainer = new THREE.Group();
+    this.threeScene = new THREE.Scene();
+    this.threeScene.add(this.rootContainer);
+
     this.camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.01,
       1000,
     );
+    this.renderer = this.createRenderer();
 
     this.audioListener = new THREE.AudioListener();
     if (this.audioListener.context.state === "suspended") {
@@ -103,36 +109,57 @@ export class MMLScene implements IMMLScene {
     this.camera.position.z = 10;
     this.camera.position.y = 5;
 
-    this.rootContainer = new THREE.Group();
-    this.threeScene = new THREE.Scene();
-    this.threeScene.add(this.rootContainer);
-
-    this.mixerContext = new MixerContext(this.renderer, this.threeScene, this.camera);
-    const css3dElement = this.mixerContext.rendererCss.domElement;
-    css3dElement.style.width = "100%";
-    css3dElement.style.height = "100%";
-    this.css3dElement = css3dElement;
-
     THREE.Cache.enabled = true;
 
     this.resizeObserver = new ResizeObserver(() => {
       this.fitContainer();
     });
-    this.resizeObserver.observe(this.css3dElement);
+    this.resizeObserver.observe(this.element);
 
     switch (mmlSceneOptions.controlsType) {
-      case CameraType.PointerLockFly:
-        this.controls = new PointerLockFlyCameraControls(this.camera, this.css3dElement);
+      case ControlsType.None:
         break;
-      case CameraType.DragFly:
+      case ControlsType.PointerLockFly:
+        this.controls = new PointerLockFlyCameraControls(this.camera, this.element);
+        break;
+      case ControlsType.DragFly:
       default:
-        this.controls = new DragFlyCameraControls(this.camera, this.css3dElement);
+        this.controls = new DragFlyCameraControls(this.camera, this.element);
         break;
     }
-  }
+    if (this.controls) {
+      this.controls.enable();
+    }
 
-  public getCSSMixerContext(): MixerContext {
-    return this.mixerContext;
+    this.clickTrigger = MMLClickTrigger.init(this.element, this);
+    this.promptManager = PromptManager.init(this.element);
+    const { interactionManager, interactionListener } = InteractionManager.init(
+      this.element,
+      this.camera,
+      this.threeScene,
+    );
+    this.interactionManager = interactionManager;
+    this.addInteractionListener(interactionListener);
+
+    const clock = new THREE.Clock();
+
+    this.animationFrameCallback = () => {
+      requestAnimationFrame(this.animationFrameCallback);
+      if (this.controls) {
+        this.controls.update(clock.getDelta());
+      }
+      this.renderer.render(this.threeScene, this.camera);
+    };
+    requestAnimationFrame(this.animationFrameCallback);
+
+    this.resizeListener = () => {
+      this.fitContainer();
+    };
+
+    window.addEventListener("resize", this.resizeListener, false);
+
+    this.element.appendChild(this.renderer.domElement);
+    this.fitContainer();
   }
 
   public getThreeScene(): THREE.Scene {
@@ -141,14 +168,6 @@ export class MMLScene implements IMMLScene {
 
   public getRenderer(): THREE.Renderer {
     return this.renderer;
-  }
-
-  public setControlsEnabled(enabled: boolean): void {
-    if (enabled) {
-      this.controls.enable();
-    } else {
-      this.controls.disable();
-    }
   }
 
   public getAudioListener(): THREE.AudioListener {
@@ -174,101 +193,53 @@ export class MMLScene implements IMMLScene {
     };
   }
 
-  public init(container: HTMLElement, elementsHolder: HTMLElement) {
-    if (this.initializedState) {
-      console.error("MScene already initialized");
-      return;
-    }
-
-    const clickTrigger = MMLClickTrigger.init(container, elementsHolder, this);
-    const promptManager = PromptManager.init(container);
-    const { interactionManager, interactionListener } = InteractionManager.init(
-      container,
-      this.camera,
-      this.threeScene,
-    );
-    this.addInteractionListener(interactionListener);
-
-    this.renderer = this.createRenderer();
-    this.setControlsEnabled(true);
-
-    const clock = new THREE.Clock();
-
-    const animationFrameCallback = () => {
-      requestAnimationFrame(animationFrameCallback);
-      this.controls.update(clock.getDelta());
-      this.renderer.render(this.threeScene, this.camera);
-    };
-    requestAnimationFrame(animationFrameCallback);
-
-    const resizeListener = () => {
-      this.fitContainer();
-    };
-
-    window.addEventListener("resize", resizeListener, false);
-
-    this.initializedState = {
-      animationFrameCallback,
-      container,
-      resizeListener,
-      clickTrigger,
-      promptManager,
-      interactionManager,
-    };
-    container.appendChild(this.css3dElement);
-    this.fitContainer();
-  }
-
   private createRenderer() {
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setClearColor(0xffffff, 1);
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    let renderer;
+    if (navigator.userAgent.includes("jsdom")) {
+      renderer = {
+        domElement: document.createElement("canvas"),
+        setSize: () => void 0,
+        render: () => void 0,
+      } as unknown as THREE.WebGLRenderer;
+    } else {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setClearColor(0xffffff, 1);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
     renderer.domElement.style.pointerEvents = "none";
-    renderer.domElement.style.position = "absolute";
-    renderer.domElement.style.top = "0";
-    renderer.domElement.style.left = "0";
-    this.css3dElement.appendChild(renderer.domElement);
     return renderer;
   }
 
   public fitContainer() {
-    if (!this.initializedState) {
+    if (!this) {
       console.error("MScene not initialized");
       return;
     }
-    const container = this.initializedState.container;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const width = this.element.clientWidth;
+    const height = this.element.clientHeight;
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
-    this.mixerContext.rendererCss.setSize(width, height);
   }
 
   public dispose() {
-    if (!this.initializedState) {
-      console.error("MScene not initialized");
-      return;
-    }
-    window.removeEventListener("resize", this.initializedState.resizeListener);
+    window.removeEventListener("resize", this.resizeListener);
     this.resizeObserver.disconnect();
     this.rootContainer.clear();
-    this.initializedState.clickTrigger.dispose();
-    this.initializedState.promptManager.dispose();
-    this.initializedState.interactionManager.dispose();
-    this.initializedState = null;
+    this.clickTrigger.dispose();
+    this.promptManager.dispose();
+    this.interactionManager.dispose();
   }
 
   public prompt(promptProps: PromptProps, callback: (message: string | null) => void) {
-    if (!this.initializedState) {
+    if (!this) {
       console.error("MScene not initialized");
       return;
     }
-    const promptManager = this.initializedState.promptManager;
-    promptManager.prompt(promptProps, callback);
+    this.promptManager.prompt(promptProps, callback);
   }
 
   public addCollider(collider: THREE.Object3D): void {

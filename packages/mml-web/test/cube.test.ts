@@ -5,7 +5,7 @@
 import { AudioContext } from "standardized-audio-context-mock";
 import * as THREE from "three";
 
-import { createSceneAttachedElement } from "./scene-test-utils";
+import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Cube } from "../src/elements/Cube";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
@@ -122,41 +122,42 @@ describe("m-cube", () => {
     });
   });
 
-  test("collide - add and remove", () => {
-    const { element, scene } = createSceneAttachedElement<Cube>("m-cube");
+  test("collide - remove and add", () => {
+    const { scene, sceneAttachment } = createTestScene();
+    const element = document.createElement("m-cube") as Cube;
     expect(Array.from((scene as any).colliders)).toEqual([]);
     const addColliderSpy = jest.spyOn(scene, "addCollider");
     const removeColliderSpy = jest.spyOn(scene, "removeCollider");
-
-    element.setAttribute("collide", "true");
-    expect(addColliderSpy).toHaveBeenCalledTimes(1);
-    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube());
-    expect(removeColliderSpy).toHaveBeenCalledTimes(0);
+    sceneAttachment.append(element);
     expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
+    expect(addColliderSpy).toHaveBeenCalledTimes(1);
+    expect(removeColliderSpy).toHaveBeenCalledTimes(0);
+    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube());
 
     element.setAttribute("collide", "false");
-    expect(Array.from((scene as any).colliders)).toEqual([]);
-    expect(addColliderSpy).toHaveBeenCalledTimes(1);
     expect(removeColliderSpy).toHaveBeenCalledTimes(1);
     expect(removeColliderSpy).toHaveBeenCalledWith(element.getCube());
+    expect(addColliderSpy).toHaveBeenCalledTimes(1);
+    expect(Array.from((scene as any).colliders)).toEqual([]);
+
+    element.setAttribute("collide", "true");
+    expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
+    expect(addColliderSpy).toHaveBeenCalledTimes(2);
+    expect(removeColliderSpy).toHaveBeenCalledTimes(1);
+    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube());
   });
 
   test("collide - update", () => {
     const { element, scene } = createSceneAttachedElement<Cube>("m-cube");
-    expect(Array.from((scene as any).colliders)).toEqual([]);
-    const addColliderSpy = jest.spyOn(scene, "addCollider");
-    const updateColliderSpy = jest.spyOn(scene, "updateCollider");
-
-    element.setAttribute("collide", "true");
-    expect(addColliderSpy).toHaveBeenCalledTimes(1);
-    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube());
-    expect(updateColliderSpy).toHaveBeenCalledTimes(0);
     expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
+    expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
+
+    const updateColliderSpy = jest.spyOn(scene, "updateCollider");
+    expect(updateColliderSpy).toHaveBeenCalledTimes(0);
 
     element.setAttribute("y", "1");
     expect(updateColliderSpy).toHaveBeenCalledTimes(1);
     expect(updateColliderSpy).toHaveBeenCalledWith(element.getCube());
-    expect(addColliderSpy).toHaveBeenCalledTimes(1);
 
     element.setAttribute("color", "red");
     // Should not have called updateCollider again
@@ -179,11 +180,6 @@ describe("m-cube", () => {
     mCube.setAttribute("z", "3");
     innerGroup.appendChild(mCube);
 
-    expect(Array.from((scene as any).colliders)).toEqual([]);
-
-    mCube.setAttribute("collide", "true");
-    expect(addColliderSpy).toHaveBeenCalledTimes(1);
-    expect(addColliderSpy).toHaveBeenCalledWith(mCube.getCube());
     expect(updateColliderSpy).toHaveBeenCalledTimes(0);
     expect(Array.from((scene as any).colliders)).toEqual([mCube.getCube()]);
 
@@ -191,7 +187,6 @@ describe("m-cube", () => {
     element.setAttribute("y", "1");
     expect(updateColliderSpy).toHaveBeenCalledTimes(1);
     expect(updateColliderSpy).toHaveBeenCalledWith(mCube.getCube());
-    expect(addColliderSpy).toHaveBeenCalledTimes(1);
     const worldPos = new THREE.Vector3();
     mCube.getCube().getWorldPosition(worldPos);
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 3 });

@@ -1,7 +1,6 @@
 import * as THREE from "three";
 
 import { Interaction } from "../../elements";
-import { MixerContext } from "../../html/HTMLMixer";
 import { IMMLScene, PromptProps } from "../../MMLScene";
 
 export function createWrappedScene(scene: IMMLScene, container: THREE.Group): IMMLScene {
@@ -15,22 +14,34 @@ export function createWrappedScene(scene: IMMLScene, container: THREE.Group): IM
 
   return {
     addCollider(collider: THREE.Object3D): void {
-      return scene.addCollider(collider);
+      if (scene.addCollider) {
+        scene.addCollider(collider);
+      }
     },
     updateCollider(collider: THREE.Object3D): void {
-      return scene.updateCollider(collider);
+      if (scene.updateCollider) {
+        scene.updateCollider(collider);
+      }
     },
     removeCollider(collider: THREE.Object3D): void {
-      return scene.removeCollider(collider);
+      if (scene.removeCollider) {
+        scene.removeCollider(collider);
+      }
     },
     addInteraction(interaction: Interaction): void {
-      return scene.addInteraction(interaction);
+      if (scene.addInteraction) {
+        scene.addInteraction(interaction);
+      }
     },
     updateInteraction(interaction: Interaction): void {
-      return scene.updateInteraction(interaction);
+      if (scene.updateInteraction) {
+        scene.updateInteraction(interaction);
+      }
     },
     removeInteraction(interaction: Interaction): void {
-      return scene.removeInteraction(interaction);
+      if (scene.removeInteraction) {
+        scene.removeInteraction(interaction);
+      }
     },
     getAudioListener: () => {
       return scene.getAudioListener();
@@ -38,17 +49,11 @@ export function createWrappedScene(scene: IMMLScene, container: THREE.Group): IM
     getRenderer(): THREE.Renderer {
       return scene.getRenderer();
     },
-    getCSSMixerContext(): MixerContext {
-      return scene.getCSSMixerContext();
-    },
     getThreeScene(): THREE.Scene {
       return scene.getThreeScene();
     },
     getCamera(): THREE.Camera {
       return scene.getCamera();
-    },
-    setControlsEnabled(enabled: boolean) {
-      scene.setControlsEnabled(enabled);
     },
     prompt(promptProps: PromptProps, callback: (result: string | null) => void) {
       scene.prompt(promptProps, callback);
