@@ -372,7 +372,7 @@ export class NetworkedDOMWebsocket {
     }
 
     // create a tree of DOM elements
-    // NOTE: the MLElement contructors are not executed during this stage
+    // NOTE: the MElement constructors are not executed during this stage
     const element = this.handleNewElement(message.snapshot);
     if (!element) {
       throw new Error("Snapshot element not created");
