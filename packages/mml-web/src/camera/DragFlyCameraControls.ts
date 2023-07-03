@@ -46,7 +46,13 @@ export class DragFlyCameraControls {
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
   private mouseDown = false;
 
+  // Touch zooming and panning
   private touchesMap = new Map<number, TouchState>();
+  private isMoving = false;
+  private panStartX: number;
+  private panStartY: number;
+  private zoomTimestamp: number;
+  private debounceTime = 20;
 
   constructor(camera: Camera, domElement: HTMLElement, speed = 15.0) {
     this.camera = camera;
@@ -60,11 +66,11 @@ export class DragFlyCameraControls {
     }
 
     document.addEventListener(
-        "touchstart",
-        function (e) {
-          e.preventDefault();
-        },
-        { passive: false },
+      "touchstart",
+      function (e) {
+        e.preventDefault();
+      },
+      { passive: false },
     );
 
     this.enabled = true;
@@ -206,8 +212,8 @@ export class DragFlyCameraControls {
     this.tempEuler.x -= movementY * 0.002;
 
     this.tempEuler.x = Math.max(
-        Math.PI / 2 - this.maxPolarAngle,
-        Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
+      Math.PI / 2 - this.maxPolarAngle,
+      Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
     );
 
     this.camera.quaternion.setFromEuler(this.tempEuler);
@@ -245,10 +251,20 @@ export class DragFlyCameraControls {
         });
       }
     }
+
+    if (event.touches.length === 1) {
+      this.panStartX = event.touches[0].clientX;
+      this.panStartY = event.touches[0].clientY;
+    }
   }
 
   // Function to handle touch end event
   private handleTouchEnd(event: TouchEvent) {
+    if (this.isMoving) {
+      this.zoomTimestamp = Date.now();
+    }
+    this.isMoving = false;
+
     const remainingTouches = new Set(Array.from(event.touches).map((touch) => touch.identifier));
 
     for (const [touchId] of this.touchesMap) {
@@ -268,7 +284,7 @@ export class DragFlyCameraControls {
       touchState.touch = touch;
     }
 
-    if (this.touchesMap.size > 1) {
+    if (event.touches.length > 1) {
       let currentAverageX = 0;
       let latestAverageX = 0;
       let currentAverageY = 0;
@@ -310,10 +326,36 @@ export class DragFlyCameraControls {
       this.vMovement.multiplyScalar(0.01);
 
       this.camera.position.add(this.vMovement);
-    } else {
-      // do panning
-    }
+      this.isMoving = true;
+    } else if (event.touches.length === 1) {
+      // Pan
+      if (!this.zoomTimestamp || Date.now() > this.zoomTimestamp + this.debounceTime) {
+        this.isMoving = false;
+        const movementX = event.touches[0].clientX - this.panStartX;
+        let movementY = event.touches[0].clientY - this.panStartY;
 
+        // Update the start coordinates for the next move event
+        this.panStartX = event.touches[0].clientX;
+        this.panStartY = event.touches[0].clientY;
+
+        // This is an addition to the original PointerLockControls class
+        if (this.invertedMouseY) {
+          movementY *= -1;
+        }
+
+        this.tempEuler.setFromQuaternion(this.camera.quaternion);
+
+        this.tempEuler.y -= movementX * 0.002;
+        this.tempEuler.x -= movementY * 0.002;
+
+        this.tempEuler.x = Math.max(
+          Math.PI / 2 - this.maxPolarAngle,
+          Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
+        );
+
+        this.camera.quaternion.setFromEuler(this.tempEuler);
+      }
+    }
     for (const touch of Array.from(event.touches)) {
       const touchState = this.touchesMap.get(touch.identifier);
       if (!touchState) {
