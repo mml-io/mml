@@ -1,0 +1,28 @@
+{
+  "name": "@mml-io/networked-dom-web-runner-broadcast",
+  "version": "0.1.3",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "files": [
+    "/build",
+    "/src"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "node ./build.js --build",
+    "iterate": "node ./build.js --watch",
+    "npm-publish": "npm run build && publish-if-not-exists --access=public",
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix",
+    "test": "npm run build && jest",
+    "test-iterate": "jest --watch"
+  },
+  "dependencies": {
+    "@mml-io/networked-dom-web-runner": "^0.1.3",
+    "@mml-io/observable-dom-common": "^0.1.3"
+  },
+  "devDependencies": {
+    "jest-environment-jsdom": "29.5.0",
+    "jest-expect-message": "1.1.3"
+  }
+}

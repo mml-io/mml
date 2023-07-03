@@ -1,6 +1,8 @@
+const path = require("path");
 const process = require("process");
 
 const esbuild = require("esbuild");
+const cssModulesPlugin = require("esbuild-css-modules-plugin");
 const { copy } = require("esbuild-plugin-copy");
 
 const buildMode = "--build";
@@ -25,7 +27,19 @@ const buildOptions = {
   publicPath: "/",
   sourcemap: true,
   outdir: "./build/",
+  loader: {
+    ".svg": "file",
+    ".png": "file",
+    ".jpg": "file",
+    ".css": "css",
+  },
   plugins: [
+    cssModulesPlugin({
+      cssModulesOption: {
+        root: path.sep === "\\" ? "." : "",
+      },
+      inject: true,
+    }),
     copy({
       resolveFrom: "cwd",
       assets: {
