@@ -1,13 +1,13 @@
-import { StaticVirtualDomElement } from "@mml-io/observable-dom-common";
+import { StaticVirtualDOMElement } from "@mml-io/observable-dom-common";
 import { applyPatch } from "rfc6902";
 
 import { VirtualDOMDiffStruct } from "../src/common";
-import { calculateStaticVirtualDomDiff } from "../src/diffing";
+import { calculateStaticVirtualDOMDiff } from "../src/diffing";
 
-function checkTreeForDuplicateNodes(state: StaticVirtualDomElement) {
+function checkTreeForDuplicateNodes(state: StaticVirtualDOMElement) {
   const nodeSet = new Set<number>();
 
-  function traverseTree(node: StaticVirtualDomElement) {
+  function traverseTree(node: StaticVirtualDOMElement) {
     if (nodeSet.has(node.nodeId)) {
       throw new Error(`Duplicate node with id ${node.nodeId} found`);
     }
@@ -19,14 +19,14 @@ function checkTreeForDuplicateNodes(state: StaticVirtualDomElement) {
 }
 
 function runTestCase(
-  initialState: StaticVirtualDomElement,
-  expectedState: StaticVirtualDomElement,
+  initialState: StaticVirtualDOMElement,
+  expectedState: StaticVirtualDOMElement,
   expectedDiff: VirtualDOMDiffStruct,
 ) {
-  const virtualDomDiff = calculateStaticVirtualDomDiff(initialState, expectedState);
-  expect(virtualDomDiff).toEqual(expectedDiff);
+  const virtualDOMDiff = calculateStaticVirtualDOMDiff(initialState, expectedState);
+  expect(virtualDOMDiff).toEqual(expectedDiff);
 
-  for (const diff of virtualDomDiff.virtualDOMDiffs) {
+  for (const diff of virtualDOMDiff.virtualDOMDiffs) {
     const patchErrors = applyPatch(initialState, [diff]);
     expect(patchErrors).toEqual([null]);
     checkTreeForDuplicateNodes(initialState);
@@ -35,16 +35,16 @@ function runTestCase(
   expect(initialState).toEqual(expectedState);
 }
 
-describe("calculateStaticVirtualDomDiff", () => {
+describe("calculateStaticVirtualDOMDiff", () => {
   describe("attribute changes", () => {
     test("attribute replacement", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-cube",
         attributes: { color: "red" },
         childNodes: [],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-cube",
         attributes: { color: "green" },
@@ -65,13 +65,13 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("attribute addition", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-cube",
         attributes: { color: "red" },
         childNodes: [],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-cube",
         attributes: { color: "red", size: "large" },
@@ -92,13 +92,13 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("attribute removal", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-cube",
         attributes: { color: "red", size: "large" },
         childNodes: [],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-cube",
         attributes: { color: "red" },
@@ -118,7 +118,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("nested groups and attributes modifications", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -144,7 +144,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -190,7 +190,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("nested attribute and child replacement", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -210,7 +210,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -257,14 +257,14 @@ describe("calculateStaticVirtualDomDiff", () => {
 
   describe("text content changes", () => {
     test("text content replacement", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "div",
         textContent: "Hello",
         attributes: {},
         childNodes: [],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "div",
         textContent: "World",
@@ -289,7 +289,7 @@ describe("calculateStaticVirtualDomDiff", () => {
   describe("node changes", () => {
     test("tag non-replacement", () => {
       // Tags cannot be swapped on an existing node so elements must be replaced
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -302,7 +302,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -337,7 +337,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("child replacement", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-cube",
         attributes: { color: "red" },
@@ -350,7 +350,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-cube",
         attributes: { color: "red" },
@@ -385,7 +385,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("multiple children replacement", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -404,7 +404,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -457,7 +457,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("adding additional m-group layer", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -476,7 +476,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -503,9 +503,9 @@ describe("calculateStaticVirtualDomDiff", () => {
         ],
       };
 
-      const virtualDomDiff = calculateStaticVirtualDomDiff(initialState, expectedState);
+      const virtualDOMDiff = calculateStaticVirtualDOMDiff(initialState, expectedState);
 
-      for (const diff of virtualDomDiff.virtualDOMDiffs) {
+      for (const diff of virtualDOMDiff.virtualDOMDiffs) {
         const patchErrors = applyPatch(initialState, [diff]);
         expect(patchErrors).toEqual([null]);
         checkTreeForDuplicateNodes(initialState);
@@ -513,7 +513,7 @@ describe("calculateStaticVirtualDomDiff", () => {
 
       expect(initialState).toEqual(expectedState);
 
-      expect(virtualDomDiff).toEqual({
+      expect(virtualDOMDiff).toEqual({
         nodeIdRemappings: [
           {
             clientFacingNodeId: 5,
@@ -558,7 +558,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("removing an m-group layer", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -584,7 +584,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -637,7 +637,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("switch order of node ids of different tags causes replacement", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -656,7 +656,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -706,7 +706,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("removing m-group wrapper to flatten", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -739,7 +739,7 @@ describe("calculateStaticVirtualDomDiff", () => {
         ],
       };
 
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -810,7 +810,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("multiple nested tag changes inside m-group", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -842,7 +842,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -920,7 +920,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("complex nested structure with multiple changes", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -952,7 +952,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1027,7 +1027,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("complex nested structure with multiple changes and attributes", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1060,7 +1060,7 @@ describe("calculateStaticVirtualDomDiff", () => {
         ],
       };
 
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1139,7 +1139,7 @@ describe("calculateStaticVirtualDomDiff", () => {
 
   describe("nodeIdRemappings", () => {
     test("switch order of node ids of same tag causes node id remapping", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1158,7 +1158,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1194,12 +1194,12 @@ describe("calculateStaticVirtualDomDiff", () => {
       };
 
       // There are no diffs because the only operations are the node id remappings
-      const virtualDomDiff = calculateStaticVirtualDomDiff(initialState, expectedState);
-      expect(virtualDomDiff).toEqual(expectedDiff);
+      const virtualDOMDiff = calculateStaticVirtualDOMDiff(initialState, expectedState);
+      expect(virtualDOMDiff).toEqual(expectedDiff);
     });
 
     test("nested groups with nodeIdRemappings", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1225,7 +1225,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1282,7 +1282,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("deeply nested structure with nodeIdRemappings", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1315,7 +1315,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1379,7 +1379,7 @@ describe("calculateStaticVirtualDomDiff", () => {
     });
 
     test("multiple nested groups with nodeIdRemappings", () => {
-      const initialState: StaticVirtualDomElement = {
+      const initialState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},
@@ -1424,7 +1424,7 @@ describe("calculateStaticVirtualDomDiff", () => {
           },
         ],
       };
-      const expectedState: StaticVirtualDomElement = {
+      const expectedState: StaticVirtualDOMElement = {
         nodeId: 1,
         tag: "m-group",
         attributes: {},

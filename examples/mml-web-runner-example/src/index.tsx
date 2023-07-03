@@ -69,6 +69,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     true,
   );
 
+  const title = document.createElement("h1");
+  title.textContent = "MML Web Runner Example";
+  document.body.append(title);
+
   const textArea = document.createElement("textarea");
   textArea.style.width = "500px";
   textArea.style.height = "500px";

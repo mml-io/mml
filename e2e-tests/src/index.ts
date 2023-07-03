@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
 
-import { EditableNetworkedDOM, LocalObservableDomFactory } from "networked-dom-server";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
@@ -22,7 +22,7 @@ watcher
     const contents = fs.readFileSync(relativeFilePath, { encoding: "utf8", flag: "r" });
     const document = new EditableNetworkedDOM(
       url.pathToFileURL(filename).toString(),
-      LocalObservableDomFactory,
+      LocalObservableDOMFactory,
     );
     document.load(contents);
 

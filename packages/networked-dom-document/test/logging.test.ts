@@ -1,4 +1,4 @@
-import { LocalObservableDomFactory } from "networked-dom-server";
+import { LocalObservableDOMFactory } from "networked-dom-server";
 import { LogMessage } from "@mml-io/observable-dom-common";
 
 import { EditableNetworkedDOM } from "../src";
@@ -39,7 +39,7 @@ describe("logging", () => {
 
     const doc = new EditableNetworkedDOM(
       "file:///test.html",
-      LocalObservableDomFactory,
+      LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {
         loggedMessages.push(logMessage);
@@ -68,7 +68,7 @@ describe("logging", () => {
 
     const doc = new EditableNetworkedDOM(
       "file:///test.html",
-      LocalObservableDomFactory,
+      LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {
         loggedMessages.push(logMessage);
@@ -108,7 +108,7 @@ describe("logging", () => {
 
     const doc = new EditableNetworkedDOM(
       "file:///test.html",
-      LocalObservableDomFactory,
+      LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {
         loggedMessages.push(logMessage);
@@ -139,7 +139,7 @@ describe("logging", () => {
 
     const doc = new EditableNetworkedDOM(
       "file:///test.html",
-      LocalObservableDomFactory,
+      LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {
         loggedMessages.push(logMessage);

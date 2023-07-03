@@ -1,5 +1,5 @@
 import { RemoteEvent } from "@mml-io/networked-dom-protocol";
-import { LocalObservableDomFactory } from "networked-dom-server";
+import { LocalObservableDOMFactory } from "networked-dom-server";
 
 import { MockWebsocket } from "./mock.websocket";
 import { EditableNetworkedDOM } from "../src";
@@ -14,7 +14,7 @@ afterEach(() => {
 
 describe("multi-client subjectivity", () => {
   test("multi-client subjectivity on load", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `
@@ -178,7 +178,7 @@ describe("multi-client subjectivity", () => {
   });
 
   test("multi-client subjectivity with reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `
@@ -342,7 +342,7 @@ describe("multi-client subjectivity", () => {
   });
 
   test("multi-client subjectivity with reload and change connections", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `

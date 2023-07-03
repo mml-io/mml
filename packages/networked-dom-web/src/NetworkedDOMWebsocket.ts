@@ -5,6 +5,7 @@ import {
   NodeDescription,
   RemoteEvent,
   ServerMessage,
+  SnapshotMessage,
   TextChangedDiff,
 } from "@mml-io/networked-dom-protocol";
 
@@ -68,6 +69,13 @@ export class NetworkedDOMWebsocket {
     this.startWebSocketConnectionAttempt();
   }
 
+  private setStatus(status: NetworkedDOMWebsocketStatus) {
+    if (this.status !== status) {
+      this.status = status;
+      this.statusUpdateCallback(status);
+    }
+  }
+
   private isHTMLElement(node: unknown): node is HTMLElement {
     if (node instanceof HTMLElement) {
       return true;
@@ -86,13 +94,6 @@ export class NetworkedDOMWebsocket {
       return false;
     }
     return node instanceof this.parentElement.ownerDocument.defaultView.Text;
-  }
-
-  private setStatus(status: NetworkedDOMWebsocketStatus) {
-    if (this.status !== status) {
-      this.status = status;
-      this.statusUpdateCallback(status);
-    }
   }
 
   private createWebsocketWithTimeout(timeout: number): Promise<WebSocket> {
@@ -191,53 +192,42 @@ export class NetworkedDOMWebsocket {
   private handleIncomingWebsocketMessage(event: MessageEvent) {
     const messages = JSON.parse(event.data) as Array<ServerMessage>;
     for (const message of messages) {
-      if (message.type === "error") {
-        console.error("Error from server", message);
-      } else if (message.type === "warning") {
-        console.warn("Warning from server", message);
-      } else {
-        if (message.documentTime) {
-          if (this.timeCallback) {
-            this.timeCallback(message.documentTime);
+      switch (message.type) {
+        case "error":
+          console.error("Error from server", message);
+          break;
+        case "warning":
+          console.warn("Warning from server", message);
+          break;
+        default: {
+          if (message.documentTime) {
+            if (this.timeCallback) {
+              this.timeCallback(message.documentTime);
+            }
           }
-        }
-        if (message.type === "snapshot") {
-          // This websocket is successfully connected. Reset the backoff time.
-          this.backoffTime = startingBackoffTimeMilliseconds;
-          this.setStatus(NetworkedDOMWebsocketStatus.Connected);
-
-          if (this.currentRoot) {
-            this.currentRoot.remove();
-            this.currentRoot = null;
-            this.elementToId.clear();
-            this.idToElement.clear();
+          switch (message.type) {
+            case "snapshot":
+              this.handleSnapshot(message);
+              break;
+            case "attributeChange":
+              this.handleAttributeChange(message);
+              break;
+            case "childrenChanged":
+              this.handleChildrenChanged(message);
+              break;
+            case "textChanged":
+              this.handleTextChanged(message);
+              break;
+            case "ping":
+              this.send({
+                type: "pong",
+                pong: message.ping,
+              });
+              break;
+            default:
+              console.warn("unknown message type", message);
+              break;
           }
-
-          // create a tree of DOM elements
-          // NOTE: the MLElement contructors are not executed during this stage
-          const element = this.handleNewElement(message.snapshot);
-          if (!element) {
-            throw new Error("Snapshot element not created");
-          }
-          if (!this.isHTMLElement(element)) {
-            throw new Error("Snapshot element is not an HTMLElement");
-          }
-          this.currentRoot = element;
-          // appending to the tree causes MElements to be constructed
-          this.parentElement.append(element);
-        } else if (message.type === "attributeChange") {
-          this.handleAttributeChange(message);
-        } else if (message.type === "childrenChanged") {
-          this.handleChildrenChanged(message);
-        } else if (message.type === "textChanged") {
-          this.handleTextChanged(message);
-        } else if (message.type === "ping") {
-          this.send({
-            type: "pong",
-            pong: message.ping,
-          });
-        } else {
-          console.warn("unknown message type", message);
         }
       }
     }
@@ -367,6 +357,32 @@ export class NetworkedDOMWebsocket {
       }
       this.removeChildElementIds(child as HTMLElement);
     }
+  }
+
+  private handleSnapshot(message: SnapshotMessage) {
+    // This websocket is successfully connected. Reset the backoff time.
+    this.backoffTime = startingBackoffTimeMilliseconds;
+    this.setStatus(NetworkedDOMWebsocketStatus.Connected);
+
+    if (this.currentRoot) {
+      this.currentRoot.remove();
+      this.currentRoot = null;
+      this.elementToId.clear();
+      this.idToElement.clear();
+    }
+
+    // create a tree of DOM elements
+    // NOTE: the MElement constructors are not executed during this stage
+    const element = this.handleNewElement(message.snapshot);
+    if (!element) {
+      throw new Error("Snapshot element not created");
+    }
+    if (!this.isHTMLElement(element)) {
+      throw new Error("Snapshot element is not an HTMLElement");
+    }
+    this.currentRoot = element;
+    // appending to the tree causes MElements to be constructed
+    this.parentElement.append(element);
   }
 
   private handleAttributeChange(message: AttributeChangedDiff) {

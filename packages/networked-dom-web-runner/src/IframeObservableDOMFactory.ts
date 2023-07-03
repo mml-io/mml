@@ -1,53 +1,40 @@
-import { ObservableDomFactory } from "@mml-io/networked-dom-document";
+import { ObservableDOMFactory } from "@mml-io/networked-dom-document";
 import {
-  ObservableDomInterface,
-  ObservableDomMessage,
+  DOM_MESSAGE_TYPE,
+  FromObservableDOMInstanceMessage,
+  ObservableDOMInterface,
+  observableDOMInterfaceToMessageSender,
+  ObservableDOMMessage,
   ObservableDOMParameters,
-  RemoteEvent,
+  ToObservableDOMInstanceMessage,
 } from "@mml-io/observable-dom-common";
 
-import { FromInstanceMessageTypes } from "./message-types";
 import { RunnerIframe } from "./RunnerIframe";
 
-export const IframeObservableDOMFactory: ObservableDomFactory = (
+export const IframeObservableDOMFactory: ObservableDOMFactory = (
   observableDOMParameters: ObservableDOMParameters,
-  callback: (message: ObservableDomMessage) => void,
+  callback: (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => void,
 ) => {
   const runnerIframe = new RunnerIframe(
     observableDOMParameters,
-    (msg: FromInstanceMessageTypes) => {
-      if (msg.type === "dom") {
-        callback(msg.message);
+    (message: FromObservableDOMInstanceMessage) => {
+      switch (message.type) {
+        case DOM_MESSAGE_TYPE:
+          callback(message.message, remoteObservableDOM);
+          break;
+        default:
+          console.error("Unknown message type", message.type);
       }
     },
   );
 
-  const remoteObservableDOM: ObservableDomInterface = {
-    addConnectedUserId(connectionId: number): void {
-      runnerIframe.sendMessageToRunner({
-        type: "addConnectedUserId",
-        connectionId,
-      });
+  const remoteObservableDOM: ObservableDOMInterface = observableDOMInterfaceToMessageSender(
+    (message: ToObservableDOMInstanceMessage) => {
+      runnerIframe.sendMessageToRunner(message);
     },
-    addIPCWebsocket(): void {
-      throw new Error("Not implemented");
-    },
-    dispatchRemoteEventFromConnectionId(connectionId: number, remoteEvent: RemoteEvent): void {
-      runnerIframe.sendMessageToRunner({
-        type: "dispatchRemoteEventFromConnectionId",
-        connectionId,
-        event: remoteEvent,
-      });
-    },
-    dispose(): void {
+    () => {
       runnerIframe.dispose();
     },
-    removeConnectedUserId(connectionId: number): void {
-      runnerIframe.sendMessageToRunner({
-        type: "removeConnectedUserId",
-        connectionId,
-      });
-    },
-  };
+  );
   return remoteObservableDOM;
 };

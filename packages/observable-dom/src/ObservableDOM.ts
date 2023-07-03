@@ -1,14 +1,14 @@
 import {
   LogMessage,
-  ObservableDomInterface,
-  ObservableDomMessage,
+  ObservableDOMInterface,
+  ObservableDOMMessage,
   ObservableDOMParameters,
   RemoteEvent,
-  StaticVirtualDomElement,
-  StaticVirtualDomMutationIdsRecord,
+  StaticVirtualDOMElement,
+  StaticVirtualDOMMutationIdsRecord,
 } from "@mml-io/observable-dom-common";
 
-import { virtualDomElementToStatic } from "./utils";
+import { virtualDOMElementToStatic } from "./utils";
 
 export type DOMRunnerMessage = {
   loaded?: boolean;
@@ -24,7 +24,6 @@ export type DOMRunnerInterface = {
     HTMLScriptElement: typeof HTMLScriptElement;
     Comment: typeof Comment;
   }; // TODO - Define this without using JSDOM types
-  addIPCWebsocket(webSocket: WebSocket): void;
   dispatchRemoteEventFromConnectionId(
     connectionId: number,
     realElement: Element,
@@ -41,18 +40,18 @@ export type DOMRunnerFactory = (
   callback: (domRunnerMessage: DOMRunnerMessage) => void,
 ) => DOMRunnerInterface;
 
-export type LiveVirtualDomElement = Omit<StaticVirtualDomElement, "childNodes"> & {
+export type LiveVirtualDOMElement = Omit<StaticVirtualDOMElement, "childNodes"> & {
   realElement: Element | Text;
-  childNodes: Array<LiveVirtualDomElement>;
-  parent: LiveVirtualDomElement | null;
+  childNodes: Array<LiveVirtualDOMElement>;
+  parent: LiveVirtualDOMElement | null;
 };
 
-export class ObservableDom implements ObservableDomInterface {
-  private nodeToNodeId = new Map<LiveVirtualDomElement, number>();
-  private nodeIdToNode = new Map<number, LiveVirtualDomElement>();
-  private realElementToVirtualElement = new Map<Element | Text, LiveVirtualDomElement>();
+export class ObservableDOM implements ObservableDOMInterface {
+  private nodeToNodeId = new Map<LiveVirtualDOMElement, number>();
+  private nodeIdToNode = new Map<number, LiveVirtualDOMElement>();
+  private realElementToVirtualElement = new Map<Element | Text, LiveVirtualDOMElement>();
   private ignoreTextNodes = true;
-  private callback: (message: ObservableDomMessage) => void;
+  private callback: (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => void;
   private nextNodeId = 1;
   private htmlPath: string;
   private domRunner: DOMRunnerInterface;
@@ -61,7 +60,7 @@ export class ObservableDom implements ObservableDomInterface {
 
   constructor(
     observableDOMParameters: ObservableDOMParameters,
-    callback: (message: ObservableDomMessage) => void,
+    callback: (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => void,
     runnerFactory: DOMRunnerFactory,
   ) {
     this.htmlPath = observableDOMParameters.htmlPath;
@@ -69,9 +68,12 @@ export class ObservableDom implements ObservableDomInterface {
     this.callback = callback;
 
     this.documentTimeIntervalTimer = setInterval(() => {
-      this.callback({
-        documentTime: this.getDocumentTime(),
-      });
+      this.callback(
+        {
+          documentTime: this.getDocumentTime(),
+        },
+        this,
+      );
     }, observableDOMParameters.pingIntervalMilliseconds || 5000);
 
     this.domRunner = runnerFactory(
@@ -80,35 +82,37 @@ export class ObservableDom implements ObservableDomInterface {
       observableDOMParameters.params,
       (domRunnerMessage: DOMRunnerMessage) => {
         if (domRunnerMessage.loaded) {
-          this.createVirtualDomElementWithChildren(
+          this.createVirtualDOMElementWithChildren(
             this.domRunner.getDocument() as unknown as Element,
             null,
           );
 
-          const snapshot = virtualDomElementToStatic(
-            this.getVirtualDomElementForRealElementOrThrow(
+          const snapshot = virtualDOMElementToStatic(
+            this.getVirtualDOMElementForRealElementOrThrow(
               this.domRunner.getDocument() as unknown as Element,
             ),
           );
 
-          this.callback({
-            snapshot,
-            documentTime: this.getDocumentTime(),
-          });
+          this.callback(
+            {
+              snapshot,
+              documentTime: this.getDocumentTime(),
+            },
+            this,
+          );
         } else if (domRunnerMessage.mutationList) {
           this.processModificationList(domRunnerMessage.mutationList);
         } else if (domRunnerMessage.logMessage) {
-          this.callback({
-            logMessage: domRunnerMessage.logMessage,
-            documentTime: this.getDocumentTime(),
-          });
+          this.callback(
+            {
+              logMessage: domRunnerMessage.logMessage,
+              documentTime: this.getDocumentTime(),
+            },
+            this,
+          );
         }
       },
     );
-  }
-
-  public addIPCWebsocket(webSocket: WebSocket) {
-    return this.domRunner.addIPCWebsocket(webSocket);
   }
 
   public addConnectedUserId(connectionId: number): void {
@@ -129,8 +133,8 @@ export class ObservableDom implements ObservableDomInterface {
 
   private processModificationList(mutationList: Array<MutationRecord>): void {
     const documentEl = this.domRunner.getDocument() as unknown as Element;
-    const documentVirtualDomElement = this.realElementToVirtualElement.get(documentEl);
-    if (!documentVirtualDomElement) {
+    const documentVirtualDOMElement = this.realElementToVirtualElement.get(documentEl);
+    if (!documentVirtualDOMElement) {
       throw new Error(`document not created in processModificationList`);
     }
 
@@ -164,18 +168,18 @@ export class ObservableDom implements ObservableDomInterface {
       const firstNonIgnoredPreviousSibling = mutation.previousSibling
         ? this.getFirstNonIgnoredPreviousSibling(mutation.previousSibling as Element | Text)
         : null;
-      const targetElement = this.getVirtualDomElementForRealElementOrThrow(
+      const targetElement = this.getVirtualDOMElementForRealElementOrThrow(
         mutation.target as Element | Text,
       );
-      const addedNodes: Array<StaticVirtualDomElement> = [];
+      const addedNodes: Array<StaticVirtualDOMElement> = [];
       for (const node of mutation.addedNodes) {
         if (this.isIgnoredElement(node as Element | Text)) {
           continue;
         }
-        const virtualDomElement = this.getVirtualDomElementForRealElementOrThrow(
+        const virtualDOMElement = this.getVirtualDOMElementForRealElementOrThrow(
           node as Element | Text,
         );
-        addedNodes.push(virtualDomElementToStatic(virtualDomElement));
+        addedNodes.push(virtualDOMElementToStatic(virtualDOMElement));
       }
 
       const removedNodeIds: Array<number> = [];
@@ -183,20 +187,20 @@ export class ObservableDom implements ObservableDomInterface {
         if (this.isIgnoredElement(node as Element | Text)) {
           continue;
         }
-        const virtualDomElement = this.getVirtualDomElementForRealElementOrThrow(
+        const virtualDOMElement = this.getVirtualDOMElementForRealElementOrThrow(
           node as Element | Text,
         );
-        removedNodeIds.push(virtualDomElement.nodeId);
+        removedNodeIds.push(virtualDOMElement.nodeId);
       }
 
-      const mutationRecord: StaticVirtualDomMutationIdsRecord = {
+      const mutationRecord: StaticVirtualDOMMutationIdsRecord = {
         type: mutation.type,
         targetId: targetElement.nodeId,
         addedNodes,
         removedNodeIds,
         previousSiblingId:
           firstNonIgnoredPreviousSibling !== null
-            ? this.getVirtualDomElementForRealElementOrThrow(firstNonIgnoredPreviousSibling).nodeId
+            ? this.getVirtualDOMElementForRealElementOrThrow(firstNonIgnoredPreviousSibling).nodeId
             : null,
         attribute: mutation.attributeName
           ? {
@@ -206,10 +210,13 @@ export class ObservableDom implements ObservableDomInterface {
           : null,
       };
 
-      this.callback({
-        mutation: mutationRecord,
-        documentTime: this.getDocumentTime(),
-      });
+      this.callback(
+        {
+          mutation: mutationRecord,
+          documentTime: this.getDocumentTime(),
+        },
+        this,
+      );
 
       this.removeKnownNodesInMutation(mutation);
     }
@@ -217,8 +224,8 @@ export class ObservableDom implements ObservableDomInterface {
 
   private addKnownNodesInMutation(mutation: MutationRecord): void {
     const targetNode = mutation.target as Element | Text;
-    const virtualDomElement = this.realElementToVirtualElement.get(targetNode);
-    if (!virtualDomElement) {
+    const virtualDOMElement = this.realElementToVirtualElement.get(targetNode);
+    if (!virtualDOMElement) {
       throw new Error(
         "Unknown node in addKnownNodesInMutation:" + targetNode + "," + mutation.type,
       );
@@ -236,7 +243,7 @@ export class ObservableDom implements ObservableDomInterface {
         if (!previousSiblingElement) {
           throw new Error("Unknown previous sibling");
         }
-        index = virtualDomElement.childNodes.indexOf(previousSiblingElement);
+        index = virtualDOMElement.childNodes.indexOf(previousSiblingElement);
         if (index === -1) {
           throw new Error("Previous sibling is not currently a child of the parent element");
         }
@@ -244,13 +251,13 @@ export class ObservableDom implements ObservableDomInterface {
       }
       mutation.addedNodes.forEach((node: Node) => {
         const asElementOrText = node as Element | Text;
-        const childVirtualDomElement = this.createVirtualDomElementWithChildren(
+        const childVirtualDOMElement = this.createVirtualDOMElementWithChildren(
           asElementOrText,
-          virtualDomElement,
+          virtualDOMElement,
         );
-        if (childVirtualDomElement) {
-          if (virtualDomElement.childNodes.indexOf(childVirtualDomElement) === -1) {
-            virtualDomElement.childNodes.splice(index, 0, childVirtualDomElement);
+        if (childVirtualDOMElement) {
+          if (virtualDOMElement.childNodes.indexOf(childVirtualDOMElement) === -1) {
+            virtualDOMElement.childNodes.splice(index, 0, childVirtualDOMElement);
             index++;
           }
         }
@@ -263,19 +270,19 @@ export class ObservableDom implements ObservableDomInterface {
       }
       const attributeValue = (targetNode as Element).getAttribute(attributeName);
       if (attributeValue === null) {
-        delete virtualDomElement.attributes[attributeName];
+        delete virtualDOMElement.attributes[attributeName];
       } else {
-        virtualDomElement.attributes[attributeName] = attributeValue;
+        virtualDOMElement.attributes[attributeName] = attributeValue;
       }
     } else if (mutation.type === "characterData") {
-      virtualDomElement.textContent = targetNode.textContent ? targetNode.textContent : undefined;
+      virtualDOMElement.textContent = targetNode.textContent ? targetNode.textContent : undefined;
     }
   }
 
   private removeKnownNodesInMutation(mutation: MutationRecord): void {
     const targetNode = mutation.target as Element | Text;
-    const virtualDomElement = this.realElementToVirtualElement.get(targetNode);
-    if (!virtualDomElement) {
+    const virtualDOMElement = this.realElementToVirtualElement.get(targetNode);
+    if (!virtualDOMElement) {
       throw new Error("Unknown node in mutation list:" + targetNode + ", " + mutation.type);
     }
     if (mutation.type === "childList") {
@@ -284,41 +291,41 @@ export class ObservableDom implements ObservableDomInterface {
         if (this.isIgnoredElement(asElementOrText)) {
           continue;
         }
-        const childDomElement = this.realElementToVirtualElement.get(asElementOrText);
-        if (!childDomElement) {
+        const childDOMElement = this.realElementToVirtualElement.get(asElementOrText);
+        if (!childDOMElement) {
           console.warn(this.htmlPath, "Unknown node in removeKnownNodesInMutation");
           continue;
         } else {
-          this.removeVirtualDomElement(childDomElement);
-          const index = virtualDomElement.childNodes.indexOf(childDomElement);
-          virtualDomElement.childNodes.splice(index, 1);
+          this.removeVirtualDOMElement(childDOMElement);
+          const index = virtualDOMElement.childNodes.indexOf(childDOMElement);
+          virtualDOMElement.childNodes.splice(index, 1);
         }
       }
       return;
     }
   }
 
-  private removeVirtualDomElement(virtualDomElement: LiveVirtualDomElement): void {
-    this.nodeIdToNode.delete(virtualDomElement.nodeId);
-    this.nodeToNodeId.delete(virtualDomElement);
-    this.realElementToVirtualElement.delete(virtualDomElement.realElement);
-    for (const child of virtualDomElement.childNodes) {
-      this.removeVirtualDomElement(child);
+  private removeVirtualDOMElement(virtualDOMElement: LiveVirtualDOMElement): void {
+    this.nodeIdToNode.delete(virtualDOMElement.nodeId);
+    this.nodeToNodeId.delete(virtualDOMElement);
+    this.realElementToVirtualElement.delete(virtualDOMElement.realElement);
+    for (const child of virtualDOMElement.childNodes) {
+      this.removeVirtualDOMElement(child);
     }
   }
 
-  private createVirtualDomElementWithChildren(
+  private createVirtualDOMElementWithChildren(
     node: Element | Text,
-    parent: LiveVirtualDomElement | null,
-  ): LiveVirtualDomElement | null {
-    const virtualElement = this.createVirtualDomElement(node, parent);
+    parent: LiveVirtualDOMElement | null,
+  ): LiveVirtualDOMElement | null {
+    const virtualElement = this.createVirtualDOMElement(node, parent);
     if (!virtualElement) {
       return null;
     }
     if ((node as Element).childNodes) {
       for (let i = 0; i < (node as Element).childNodes.length; i++) {
         const child = (node as Element).childNodes[i];
-        const childVirtualElement = this.createVirtualDomElementWithChildren(
+        const childVirtualElement = this.createVirtualDOMElementWithChildren(
           child as Element | Text,
           virtualElement,
         );
@@ -331,10 +338,10 @@ export class ObservableDom implements ObservableDomInterface {
     return virtualElement;
   }
 
-  private createVirtualDomElement(
+  private createVirtualDOMElement(
     node: Element | Text,
-    parent: LiveVirtualDomElement | null,
-  ): LiveVirtualDomElement | null {
+    parent: LiveVirtualDOMElement | null,
+  ): LiveVirtualDOMElement | null {
     if (this.isIgnoredElement(node)) {
       return null;
     }
@@ -361,7 +368,7 @@ export class ObservableDom implements ObservableDomInterface {
     }
 
     const nodeId = this.nextNodeId++;
-    const virtualElement: LiveVirtualDomElement = {
+    const virtualElement: LiveVirtualDOMElement = {
       nodeId,
       tag: node.nodeName,
       attributes,
@@ -392,9 +399,9 @@ export class ObservableDom implements ObservableDomInterface {
     return null;
   }
 
-  private getVirtualDomElementForRealElementOrThrow(
+  private getVirtualDOMElementForRealElementOrThrow(
     realElement: Element | Text,
-  ): LiveVirtualDomElement {
+  ): LiveVirtualDOMElement {
     const virtualElement = this.realElementToVirtualElement.get(realElement);
     if (!virtualElement) {
       throw new Error(`Virtual element not found for real element`);

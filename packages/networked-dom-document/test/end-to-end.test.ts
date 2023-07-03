@@ -1,4 +1,4 @@
-import { LocalObservableDomFactory } from "networked-dom-server";
+import { LocalObservableDOMFactory } from "networked-dom-server";
 
 import { MockWebsocket } from "./mock.websocket";
 import { EditableNetworkedDOM } from "../src";
@@ -13,7 +13,7 @@ afterEach(() => {
 
 describe("end-to-end", () => {
   test("client-snapshot-and-diff-on-reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load("<m-cube></m-cube>");
 
@@ -71,7 +71,7 @@ describe("end-to-end", () => {
   });
 
   test("client-snapshot-and-larger-diff-on-reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load("<m-cube></m-cube>");
 
@@ -155,7 +155,7 @@ describe("end-to-end", () => {
   });
 
   test("client-sends-event-and-observes-state-change", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube id="clickable-cube" color="red"></m-cube>

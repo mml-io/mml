@@ -7,33 +7,33 @@ import {
   TextChangedDiff,
   TextNodeDescription,
 } from "@mml-io/networked-dom-protocol";
-import { StaticVirtualDomElement } from "@mml-io/observable-dom-common";
+import { StaticVirtualDOMElement } from "@mml-io/observable-dom-common";
 import * as rfc6902 from "rfc6902";
 
-import { NodeMapping, StaticVirtualDomMutationRecord, VirtualDOMDiffStruct } from "./common";
+import { NodeMapping, StaticVirtualDOMMutationRecord, VirtualDOMDiffStruct } from "./common";
 
 export const visibleToAttrName = "visible-to";
 export const hiddenFromAttrName = "hidden-from";
 
 // This function does a lot of heavy lifting - it takes a mutation and applies it to the connection's view (affecting which nodes are visible based on attributes etc.)
 // As a result of that application it generates a diff for that client's view of the DOM.
-export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
-  mutation: StaticVirtualDomMutationRecord,
-  parentNode: StaticVirtualDomElement | null,
+export function diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
+  mutation: StaticVirtualDOMMutationRecord,
+  parentNode: StaticVirtualDOMElement | null,
   connectionId: number,
   visibleNodesForConnection: Set<number>,
 ): Diff | null {
-  const virtualDomElement = mutation.target;
+  const virtualDOMElement = mutation.target;
 
   if (mutation.type === "attributes") {
-    const visible = visibleNodesForConnection.has(virtualDomElement.nodeId);
+    const visible = visibleNodesForConnection.has(virtualDOMElement.nodeId);
 
     if (!parentNode) {
       throw new Error("Node has no parent");
     }
     const parentNodeId = parentNode.nodeId;
     const shouldBeVisible =
-      shouldShowNodeToConnectionId(virtualDomElement, connectionId) &&
+      shouldShowNodeToConnectionId(virtualDOMElement, connectionId) &&
       visibleNodesForConnection.has(parentNodeId);
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -41,21 +41,21 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
 
     if (visible && shouldBeVisible) {
       let newValue = null; // null indicates deleted
-      if (virtualDomElement.attributes[attributeName] !== undefined) {
-        newValue = virtualDomElement.attributes[attributeName];
+      if (virtualDOMElement.attributes[attributeName] !== undefined) {
+        newValue = virtualDOMElement.attributes[attributeName];
       }
       const diff: AttributeChangedDiff = {
         type: "attributeChange",
-        nodeId: virtualDomElement.nodeId,
+        nodeId: virtualDOMElement.nodeId,
         attribute: attributeName,
         newValue,
       };
       return diff;
     } else if (!visible && shouldBeVisible) {
       // Need to add this child to the connection's view now
-      visibleNodesForConnection.add(virtualDomElement.nodeId);
+      visibleNodesForConnection.add(virtualDOMElement.nodeId);
 
-      const index = parentNode.childNodes.indexOf(virtualDomElement);
+      const index = parentNode.childNodes.indexOf(virtualDOMElement);
       if (index === -1) {
         throw new Error("Node not found in parent's children");
       }
@@ -70,7 +70,7 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
       }
 
       const nodeDescription = describeNodeWithChildrenForConnectionId(
-        virtualDomElement,
+        virtualDOMElement,
         connectionId,
         visibleNodesForConnection,
       );
@@ -86,13 +86,13 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
       };
       return diff;
     } else if (visible && !shouldBeVisible) {
-      removeNodeAndChildrenFromVisibleNodes(virtualDomElement, visibleNodesForConnection);
+      removeNodeAndChildrenFromVisibleNodes(virtualDOMElement, visibleNodesForConnection);
       const diff: ChildrenChangedDiff = {
         type: "childrenChanged",
         nodeId: parentNodeId,
         previousNodeId: null,
         addedNodes: [],
-        removedNodes: [virtualDomElement.nodeId],
+        removedNodes: [virtualDOMElement.nodeId],
       };
       return diff;
     } else if (!visible && !shouldBeVisible) {
@@ -100,7 +100,7 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
     }
   }
 
-  if (!visibleNodesForConnection.has(virtualDomElement.nodeId)) {
+  if (!visibleNodesForConnection.has(virtualDOMElement.nodeId)) {
     // This element is not visible to the connection, so we don't need to send a diff for it or its children
     return null;
   }
@@ -108,8 +108,8 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
   if (mutation.type === "characterData") {
     const diff: TextChangedDiff = {
       type: "textChanged",
-      nodeId: virtualDomElement.nodeId,
-      text: virtualDomElement.textContent || "",
+      nodeId: virtualDOMElement.nodeId,
+      text: virtualDOMElement.textContent || "",
     };
     return diff;
   }
@@ -118,9 +118,9 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
     let previousSibling = mutation.previousSibling;
     let previousNodeId: number | null = null;
     if (previousSibling) {
-      let previousIndex = virtualDomElement.childNodes.indexOf(previousSibling);
+      let previousIndex = virtualDOMElement.childNodes.indexOf(previousSibling);
       while (previousIndex !== -1) {
-        previousSibling = virtualDomElement.childNodes[previousIndex];
+        previousSibling = virtualDOMElement.childNodes[previousIndex];
         if (visibleNodesForConnection.has(previousSibling.nodeId)) {
           previousNodeId = previousSibling.nodeId;
           break;
@@ -131,15 +131,15 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
 
     const diff: ChildrenChangedDiff = {
       type: "childrenChanged",
-      nodeId: virtualDomElement.nodeId,
+      nodeId: virtualDOMElement.nodeId,
       previousNodeId,
       addedNodes: [],
       removedNodes: [],
     };
 
-    mutation.addedNodes.forEach((childVirtualDomElement: StaticVirtualDomElement) => {
+    mutation.addedNodes.forEach((childVirtualDOMElement: StaticVirtualDOMElement) => {
       const describedNode = describeNodeWithChildrenForConnectionId(
-        childVirtualDomElement,
+        childVirtualDOMElement,
         connectionId,
         visibleNodesForConnection,
       );
@@ -148,10 +148,10 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
       }
       diff.addedNodes.push(describedNode);
     });
-    mutation.removedNodes.forEach((childVirtualDomElement: StaticVirtualDomElement) => {
-      if (visibleNodesForConnection.has(childVirtualDomElement.nodeId)) {
-        removeNodeAndChildrenFromVisibleNodes(childVirtualDomElement, visibleNodesForConnection);
-        diff.removedNodes.push(childVirtualDomElement.nodeId);
+    mutation.removedNodes.forEach((childVirtualDOMElement: StaticVirtualDOMElement) => {
+      if (visibleNodesForConnection.has(childVirtualDOMElement.nodeId)) {
+        removeNodeAndChildrenFromVisibleNodes(childVirtualDOMElement, visibleNodesForConnection);
+        diff.removedNodes.push(childVirtualDOMElement.nodeId);
       }
     });
 
@@ -166,7 +166,7 @@ export function diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
 }
 
 function getNodeIdOfPreviousVisibleSibling(
-  parentVirtualElement: StaticVirtualDomElement,
+  parentVirtualElement: StaticVirtualDOMElement,
   candidateIndex: number,
   visibleNodesForConnection: Set<number>,
 ): number | null {
@@ -184,11 +184,11 @@ function getNodeIdOfPreviousVisibleSibling(
 }
 
 function shouldShowNodeToConnectionId(
-  virtualDomElement: StaticVirtualDomElement,
+  virtualDOMElement: StaticVirtualDOMElement,
   connectionId: number,
 ): boolean {
-  const visibleToAttr = virtualDomElement.attributes[visibleToAttrName];
-  const hiddenFromAttr = virtualDomElement.attributes[hiddenFromAttrName];
+  const visibleToAttr = virtualDOMElement.attributes[visibleToAttrName];
+  const hiddenFromAttr = virtualDOMElement.attributes[hiddenFromAttrName];
   const connectionIdString = connectionId.toString();
   if (visibleToAttr !== undefined) {
     const visibleToList = visibleToAttr.split(" ");
@@ -208,38 +208,38 @@ function shouldShowNodeToConnectionId(
 }
 
 export function describeNodeWithChildrenForConnectionId(
-  virtualDomElement: StaticVirtualDomElement,
+  virtualDOMElement: StaticVirtualDOMElement,
   connectionId: number,
   visibleNodesForConnection: Set<number>,
 ): NodeDescription | null {
-  if (!shouldShowNodeToConnectionId(virtualDomElement, connectionId)) {
+  if (!shouldShowNodeToConnectionId(virtualDOMElement, connectionId)) {
     return null;
   }
 
-  let emittedTagName = virtualDomElement.tag;
+  let emittedTagName = virtualDOMElement.tag;
   if (emittedTagName === "#document") {
     emittedTagName = "DIV";
   }
   if (emittedTagName === "#text") {
     const textNode: TextNodeDescription = {
       type: "text",
-      nodeId: virtualDomElement.nodeId,
-      text: virtualDomElement.textContent || "",
+      nodeId: virtualDOMElement.nodeId,
+      text: virtualDOMElement.textContent || "",
     };
     visibleNodesForConnection.add(textNode.nodeId);
     return textNode;
   } else {
     const node: ElementNodeDescription = {
       type: "element",
-      nodeId: virtualDomElement.nodeId,
+      nodeId: virtualDOMElement.nodeId,
       tag: emittedTagName,
-      attributes: virtualDomElement.attributes,
+      attributes: virtualDOMElement.attributes,
       children: [],
-      text: virtualDomElement.textContent,
+      text: virtualDOMElement.textContent,
     };
     visibleNodesForConnection.add(node.nodeId);
 
-    for (const child of virtualDomElement.childNodes) {
+    for (const child of virtualDOMElement.childNodes) {
       const childNodeDescription = describeNodeWithChildrenForConnectionId(
         child,
         connectionId,
@@ -254,11 +254,11 @@ export function describeNodeWithChildrenForConnectionId(
 }
 
 function removeNodeAndChildrenFromVisibleNodes(
-  virtualDomElement: StaticVirtualDomElement,
+  virtualDOMElement: StaticVirtualDOMElement,
   visibleNodesForConnection: Set<number>,
 ): void {
-  visibleNodesForConnection.delete(virtualDomElement.nodeId);
-  for (const child of virtualDomElement.childNodes) {
+  visibleNodesForConnection.delete(virtualDOMElement.nodeId);
+  for (const child of virtualDOMElement.childNodes) {
     if (!visibleNodesForConnection.has(child.nodeId)) {
       console.error("Inner child of removed element was not visible", child.nodeId);
     }
@@ -267,14 +267,14 @@ function removeNodeAndChildrenFromVisibleNodes(
 }
 
 export function findParentNodeOfNodeId(
-  virtualDomElement: StaticVirtualDomElement,
+  virtualDOMElement: StaticVirtualDOMElement,
   targetNodeId: number,
-): StaticVirtualDomElement | null {
+): StaticVirtualDOMElement | null {
   // TODO - avoid a search of the whole tree for the node's parent
   // depth-first search of the whole virtual dom structure to find the node's parent
-  for (const child of virtualDomElement.childNodes) {
+  for (const child of virtualDOMElement.childNodes) {
     if (child.nodeId === targetNodeId) {
-      return virtualDomElement;
+      return virtualDOMElement;
     } else {
       const foundParentId = findParentNodeOfNodeId(child, targetNodeId);
       if (foundParentId) {
@@ -286,9 +286,9 @@ export function findParentNodeOfNodeId(
 }
 
 export function virtualDOMDiffToVirtualDOMMutationRecord(
-  virtualStructure: StaticVirtualDomElement,
+  virtualStructure: StaticVirtualDOMElement,
   domDiff: rfc6902.Operation,
-): Array<StaticVirtualDomMutationRecord> {
+): Array<StaticVirtualDOMMutationRecord> {
   const pointer = rfc6902.Pointer.fromJSON(domDiff.path);
   const grandParentTokens = pointer.tokens.slice(0, pointer.tokens.length - 2);
   const lastToken = pointer.tokens[pointer.tokens.length - 1];
@@ -296,7 +296,7 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
 
   if (lastToken === "textContent") {
     const nodePointer = new rfc6902.Pointer(pointer.tokens.slice(0, pointer.tokens.length - 1));
-    const node = nodePointer.get(virtualStructure) as StaticVirtualDomElement;
+    const node = nodePointer.get(virtualStructure) as StaticVirtualDOMElement;
     return [
       {
         type: "characterData",
@@ -312,7 +312,7 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
   if (secondLastToken === "attributes") {
     // This handles attribute additions, changes, and removals
     const nodePointer = new rfc6902.Pointer(grandParentTokens);
-    const node = nodePointer.get(virtualStructure) as StaticVirtualDomElement;
+    const node = nodePointer.get(virtualStructure) as StaticVirtualDOMElement;
     return [
       {
         type: "attributes",
@@ -329,9 +329,9 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
 
   if (secondLastToken === "childNodes") {
     const nodePointer = new rfc6902.Pointer(grandParentTokens);
-    const node = nodePointer.get(virtualStructure) as StaticVirtualDomElement;
+    const node = nodePointer.get(virtualStructure) as StaticVirtualDOMElement;
 
-    let previousSibling: StaticVirtualDomElement | null = null;
+    let previousSibling: StaticVirtualDOMElement | null = null;
     if (lastToken === "-") {
       // Append to the end of the children
     } else {
@@ -342,8 +342,8 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
         previousSibling = node.childNodes[index - 1];
       }
     }
-    const addedNodes: Array<StaticVirtualDomElement> = [];
-    const removedNodes: Array<StaticVirtualDomElement> = [];
+    const addedNodes: Array<StaticVirtualDOMElement> = [];
+    const removedNodes: Array<StaticVirtualDOMElement> = [];
     if (domDiff.op === "add") {
       addedNodes.push(domDiff.value);
       return [
@@ -357,7 +357,7 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
         },
       ];
     } else if (domDiff.op === "remove") {
-      const removedNode = pointer.get(virtualStructure) as StaticVirtualDomElement;
+      const removedNode = pointer.get(virtualStructure) as StaticVirtualDOMElement;
       removedNodes.push(removedNode);
       return [
         {
@@ -371,7 +371,7 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
       ];
     } else if (domDiff.op === "replace") {
       // This is a replacement of a single node
-      const removedNode = pointer.get(virtualStructure) as StaticVirtualDomElement;
+      const removedNode = pointer.get(virtualStructure) as StaticVirtualDOMElement;
       removedNodes.push(removedNode);
       addedNodes.push(domDiff.value);
       return [
@@ -399,9 +399,9 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
   throw new Error("Unhandled diff type");
 }
 
-export function calculateStaticVirtualDomDiff(
-  originalState: StaticVirtualDomElement,
-  latestState: StaticVirtualDomElement,
+export function calculateStaticVirtualDOMDiff(
+  originalState: StaticVirtualDOMElement,
+  latestState: StaticVirtualDOMElement,
 ): VirtualDOMDiffStruct {
   const jsonPatchDiffs = rfc6902.createPatch(
     originalState,
@@ -439,7 +439,7 @@ export function calculateStaticVirtualDomDiff(
   );
 }
 
-function getHighestNodeId(node: StaticVirtualDomElement) {
+function getHighestNodeId(node: StaticVirtualDOMElement) {
   let highest = node.nodeId;
   for (const child of node.childNodes) {
     highest = Math.max(highest, getHighestNodeId(child));
@@ -447,9 +447,9 @@ function getHighestNodeId(node: StaticVirtualDomElement) {
   return highest;
 }
 
-function getRemovedNodeIds(before: StaticVirtualDomElement, diff: rfc6902.Operation) {
+function getRemovedNodeIds(before: StaticVirtualDOMElement, diff: rfc6902.Operation) {
   const removedIds = new Set<number>();
-  function addNode(node: StaticVirtualDomElement) {
+  function addNode(node: StaticVirtualDOMElement) {
     removedIds.add(node.nodeId);
     for (const child of node.childNodes) {
       addNode(child);
@@ -462,9 +462,9 @@ function getRemovedNodeIds(before: StaticVirtualDomElement, diff: rfc6902.Operat
   return removedIds;
 }
 
-function getNodeIdsFromNodeAndChildren(node: StaticVirtualDomElement) {
+function getNodeIdsFromNodeAndChildren(node: StaticVirtualDOMElement) {
   const nodeIds = new Set<number>();
-  function addNode(node: StaticVirtualDomElement) {
+  function addNode(node: StaticVirtualDOMElement) {
     nodeIds.add(node.nodeId);
     for (const child of node.childNodes) {
       addNode(child);
@@ -477,7 +477,7 @@ function getNodeIdsFromNodeAndChildren(node: StaticVirtualDomElement) {
 // To avoid duplicate node ids at any point in the sequence of operations, apply the operations and determine if any node ids are duplicated at any point. If so, remap the node ids to be unique.
 function remapDuplicatedNodeIdsInOperations(
   virtualDOMDiffStruct: VirtualDOMDiffStruct,
-  latestState: StaticVirtualDomElement,
+  latestState: StaticVirtualDOMElement,
 ): VirtualDOMDiffStruct {
   const { originalState, nodeIdRemappings, virtualDOMDiffs } = virtualDOMDiffStruct;
 
@@ -490,7 +490,7 @@ function remapDuplicatedNodeIdsInOperations(
   const before = JSON.parse(JSON.stringify(originalState));
 
   function checkAndReplaceNodeIdsIfAlreadyInUse(
-    node: StaticVirtualDomElement,
+    node: StaticVirtualDOMElement,
     addingNodeIds: Set<number>,
     removedIds: Set<number>,
   ) {
