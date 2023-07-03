@@ -1,15 +1,15 @@
-import { JSDOMRunnerFactory, ObservableDom } from "@mml-io/observable-dom";
+import { JSDOMRunnerFactory, ObservableDOM } from "@mml-io/observable-dom";
 import {
-  ObservableDomInterface,
-  ObservableDomMessage,
+  ObservableDOMInterface,
+  ObservableDOMMessage,
   ObservableDOMParameters,
 } from "@mml-io/observable-dom-common";
 
-export function LocalObservableDomFactory(
+export function LocalObservableDOMFactory(
   observableDOMParameters: ObservableDOMParameters,
-  callback: (message: ObservableDomMessage) => void,
-): ObservableDomInterface {
-  return new ObservableDom(observableDOMParameters, callback, JSDOMRunnerFactory);
+  callback: (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => void,
+): ObservableDOMInterface {
+  return new ObservableDOM(observableDOMParameters, callback, JSDOMRunnerFactory);
 }
 
 export * from "@mml-io/observable-dom";

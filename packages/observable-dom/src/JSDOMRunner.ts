@@ -5,9 +5,9 @@ import { AbortablePromise, DOMWindow, JSDOM, ResourceLoader, VirtualConsole } fr
 import * as nodeFetch from "node-fetch";
 import nodeFetchFn from "node-fetch";
 
-import { DOMRunnerFactory, DOMRunnerInterface, DOMRunnerMessage } from "./ObservableDom";
+import { DOMRunnerFactory, DOMRunnerInterface, DOMRunnerMessage } from "./ObservableDOM";
 
-const ErrDomWindowNotInitialized = "DOMWindow not initialized";
+const ErrDOMWindowNotInitialized = "DOMWindow not initialized";
 
 // TODO - remove this monkeypatching if it's possible to avoid the race conditions in naive MutationObserver usage
 const monkeyPatchedMutationRecordCallbacks = new Set<() => void>();
@@ -57,15 +57,12 @@ class RejectionResourceLoader extends ResourceLoader {
 export class JSDOMRunner {
   private monkeyPatchMutationRecordCallback: () => void;
 
-  private ipcWebsockets = new Set<WebSocket>();
-
   public domWindow: DOMWindow | null = null;
-  private jsDom: JSDOM;
+  private jsdom: JSDOM;
 
   private callback: (message: DOMRunnerMessage) => void;
   private mutationObserver: MutationObserver | null = null;
   private htmlPath: string;
-  private ipcListeners = new Set<(event: any) => void>();
 
   private documentStartTime = Date.now();
 
@@ -104,7 +101,7 @@ export class JSDOMRunner {
     };
     monkeyPatchedMutationRecordCallbacks.add(this.monkeyPatchMutationRecordCallback);
 
-    this.jsDom = new JSDOM(htmlContents, {
+    this.jsdom = new JSDOM(htmlContents, {
       runScripts: "dangerously",
       resources: new RejectionResourceLoader(),
       url: this.htmlPath,
@@ -128,24 +125,6 @@ export class JSDOMRunner {
 
         // JSON stringify and parse to avoid potential reference leaks from the params object
         window.params = JSON.parse(JSON.stringify(params));
-
-        const oldDocumentAddEventListener = window.document.addEventListener;
-        window.document.addEventListener = (...args: [string, EventListener, ...any[]]) => {
-          const [eventName, listener] = args;
-          if (eventName === "ipc") {
-            this.ipcListeners.add(listener);
-          }
-          return oldDocumentAddEventListener.call(window.document, ...args);
-        };
-
-        const oldDocumentRemoveEventListener = window.document.addEventListener;
-        window.document.removeEventListener = (...args: [string, EventListener, ...any[]]) => {
-          const [eventName, listener] = args;
-          if (eventName === "ipc") {
-            this.ipcListeners.delete(listener);
-          }
-          return oldDocumentRemoveEventListener.call(window.document, ...args);
-        };
 
         this.mutationObserver = new window.MutationObserver((mutationList) => {
           this.callback({
@@ -196,7 +175,7 @@ export class JSDOMRunner {
 
   public getDocument(): Document {
     if (!this.domWindow) {
-      throw new Error(ErrDomWindowNotInitialized);
+      throw new Error(ErrDOMWindowNotInitialized);
     }
 
     return this.domWindow.document;
@@ -206,30 +185,6 @@ export class JSDOMRunner {
     return this.domWindow;
   }
 
-  public addIPCWebsocket(webSocket: WebSocket) {
-    if (!this.domWindow) {
-      throw new Error(ErrDomWindowNotInitialized);
-    }
-    if (this.ipcListeners.size === 0) {
-      console.error("ipc requested, but no ipc listeners registered on document:", this.htmlPath);
-      webSocket.close();
-      return;
-    }
-    this.ipcWebsockets.add(webSocket);
-    const event = new this.domWindow.CustomEvent("ipc", {
-      detail: {
-        webSocket,
-      },
-    });
-    for (const ipcListener of this.ipcListeners) {
-      ipcListener(event);
-    }
-    webSocket.addEventListener("close", () => {
-      this.ipcWebsockets.delete(webSocket);
-    });
-    return;
-  }
-
   public dispose() {
     const records = this.mutationObserver?.takeRecords();
     this.callback({
@@ -237,7 +192,7 @@ export class JSDOMRunner {
     });
     monkeyPatchedMutationRecordCallbacks.delete(this.monkeyPatchMutationRecordCallback);
     this.mutationObserver?.disconnect();
-    this.jsDom.window.close();
+    this.jsdom.window.close();
   }
 
   public getDocumentTime() {
@@ -250,7 +205,7 @@ export class JSDOMRunner {
     remoteEvent: RemoteEvent,
   ) {
     if (!this.domWindow) {
-      throw new Error(ErrDomWindowNotInitialized);
+      throw new Error(ErrDOMWindowNotInitialized);
     }
 
     const bubbles = remoteEvent.bubbles || false;
@@ -268,7 +223,7 @@ export class JSDOMRunner {
       if (handlerAttributeValue) {
         // This event is defined as an HTML event attribute.
         const script = handlerAttributeValue;
-        const vmContext = this.jsDom.getInternalVMContext();
+        const vmContext = this.jsdom.getInternalVMContext();
         try {
           const invoke = vm.runInContext(`(function(event){ ${script} })`, vmContext);
           Reflect.apply(invoke, domNode, [remoteEventObject]);

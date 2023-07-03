@@ -1,2 +1,2 @@
-export * from "./ObservableDom";
+export * from "./ObservableDOM";
 export * from "./JSDOMRunner";

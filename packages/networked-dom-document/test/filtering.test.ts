@@ -1,5 +1,5 @@
 import { RemoteEvent } from "@mml-io/networked-dom-protocol";
-import { LocalObservableDomFactory } from "networked-dom-server";
+import { LocalObservableDOMFactory } from "networked-dom-server";
 
 import { MockWebsocket } from "./mock.websocket";
 import { EditableNetworkedDOM } from "../src";
@@ -14,7 +14,7 @@ afterEach(() => {
 
 describe("filtering", () => {
   test("filters onclick on reloads", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube onclick="alert('in-first')" color="red"></m-cube>
@@ -91,7 +91,7 @@ describe("filtering", () => {
   });
 
   test("filters onclick on mutation", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube onclick="this.setAttribute('onclick','doSomething()');" color="red"></m-cube>

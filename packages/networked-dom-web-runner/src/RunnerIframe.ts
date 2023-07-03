@@ -1,19 +1,21 @@
-import { ObservableDOMParameters } from "@mml-io/observable-dom-common";
+import {
+  FromObservableDOMInstanceMessage,
+  ObservableDOMParameters,
+  ToObservableDOMInstanceMessage,
+} from "@mml-io/observable-dom-common";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 // eslint-disable-next-line import/no-unresolved
 import runnerText from "runner-iframe-js-text";
 
-import { FromInstanceMessageTypes, ToInstanceMessageTypes } from "./message-types";
-
 export class RunnerIframe {
   private iframe: HTMLIFrameElement;
-  private onMessageCallback: (msg: FromInstanceMessageTypes) => void;
-  private postMessageListener: (msg: MessageEvent) => void;
+  private onMessageCallback: (message: FromObservableDOMInstanceMessage) => void;
+  private postMessageListener: (messageEvent: MessageEvent) => void;
 
   constructor(
     observableDOMParameters: ObservableDOMParameters,
-    onMessageCallback: (msg: FromInstanceMessageTypes) => void,
+    onMessageCallback: (message: FromObservableDOMInstanceMessage) => void,
   ) {
     this.iframe = document.createElement("iframe");
     this.iframe.setAttribute("sandbox", "allow-scripts");
@@ -62,14 +64,14 @@ export class RunnerIframe {
 
     this.postMessageListener = (e: MessageEvent) => {
       if (e.source === this.iframe.contentWindow || (isJSDOM && e.source === null)) {
-        const parsed = JSON.parse(e.data) as FromInstanceMessageTypes;
+        const parsed = JSON.parse(e.data) as FromObservableDOMInstanceMessage;
         onMessageCallback(parsed);
       }
     };
     window.addEventListener("message", this.postMessageListener);
   }
 
-  sendMessageToRunner(message: ToInstanceMessageTypes) {
+  sendMessageToRunner(message: ToObservableDOMInstanceMessage) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.iframe.contentWindow!.postMessage(JSON.stringify(message), "*");
   }

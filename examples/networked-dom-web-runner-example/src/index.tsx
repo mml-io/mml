@@ -5,19 +5,20 @@ import {
   NetworkedDOMWebRunnerClient,
 } from "@mml-io/networked-dom-web-runner";
 
-const startingContent = `<div id="my-div" style="width:50px; height: 50px; background-color:orange;">Init</div>
+const startingContent = `
+<div id="my-div" style="width:50px; height: 50px; background-color:orange; color: white;">Init</div>
+<div id="connected-status-div" style="background-color:blue; color: white;">Connected: 0</div>
 <button id="my-button">Click me!</button>
 <script>
   const myDiv = document.getElementById("my-div");
   const myButton = document.getElementById("my-button");
+  const connectedStatusDiv = document.getElementById("connected-status-div");
+  let connectedCount = 0;
 
   let colorToggle = false;
   myButton.addEventListener("click", () => {
     colorToggle = !colorToggle;
-    myDiv.setAttribute(
-      "style",
-      "background-color: "+(colorToggle ? "green" : "red")+"; width: 50px; height: 50px;",
-    );
+    myDiv.style.backgroundColor = (colorToggle ? "green" : "red");
   });
 
   let textToggle = false;
@@ -25,6 +26,15 @@ const startingContent = `<div id="my-div" style="width:50px; height: 50px; backg
     textToggle = !textToggle;
     myDiv.textContent = textToggle ? "Hello" : "World";
   }, 1000);
+  
+  window.addEventListener("connected", () => {
+    connectedCount++;
+    connectedStatusDiv.textContent = "Connected: "+connectedCount;
+  });
+  window.addEventListener("disconnected", () => {
+    connectedCount--;
+    connectedStatusDiv.textContent = "Connected: "+connectedCount;
+  });
 </script>`;
 
 function createCloseableNetworkedDOMWebRunnerClient(
@@ -62,6 +72,10 @@ window.addEventListener("DOMContentLoaded", () => {
     IframeObservableDOMFactory,
     false,
   );
+
+  const title = document.createElement("h1");
+  title.textContent = "Networked DOM Web Runner Example";
+  document.body.append(title);
 
   const textArea = document.createElement("textarea");
   textArea.style.width = "500px";

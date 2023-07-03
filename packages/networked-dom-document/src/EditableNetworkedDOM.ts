@@ -1,7 +1,7 @@
-import { LogMessage, StaticVirtualDomElement } from "@mml-io/observable-dom-common";
+import { LogMessage, StaticVirtualDOMElement } from "@mml-io/observable-dom-common";
 
 import { VirtualDOMDiffStruct } from "./common";
-import { NetworkedDOM, ObservableDomFactory } from "./NetworkedDOM";
+import { NetworkedDOM, ObservableDOMFactory } from "./NetworkedDOM";
 
 type LoadedState = {
   htmlContents: string;
@@ -19,14 +19,14 @@ export class EditableNetworkedDOM {
   private websockets = new Set<WebSocket>();
   private loadedState: LoadedState | null = null;
 
-  private observableDOMFactory: ObservableDomFactory;
+  private observableDOMFactory: ObservableDOMFactory;
   private ignoreTextNodes: boolean;
 
   private logCallback?: (message: LogMessage) => void;
 
   constructor(
     htmlPath: string,
-    observableDOMFactory: ObservableDomFactory,
+    observableDOMFactory: ObservableDOMFactory,
     ignoreTextNodes = true,
     logCallback?: (message: LogMessage) => void,
   ) {
@@ -45,7 +45,7 @@ export class EditableNetworkedDOM {
       this.params = params;
     }
 
-    let oldInstanceRoot: StaticVirtualDomElement | null = null;
+    let oldInstanceRoot: StaticVirtualDOMElement | null = null;
     let existingWebsocketMap: Map<WebSocket, number> | null = null;
     if (this.loadedState) {
       const oldInstance = this.loadedState.networkedDOM;
@@ -61,7 +61,7 @@ export class EditableNetworkedDOM {
       this.htmlPath,
       htmlContents,
       oldInstanceRoot,
-      (domDiff: VirtualDOMDiffStruct | null) => {
+      (domDiff: VirtualDOMDiffStruct | null, networkedDOM: NetworkedDOM) => {
         didLoad = true;
         if (this.loadedState) {
           this.loadedState.loaded = true;
@@ -113,16 +113,6 @@ export class EditableNetworkedDOM {
     this.websockets.delete(webSocket);
     if (this.loadedState && this.loadedState.loaded) {
       this.loadedState.networkedDOM.removeWebSocket(webSocket);
-    }
-  }
-
-  public addIPCWebSocket(webSocket: WebSocket) {
-    if (this.loadedState && this.loadedState.loaded) {
-      this.loadedState.networkedDOM.addIPCWebSocket(webSocket);
-    } else {
-      console.error("Dom instance not loaded/ready to accept IPC websocket");
-      webSocket.close();
-      return;
     }
   }
 }

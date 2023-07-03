@@ -4,14 +4,10 @@
 
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { LogMessage } from "@mml-io/observable-dom-common";
-import { AudioContext } from "standardized-audio-context-mock";
 
 import { waitFor } from "./test-util";
 import { IframeObservableDOMFactory, NetworkedDOMWebRunnerClient } from "../build/index";
 
-beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
-});
 test("networked-dom-web-runner end-to-end", async () => {
   const logs: LogMessage[] = [];
 
@@ -53,37 +49,27 @@ test("networked-dom-web-runner end-to-end", async () => {
   testElement.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   await waitFor(() => testElement.getAttribute("data-some-attr") === "new-value");
 
-  await waitFor(() => true);
-
-  expect(logs).toContainEqual(
+  expect(logs).toEqual([
     expect.objectContaining({
       level: "log",
       content: ["level-log"],
     }),
-  );
 
-  expect(logs).toContainEqual(
     expect.objectContaining({
       level: "info",
       content: ["level-info"],
     }),
-  );
 
-  expect(logs).toContainEqual(
     expect.objectContaining({
       level: "warn",
       content: ["level-warn"],
     }),
-  );
 
-  expect(logs).toContainEqual(
     expect.objectContaining({
       level: "error",
       content: ["level-error"],
     }),
-  );
 
-  expect(logs).toContainEqual(
     expect.objectContaining({
       level: "system",
       content: [
@@ -93,7 +79,13 @@ test("networked-dom-web-runner end-to-end", async () => {
         }),
       ],
     }),
-  );
+  ]);
+
+  networkedDOMDocument.load(`<div data-some-id="different-element"></div>`);
+
+  await waitFor(() => {
+    return client.element.querySelectorAll("[data-some-id='different-element']").length > 0;
+  });
 
   networkedDOMDocument.dispose();
 });

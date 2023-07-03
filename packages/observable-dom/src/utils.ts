@@ -1,13 +1,13 @@
-import { StaticVirtualDomElement } from "@mml-io/observable-dom-common";
+import { StaticVirtualDOMElement } from "@mml-io/observable-dom-common";
 
-import { LiveVirtualDomElement } from "./ObservableDom";
+import { LiveVirtualDOMElement } from "./ObservableDOM";
 
-export function virtualDomElementToStatic(el: LiveVirtualDomElement): StaticVirtualDomElement {
+export function virtualDOMElementToStatic(el: LiveVirtualDOMElement): StaticVirtualDOMElement {
   return {
     nodeId: el.nodeId,
     tag: el.tag,
     attributes: el.attributes,
-    childNodes: el.childNodes.map((child) => virtualDomElementToStatic(child)),
+    childNodes: el.childNodes.map((child) => virtualDOMElementToStatic(child)),
     textContent: el.textContent,
   };
 }

@@ -6,14 +6,14 @@ import { NetworkedDOM } from "@mml-io/networked-dom-document";
 import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
-import { EditableNetworkedDOM, LocalObservableDomFactory } from "networked-dom-server";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import ws from "ws";
 
 const port = process.env.PORT || 8080;
 
 const filePath = path.resolve(__dirname, "../src/mml-document.html");
 
-const getDomFileContents = () => fs.readFileSync(filePath, "utf8");
+const getMMLFileContents = () => fs.readFileSync(filePath, "utf8");
 
 const getWebsocketUrl = (req: Request) =>
   `${req.secure ? "wss" : "ws"}://${
@@ -24,11 +24,11 @@ const getWebsocketUrl = (req: Request) =>
 
 const document = new EditableNetworkedDOM(
   url.pathToFileURL(filePath).toString(),
-  LocalObservableDomFactory,
+  LocalObservableDOMFactory,
 );
-document.load(getDomFileContents());
+document.load(getMMLFileContents());
 chokidar.watch(filePath).on("change", () => {
-  document.load(getDomFileContents());
+  document.load(getMMLFileContents());
 });
 
 const { app } = enableWs(express(), undefined, {
@@ -55,7 +55,7 @@ app.get("/", (req, res) => {
 });
 app.get("/static-example/", (req, res) => {
   res.send(
-    `<html><script src="http://localhost:28891/index.js"></script>${getDomFileContents()}</html>`,
+    `<html><script src="http://localhost:28891/index.js"></script>${getMMLFileContents()}</html>`,
   );
 });
 app.ws("/mml-websocket", (ws: ws.WebSocket) => {

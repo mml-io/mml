@@ -3,7 +3,7 @@ import * as path from "path";
 import * as url from "url";
 
 import { NetworkedDOM } from "@mml-io/networked-dom-document";
-import { EditableNetworkedDOM, LocalObservableDomFactory } from "networked-dom-server";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
@@ -13,7 +13,7 @@ const port = process.env.PORT || 8081;
 
 const filePath = path.resolve(__dirname, "../src/networked-dom-document.html");
 
-const getDomFileContents = () => fs.readFileSync(filePath, "utf8");
+const getHTMLFileContents = () => fs.readFileSync(filePath, "utf8");
 
 const getWebsocketUrl = (req: Request) =>
   `${req.secure ? "wss" : "ws"}://${
@@ -24,12 +24,12 @@ const getWebsocketUrl = (req: Request) =>
 
 const document = new EditableNetworkedDOM(
   url.pathToFileURL(filePath).toString(),
-  LocalObservableDomFactory,
+  LocalObservableDOMFactory,
   false,
 );
-document.load(getDomFileContents());
+document.load(getHTMLFileContents());
 chokidar.watch(filePath).on("change", () => {
-  document.load(getDomFileContents());
+  document.load(getHTMLFileContents());
 });
 
 const { app } = enableWs(express(), undefined, {
@@ -48,7 +48,7 @@ app.get("/", (req, res) => {
 `);
 });
 app.get("/static-example/", (req, res) => {
-  res.send(getDomFileContents());
+  res.send(getHTMLFileContents());
 });
 app.ws("/networked-dom-websocket", (ws: ws.WebSocket) => {
   document.addWebSocket(ws as unknown as WebSocket);

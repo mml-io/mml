@@ -97,10 +97,6 @@ export class WebBrowserDOMRunner implements DOMRunnerInterface {
     }
   }
 
-  addIPCWebsocket(): void {
-    throw new Error("Not implemented.");
-  }
-
   dispatchRemoteEventFromConnectionId(
     connectionId: number,
     realElement: Element,

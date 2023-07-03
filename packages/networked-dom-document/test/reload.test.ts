@@ -1,4 +1,4 @@
-import { LocalObservableDomFactory } from "networked-dom-server";
+import { LocalObservableDOMFactory } from "networked-dom-server";
 
 import { MockWebsocket } from "./mock.websocket";
 import { EditableNetworkedDOM } from "../src";
@@ -13,7 +13,7 @@ afterEach(() => {
 
 describe("reloading", () => {
   test("add-within-group-on-reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube color="red"></m-cube>
@@ -173,7 +173,7 @@ describe("reloading", () => {
   });
 
   test("move-to-within-group-on-reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
@@ -352,7 +352,7 @@ describe("reloading", () => {
   });
 
   test("remapping-on-reload-and-click", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDomFactory);
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `

@@ -9,35 +9,35 @@ import {
 } from "@mml-io/networked-dom-protocol";
 import {
   LogMessage,
-  ObservableDomInterface,
-  ObservableDomMessage,
+  ObservableDOMInterface,
+  ObservableDOMMessage,
   ObservableDOMParameters,
-  StaticVirtualDomElement,
-  StaticVirtualDomMutationIdsRecord,
+  StaticVirtualDOMElement,
+  StaticVirtualDOMMutationIdsRecord,
 } from "@mml-io/observable-dom-common";
 import { applyPatch } from "rfc6902";
 
-import { StaticVirtualDomMutationRecord, VirtualDOMDiffStruct } from "./common";
+import { StaticVirtualDOMMutationRecord, VirtualDOMDiffStruct } from "./common";
 import {
-  calculateStaticVirtualDomDiff,
+  calculateStaticVirtualDOMDiff,
   describeNodeWithChildrenForConnectionId,
-  diffFromApplicationOfStaticVirtualDomMutationRecordToConnection,
+  diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection,
   findParentNodeOfNodeId,
   virtualDOMDiffToVirtualDOMMutationRecord,
 } from "./diffing";
 
-export const networkedDomProtocolSubProtocol_v0_1 = "networked-dom-v0.1";
-export const defaultWebsocketSubProtocol = networkedDomProtocolSubProtocol_v0_1;
+export const networkedDOMProtocolSubProtocol_v0_1 = "networked-dom-v0.1";
+export const defaultWebsocketSubProtocol = networkedDOMProtocolSubProtocol_v0_1;
 
-export type ObservableDomFactory = (
+export type ObservableDOMFactory = (
   observableDOMParameters: ObservableDOMParameters,
-  callback: (message: ObservableDomMessage) => void,
-) => ObservableDomInterface;
+  callback: (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => void,
+) => ObservableDOMInterface;
 
 export class NetworkedDOM {
   // First to last in order of preference
   public static SupportedWebsocketSubProtocolsPreferenceOrder = [
-    networkedDomProtocolSubProtocol_v0_1,
+    networkedDOMProtocolSubProtocol_v0_1,
   ];
 
   // Map from the node ids that the DOM uses internally to the node ids that clients refer to.
@@ -46,13 +46,10 @@ export class NetworkedDOM {
   // Map from the node ids that clients refer to to the node ids that the DOM uses internally.
   private clientNodeIdToInternalNodeId = new Map<number, number>();
 
-  private nextNodeId = 1;
-
-  private ipcWebsockets = new Set<WebSocket>();
   private currentConnectionId = 1;
   private connectionIdToWebSocketContext = new Map<
     number,
-    { webSocket: WebSocket; messageListener: (msg: MessageEvent) => void }
+    { webSocket: WebSocket; messageListener: (messageEvent: MessageEvent) => void }
   >();
   private webSocketToConnectionId = new Map<WebSocket, number>();
   private visibleNodeIdsByConnectionId = new Map<number, Set<number>>();
@@ -62,11 +59,11 @@ export class NetworkedDOM {
   private disposed = false;
   private ignoreTextNodes: boolean;
 
-  private documentRoot!: StaticVirtualDomElement;
-  private nodeIdToNode = new Map<number, StaticVirtualDomElement>();
+  private documentRoot!: StaticVirtualDOMElement;
+  private nodeIdToNode = new Map<number, StaticVirtualDOMElement>();
   private nodeIdToParentNodeId = new Map<number, number>();
 
-  private observableDom: ObservableDomInterface;
+  private observableDOM: ObservableDOMInterface;
 
   private documentEffectiveStartTime = Date.now();
   private latestDocumentTime = 0;
@@ -76,11 +73,11 @@ export class NetworkedDOM {
   private logCallback?: (message: LogMessage) => void;
 
   constructor(
-    observableDomFactory: ObservableDomFactory,
+    observableDOMFactory: ObservableDOMFactory,
     htmlPath: string,
     htmlContents: string,
-    oldInstanceDocumentRoot: StaticVirtualDomElement | null,
-    onLoad: (domDiff: VirtualDOMDiffStruct | null) => void,
+    oldInstanceDocumentRoot: StaticVirtualDOMElement | null,
+    onLoad: (domDiff: VirtualDOMDiffStruct | null, networkedDOM: NetworkedDOM) => void,
     params = {},
     ignoreTextNodes = true,
     logCallback?: (message: LogMessage) => void,
@@ -90,7 +87,7 @@ export class NetworkedDOM {
 
     this.logCallback = logCallback || this.defaultLogCallback;
 
-    this.observableDom = observableDomFactory(
+    this.observableDOM = observableDOMFactory(
       {
         htmlPath,
         htmlContents,
@@ -98,7 +95,8 @@ export class NetworkedDOM {
         ignoreTextNodes,
         pingIntervalMilliseconds: 5000,
       },
-      (message: ObservableDomMessage) => {
+      (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => {
+        this.observableDOM = observableDOM;
         if (message.documentTime) {
           this.documentEffectiveStartTime = Date.now() - message.documentTime;
           this.latestDocumentTime = message.documentTime;
@@ -114,7 +112,7 @@ export class NetworkedDOM {
 
           let domDiff: VirtualDOMDiffStruct | null = null;
           if (oldInstanceDocumentRoot) {
-            domDiff = calculateStaticVirtualDomDiff(oldInstanceDocumentRoot, clonedSnapshot);
+            domDiff = calculateStaticVirtualDOMDiff(oldInstanceDocumentRoot, clonedSnapshot);
             for (const remapping of domDiff.nodeIdRemappings) {
               this.addRemappedNodeId(remapping.clientFacingNodeId, remapping.internalNodeId);
             }
@@ -122,7 +120,7 @@ export class NetworkedDOM {
 
           this.addAndRemapNodeFromInstance(this.documentRoot, -1);
 
-          onLoad(domDiff);
+          onLoad(domDiff, this);
         } else if (message.mutation) {
           if (this.initialLoad) {
             throw new Error("Received mutation before initial load");
@@ -140,7 +138,7 @@ export class NetworkedDOM {
             this.sendPings();
             return;
           }
-          console.error("Unknown message type from observableDom", message);
+          console.error("Unknown message type from observableDOM", message);
         }
       },
     );
@@ -194,7 +192,7 @@ export class NetworkedDOM {
 
   private getInitialSnapshot(
     connectionId: number,
-    documentVirtualDomElement: StaticVirtualDomElement,
+    documentVirtualDOMElement: StaticVirtualDOMElement,
   ): SnapshotMessage {
     const visibleNodesForConnection = this.visibleNodeIdsByConnectionId.get(connectionId);
     if (!visibleNodesForConnection) {
@@ -205,7 +203,7 @@ export class NetworkedDOM {
       throw err;
     }
     const domSnapshot: NodeDescription | null = describeNodeWithChildrenForConnectionId(
-      documentVirtualDomElement,
+      documentVirtualDOMElement,
       connectionId,
       visibleNodesForConnection,
     );
@@ -275,7 +273,7 @@ export class NetworkedDOM {
           }
 
           diffsByConnectionId.forEach((diffs, connectionId) => {
-            const mutationDiff = diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
+            const mutationDiff = diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
               mutationRecordLike,
               virtualElementParent,
               connectionId,
@@ -311,9 +309,9 @@ export class NetworkedDOM {
         webSocketContext.webSocket.send(serializedDiffs);
       });
     } else {
-      const documentVirtualDomElement = this.documentRoot;
-      if (!documentVirtualDomElement) {
-        throw new Error(`documentVirtualDomElement not found in getInitialSnapshot`);
+      const documentVirtualDOMElement = this.documentRoot;
+      if (!documentVirtualDOMElement) {
+        throw new Error(`documentVirtualDOMElement not found in getInitialSnapshot`);
       }
       for (const connectionId of connectionIds) {
         const webSocketContext = this.connectionIdToWebSocketContext.get(connectionId);
@@ -321,7 +319,7 @@ export class NetworkedDOM {
           throw new Error(`webSocketContext not found in addExistingWebsockets`);
         }
         const asServerMessages: Array<ServerMessage> = [
-          this.getInitialSnapshot(connectionId, documentVirtualDomElement),
+          this.getInitialSnapshot(connectionId, documentVirtualDOMElement),
         ];
         const serializedSnapshotMessage = JSON.stringify(asServerMessages);
         webSocketContext.webSocket.send(serializedSnapshotMessage);
@@ -329,16 +327,16 @@ export class NetworkedDOM {
     }
 
     for (const connectionId of connectionIds) {
-      this.observableDom.addConnectedUserId(connectionId);
+      this.observableDOM.addConnectedUserId(connectionId);
     }
   }
 
-  private findParentNodeOfNodeId(targetNodeId: number): StaticVirtualDomElement | null {
+  private findParentNodeOfNodeId(targetNodeId: number): StaticVirtualDOMElement | null {
     const parentNodeId = this.nodeIdToParentNodeId.get(targetNodeId);
     if (parentNodeId === undefined) {
       throw new Error("Parent node ID not found");
     }
-    return this.getStaticVirtualDomElementByInternalNodeIdOrThrow(parentNodeId);
+    return this.getStaticVirtualDOMElementByInternalNodeIdOrThrow(parentNodeId);
   }
 
   private registerWebsocket(
@@ -354,8 +352,8 @@ export class NetworkedDOM {
     }
     const webSocketContext = {
       webSocket,
-      messageListener: (msg: MessageEvent) => {
-        const string = String(msg.data);
+      messageListener: (messageEvent: MessageEvent) => {
+        const string = String(messageEvent.data);
         let parsed;
         try {
           parsed = JSON.parse(string) as ClientMessage;
@@ -378,15 +376,6 @@ export class NetworkedDOM {
     this.webSocketToConnectionId.set(webSocket, connectionId);
     webSocket.addEventListener("message", webSocketContext.messageListener);
     return { connectionId };
-  }
-
-  public addIPCWebSocket(webSocket: WebSocket) {
-    this.ipcWebsockets.add(webSocket);
-    webSocket.addEventListener("close", () => {
-      this.ipcWebsockets.delete(webSocket);
-    });
-
-    this.observableDom.addIPCWebsocket(webSocket);
   }
 
   public static handleWebsocketSubprotocol(protocols: Set<string> | Array<string>): string | false {
@@ -439,16 +428,16 @@ export class NetworkedDOM {
     }
 
     const { connectionId } = this.registerWebsocket(webSocket);
-    const documentVirtualDomElement = this.documentRoot;
-    if (!documentVirtualDomElement) {
-      throw new Error(`documentVirtualDomElement not found in getInitialSnapshot`);
+    const documentVirtualDOMElement = this.documentRoot;
+    if (!documentVirtualDOMElement) {
+      throw new Error(`documentVirtualDOMElement not found in getInitialSnapshot`);
     }
     const asServerMessages: Array<ServerMessage> = [
-      this.getInitialSnapshot(connectionId, documentVirtualDomElement),
+      this.getInitialSnapshot(connectionId, documentVirtualDOMElement),
     ];
     const serializedSnapshotMessage = JSON.stringify(asServerMessages);
     webSocket.send(serializedSnapshotMessage);
-    this.observableDom.addConnectedUserId(connectionId);
+    this.observableDOM.addConnectedUserId(connectionId);
   }
 
   public removeWebSocket(webSocket: WebSocket): void {
@@ -456,7 +445,7 @@ export class NetworkedDOM {
     if (!connectionId) {
       return;
     }
-    this.observableDom.removeConnectedUserId(connectionId);
+    this.observableDOM.removeConnectedUserId(connectionId);
     const webSocketContext = this.connectionIdToWebSocketContext.get(connectionId);
     if (!webSocketContext) {
       throw new Error("Missing context for websocket");
@@ -470,11 +459,11 @@ export class NetworkedDOM {
   public dispose(): void {
     this.disposed = true;
     for (const [, connectionId] of this.webSocketToConnectionId) {
-      this.observableDom.removeConnectedUserId(connectionId);
+      this.observableDOM.removeConnectedUserId(connectionId);
     }
 
     // Handle all of the remaining mutations that the disconnections could have caused
-    this.observableDom.dispose();
+    this.observableDOM.dispose();
 
     for (const [webSocket, connectionId] of this.webSocketToConnectionId) {
       const webSocketContext = this.connectionIdToWebSocketContext.get(connectionId);
@@ -486,20 +475,16 @@ export class NetworkedDOM {
       this.visibleNodeIdsByConnectionId.delete(connectionId);
       this.webSocketToConnectionId.delete(webSocket);
     }
-
-    for (const ipcWebsocket of this.ipcWebsockets) {
-      ipcWebsocket.close();
-    }
   }
 
-  private processModification(mutationRecord: StaticVirtualDomMutationRecord): void {
-    const documentVirtualDomElement = this.documentRoot;
-    if (!documentVirtualDomElement) {
+  private processModification(mutationRecord: StaticVirtualDOMMutationRecord): void {
+    const documentVirtualDOMElement = this.documentRoot;
+    if (!documentVirtualDOMElement) {
       throw new Error(`document not created in processModification`);
     }
 
     for (const [, visibleNodesForConnection] of this.visibleNodeIdsByConnectionId) {
-      visibleNodesForConnection.add(documentVirtualDomElement.nodeId);
+      visibleNodesForConnection.add(documentVirtualDOMElement.nodeId);
     }
 
     const diffsByConnectionId = new Map<number, Array<Diff>>(
@@ -515,7 +500,7 @@ export class NetworkedDOM {
         console.error("parentNode not found for attribute mutationRecord", mutationRecord);
         console.error("this.documentRoot", JSON.stringify(this.documentRoot, null, 2));
       }
-      const diff = diffFromApplicationOfStaticVirtualDomMutationRecordToConnection(
+      const diff = diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
         mutationRecord,
         parentNode,
         connectionId,
@@ -540,23 +525,23 @@ export class NetworkedDOM {
     });
   }
 
-  private removeKnownNodesInMutation(mutation: StaticVirtualDomMutationRecord): void {
-    const virtualDomElement = mutation.target;
+  private removeKnownNodesInMutation(mutation: StaticVirtualDOMMutationRecord): void {
+    const virtualDOMElement = mutation.target;
     if (mutation.type === "childList") {
-      mutation.removedNodes.forEach((childDomElement: StaticVirtualDomElement) => {
-        this.removeVirtualDomElement(childDomElement);
-        const index = virtualDomElement.childNodes.indexOf(childDomElement);
-        virtualDomElement.childNodes.splice(index, 1);
+      mutation.removedNodes.forEach((childDOMElement: StaticVirtualDOMElement) => {
+        this.removeVirtualDOMElement(childDOMElement);
+        const index = virtualDOMElement.childNodes.indexOf(childDOMElement);
+        virtualDOMElement.childNodes.splice(index, 1);
       });
       return;
     }
   }
 
-  private removeVirtualDomElement(virtualDomElement: StaticVirtualDomElement): void {
-    this.nodeIdToNode.delete(virtualDomElement.nodeId);
-    this.nodeIdToParentNodeId.delete(virtualDomElement.nodeId);
-    for (const child of virtualDomElement.childNodes) {
-      this.removeVirtualDomElement(child);
+  private removeVirtualDOMElement(virtualDOMElement: StaticVirtualDOMElement): void {
+    this.nodeIdToNode.delete(virtualDOMElement.nodeId);
+    this.nodeIdToParentNodeId.delete(virtualDOMElement.nodeId);
+    for (const child of virtualDOMElement.childNodes) {
+      this.removeVirtualDOMElement(child);
     }
   }
 
@@ -593,12 +578,12 @@ export class NetworkedDOM {
       remoteEvent.nodeId = remappedNode;
     }
 
-    this.observableDom.dispatchRemoteEventFromConnectionId(connectionId, remoteEvent);
+    this.observableDOM.dispatchRemoteEventFromConnectionId(connectionId, remoteEvent);
   }
 
-  private getStaticVirtualDomElementByInternalNodeIdOrThrow(
+  private getStaticVirtualDOMElementByInternalNodeIdOrThrow(
     internalNodeId: number,
-  ): StaticVirtualDomElement {
+  ): StaticVirtualDOMElement {
     const remappedId = this.internalNodeIdToClientNodeId.get(internalNodeId);
     if (remappedId !== undefined) {
       const node = this.nodeIdToNode.get(remappedId);
@@ -615,11 +600,11 @@ export class NetworkedDOM {
   }
 
   private addKnownNodesInMutation(
-    mutation: StaticVirtualDomMutationIdsRecord,
-  ): StaticVirtualDomMutationRecord {
-    const target = this.getStaticVirtualDomElementByInternalNodeIdOrThrow(mutation.targetId);
+    mutation: StaticVirtualDOMMutationIdsRecord,
+  ): StaticVirtualDOMMutationRecord {
+    const target = this.getStaticVirtualDOMElementByInternalNodeIdOrThrow(mutation.targetId);
 
-    // TODO - avoid mutation in this conversion - use the attribute pair in the handling (would require changing StaticVirtualDomMutationRecord.attributeName to be the key/value pair).
+    // TODO - avoid mutation in this conversion - use the attribute pair in the handling (would require changing StaticVirtualDOMMutationRecord.attributeName to be the key/value pair).
     if (mutation.attribute) {
       if (mutation.attribute.value !== null) {
         target.attributes[mutation.attribute.attributeName] = mutation.attribute.value;
@@ -629,7 +614,7 @@ export class NetworkedDOM {
     }
 
     const previousSibling = mutation.previousSiblingId
-      ? this.getStaticVirtualDomElementByInternalNodeIdOrThrow(mutation.previousSiblingId)
+      ? this.getStaticVirtualDOMElementByInternalNodeIdOrThrow(mutation.previousSiblingId)
       : null;
 
     if (mutation.type === "childList") {
@@ -641,11 +626,11 @@ export class NetworkedDOM {
         }
         index += 1;
       }
-      mutation.addedNodes.forEach((childVirtualDomElement: StaticVirtualDomElement) => {
-        this.addAndRemapNodeFromInstance(childVirtualDomElement, target.nodeId);
+      mutation.addedNodes.forEach((childVirtualDOMElement: StaticVirtualDOMElement) => {
+        this.addAndRemapNodeFromInstance(childVirtualDOMElement, target.nodeId);
 
-        if (target.childNodes.indexOf(childVirtualDomElement) === -1) {
-          target.childNodes.splice(index, 0, childVirtualDomElement);
+        if (target.childNodes.indexOf(childVirtualDOMElement) === -1) {
+          target.childNodes.splice(index, 0, childVirtualDOMElement);
           index++;
         }
       });
@@ -660,18 +645,18 @@ export class NetworkedDOM {
     } else if (mutation.type === "characterData") {
       // TODO - reimplement characterData
       throw new Error("characterData not supported");
-      // virtualDomElement.textContent = targetNode.textContent ? targetNode.textContent : undefined;
+      // virtualDOMElement.textContent = targetNode.textContent ? targetNode.textContent : undefined;
     }
 
-    const record: StaticVirtualDomMutationRecord = {
+    const record: StaticVirtualDOMMutationRecord = {
       type: mutation.type,
       target,
       addedNodes: mutation.addedNodes,
       removedNodes: mutation.removedNodeIds.map((nodeId) => {
-        return this.getStaticVirtualDomElementByInternalNodeIdOrThrow(nodeId);
+        return this.getStaticVirtualDOMElementByInternalNodeIdOrThrow(nodeId);
       }),
       previousSibling: mutation.previousSiblingId
-        ? this.getStaticVirtualDomElementByInternalNodeIdOrThrow(mutation.previousSiblingId)
+        ? this.getStaticVirtualDOMElementByInternalNodeIdOrThrow(mutation.previousSiblingId)
         : null,
       attributeName: mutation.attribute ? mutation.attribute.attributeName : null,
     };
@@ -679,11 +664,11 @@ export class NetworkedDOM {
     return record;
   }
 
-  getSnapshot(): StaticVirtualDomElement {
+  getSnapshot(): StaticVirtualDOMElement {
     return this.documentRoot;
   }
 
-  private addAndRemapNodeFromInstance(node: StaticVirtualDomElement, parentNodeId: number) {
+  private addAndRemapNodeFromInstance(node: StaticVirtualDOMElement, parentNodeId: number) {
     const remappedNodeId = this.internalNodeIdToClientNodeId.get(node.nodeId);
     if (remappedNodeId !== undefined) {
       node.nodeId = remappedNodeId;

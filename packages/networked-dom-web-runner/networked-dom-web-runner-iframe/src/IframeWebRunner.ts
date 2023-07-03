@@ -1,9 +1,14 @@
+import { ObservableDOM } from "@mml-io/observable-dom/src/ObservableDOM";
 import {
-  FromInstanceMessageTypes,
-  ToInstanceMessageTypes,
-} from "@mml-io/networked-dom-web-runner/src/message-types";
-import { ObservableDom } from "@mml-io/observable-dom/src/ObservableDom";
-import { ObservableDomMessage, ObservableDOMParameters } from "@mml-io/observable-dom-common";
+  ADD_CONNECTED_USER_ID_MESSAGE_TYPE,
+  DISPATCH_REMOTE_EVENT_FROM_CONNECTION_ID_MESSAGE_TYPE,
+  DOM_MESSAGE_TYPE,
+  FromObservableDOMInstanceMessage,
+  ObservableDOMMessage,
+  ObservableDOMParameters,
+  REMOVE_CONNECTED_USER_ID_MESSAGE_TYPE,
+  ToObservableDOMInstanceMessage,
+} from "@mml-io/observable-dom-common";
 
 import { WebBrowserDOMRunnerFactory } from "./WebBrowserDOMRunner";
 
@@ -11,28 +16,38 @@ import { WebBrowserDOMRunnerFactory } from "./WebBrowserDOMRunner";
 export function setupIframeWebRunner(argsString: string) {
   const observableDOMParams = JSON.parse(atob(argsString)) as ObservableDOMParameters;
 
-  const sendMessageToHandler = (message: FromInstanceMessageTypes) => {
+  const sendMessageToHandler = (message: FromObservableDOMInstanceMessage) => {
     window.parent.postMessage(JSON.stringify(message), "*");
   };
 
-  const observableDOM = new ObservableDom(
+  const observableDOM = new ObservableDOM(
     {
       ...observableDOMParams,
       htmlContents: "", // This must be empty as the contents are assumed to be provided by the srcdoc
     },
-    (observableDomMessage: ObservableDomMessage) => {
+    (observableDOMMessage: ObservableDOMMessage) => {
       sendMessageToHandler({
-        type: "dom",
-        message: observableDomMessage,
+        type: DOM_MESSAGE_TYPE,
+        message: observableDOMMessage,
       });
     },
     WebBrowserDOMRunnerFactory,
   );
 
   window.addEventListener("message", (e) => {
-    const parsed = JSON.parse(e.data) as ToInstanceMessageTypes;
-    if (parsed.type === "dispatchRemoteEventFromConnectionId") {
-      observableDOM.dispatchRemoteEventFromConnectionId(parsed.connectionId, parsed.event);
+    const parsed = JSON.parse(e.data) as ToObservableDOMInstanceMessage;
+    switch (parsed.type) {
+      case DISPATCH_REMOTE_EVENT_FROM_CONNECTION_ID_MESSAGE_TYPE:
+        observableDOM.dispatchRemoteEventFromConnectionId(parsed.connectionId, parsed.event);
+        break;
+      case ADD_CONNECTED_USER_ID_MESSAGE_TYPE:
+        observableDOM.addConnectedUserId(parsed.connectionId);
+        break;
+      case REMOVE_CONNECTED_USER_ID_MESSAGE_TYPE:
+        observableDOM.removeConnectedUserId(parsed.connectionId);
+        break;
+      default:
+        console.error("Unknown message type", parsed);
     }
   });
 }
