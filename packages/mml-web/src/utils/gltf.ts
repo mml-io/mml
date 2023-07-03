@@ -3,7 +3,7 @@ import * as THREE from "three";
 const {
   GLTFLoader: GLTFLoaderImp,
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-} = require("../../../../node_modules/three/examples/jsm/loaders/GLTFLoader");
+} = require("three/examples/jsm/loaders/GLTFLoader.js");
 
 declare class GLTFLoader {
   constructor(loadingManager?: THREE.LoadingManager);

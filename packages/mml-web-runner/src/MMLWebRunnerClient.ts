@@ -34,7 +34,7 @@ export class MMLWebRunnerClient extends NetworkedDOMWebRunnerClient {
     );
     this.remoteHolderElement.append(remoteDocumentWrapper.element);
     this.remoteDocumentHolder = remoteDocumentWrapper.element;
-    this.mScene.init(this.element, this.remoteDocumentHolder);
+    this.element.append(this.mScene.element);
     overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
       if (!this.connectedState) {
         throw new Error("connectedState not set");

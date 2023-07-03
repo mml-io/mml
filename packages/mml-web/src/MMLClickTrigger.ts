@@ -12,25 +12,15 @@ export class MMLClickTrigger {
   private scene: IMMLScene;
   private raycaster: THREE.Raycaster;
   private clickTarget: Document | HTMLElement;
-  private elementsHolder: Document | HTMLElement;
   private mouseDownTime: number | null = null;
   private mouseMoveDelta = 0;
 
-  static init(
-    clickTarget: Document | HTMLElement,
-    elementsHolder: Document | HTMLElement,
-    scene: IMMLScene,
-  ): MMLClickTrigger {
-    return new MMLClickTrigger(clickTarget, elementsHolder, scene);
+  static init(clickTarget: Document | HTMLElement, scene: IMMLScene): MMLClickTrigger {
+    return new MMLClickTrigger(clickTarget, scene);
   }
 
-  private constructor(
-    clickTarget: Document | HTMLElement,
-    elementsHolder: Document | HTMLElement,
-    scene: IMMLScene,
-  ) {
+  private constructor(clickTarget: Document | HTMLElement, scene: IMMLScene) {
     this.clickTarget = clickTarget;
-    this.elementsHolder = elementsHolder;
     this.scene = scene;
     this.raycaster = new THREE.Raycaster();
 
@@ -96,19 +86,11 @@ export class MMLClickTrigger {
 
           const mElement = MElement.getMElementFromObject(obj);
           if (mElement && mElement.isClickable()) {
-            if (this.elementsHolder.contains(mElement)) {
-              /*
-                 Only dispatch the event if the element in the scene is a child of the container - this handles the case
-                 where there are multiple documents in the same THREE.js scene and the events should only be handled by
-                 their respective handlers.
-                */
-
-              mElement.dispatchEvent(
-                new MouseEvent("click", {
-                  bubbles: true,
-                }),
-              );
-            }
+            mElement.dispatchEvent(
+              new MouseEvent("click", {
+                bubbles: true,
+              }),
+            );
             return;
           }
           obj = obj.parent;
