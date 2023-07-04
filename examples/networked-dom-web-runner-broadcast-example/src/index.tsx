@@ -80,6 +80,7 @@ const broadcastReceiver = new NetworkedDOMBroadcastReceiver(
   (toBroadcastInstanceMessage: ToBroadcastInstanceMessage) => {
     fakeWebSocket.serverSideWebsocket.send(JSON.stringify(toBroadcastInstanceMessage));
   },
+  true,
   (logMessage: LogMessage) => {
     console.log(logMessage);
   },

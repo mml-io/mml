@@ -26,6 +26,7 @@ test("broadcast end-to-end", async () => {
     (toBroadcastInstanceMessage: ToBroadcastInstanceMessage) => {
       fakeWebSocket.serverSideWebsocket.send(JSON.stringify(toBroadcastInstanceMessage));
     },
+    true,
     (logMessage) => {
       logs.push(logMessage);
     },

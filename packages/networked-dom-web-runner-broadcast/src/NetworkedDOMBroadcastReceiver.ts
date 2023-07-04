@@ -34,7 +34,8 @@ export class NetworkedDOMBroadcastReceiver {
 
   constructor(
     sendMessage: (message: ToBroadcastInstanceMessage) => void,
-    logCallback: (logMessage: LogMessage) => void,
+    ignoreTextNodes = true,
+    logCallback?: (logMessage: LogMessage) => void,
   ) {
     this.sendMessage = sendMessage;
     this.editableNetworkedDOM = new EditableNetworkedDOM(
@@ -79,7 +80,7 @@ export class NetworkedDOMBroadcastReceiver {
           return remoteObservableDOM;
         }
       },
-      true,
+      ignoreTextNodes,
       logCallback,
     );
   }
