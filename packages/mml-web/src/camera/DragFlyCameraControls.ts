@@ -68,11 +68,11 @@ export class DragFlyCameraControls {
     }
 
     document.addEventListener(
-        "touchstart",
-        function (e) {
-          e.preventDefault();
-        },
-        {passive: false},
+      "touchstart",
+      function (e) {
+        e.preventDefault();
+      },
+      { passive: false },
     );
 
     this.enabled = true;
@@ -86,7 +86,7 @@ export class DragFlyCameraControls {
     this.eventHandlerCollection.add(document, "touchstart", this.handleTouchStart.bind(this));
     this.eventHandlerCollection.add(document, "touchend", this.handleTouchEnd.bind(this));
     this.eventHandlerCollection.add(document, "touchmove", this.handleTouchMove.bind(this));
-    this.eventHandlerCollection.add(document,"click", this.handleClick.bind(this));
+    this.eventHandlerCollection.add(document, "click", this.handleClick.bind(this));
   }
 
   public disable() {
@@ -215,8 +215,8 @@ export class DragFlyCameraControls {
     this.tempEuler.x -= movementY * 0.002;
 
     this.tempEuler.x = Math.max(
-        Math.PI / 2 - this.maxPolarAngle,
-        Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
+      Math.PI / 2 - this.maxPolarAngle,
+      Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
     );
 
     this.camera.quaternion.setFromEuler(this.tempEuler);
@@ -281,17 +281,17 @@ export class DragFlyCameraControls {
       }
     }
 
-    if ((Date.now() - this.clickTimestamp) < this.clickTime){
+    if (Date.now() - this.clickTimestamp < this.clickTime) {
       /* this is a click */
       console.log("Click positions: ", this.panStartX, this.panStartY);
 
       // Create and dispatch a new mouse event with specific x and y coordinates
-      const clickEvent = new MouseEvent('click', {
+      const clickEvent = new MouseEvent("click", {
         bubbles: true,
         cancelable: true,
         view: window,
         clientX: this.panStartX,
-        clientY: this.panStartY
+        clientY: this.panStartY,
       });
       window.dispatchEvent(clickEvent);
       console.log("Click event dispatched");
@@ -374,15 +374,15 @@ export class DragFlyCameraControls {
         this.tempEuler.x -= movementY * 0.002;
 
         this.tempEuler.x = Math.max(
-            Math.PI / 2 - this.maxPolarAngle,
-            Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
+          Math.PI / 2 - this.maxPolarAngle,
+          Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
         );
 
         this.camera.quaternion.setFromEuler(this.tempEuler);
       }
     }
 
-  for (const touch of Array.from(event.touches)) {
+    for (const touch of Array.from(event.touches)) {
       const touchState = this.touchesMap.get(touch.identifier);
       if (!touchState) {
         throw new Error("Touch identifier not found.");
