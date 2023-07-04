@@ -1058,4 +1058,35 @@
       </xs:complexContent>
     </xs:complexType>
   </xs:element>
+
+    <xs:element name="m-chat-probe">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-chat-probe` element is used to recieve messages from a chat system.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="radius" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The radius that this chat message can be used from in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the chat probe is enabled (true) or disabled (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>
