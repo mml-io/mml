@@ -53,6 +53,8 @@ export class DragFlyCameraControls {
   private panStartY: number;
   private zoomTimestamp: number;
   private debounceTime = 20;
+  private clickTimestamp: number;
+  private clickTime = 200;
 
   constructor(camera: Camera, domElement: HTMLElement, speed = 15.0) {
     this.camera = camera;
@@ -66,11 +68,11 @@ export class DragFlyCameraControls {
     }
 
     document.addEventListener(
-      "touchstart",
-      function (e) {
-        e.preventDefault();
-      },
-      { passive: false },
+        "touchstart",
+        function (e) {
+          e.preventDefault();
+        },
+        {passive: false},
     );
 
     this.enabled = true;
@@ -84,6 +86,7 @@ export class DragFlyCameraControls {
     this.eventHandlerCollection.add(document, "touchstart", this.handleTouchStart.bind(this));
     this.eventHandlerCollection.add(document, "touchend", this.handleTouchEnd.bind(this));
     this.eventHandlerCollection.add(document, "touchmove", this.handleTouchMove.bind(this));
+    this.eventHandlerCollection.add(document,"click", this.handleClick.bind(this));
   }
 
   public disable() {
@@ -212,12 +215,13 @@ export class DragFlyCameraControls {
     this.tempEuler.x -= movementY * 0.002;
 
     this.tempEuler.x = Math.max(
-      Math.PI / 2 - this.maxPolarAngle,
-      Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
+        Math.PI / 2 - this.maxPolarAngle,
+        Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
     );
 
     this.camera.quaternion.setFromEuler(this.tempEuler);
   }
+
   private onMouseUp() {
     this.mouseDown = false;
   }
@@ -230,6 +234,10 @@ export class DragFlyCameraControls {
 
     // restrict to a reasonable min and max
     this.speed = Math.max(5, Math.min(this.speed, 1000));
+  }
+
+  private handleClick(event: TouchEvent) {
+    console.log("Click event detected with the following details: ", event);
   }
 
   // Function to handle touch start event
@@ -255,9 +263,9 @@ export class DragFlyCameraControls {
     if (event.touches.length === 1) {
       this.panStartX = event.touches[0].clientX;
       this.panStartY = event.touches[0].clientY;
+      this.clickTimestamp = Date.now();
     }
   }
-
   // Function to handle touch end event
   private handleTouchEnd(event: TouchEvent) {
     if (this.isMoving) {
@@ -271,6 +279,22 @@ export class DragFlyCameraControls {
       if (!remainingTouches.has(touchId)) {
         this.touchesMap.delete(touchId);
       }
+    }
+
+    if ((Date.now() - this.clickTimestamp) < this.clickTime){
+      /* this is a click */
+      console.log("Click positions: ", this.panStartX, this.panStartY);
+
+      // Create and dispatch a new mouse event with specific x and y coordinates
+      const clickEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: this.panStartX,
+        clientY: this.panStartY
+      });
+      window.dispatchEvent(clickEvent);
+      console.log("Click event dispatched");
     }
   }
 
@@ -331,6 +355,7 @@ export class DragFlyCameraControls {
       // Pan
       if (!this.zoomTimestamp || Date.now() > this.zoomTimestamp + this.debounceTime) {
         this.isMoving = false;
+
         const movementX = event.touches[0].clientX - this.panStartX;
         let movementY = event.touches[0].clientY - this.panStartY;
 
@@ -349,14 +374,15 @@ export class DragFlyCameraControls {
         this.tempEuler.x -= movementY * 0.002;
 
         this.tempEuler.x = Math.max(
-          Math.PI / 2 - this.maxPolarAngle,
-          Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
+            Math.PI / 2 - this.maxPolarAngle,
+            Math.min(Math.PI / 2 - this.minPolarAngle, this.tempEuler.x),
         );
 
         this.camera.quaternion.setFromEuler(this.tempEuler);
       }
     }
-    for (const touch of Array.from(event.touches)) {
+
+  for (const touch of Array.from(event.touches)) {
       const touchState = this.touchesMap.get(touch.identifier);
       if (!touchState) {
         throw new Error("Touch identifier not found.");
