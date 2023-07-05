@@ -1062,7 +1062,7 @@
     <xs:element name="m-chat-probe">
     <xs:annotation>
       <xs:documentation>
-        The `m-chat-probe` element is used to recieve messages from a chat system.
+        The `m-chat-probe` element is used to receive messages from a chat system.
       </xs:documentation>
     </xs:annotation>
     <xs:complexType mixed="true">
