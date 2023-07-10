@@ -7,6 +7,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { DebugHelper } from "../utils/DebugHelper";
+import {AnimatedAttributeHelper} from "../utils/AnimatedAttributeHelper";
 
 // Workaround for zero-scale values breaking audio playback in THREE PositionalAudio
 function minimumNonZero(value: number): number {
@@ -14,15 +15,26 @@ function minimumNonZero(value: number): number {
 }
 
 export abstract class TransformableElement extends MElement {
+  private animatedAttributeHelper = new AnimatedAttributeHelper({
+    x: (newValue: number) => {
+      this.container.position.x = newValue;
+    },
+    y: (newValue: number) => {
+      this.container.position.y = newValue;
+    },
+    z: (newValue: number) => {
+      this.container.position.z = newValue;
+    },
+  })
   private static TransformableElementAttributeHandler = new AttributeHandler<TransformableElement>({
     x: (instance, newValue) => {
-      instance.container.position.x = parseFloatAttribute(newValue, 0);
+      instance.animatedAttributeHelper.setAttribute("x", parseFloatAttribute(newValue, 0));
     },
     y: (instance, newValue) => {
-      instance.container.position.y = parseFloatAttribute(newValue, 0);
+      instance.animatedAttributeHelper.setAttribute("y", parseFloatAttribute(newValue, 0));
     },
     z: (instance, newValue) => {
-      instance.container.position.z = parseFloatAttribute(newValue, 0);
+      instance.animatedAttributeHelper.setAttribute("z", parseFloatAttribute(newValue, 0));
     },
     rx: (instance, newValue) => {
       instance.container.rotation.x = parseFloatAttribute(newValue, 0) * THREE.MathUtils.DEG2RAD;

@@ -1,3 +1,4 @@
+import { Animation } from "./Animation";
 import { Audio } from "./Audio";
 import { Character } from "./Character";
 import { Cube } from "./Cube";
@@ -36,4 +37,5 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Video.tagName, Video);
   targetWindow.customElements.define(Audio.tagName, Audio);
   targetWindow.customElements.define(Interaction.tagName, Interaction);
+  targetWindow.customElements.define(Animation.tagName, Animation);
 }

@@ -1,7 +1,7 @@
 <m-plane color="blue" width="20" height="15" rx="-90"></m-plane>
 <m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
 <m-cube x="0" y="2" z="0" width="10" height="4" id="my-cube" color="red">
-  <!--  <m-animation attr="y" start="0.1" end="5"></m-animation>-->
+<!--  <m-animation attr="y" start="0.1" end="5"></m-animation>-->
 </m-cube>
 
 <script>
@@ -12,19 +12,12 @@
   //   console.log("remove");
   // }
   myCube.addEventListener("click", () => {
-    myCube.setAttribute("y", "0");
     const newAnimation = document.createElement("m-animation");
     newAnimation.setAttribute("attr", "y");
     newAnimation.setAttribute("start", "0");
     newAnimation.setAttribute("end", "10.0");
     newAnimation.setAttribute("start-time", document.timeline.currentTime);
-    newAnimation.setAttribute("duration", "10000");
+    newAnimation.setAttribute("duration", "100000");
     myCube.appendChild(newAnimation);
-    setTimeout(() => {
-      myCube.setAttribute("y", "5");
-      setTimeout(() => {
-        newAnimation.remove()
-      }, 500);
-    }, 8000);
   });
 </script>
