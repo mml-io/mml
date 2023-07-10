@@ -40,3 +40,30 @@ export interface MMLPromptEvent extends RemoteEvent {
 export interface MMLClickEvent extends RemoteEvent {
   readonly type: "click";
 }
+
+type PositionAndRotation = {
+  /**
+   * The position as x, y, and z coordinates.
+   */
+  position: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  /**
+   * The rotation as Euler XYZ-ordered angles in degrees.
+   */
+  rotation: {
+    x: number;
+    y: number;
+    z: number;
+  };
+};
+
+/**
+ * Received when a user enters the range of an m-position-probe.
+ */
+export interface MMLPositionEnterEvent extends RemoteEvent {
+  readonly type: "positionenter";
+  readonly detail: PositionAndRotation & RemoteEvent["detail"];
+}

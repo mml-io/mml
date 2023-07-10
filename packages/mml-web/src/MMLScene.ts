@@ -9,9 +9,9 @@ import { InteractionManager } from "./interaction-ui";
 import { MMLClickTrigger } from "./MMLClickTrigger";
 import { PromptManager } from "./prompt-ui";
 
-export type ScenePosition = {
-  location: { x: number; y: number; z: number };
-  orientation: { x: number; y: number; z: number };
+export type PositionAndRotation = {
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
 };
 
 export type InteractionListener = {
@@ -42,7 +42,7 @@ export type IMMLScene = {
   updateInteraction?: (interaction: Interaction) => void;
   removeInteraction?: (interaction: Interaction) => void;
 
-  getUserPosition: () => ScenePosition;
+  getUserPositionAndRotation(): PositionAndRotation;
 
   prompt: (promptProps: PromptProps, callback: (message: string | null) => void) => void;
 };
@@ -182,10 +182,10 @@ export class MMLScene implements IMMLScene {
     return this.camera;
   }
 
-  public getUserPosition(): ScenePosition {
+  public getUserPositionAndRotation(): PositionAndRotation {
     return {
-      location: this.camera.position,
-      orientation: {
+      position: this.camera.position,
+      rotation: {
         x: this.camera.rotation.x,
         y: this.camera.rotation.y,
         z: this.camera.rotation.z,

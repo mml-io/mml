@@ -11,6 +11,7 @@ import { Light } from "./Light";
 import { MElement } from "./MElement";
 import { Model } from "./Model";
 import { Plane } from "./Plane";
+import { PositionProbe } from "./PositionProbe";
 import { Prompt } from "./Prompt";
 import { RemoteDocument } from "./RemoteDocument";
 import { Sphere } from "./Sphere";
@@ -35,5 +36,6 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Image.tagName, Image);
   targetWindow.customElements.define(Video.tagName, Video);
   targetWindow.customElements.define(Audio.tagName, Audio);
+  targetWindow.customElements.define(PositionProbe.tagName, PositionProbe);
   targetWindow.customElements.define(Interaction.tagName, Interaction);
 }

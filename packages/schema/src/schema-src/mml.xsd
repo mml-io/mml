@@ -316,6 +316,7 @@
       <xs:element ref="m-image"/>
       <xs:element ref="m-video"/>
       <xs:element ref="m-prompt"/>
+      <xs:element ref="m-position-probe"/>
       <xs:element ref="m-interaction"/>
       <xs:element ref="m-frame"/>
       <xs:element ref="m-cylinder"/>
@@ -949,6 +950,58 @@
                 <xs:enumeration value="right"/>
               </xs:restriction>
             </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-position-probe">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-position-probe` element is used to request the position of a user (either camera or avatar depending upon the experience).
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="range" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The range from its position that the position probe requests user positions for in meters. Default value is 10 meters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="interval" type="xs:int">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds between user positions being sent to the position probe. Default value is 1000 (1 second).
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="onpositionenter" type="Script">
+            <xs:annotation>
+              <xs:documentation>
+                A script expression to be executed when a user enters the range of the position probe.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="onpositionmove" type="Script">
+            <xs:annotation>
+              <xs:documentation>
+                A script expression to be executed when a user moves within the range of the position probe.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="onpositionleave" type="Script">
+            <xs:annotation>
+              <xs:documentation>
+                A script expression to be executed when a user leaves the range of the position probe.
+              </xs:documentation>
+            </xs:annotation>
           </xs:attribute>
         </xs:extension>
       </xs:complexContent>

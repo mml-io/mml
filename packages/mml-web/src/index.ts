@@ -7,6 +7,5 @@ export * from "./MMLScene";
 export * from "./MMLClickTrigger";
 export * from "./FullScreenMScene";
 export { NetworkedDOMWebsocket } from "@mml-io/networked-dom-web";
-export * from "./utils/InteractionUtils";
 export * from "./interaction-ui";
 export * from "./prompt-ui";

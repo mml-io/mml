@@ -1,0 +1,97 @@
+<m-plane color="lightsteelblue" width="15" height="15" rx="-90"></m-plane>
+<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+
+<m-group id="my-group" x="3" ry="30" y="4">
+  <m-position-probe range="7" id="my-probe" interval="100"></m-position-probe>
+  <m-group id="user-presence-holder"></m-group>
+</m-group>
+
+<m-cube id="toggle-range-cube" color="green" x="2" z="3" y="1.5"></m-cube>
+<m-cube id="toggle-position-cube" color="red" x="-2" z="3" y="1.5"></m-cube>
+
+<script>
+  const positionProbe = document.getElementById("my-probe");
+  const originalRange = positionProbe.getAttribute("range");
+  const group = document.getElementById("my-group");
+  const originalX = group.getAttribute("x");
+  const toggledRange = 25;
+  const toggledX = -3;
+
+  const toggleRangeCube = document.getElementById("toggle-range-cube");
+  let rangeToggle = false;
+  toggleRangeCube.addEventListener("click", () => {
+    rangeToggle = !rangeToggle;
+    positionProbe.setAttribute("range", rangeToggle ? toggledRange : originalRange);
+  });
+  
+  const togglePositionCube = document.getElementById("toggle-position-cube");
+  let positionToggle = false;
+  togglePositionCube.addEventListener("click", () => {
+    positionToggle = !positionToggle;
+    group.setAttribute("x", positionToggle ? toggledX : originalX);
+  });
+
+  const connectedUsers = new Map();
+  const userPresenceHolder = document.getElementById("user-presence-holder");
+
+  function getOrCreateUser(connectionId, position, rotation) {
+    const user = connectedUsers.get(connectionId);
+    if (user) {
+      user.position = position;
+      user.rotation = rotation;
+      return user;
+    }
+    const userCube = document.createElement("m-cube");
+    userCube.setAttribute("collide", false);
+    userCube.setAttribute("data-test-id", "user-cube");
+    userCube.setAttribute("width", 0.25);
+    userCube.setAttribute("height", 0.25);
+    userCube.setAttribute("depth", 0.25);
+    userCube.setAttribute("color", `#${Math.floor(Math.random() * 0xffffff).toString(16)}`);
+    userPresenceHolder.append(userCube);
+    const newUser = {
+      cube: userCube,
+      position,
+      rotation,
+    };
+    connectedUsers.set(connectionId, newUser);
+    return newUser;
+  }
+
+  function clearUser(connectionId) {
+    const user = connectedUsers.get(connectionId);
+    if (!user) return;
+    user.cube.remove();
+    connectedUsers.delete(connectionId);
+  }
+
+  function setCubePosition(connectionId, position, rotation) {
+    const user = getOrCreateUser(connectionId, position, rotation);
+    user.cube.setAttribute("x", position.x / 2);
+    user.cube.setAttribute("y", position.y / 2);
+    user.cube.setAttribute("z", position.z / 2);
+    user.cube.setAttribute("rx", rotation.x);
+    user.cube.setAttribute("ry", rotation.y);
+    user.cube.setAttribute("rz", rotation.z);
+  }
+
+  positionProbe.addEventListener("positionenter", (event) => {
+    const { connectionId, position, rotation } = event.detail;
+    setCubePosition(connectionId, position, rotation);
+  });
+
+  positionProbe.addEventListener("positionmove", (event) => {
+    const { connectionId, position, rotation } = event.detail;
+    setCubePosition(connectionId, position, rotation);
+  });
+
+  positionProbe.addEventListener("positionleave", (event) => {
+    const { connectionId } = event.detail;
+    clearUser(connectionId);
+  });
+
+  window.addEventListener("disconnected", (event) => {
+    const { connectionId } = event.detail;
+    clearUser(connectionId);
+  });
+</script>
