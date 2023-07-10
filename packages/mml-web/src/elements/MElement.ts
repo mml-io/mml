@@ -43,7 +43,7 @@ export abstract class MElement extends HTMLElement {
   }
 
   public getScene(): IMMLScene {
-    const sceneAttachmentElement = this.closest("m-remote-document") || null;
+    const sceneAttachmentElement = this.getRemoteDocument();
     if (sceneAttachmentElement) {
       return (sceneAttachmentElement as RemoteDocument).getMScene();
     }
@@ -54,7 +54,7 @@ export abstract class MElement extends HTMLElement {
     return globalScene;
   }
 
-  private getRemoteDocument(): RemoteDocument | null {
+  public getRemoteDocument(): RemoteDocument | null {
     return this.closest("m-remote-document") || null;
   }
 

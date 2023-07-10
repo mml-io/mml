@@ -47,8 +47,14 @@ describe("m-position-probe", () => {
     });
     expect(enterEvent.type).toEqual("positionenter");
     expect(enterEvent.detail).toEqual({
-      position: { x: 1, y: 2, z: 3 },
-      rotation: { x: expect.closeTo(0), y: expect.closeTo(45), z: expect.closeTo(0) },
+      elementRelative: {
+        position: { x: 1, y: 2, z: 3 },
+        rotation: { x: expect.closeTo(0), y: expect.closeTo(45), z: expect.closeTo(0) },
+      },
+      documentRelative: {
+        position: { x: 1, y: 2, z: 3 },
+        rotation: { x: expect.closeTo(0), y: expect.closeTo(45), z: expect.closeTo(0) },
+      },
     });
 
     // Move the position
@@ -63,11 +69,17 @@ describe("m-position-probe", () => {
     });
     expect(moveEvent.type).toEqual("positionmove");
     expect(moveEvent.detail).toEqual({
-      position: { x: 2, y: 4, z: 6 },
-      rotation: { x: expect.closeTo(0), y: expect.closeTo(90), z: expect.closeTo(0) },
+      elementRelative: {
+        position: { x: 2, y: 4, z: 6 },
+        rotation: { x: expect.closeTo(0), y: expect.closeTo(90), z: expect.closeTo(0) },
+      },
+      documentRelative: {
+        position: { x: 2, y: 4, z: 6 },
+        rotation: { x: expect.closeTo(0), y: expect.closeTo(90), z: expect.closeTo(0) },
+      },
     });
 
-    // Move the position outside of the probe
+    // Move the position outside the probe range
     sendPositionSpy.mockImplementation(() => ({
       position: new THREE.Vector3(20, 40, 60),
       rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(135), 0),
@@ -106,8 +118,14 @@ describe("m-position-probe", () => {
     });
     expect(enterEvent.type).toEqual("positionenter");
     expect(enterEvent.detail).toEqual({
-      position: { x: 1, y: 2, z: 3 },
-      rotation: { x: expect.closeTo(0), y: expect.closeTo(45), z: expect.closeTo(0) },
+      elementRelative: {
+        position: { x: 1, y: 2, z: 3 },
+        rotation: { x: expect.closeTo(0), y: expect.closeTo(45), z: expect.closeTo(0) },
+      },
+      documentRelative: {
+        position: { x: 11, y: 22, z: 33 },
+        rotation: { x: expect.closeTo(0), y: expect.closeTo(45), z: expect.closeTo(0) },
+      },
     });
 
     // Move the position
@@ -122,11 +140,17 @@ describe("m-position-probe", () => {
     });
     expect(moveEvent.type).toEqual("positionmove");
     expect(moveEvent.detail).toEqual({
-      position: { x: 2, y: 4, z: 6 },
-      rotation: { x: expect.closeTo(0), y: expect.closeTo(90), z: expect.closeTo(0) },
+      elementRelative: {
+        position: { x: 2, y: 4, z: 6 },
+        rotation: { x: expect.closeTo(0), y: expect.closeTo(90), z: expect.closeTo(0) },
+      },
+      documentRelative: {
+        position: { x: 12, y: 24, z: 36 },
+        rotation: { x: expect.closeTo(0), y: expect.closeTo(90), z: expect.closeTo(0) },
+      },
     });
 
-    // Move the position outside of the probe
+    // Move the position outside the probe range
     sendPositionSpy.mockImplementation(() => ({
       position: new THREE.Vector3(20, 40, 60),
       rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(135), 0),

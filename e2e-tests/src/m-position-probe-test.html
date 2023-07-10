@@ -47,7 +47,7 @@
     userCube.setAttribute("width", 0.25);
     userCube.setAttribute("height", 0.25);
     userCube.setAttribute("depth", 0.25);
-    userCube.setAttribute("color", `#${Math.floor(Math.random() * 0xffffff).toString(16)}`);
+    userCube.setAttribute("color", "red");
     userPresenceHolder.append(userCube);
     const newUser = {
       cube: userCube,
@@ -76,13 +76,13 @@
   }
 
   positionProbe.addEventListener("positionenter", (event) => {
-    const { connectionId, position, rotation } = event.detail;
-    setCubePosition(connectionId, position, rotation);
+    const { connectionId, elementRelative, documentRelative } = event.detail;
+    setCubePosition(connectionId, elementRelative.position, elementRelative.rotation);
   });
 
   positionProbe.addEventListener("positionmove", (event) => {
-    const { connectionId, position, rotation } = event.detail;
-    setCubePosition(connectionId, position, rotation);
+    const { connectionId, elementRelative, documentRelative } = event.detail;
+    setCubePosition(connectionId, elementRelative.position, elementRelative.rotation);
   });
 
   positionProbe.addEventListener("positionleave", (event) => {

@@ -985,21 +985,21 @@
           <xs:attribute name="onpositionenter" type="Script">
             <xs:annotation>
               <xs:documentation>
-                A script expression to be executed when a user enters the range of the position probe.
+                A script expression to be executed when a user enters the range of the position probe. Receives a `PositionEnterEvent`.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="onpositionmove" type="Script">
             <xs:annotation>
               <xs:documentation>
-                A script expression to be executed when a user moves within the range of the position probe.
+                A script expression to be executed when a user moves within the range of the position probe. Receives a `PositionMoveEvent`.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="onpositionleave" type="Script">
             <xs:annotation>
               <xs:documentation>
-                A script expression to be executed when a user leaves the range of the position probe.
+                A script expression to be executed when a user leaves the range of the position probe. Receives a `PositionLeaveEvent`.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

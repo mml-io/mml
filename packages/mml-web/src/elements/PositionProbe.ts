@@ -82,23 +82,41 @@ export class PositionProbe extends TransformableElement {
 
   private emitPosition() {
     const userPositionAndRotation = this.getUserPositionAndRotation();
-    const relativeUserPositionAndRotation = getRelativePositionAndRotationRelativeToObject(
+    const elementRelative = getRelativePositionAndRotationRelativeToObject(
       userPositionAndRotation,
       this.getContainer(),
     );
 
     // Check if the position is within range
-    const distance = new THREE.Vector3()
-      .copy(relativeUserPositionAndRotation.position as THREE.Vector3)
-      .length();
+    const distance = new THREE.Vector3().copy(elementRelative.position as THREE.Vector3).length();
 
     if (distance <= this.props.range) {
-      const positionAndRotation = {
-        position: relativeUserPositionAndRotation.position,
+      const elementRelativePositionAndRotation = {
+        position: elementRelative.position,
         rotation: {
-          x: THREE.MathUtils.radToDeg(relativeUserPositionAndRotation.rotation.x),
-          y: THREE.MathUtils.radToDeg(relativeUserPositionAndRotation.rotation.y),
-          z: THREE.MathUtils.radToDeg(relativeUserPositionAndRotation.rotation.z),
+          x: THREE.MathUtils.radToDeg(elementRelative.rotation.x),
+          y: THREE.MathUtils.radToDeg(elementRelative.rotation.y),
+          z: THREE.MathUtils.radToDeg(elementRelative.rotation.z),
+        },
+      };
+
+      let documentRoot;
+      const remoteDocument = this.getRemoteDocument();
+      if (remoteDocument) {
+        documentRoot = remoteDocument.getContainer();
+      } else {
+        documentRoot = this.getScene().getRootContainer();
+      }
+      const documentRelative = getRelativePositionAndRotationRelativeToObject(
+        userPositionAndRotation,
+        documentRoot,
+      );
+      const documentRelativePositionAndRotation = {
+        position: documentRelative.position,
+        rotation: {
+          x: THREE.MathUtils.radToDeg(documentRelative.rotation.x),
+          y: THREE.MathUtils.radToDeg(documentRelative.rotation.y),
+          z: THREE.MathUtils.radToDeg(documentRelative.rotation.z),
         },
       };
       if (!this.currentlyInRange) {
@@ -106,8 +124,8 @@ export class PositionProbe extends TransformableElement {
         this.dispatchEvent(
           new CustomEvent(positionProbeEnterEventName, {
             detail: {
-              position: positionAndRotation.position,
-              rotation: positionAndRotation.rotation,
+              elementRelative: elementRelativePositionAndRotation,
+              documentRelative: documentRelativePositionAndRotation,
             },
           }),
         );
@@ -115,8 +133,8 @@ export class PositionProbe extends TransformableElement {
         this.dispatchEvent(
           new CustomEvent(positionProbePositionMoveEventName, {
             detail: {
-              position: positionAndRotation.position,
-              rotation: positionAndRotation.rotation,
+              elementRelative: elementRelativePositionAndRotation,
+              documentRelative: documentRelativePositionAndRotation,
             },
           }),
         );

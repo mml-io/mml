@@ -65,5 +65,38 @@ type PositionAndRotation = {
  */
 export interface MMLPositionEnterEvent extends RemoteEvent {
   readonly type: "positionenter";
-  readonly detail: PositionAndRotation & RemoteEvent["detail"];
+  readonly detail: {
+    /**
+     * The location of the user relative to the target element.
+     */
+    readonly elementRelative: PositionAndRotation;
+    /**
+     * The location of the user relative to the target element.
+     */
+    readonly documentRelative: PositionAndRotation;
+  } & RemoteEvent["detail"];
+}
+
+/**
+ * Received when a user moves after having entered the range of an m-position-probe.
+ */
+export interface MMLPositionMoveEvent extends RemoteEvent {
+  readonly type: "positionmove";
+  readonly detail: {
+    /**
+     * The location of the user relative to the target element.
+     */
+    readonly elementRelative: PositionAndRotation;
+    /**
+     * The location of the user relative to the target element.
+     */
+    readonly documentRelative: PositionAndRotation;
+  } & RemoteEvent["detail"];
+}
+
+/**
+ * Received when a user leaves the range of an m-position-probe after having entered.
+ */
+export interface MMLPositionLeaveEvent extends RemoteEvent {
+  readonly type: "positionleave";
 }
