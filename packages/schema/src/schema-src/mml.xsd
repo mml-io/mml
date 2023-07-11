@@ -1058,4 +1058,42 @@
       </xs:complexContent>
     </xs:complexType>
   </xs:element>
+  
+  <xs:element name="m-chat-probe">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-chat-probe` element is used to receive messages from a chat system. Which chat system that is depends on the client implementation.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="radius" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                If the sender of a chat message is within this radius (in meters) of the chat probe, the message is expected to be forwarded to the probe. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the chat probe is enabled (true) or disabled (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="onchat" type="Script">
+            <xs:annotation>
+              <xs:documentation>
+                A script expression that is executed when a chat message is forwarded to the probe. The message itself is contained within the `message` parameter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>
