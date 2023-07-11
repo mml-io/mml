@@ -67,13 +67,9 @@ export class DragFlyCameraControls {
       return;
     }
 
-    document.addEventListener(
-      "touchstart",
-      function (e) {
-        e.preventDefault();
-      },
-      { passive: false },
-    );
+    document.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+    }, { passive: false });
 
     this.enabled = true;
     this.eventHandlerCollection.add(document, "keydown", this.onKeyDown.bind(this));
@@ -86,7 +82,7 @@ export class DragFlyCameraControls {
     this.eventHandlerCollection.add(document, "touchstart", this.handleTouchStart.bind(this));
     this.eventHandlerCollection.add(document, "touchend", this.handleTouchEnd.bind(this));
     this.eventHandlerCollection.add(document, "touchmove", this.handleTouchMove.bind(this));
-    this.eventHandlerCollection.add(document, "click", this.handleClick.bind(this));
+    // this.eventHandlerCollection.add(document, "click", this.handleClick.bind(this));
   }
 
   public disable() {
@@ -236,9 +232,9 @@ export class DragFlyCameraControls {
     this.speed = Math.max(5, Math.min(this.speed, 1000));
   }
 
-  private handleClick(event: TouchEvent) {
-    console.log("Click event detected with the following details: ", event);
-  }
+  // private handleClick(event: TouchEvent) {
+  //   console.log("Click event detected with the following details: ", event);
+  // }
 
   // Function to handle touch start event
   private handleTouchStart(event: TouchEvent) {
@@ -283,8 +279,6 @@ export class DragFlyCameraControls {
 
     if (Date.now() - this.clickTimestamp < this.clickTime) {
       /* this is a click */
-      console.log("Click positions: ", this.panStartX, this.panStartY);
-
       // Create and dispatch a new mouse event with specific x and y coordinates
       const clickEvent = new MouseEvent("click", {
         bubbles: true,
@@ -294,7 +288,6 @@ export class DragFlyCameraControls {
         clientY: this.panStartY,
       });
       window.dispatchEvent(clickEvent);
-      console.log("Click event dispatched");
     }
   }
 

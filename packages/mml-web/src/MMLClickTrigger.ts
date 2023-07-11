@@ -28,6 +28,7 @@ export class MMLClickTrigger {
     this.eventHandlerCollection.add(clickTarget, "mousedown", this.handleMouseDown.bind(this));
     this.eventHandlerCollection.add(clickTarget, "mouseup", this.handleMouseUp.bind(this));
     this.eventHandlerCollection.add(clickTarget, "mousemove", this.handleMouseMove.bind(this));
+    this.eventHandlerCollection.add(clickTarget, "touchstart", this.handleTouchStart.bind(this));
   }
 
   private handleMouseDown() {
@@ -52,6 +53,51 @@ export class MMLClickTrigger {
   private handleMouseMove(event: MouseEvent) {
     if (this.mouseDownTime) {
       this.mouseMoveDelta += Math.abs(event.movementX) + Math.abs(event.movementY);
+    }
+  }
+
+  private handleTouchStart(event: TouchEvent) {
+    if ((event.detail as any).element) {
+      // Avoid infinite loop of handling click events that originated from this trigger
+      return;
+    }
+    let x = 0;
+    let y = 0;
+    if (!document.pointerLockElement) {
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      if (this.clickTarget instanceof HTMLElement) {
+        width = this.clickTarget.offsetWidth;
+        height = this.clickTarget.offsetHeight;
+      }
+      x = (event.touches[0].clientX / width) * 2 - 1;
+      y = -((event.touches[0].clientY / height) * 2 - 1);
+    }
+    this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.scene.getCamera());
+    const intersections = this.raycaster.intersectObject(this.scene.getRootContainer(), true);
+    if (intersections.length > 0) {
+      for (const intersection of intersections) {
+        let obj: THREE.Object3D | null = intersection.object;
+        while (obj) {
+          /*
+             Ignore scene objects that have a transparent or wireframe material
+            */
+          if (this.isMaterialIgnored(obj)) {
+            break;
+          }
+
+          const mElement = MElement.getMElementFromObject(obj);
+          if (mElement && mElement.isClickable()) {
+            mElement.dispatchEvent(
+              new MouseEvent("click", {
+                bubbles: true,
+              }),
+            );
+            return;
+          }
+          obj = obj.parent;
+        }
+      }
     }
   }
 
