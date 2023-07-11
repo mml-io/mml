@@ -67,9 +67,13 @@ export class DragFlyCameraControls {
       return;
     }
 
-    document.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-    }, { passive: false });
+    document.addEventListener(
+      "touchstart",
+      (e) => {
+        e.preventDefault();
+      },
+      { passive: false },
+    );
 
     this.enabled = true;
     this.eventHandlerCollection.add(document, "keydown", this.onKeyDown.bind(this));
