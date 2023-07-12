@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-web-client",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "files": [
     "/build",
     "/src"
@@ -15,6 +15,6 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web": "^0.1.3"
+    "@mml-io/networked-dom-web": "^0.2.0"
   }
 }
