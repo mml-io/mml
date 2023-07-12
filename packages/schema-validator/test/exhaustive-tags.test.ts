@@ -12,6 +12,7 @@ test("exhaustive tags", () => {
   <m-interaction></m-interaction>
   <m-model></m-model>
   <m-character></m-character>
+  <m-position-probe></m-position-probe>
   <m-frame></m-frame>
   <m-label></m-label>
   <m-group></m-group>

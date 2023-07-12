@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { RemoteDocument } from "./RemoteDocument";
 import { consumeEventEventName, documentTimeChangedEventName } from "../common";
 import { getGlobalMScene } from "../global";
-import { IMMLScene, ScenePosition } from "../MMLScene";
+import { IMMLScene, PositionAndRotation } from "../MMLScene";
 
 const MELEMENT_PROPERTY_NAME = "m-element-property";
 
@@ -43,7 +43,7 @@ export abstract class MElement extends HTMLElement {
   }
 
   public getScene(): IMMLScene {
-    const sceneAttachmentElement = this.closest("m-remote-document") || null;
+    const sceneAttachmentElement = this.getRemoteDocument();
     if (sceneAttachmentElement) {
       return (sceneAttachmentElement as RemoteDocument).getMScene();
     }
@@ -54,7 +54,7 @@ export abstract class MElement extends HTMLElement {
     return globalScene;
   }
 
-  private getRemoteDocument(): RemoteDocument | null {
+  public getRemoteDocument(): RemoteDocument | null {
     return this.closest("m-remote-document") || null;
   }
 
@@ -107,12 +107,12 @@ export abstract class MElement extends HTMLElement {
     return sceneAttachment.getCamera();
   }
 
-  getUserPosition(): ScenePosition {
+  getUserPositionAndRotation(): PositionAndRotation {
     const sceneAttachment = this.getScene();
     if (!sceneAttachment) {
       throw new Error("No scene to retrieve user position from");
     }
-    return sceneAttachment.getUserPosition();
+    return sceneAttachment.getUserPositionAndRotation();
   }
 
   getAudioListener(): THREE.AudioListener {
