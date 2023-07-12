@@ -1072,28 +1072,28 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="in-focus" type="xs:float">
+          <xs:attribute name="in-focus" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
                 Whether the interaction must be in the direction of the camera to be used. Default value is true.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="line-of-sight" type="xs:float">
+          <xs:attribute name="line-of-sight" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
                 Whether the interaction must be visible to the camera to be used. Default value is false.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="priority" type="xs:float">
+          <xs:attribute name="priority" type="xs:int">
             <xs:annotation>
               <xs:documentation>
                 The priority of this interaction. Lower priority interactions will be shown first. Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="prompt" type="xs:float">
+          <xs:attribute name="prompt" type="xs:string">
             <xs:annotation>
               <xs:documentation>
                 The prompt to be displayed when the interaction is presented to the user.
