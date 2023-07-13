@@ -17,7 +17,8 @@
   "dependencies": {
     "@mml-io/observable-dom-common": "^0.2.0",
     "jsdom": "22.1.0",
-    "node-fetch": "2.6.11"
+    "node-fetch": "2.6.11",
+    "canvas": "^2.11.2"
   },
   "devDependencies": {
     "@types/jsdom": "21.1.1",

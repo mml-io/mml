@@ -132,11 +132,11 @@ describe("m-cube", () => {
     expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
     expect(addColliderSpy).toHaveBeenCalledTimes(1);
     expect(removeColliderSpy).toHaveBeenCalledTimes(0);
-    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube());
+    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube(), element);
 
     element.setAttribute("collide", "false");
     expect(removeColliderSpy).toHaveBeenCalledTimes(1);
-    expect(removeColliderSpy).toHaveBeenCalledWith(element.getCube());
+    expect(removeColliderSpy).toHaveBeenCalledWith(element.getCube(), element);
     expect(addColliderSpy).toHaveBeenCalledTimes(1);
     expect(Array.from((scene as any).colliders)).toEqual([]);
 
@@ -144,7 +144,7 @@ describe("m-cube", () => {
     expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
     expect(addColliderSpy).toHaveBeenCalledTimes(2);
     expect(removeColliderSpy).toHaveBeenCalledTimes(1);
-    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube());
+    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube(), element);
   });
 
   test("collide - update", () => {
@@ -157,7 +157,7 @@ describe("m-cube", () => {
 
     element.setAttribute("y", "1");
     expect(updateColliderSpy).toHaveBeenCalledTimes(1);
-    expect(updateColliderSpy).toHaveBeenCalledWith(element.getCube());
+    expect(updateColliderSpy).toHaveBeenCalledWith(element.getCube(), element);
 
     element.setAttribute("color", "red");
     // Should not have called updateCollider again
@@ -186,14 +186,14 @@ describe("m-cube", () => {
     // y should be increased by one due to the parent group - should now be 3
     element.setAttribute("y", "1");
     expect(updateColliderSpy).toHaveBeenCalledTimes(1);
-    expect(updateColliderSpy).toHaveBeenCalledWith(mCube.getCube());
+    expect(updateColliderSpy).toHaveBeenCalledWith(mCube.getCube(), mCube);
     const worldPos = new THREE.Vector3();
     mCube.getCube().getWorldPosition(worldPos);
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 3 });
 
     innerGroup.setAttribute("z", "1");
     expect(updateColliderSpy).toHaveBeenCalledTimes(2);
-    expect(updateColliderSpy).toHaveBeenNthCalledWith(2, mCube.getCube());
+    expect(updateColliderSpy).toHaveBeenNthCalledWith(2, mCube.getCube(), mCube);
     expect(addColliderSpy).toHaveBeenCalledTimes(1);
     mCube.getCube().getWorldPosition(worldPos);
     // z should be increased by one due to the parent group - should now be 4

@@ -7,6 +7,7 @@ import { Interaction } from "./elements/Interaction";
 import { MElement } from "./elements/MElement";
 import { InteractionManager } from "./interaction-ui";
 import { MMLClickTrigger } from "./MMLClickTrigger";
+import { MMLCollisionTrigger } from "./MMLCollisionTrigger";
 import { PromptManager } from "./prompt-ui";
 
 export type PositionAndRotation = {
@@ -26,6 +27,8 @@ export type PromptProps = {
   prefill?: string;
 };
 
+type CollisionData = {};
+
 export type IMMLScene = {
   getAudioListener: () => THREE.AudioListener;
   getRenderer: () => THREE.Renderer;
@@ -34,13 +37,17 @@ export type IMMLScene = {
   getCamera: () => THREE.Camera;
   getRootContainer: () => THREE.Group;
 
-  addCollider?: (collider: THREE.Object3D) => void;
-  updateCollider?: (collider: THREE.Object3D) => void;
-  removeCollider?: (collider: THREE.Object3D) => void;
+  addCollider?: (collider: THREE.Object3D, element: MElement) => void;
+  updateCollider?: (collider: THREE.Object3D, element: MElement) => void;
+  removeCollider?: (collider: THREE.Object3D, element: MElement) => void;
 
   addInteraction?: (interaction: Interaction) => void;
   updateInteraction?: (interaction: Interaction) => void;
   removeInteraction?: (interaction: Interaction) => void;
+
+  startCollision?(collider: THREE.Object3D, collisionData: CollisionData): void;
+  updateCollision?(collider: THREE.Object3D, collisionData: CollisionData): void;
+  endCollision?(collider: THREE.Object3D, collisionData: CollisionData): void;
 
   getUserPositionAndRotation(): PositionAndRotation;
 
@@ -76,6 +83,7 @@ export class MMLScene implements IMMLScene {
   private promptManager: PromptManager;
   private interactionManager: InteractionManager;
   private resizeObserver: ResizeObserver;
+  private collisionTrigger: MMLCollisionTrigger;
 
   constructor(mmlSceneOptions: MMLSceneOptions = {}) {
     this.element = document.createElement("div");
@@ -132,6 +140,7 @@ export class MMLScene implements IMMLScene {
     }
 
     this.clickTrigger = MMLClickTrigger.init(this.element, this);
+    this.collisionTrigger = MMLCollisionTrigger.init();
     this.promptManager = PromptManager.init(this.element);
     const { interactionManager, interactionListener } = InteractionManager.init(
       this.element,

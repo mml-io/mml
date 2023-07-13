@@ -1,23 +1,23 @@
 import * as THREE from "three";
 
-import { Interaction } from "../../elements";
+import { Interaction, MElement } from "../../elements";
 import { IMMLScene, PromptProps } from "../../MMLScene";
 
 export function createWrappedScene(scene: IMMLScene, container: THREE.Group): IMMLScene {
   return {
-    addCollider(collider: THREE.Object3D): void {
+    addCollider(collider: THREE.Object3D, element: MElement): void {
       if (scene.addCollider) {
-        scene.addCollider(collider);
+        scene.addCollider(collider, element);
       }
     },
-    updateCollider(collider: THREE.Object3D): void {
+    updateCollider(collider: THREE.Object3D, element: MElement): void {
       if (scene.updateCollider) {
-        scene.updateCollider(collider);
+        scene.updateCollider(collider, element);
       }
     },
-    removeCollider(collider: THREE.Object3D): void {
+    removeCollider(collider: THREE.Object3D, element: MElement): void {
       if (scene.removeCollider) {
-        scene.removeCollider(collider);
+        scene.removeCollider(collider, element);
       }
     },
     addInteraction(interaction: Interaction): void {

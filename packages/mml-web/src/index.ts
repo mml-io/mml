@@ -5,6 +5,8 @@ export * from "./websocket/RemoteDocumentWrapper";
 export * from "./elements";
 export * from "./MMLScene";
 export * from "./MMLClickTrigger";
+export * from "./MMLCollisionTrigger";
+export * from "./utils/position-utils";
 export * from "./FullScreenMScene";
 export { NetworkedDOMWebsocket } from "@mml-io/networked-dom-web";
 export * from "./interaction-ui";
