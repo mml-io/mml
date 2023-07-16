@@ -1,2 +1,5 @@
 <m-label content="This is static MML in an m-frame" y="1.5" padding="0" width="3" alignment="center"></m-label>
 <m-cube onclick="console.error('should never run'); bang();" color="orange"></m-cube>
+
+<!--Include a relative-path m-image to test that the content is loaded relative to the path of this file-->
+<m-image src="test-image.png" y="2" z="-3" width="5"></m-image>

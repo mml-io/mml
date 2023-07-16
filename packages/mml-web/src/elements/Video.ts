@@ -328,7 +328,8 @@ export class Video extends TransformableElement {
       tag.crossOrigin = "anonymous";
       tag.loop = this.props.loop;
 
-      if (tag.src !== this.props.src) {
+      const contentAddress = this.contentSrcToContentAddress(this.props.src);
+      if (tag.src !== contentAddress) {
         if (tag.src) {
           // There is an existing src - stop playing to allow changing it
           this.loadedVideoState.paused = true;
@@ -336,7 +337,7 @@ export class Video extends TransformableElement {
         }
 
         try {
-          tag.src = this.props.src;
+          tag.src = contentAddress;
         } catch (e) {
           console.error("src failed to switch", e);
         }

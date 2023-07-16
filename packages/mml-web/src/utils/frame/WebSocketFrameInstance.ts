@@ -76,7 +76,6 @@ export class WebSocketFrameInstance {
   private srcToAddress(src: string): string {
     const insecurePrefix = "ws:///";
     const securePrefix = "wss:///";
-    console.log("srcToAddress", src);
     if (src.startsWith(insecurePrefix)) {
       // Relative insecure websocket path
       return `ws://${this.getDocumentHost()}/${src.substring(insecurePrefix.length)}`;

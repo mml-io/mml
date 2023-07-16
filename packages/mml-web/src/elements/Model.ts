@@ -57,7 +57,9 @@ export class Model extends TransformableElement {
         return;
       }
 
-      const srcModelPromise = instance.asyncLoadSourceAsset(instance.props.src);
+      const srcModelPromise = instance.asyncLoadSourceAsset(
+        instance.contentSrcToContentAddress(instance.props.src),
+      );
       instance.latestSrcModelPromise = srcModelPromise;
       srcModelPromise.then((result) => {
         if (instance.latestSrcModelPromise !== srcModelPromise) {
@@ -114,7 +116,10 @@ export class Model extends TransformableElement {
         instance.currentAnimationAction = null;
       }
 
-      const animPromise = loadGltfAsPromise(Model.gltfLoader, instance.props.anim);
+      const animPromise = loadGltfAsPromise(
+        Model.gltfLoader,
+        instance.contentSrcToContentAddress(instance.props.anim),
+      );
       instance.latestAnimPromise = animPromise;
       animPromise.then((result) => {
         if (instance.latestAnimPromise !== animPromise) {

@@ -2,10 +2,10 @@ import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
 
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 
 const port = process.env.PORT || 8079;
 
@@ -95,18 +95,16 @@ app.ws("/:pathName", (ws, req) => {
 });
 
 app.get("/:documentPath/", (req, res) => {
-  const html = `<html><script src="${req.secure ? "https" : "http"}://${
-   req.get('host')
-  }/client/index.js?defineGlobals=true&websocketUrl=${getWebsocketUrl(req)}"></script></html>`;
+  const html = `<html><script src="${req.secure ? "https" : "http"}://${req.get(
+    "host",
+  )}/client/index.js?defineGlobals=true&websocketUrl=${getWebsocketUrl(req)}"></script></html>`;
 
   res.send(html);
 });
 
 app.use(
-    "/client/",
-    express.static(
-        path.resolve(__dirname, "../../node_modules/mml-web-client/build/")
-    )
+  "/client/",
+  express.static(path.resolve(__dirname, "../../node_modules/mml-web-client/build/")),
 );
 
 app.get("/:documentPath/reset", (req, res) => {
