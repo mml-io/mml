@@ -1,5 +1,3 @@
-const path = require("path");
-
 const esbuild = require("esbuild");
 const buildMode = "--build";
 const watchMode = "--watch";
