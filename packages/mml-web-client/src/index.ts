@@ -87,6 +87,7 @@ function createStatusElement() {
       };
       const statusElement = createStatusElement();
       const remoteDocumentWrapper = new RemoteDocumentWrapper(
+        window.location.href,
         windowTarget,
         fullScreenMScene,
         eventHandler,

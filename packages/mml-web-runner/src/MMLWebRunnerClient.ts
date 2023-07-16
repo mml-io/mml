@@ -28,6 +28,7 @@ export class MMLWebRunnerClient extends NetworkedDOMWebRunnerClient {
       overriddenHandler(element, event);
     };
     const remoteDocumentWrapper = new RemoteDocumentWrapper(
+      window.location.href,
       this.windowTarget,
       this.mScene,
       eventHandler,

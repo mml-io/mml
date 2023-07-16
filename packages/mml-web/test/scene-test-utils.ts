@@ -13,7 +13,7 @@ export function createSceneAttachedElement<T extends HTMLElement>(
 export function createTestScene(): { scene: FullScreenMScene; sceneAttachment: RemoteDocument } {
   const scene = new FullScreenMScene();
   const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-  sceneAttachment.setMScene(scene);
+  sceneAttachment.init(scene, "ws://localhost:8080");
   document.body.append(sceneAttachment);
   return { scene, sceneAttachment };
 }

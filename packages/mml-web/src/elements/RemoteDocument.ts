@@ -7,6 +7,7 @@ export class RemoteDocument extends MElement {
 
   private scene: IMMLScene | null = null;
   private relativeDocumentStartTime: number | null = null;
+  private documentAddress: string | null = null;
 
   constructor() {
     super();
@@ -53,12 +54,17 @@ export class RemoteDocument extends MElement {
     // no-op to avoid calling super class
   }
 
-  setMScene(mScene: IMMLScene) {
+  init(mScene: IMMLScene, documentAddress: string) {
     if (this.scene) {
       throw new Error("Scene already set");
     }
     this.scene = mScene;
+    this.documentAddress = documentAddress;
     this.scene.getRootContainer().add(this.container);
+  }
+
+  public getDocumentAddress(): string | null {
+    return this.documentAddress;
   }
 
   getMScene(): IMMLScene {
