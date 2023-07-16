@@ -6,7 +6,7 @@ describe("m-cube", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:8079/m-cube-test.html/reset");
+    await page.goto("http://localhost:7079/m-cube-test.html/reset");
 
     await page.waitForSelector("m-cube[color='red']");
 

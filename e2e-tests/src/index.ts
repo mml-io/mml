@@ -7,7 +7,7 @@ import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
 
-const port = process.env.PORT || 8079;
+const port = process.env.PORT || 7079;
 
 const srcPath = path.resolve(__dirname, "../src");
 

@@ -9,7 +9,7 @@ import enableWs from "express-ws";
 import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import ws from "ws";
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 7070;
 
 const filePath = path.resolve(__dirname, "../src/mml-document.html");
 

@@ -84,8 +84,8 @@ This repo contains libraries and schema definitions for MML. The most likely way
 1. `npm install`
 1. `npm run iterate` Builds and starts incrementally building package artefacts from sources
    * Servers should start for examples:
-     * [http://localhost:8080](http://localhost:8080) - MML Example Server
-     * [http://localhost:8081](http://localhost:8081) - Networked DOM Example Server
+     * [http://localhost:7070](http://localhost:7070) - MML Example Server
+     * [http://localhost:7071](http://localhost:7071) - Networked DOM Example Server
 
 To use any of the libraries in this repo in another project, you can use `npm link` to make these dependencies linkable to your other npm project.
 * `npm run link-all` Runs `npm link` in all would-be-published packages to allow using as local dependencies to develop with. It will also print the commands to link the dependencies.
