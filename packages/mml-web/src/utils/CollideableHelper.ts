@@ -6,12 +6,12 @@ import { TransformableElement } from "../elements/TransformableElement";
 import { IMMLScene } from "../MMLScene";
 
 const collideAttributeName = "collide";
+const collisionIntervalAttributeName = "collision-interval";
 const debugAttributeName = "debug";
 const defaultCollideable = true;
 const defaultDebug = false;
 
 export class CollideableHelper {
-  static observedAttributes = [collideAttributeName];
   private element: MElement;
 
   private props = {
@@ -27,12 +27,16 @@ export class CollideableHelper {
         instance.updateCollider(instance.colliderState.collider);
       }
     },
+    [collisionIntervalAttributeName]: () => {
+      // Collision interval is handled by the MMLCollisionTrigger, but is here for completeness of attribute handling
+    },
     [debugAttributeName]: (instance, newValue) => {
       const debug = parseBoolAttribute(newValue, defaultDebug);
       instance.props.debug = debug;
       instance.colliderUpdated();
     },
   });
+  static observedAttributes = CollideableHelper.AttributeHandler.getAttributes();
 
   constructor(element: MElement) {
     this.element = element;

@@ -37,8 +37,6 @@ export class MMLCollisionTrigger {
     return new MMLCollisionTrigger();
   }
 
-  private constructor() {}
-
   public setCurrentCollisions(currentCollisions: Map<THREE.Object3D, CollisionData> | null) {
     const currentTime = performance.now();
     if (currentCollisions) {

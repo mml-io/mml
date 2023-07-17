@@ -27,8 +27,6 @@ export type PromptProps = {
   prefill?: string;
 };
 
-type CollisionData = {};
-
 export type IMMLScene = {
   getAudioListener: () => THREE.AudioListener;
   getRenderer: () => THREE.Renderer;
@@ -44,10 +42,6 @@ export type IMMLScene = {
   addInteraction?: (interaction: Interaction) => void;
   updateInteraction?: (interaction: Interaction) => void;
   removeInteraction?: (interaction: Interaction) => void;
-
-  startCollision?(collider: THREE.Object3D, collisionData: CollisionData): void;
-  updateCollision?(collider: THREE.Object3D, collisionData: CollisionData): void;
-  endCollision?(collider: THREE.Object3D, collisionData: CollisionData): void;
 
   getUserPositionAndRotation(): PositionAndRotation;
 
@@ -251,7 +245,8 @@ export class MMLScene implements IMMLScene {
     this.promptManager.prompt(promptProps, callback);
   }
 
-  public addCollider(collider: THREE.Object3D): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public addCollider(collider: THREE.Object3D, element: MElement): void {
     this.colliders.add(collider);
   }
 
