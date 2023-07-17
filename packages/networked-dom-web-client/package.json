@@ -2,8 +2,7 @@
   "name": "@mml-io/networked-dom-web-client",
   "version": "0.2.0",
   "files": [
-    "/build",
-    "/src"
+    "/build"
   ],
   "main": "build/index.js",
   "scripts": {

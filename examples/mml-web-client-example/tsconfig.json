@@ -13,7 +13,8 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "downlevelIteration": true,
-    "outDir": "./build"
+    "outDir": "./build",
+    "incremental": true
   },
   "include": ["src/**/*"],
   "exclude": ["**/build/*", "types-src", "**/build.js"]
