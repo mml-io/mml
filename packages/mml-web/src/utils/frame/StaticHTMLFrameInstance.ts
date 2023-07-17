@@ -2,6 +2,7 @@ import { DOMSanitizer } from "@mml-io/networked-dom-web";
 import * as THREE from "three";
 
 import { createWrappedScene } from "./CreateWrappedScene";
+import { MElement } from "../../elements/MElement";
 import { IMMLScene } from "../../MMLScene";
 import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
 
@@ -9,12 +10,12 @@ export class StaticHTMLFrameInstance {
   public readonly src: string;
   public readonly container: THREE.Group;
   private readonly remoteDocumentWrapper: RemoteDocumentWrapper;
-  private readonly targetForWrapper: HTMLElement;
+  private readonly targetForWrapper: MElement;
   private readonly scene: IMMLScene;
 
   static parser = new DOMParser();
 
-  constructor(targetElement: HTMLElement, src: string, scene: IMMLScene) {
+  constructor(targetElement: MElement, src: string, scene: IMMLScene) {
     this.targetForWrapper = targetElement;
     this.src = src;
     this.scene = scene;
@@ -25,18 +26,25 @@ export class StaticHTMLFrameInstance {
 
     const wrappedScene: IMMLScene = createWrappedScene(this.scene, this.container);
 
-    this.remoteDocumentWrapper = new RemoteDocumentWrapper(windowTarget, wrappedScene, () => {
-      // Events targeting static MML frames should not be sent
-    });
+    const address = this.targetForWrapper.contentSrcToContentAddress(this.src);
+
+    this.remoteDocumentWrapper = new RemoteDocumentWrapper(
+      address,
+      windowTarget,
+      wrappedScene,
+      () => {
+        // Events targeting static MML frames should not be sent
+      },
+    );
     this.targetForWrapper.append(this.remoteDocumentWrapper.element);
     // Promise is intentionally ignored here
-    this.fetch();
+    this.fetch(address);
   }
 
-  private async fetch() {
+  private async fetch(address: string) {
     let response;
     try {
-      response = await fetch(this.src);
+      response = await fetch(address);
     } catch (err) {
       console.error("Failed to fetch static MML page", err);
       return;

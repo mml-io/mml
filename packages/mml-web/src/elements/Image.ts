@@ -38,7 +38,10 @@ export class Image extends TransformableElement {
         return;
       }
 
-      instance.srcApplyPromise = loadImageAsPromise(Image.imageLoader, newValue)
+      instance.srcApplyPromise = loadImageAsPromise(
+        Image.imageLoader,
+        instance.contentSrcToContentAddress(newValue),
+      )
         .then((image: HTMLImageElement) => {
           if (instance.getAttribute("src") === newValue) {
             // if the current src attribute still matches the requested URL, add

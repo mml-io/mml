@@ -6,6 +6,7 @@ export class RemoteDocumentWrapper {
   public readonly element: RemoteDocument;
 
   constructor(
+    address: string,
     targetWindow: Window,
     mScene: IMMLScene,
     handleEvent: (element: HTMLElement, event: CustomEvent) => void,
@@ -16,7 +17,7 @@ export class RemoteDocumentWrapper {
       handleEvent(element, originalEvent);
       wrappedEvent.stopPropagation();
     });
-    this.element.setMScene(mScene);
+    this.element.init(mScene, address);
   }
 
   public setDocumentTime(documentTime: number) {

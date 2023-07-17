@@ -19,7 +19,7 @@ describe("m-group", () => {
   test("test attachment to scene", () => {
     const scene = new FullScreenMScene();
     const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-    sceneAttachment.setMScene(scene);
+    sceneAttachment.init(scene, "ws://localhost:8080");
     document.body.append(sceneAttachment);
 
     const element = document.createElement("m-group") as Group;
