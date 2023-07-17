@@ -6,7 +6,7 @@ describe("m-image", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:8079/m-image-test.html/reset");
+    await page.goto("http://localhost:7079/m-image-test.html/reset");
 
     // Wait for the m-image content to load
     await page.waitForFunction(
