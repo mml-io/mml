@@ -9,7 +9,7 @@ import express, { Request } from "express";
 import enableWs from "express-ws";
 import ws from "ws";
 
-const port = process.env.PORT || 8081;
+const port = process.env.PORT || 7071;
 
 const filePath = path.resolve(__dirname, "../src/networked-dom-document.html");
 

@@ -20,7 +20,7 @@
 
   const contentLabel = document.getElementById("json-content");
   async function fetchData() {
-    const address = `http://localhost:8079/assets/some-data.json`;
+    const address = `http://localhost:7079/assets/some-data.json`;
     const res = await fetch(address);
     const json = await res.json();
     contentLabel.setAttribute("content", `${JSON.stringify(json)}`);

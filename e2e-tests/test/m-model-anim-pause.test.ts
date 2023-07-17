@@ -8,7 +8,7 @@ describe("m-model", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:8079/m-model-anim-pause-test.html/reset");
+    await page.goto("http://localhost:7079/m-model-anim-pause-test.html/reset");
 
     await page.waitForSelector("m-model");
 
