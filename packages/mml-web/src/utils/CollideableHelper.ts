@@ -6,12 +6,12 @@ import { TransformableElement } from "../elements/TransformableElement";
 import { IMMLScene } from "../MMLScene";
 
 const collideAttributeName = "collide";
+const collisionIntervalAttributeName = "collision-interval";
 const debugAttributeName = "debug";
 const defaultCollideable = true;
 const defaultDebug = false;
 
 export class CollideableHelper {
-  static observedAttributes = [collideAttributeName];
   private element: MElement;
 
   private props = {
@@ -27,12 +27,16 @@ export class CollideableHelper {
         instance.updateCollider(instance.colliderState.collider);
       }
     },
+    [collisionIntervalAttributeName]: () => {
+      // Collision interval is handled by the MMLCollisionTrigger, but is here for completeness of attribute handling
+    },
     [debugAttributeName]: (instance, newValue) => {
       const debug = parseBoolAttribute(newValue, defaultDebug);
       instance.props.debug = debug;
       instance.colliderUpdated();
     },
   });
+  static observedAttributes = CollideableHelper.AttributeHandler.getAttributes();
 
   constructor(element: MElement) {
     this.element = element;
@@ -45,7 +49,7 @@ export class CollideableHelper {
 
   private colliderUpdated() {
     if (this.props.collide && this.colliderState.scene && this.colliderState.collider) {
-      this.colliderState.scene.updateCollider?.(this.colliderState.collider);
+      this.colliderState.scene.updateCollider?.(this.colliderState.collider, this.element);
     }
   }
 
@@ -70,14 +74,14 @@ export class CollideableHelper {
 
     if (collide) {
       if (colliderChanged && previousCollider !== null) {
-        this.colliderState.scene.removeCollider?.(previousCollider);
+        this.colliderState.scene.removeCollider?.(previousCollider, this.element);
       }
       if (collider !== null) {
-        this.colliderState.scene.addCollider?.(collider);
+        this.colliderState.scene.addCollider?.(collider, this.element);
       }
     } else {
       if (previousCollider !== null) {
-        this.colliderState.scene.removeCollider?.(previousCollider);
+        this.colliderState.scene.removeCollider?.(previousCollider, this.element);
       }
     }
   }
@@ -94,7 +98,7 @@ export class CollideableHelper {
       return;
     }
 
-    scene.removeCollider?.(this.colliderState.collider);
+    scene.removeCollider?.(this.colliderState.collider, this.element);
 
     this.colliderState.scene = null;
   }

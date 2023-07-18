@@ -210,6 +210,34 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="collision-interval" type="xs:integer">
+      <xs:annotation>
+        <xs:documentation>
+          If set, the time in milliseconds between user collision events being sent to the element. By default collision events are not sent.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="oncollisionstart" type="Script">
+      <xs:annotation>
+        <xs:documentation>
+          A script expression to be executed when a user starts colliding with the element. Receives a `CollisionStartEvent`.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="oncollisionmove" type="Script">
+      <xs:annotation>
+        <xs:documentation>
+          A script expression to be executed when a user moves the collision point they are colliding at on the element. Receives a `CollisionMoveEvent`.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="oncollisionend" type="Script">
+      <xs:annotation>
+        <xs:documentation>
+          A script expression to be executed when a user stops colliding with the element. Receives a `CollisionEndEvent`.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:attributeGroup>
 
   <xs:attributeGroup name="colorable">
