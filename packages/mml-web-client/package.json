@@ -1,6 +1,6 @@
 {
   "name": "mml-web-client",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "files": [
     "/build"
   ],
@@ -14,7 +14,7 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "mml-web": "^0.2.0",
+    "mml-web": "^0.3.0",
     "three": "0.153.0"
   },
   "devDependencies": {

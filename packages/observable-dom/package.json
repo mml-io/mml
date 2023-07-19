@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/observable-dom",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -15,7 +15,7 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/observable-dom-common": "^0.2.0",
+    "@mml-io/observable-dom-common": "^0.3.0",
     "jsdom": "22.1.0",
     "node-fetch": "2.6.11"
   },
