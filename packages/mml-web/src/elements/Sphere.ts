@@ -11,26 +11,55 @@ import { CollideableHelper } from "../utils/CollideableHelper";
 
 const defaultSphereColor = new THREE.Color(0xffffff);
 const defaultSphereRadius = 0.5;
-const defaultWidthSegments = 16;
-const defaultHeightSegments = 16;
+const defaultSphereOpacity = 1;
+const defaultSphereCastShadows = true;
+
+const defaultSphereWidthSegments = 16;
+const defaultSphereHeightSegments = 16;
 
 export class Sphere extends TransformableElement {
   static tagName = "m-sphere";
 
+  static sphereGeometry = new THREE.SphereGeometry(
+    defaultSphereRadius,
+    defaultSphereWidthSegments,
+    defaultSphereHeightSegments,
+  );
+
+  private props = {
+    radius: defaultSphereRadius as number,
+    color: defaultSphereColor,
+    opacity: defaultSphereOpacity,
+    castShadows: defaultSphereCastShadows,
+  };
+
+  private mesh: THREE.Mesh<THREE.SphereGeometry, THREE.Material | Array<THREE.Material>>;
+  private material: THREE.MeshStandardMaterial | null = null;
+
+  private collideableHelper = new CollideableHelper(this);
+
   private static attributeHandler = new AttributeHandler<Sphere>({
     color: (instance, newValue) => {
-      const color = parseColorAttribute(newValue, defaultSphereColor);
-      instance.mesh.material.color = color;
+      instance.props.color = parseColorAttribute(newValue, defaultSphereColor);
+      if (instance.material) {
+        instance.material.color = instance.props.color;
+      }
     },
     radius: (instance, newValue) => {
-      const scale = parseFloatAttribute(newValue, defaultSphereRadius) * 2;
+      instance.props.radius = parseFloatAttribute(newValue, defaultSphereRadius);
+      const scale = instance.props.radius * 2;
       instance.mesh.scale.set(scale, scale, scale);
+      instance.collideableHelper.updateCollider(instance.mesh);
     },
     opacity: (instance, newValue) => {
-      instance.mesh.material.opacity = parseFloatAttribute(newValue, 1);
+      instance.props.opacity = parseFloatAttribute(newValue, defaultSphereOpacity);
+      if (instance.material) {
+        instance.material.opacity = parseFloatAttribute(newValue, 1);
+      }
     },
     "cast-shadows": (instance, newValue) => {
-      instance.mesh.castShadow = parseBoolAttribute(newValue, true);
+      instance.props.castShadows = parseBoolAttribute(newValue, defaultSphereCastShadows);
+      instance.mesh.castShadow = instance.props.castShadows;
     },
   });
 
@@ -42,25 +71,13 @@ export class Sphere extends TransformableElement {
     ];
   }
 
-  private mesh: THREE.Mesh<
-    THREE.SphereGeometry,
-    THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
-  >;
-  private collideableHelper = new CollideableHelper(this);
-
   constructor() {
     super();
-    const geometry = new THREE.SphereGeometry(
-      defaultSphereRadius,
-      defaultWidthSegments,
-      defaultHeightSegments,
-    );
-    const material = new THREE.MeshStandardMaterial({
-      color: defaultSphereColor,
-      transparent: true,
-    });
-    this.mesh = new THREE.Mesh(geometry, material);
-    this.mesh.castShadow = true;
+    this.mesh = new THREE.Mesh(Sphere.sphereGeometry);
+    this.mesh.scale.x = this.props.radius * 2;
+    this.mesh.scale.y = this.props.radius * 2;
+    this.mesh.scale.z = this.props.radius * 2;
+    this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
   }
@@ -75,8 +92,8 @@ export class Sphere extends TransformableElement {
 
   public getSphere(): THREE.Mesh<
     THREE.SphereGeometry,
-    THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
-  > {
+    THREE.Material | Array<THREE.Material>
+  > | null {
     return this.mesh;
   }
 
@@ -86,13 +103,24 @@ export class Sphere extends TransformableElement {
     this.collideableHelper.handle(name, newValue);
   }
 
-  connectedCallback(): void {
+  connectedCallback() {
     super.connectedCallback();
+    this.material = new THREE.MeshStandardMaterial({
+      color: this.props.color,
+      transparent: true,
+      opacity: this.props.opacity,
+    });
+    this.mesh.material = this.material;
     this.collideableHelper.updateCollider(this.mesh);
   }
 
-  disconnectedCallback(): void {
+  disconnectedCallback() {
     this.collideableHelper.removeColliders();
+    if (this.material) {
+      this.material.dispose();
+      this.mesh.material = [];
+      this.material = null;
+    }
     super.disconnectedCallback();
   }
 }

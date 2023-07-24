@@ -8,16 +8,33 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 
+const defaultImageSrc = "";
 const defaultImageWidth = null;
 const defaultImageHeight = null;
+const defaultImageOpacity = 1;
+const defaultImageCastShadows = true;
 
 export class Image extends TransformableElement {
   static tagName = "m-image";
 
+  private static imageLoader = new THREE.ImageLoader();
+  private static planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+
   private props = {
+    src: defaultImageSrc,
     width: defaultImageWidth as number | null,
     height: defaultImageHeight as number | null,
+    opacity: defaultImageOpacity,
+    castShadows: defaultImageCastShadows,
   };
+
+  private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
+  private material: THREE.MeshStandardMaterial | null = null;
+
+  private srcApplyPromise: Promise<HTMLImageElement> | null = null;
+
+  private collideableHelper = new CollideableHelper(this);
+  private loadedImage: HTMLImageElement | null;
 
   private static attributeHandler = new AttributeHandler<Image>({
     width: (instance, newValue) => {
@@ -29,36 +46,17 @@ export class Image extends TransformableElement {
       instance.updateHeightAndWidth();
     },
     src: (instance, newValue) => {
-      if (newValue === null || newValue.trim().length === 0) {
-        // if the src attribute is empty, remove the image data from the THREE material
-        instance.loadedImage = null;
-        instance.mesh.material.map = null;
-        instance.updateHeightAndWidth();
-        instance.srcApplyPromise = null;
-        return;
+      instance.setSrc(newValue);
+    },
+    opacity: (instance, newValue) => {
+      instance.props.opacity = parseFloatAttribute(newValue, defaultImageOpacity);
+      if (instance.material) {
+        instance.material.opacity = parseFloatAttribute(newValue, 1);
       }
-
-      instance.srcApplyPromise = loadImageAsPromise(
-        Image.imageLoader,
-        instance.contentSrcToContentAddress(newValue),
-      )
-        .then((image: HTMLImageElement) => {
-          if (instance.getAttribute("src") === newValue) {
-            // if the current src attribute still matches the requested URL, add
-            // image data to the THREE material
-            instance.loadedImage = image;
-            instance.mesh.material.map = new THREE.CanvasTexture(image);
-            instance.mesh.material.needsUpdate = true;
-            instance.updateHeightAndWidth();
-          }
-        })
-        .catch((error) => {
-          console.error("Error loading image:", newValue, error);
-          instance.updateHeightAndWidth();
-        });
     },
     "cast-shadows": (instance, newValue) => {
-      instance.mesh.castShadow = parseBoolAttribute(newValue, true);
+      instance.props.castShadows = parseBoolAttribute(newValue, defaultImageCastShadows);
+      instance.mesh.castShadow = instance.props.castShadows;
     },
   });
 
@@ -70,28 +68,56 @@ export class Image extends TransformableElement {
     ];
   }
 
-  private srcApplyPromise: Promise<void> | null = null;
-
-  private collideableHelper = new CollideableHelper(this);
-  private static imageLoader = new THREE.ImageLoader();
-  private mesh: THREE.Mesh<
-    THREE.PlaneGeometry,
-    THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
-  >;
-  private loadedImage: HTMLImageElement | HTMLVideoElement | null;
-
   constructor() {
     super();
-    const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      transparent: true,
-      side: THREE.DoubleSide,
-    });
-    this.mesh = new THREE.Mesh(geometry, material);
-    this.mesh.castShadow = true;
-    this.mesh.receiveShadow = false;
+    this.mesh = new THREE.Mesh(Image.planeGeometry);
+    this.mesh.castShadow = this.props.castShadows;
+    this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  private setSrc(newValue: string | null) {
+    this.props.src = (newValue || "").trim();
+    if (this.loadedImage !== null) {
+      // if the image has already been loaded, remove the image data from the THREE material
+      this.loadedImage = null;
+      this.srcApplyPromise = null;
+      if (this.material && this.material.map) {
+        this.material.map.dispose();
+        this.material.map = null;
+      }
+    }
+    if (!this.props.src) {
+      // if the src attribute is empty, reset the dimensions and return
+      this.updateHeightAndWidth();
+      return;
+    }
+    if (!this.material) {
+      // if the element is not yet connected, return
+      return;
+    }
+
+    const srcApplyPromise = loadImageAsPromise(
+      Image.imageLoader,
+      this.contentSrcToContentAddress(this.props.src),
+    );
+    this.srcApplyPromise = srcApplyPromise;
+
+    srcApplyPromise
+      .then((image: HTMLImageElement) => {
+        if (this.srcApplyPromise !== srcApplyPromise || !this.material) {
+          // If we've loaded a different image since, or we're no longer connected, ignore this image
+          return;
+        }
+        this.loadedImage = image;
+        this.material.map = new THREE.CanvasTexture(image);
+        this.material.needsUpdate = true;
+        this.updateHeightAndWidth();
+      })
+      .catch((error) => {
+        console.error("Error loading image:", newValue, error);
+        this.updateHeightAndWidth();
+      });
   }
 
   public parentTransformed(): void {
@@ -110,22 +136,42 @@ export class Image extends TransformableElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this.material = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: this.props.opacity,
+      side: THREE.DoubleSide,
+    });
+    this.mesh.material = this.material;
+    if (this.props.src) {
+      this.setSrc(this.props.src);
+    }
     this.collideableHelper.updateCollider(this.mesh);
   }
 
   disconnectedCallback() {
     this.collideableHelper.removeColliders();
+    if (this.material) {
+      this.material.dispose();
+      if (this.material.map) {
+        this.material.map.dispose();
+      }
+      this.mesh.material = [];
+      this.material = null;
+    }
+    this.loadedImage = null;
     super.disconnectedCallback();
   }
 
   public getImageMesh(): THREE.Mesh<
     THREE.PlaneGeometry,
-    THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
-  > {
+    THREE.Material | Array<THREE.Material>
+  > | null {
     return this.mesh;
   }
 
   private updateHeightAndWidth() {
+    const mesh = this.mesh;
     if (this.loadedImage) {
       const height = this.props.height;
       const width = this.props.width;
@@ -133,26 +179,26 @@ export class Image extends TransformableElement {
       const loadedHeight = this.loadedImage.height;
 
       if (height && width) {
-        this.mesh.scale.x = width;
-        this.mesh.scale.y = height;
+        mesh.scale.x = width;
+        mesh.scale.y = height;
       } else if (height && !width) {
-        this.mesh.scale.y = height;
+        mesh.scale.y = height;
         // compute width
-        this.mesh.scale.x = (this.mesh.scale.y * loadedWidth) / loadedHeight;
+        mesh.scale.x = (mesh.scale.y * loadedWidth) / loadedHeight;
       } else if (!height && width) {
-        this.mesh.scale.x = width;
+        mesh.scale.x = width;
         // compute height
-        this.mesh.scale.y = (this.mesh.scale.x * loadedHeight) / loadedWidth;
+        mesh.scale.y = (mesh.scale.x * loadedHeight) / loadedWidth;
       } else {
-        this.mesh.scale.x = 1;
+        mesh.scale.x = 1;
         // compute height
-        this.mesh.scale.y = loadedHeight / loadedWidth;
+        mesh.scale.y = loadedHeight / loadedWidth;
       }
     } else {
-      this.mesh.scale.x = this.props.width !== null ? this.props.width : 1;
-      this.mesh.scale.y = this.props.height !== null ? this.props.height : 1;
+      mesh.scale.x = this.props.width !== null ? this.props.width : 1;
+      mesh.scale.y = this.props.height !== null ? this.props.height : 1;
     }
-    this.collideableHelper.updateCollider(this.mesh);
+    this.collideableHelper.updateCollider(mesh);
   }
 }
 

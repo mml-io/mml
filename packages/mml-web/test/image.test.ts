@@ -5,8 +5,9 @@
 import { AudioContext } from "standardized-audio-context-mock";
 import { Cache } from "three";
 
+import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
-import * as Image from "../src/elements/Image";
+import { Image } from "../src/elements/Image";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMScene } from "../src/FullScreenMScene";
@@ -24,7 +25,7 @@ describe("m-image", () => {
     sceneAttachment.init(scene, "ws://localhost:8080");
     document.body.append(sceneAttachment);
 
-    const element = document.createElement("m-image") as Image.Image;
+    const element = document.createElement("m-image") as Image;
     sceneAttachment.append(element);
 
     expect(scene.getThreeScene().children[0].children[0].children[0].children[0]).toBe(
@@ -63,12 +64,12 @@ describe("m-image", () => {
   });
 
   test("observes the schema-specified attributes", () => {
-    const schema = testElementSchemaMatchesObservedAttributes("m-image", Image.Image);
-    expect(schema.name).toEqual(Image.Image.tagName);
+    const schema = testElementSchemaMatchesObservedAttributes("m-image", Image);
+    expect(schema.name).toEqual(Image.tagName);
   });
 
   test("images default to a width of 1 and use the source image aspect ratio", async () => {
-    const image = document.createElement("m-image") as Image.Image;
+    const { element: image } = createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
@@ -91,7 +92,7 @@ describe("m-image", () => {
   });
 
   test("setting height but not width preserves image aspect ratio", async () => {
-    const image = document.createElement("m-image") as Image.Image;
+    const { element: image } = createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
@@ -114,7 +115,7 @@ describe("m-image", () => {
   });
 
   test("setting width but not height preserves image aspect ratio", async () => {
-    const image = document.createElement("m-image") as Image.Image;
+    const { element: image } = createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
@@ -137,7 +138,7 @@ describe("m-image", () => {
   });
 
   test("setting width and height ignores aspect ratio", async () => {
-    const image = document.createElement("m-image") as Image.Image;
+    const { element: image } = createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 

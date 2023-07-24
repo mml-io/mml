@@ -10,10 +10,6 @@ const buildOptions = {
   bundle: true,
   write: true,
   format: "cjs",
-  loader: {
-    ".glb": "file",
-  },
-  publicPath: "/",
   sourcemap: true,
   outdir: "build",
 };
@@ -41,11 +37,12 @@ switch (mode) {
 
     esbuild
       .context({ ...buildOptions })
-      .then((context) =>
+      .then((context) => {
+        context.watch();
         context.serve({
           port: parseInt(portArg, 10),
-        }),
-      )
+        });
+      })
       .catch((e) => {
         console.error(e);
         process.exit(1);

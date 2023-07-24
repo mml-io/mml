@@ -52,22 +52,6 @@ export class Audio extends TransformableElement {
     debug: false,
   };
 
-  private static DebugGeometry = new THREE.SphereGeometry(1, 16, 16, 1);
-  private static DebugMaterials = [
-    new THREE.MeshBasicMaterial({
-      color: 0xffa500,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.3,
-    }),
-    new THREE.MeshBasicMaterial({
-      color: 0x00ff00,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.1,
-    }),
-  ];
-
   private static attributeHandler = new AttributeHandler<Audio>({
     enabled: (instance, newValue) => {
       instance.props.enabled = parseBoolAttribute(newValue, defaultAudioEnabled);
