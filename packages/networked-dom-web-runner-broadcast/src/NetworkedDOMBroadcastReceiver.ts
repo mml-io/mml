@@ -77,12 +77,41 @@ export class NetworkedDOMBroadcastReceiver {
               // no-op dispose
             },
           );
+          callback(
+            {
+              snapshot: {
+                nodeId: 1,
+                tag: "div",
+                attributes: {},
+                childNodes: [],
+              },
+              documentTime: 0,
+            },
+            remoteObservableDOM,
+          );
           return remoteObservableDOM;
         }
       },
       ignoreTextNodes,
       logCallback,
     );
+  }
+
+  public clearRevisionState() {
+    /*
+     This allows reusing revision ids (e.g. from another runner)
+
+     This doesn't itself clear the EditableNetworkedDOM, which allows the revision from another runner to be diffed
+     against the previous state
+    */
+    this.currentRevisionState = null;
+  }
+
+  public clearState() {
+    this.clearRevisionState();
+
+    // Calling load with no revision state will clear the EditableNetworkedDOM to an empty state
+    this.editableNetworkedDOM.load("", {});
   }
 
   public handleMessage(parsed: FromBroadcastInstanceMessage) {

@@ -257,21 +257,21 @@ export class NetworkedDOM {
           virtualDOMDiff,
         );
 
-        const patchResults = applyPatch(domDiff.originalState, [virtualDOMDiff]);
-        for (const patchResult of patchResults) {
-          if (patchResult !== null) {
-            console.error("Patching virtual dom structure resulted in error", patchResult);
-            throw patchResult;
+        if (virtualDOMDiff.path === "" && virtualDOMDiff.op === "replace") {
+          // The patch is a snapshot replacement - no need to check the patch validity
+        } else {
+          const patchResults = applyPatch(domDiff.originalState, [virtualDOMDiff]);
+          for (const patchResult of patchResults) {
+            if (patchResult !== null) {
+              console.error("Patching virtual dom structure resulted in error", patchResult);
+              throw patchResult;
+            }
           }
         }
 
         for (const mutationRecordLike of mutationRecordLikes) {
           const targetNodeId = mutationRecordLike.target.nodeId;
           const virtualElementParent = findParentNodeOfNodeId(domDiff.originalState, targetNodeId);
-          if (!virtualElementParent) {
-            throw new Error(`could not find parent node of nodeId ${targetNodeId}`);
-          }
-
           diffsByConnectionId.forEach((diffs, connectionId) => {
             const mutationDiff = diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
               mutationRecordLike,

@@ -45,7 +45,7 @@ export type AttributeChangedDiff = {
   documentTime?: number;
 };
 
-export type Diff = ChildrenChangedDiff | AttributeChangedDiff | TextChangedDiff;
+export type Diff = SnapshotMessage | ChildrenChangedDiff | AttributeChangedDiff | TextChangedDiff;
 
 export type PingMessage = {
   type: "ping";
@@ -63,4 +63,4 @@ export type WarningMessage = {
   message: string;
 };
 
-export type ServerMessage = SnapshotMessage | Diff | PingMessage | ErrorMessage | WarningMessage;
+export type ServerMessage = Diff | PingMessage | ErrorMessage | WarningMessage;

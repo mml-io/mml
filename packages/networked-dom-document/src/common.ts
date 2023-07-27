@@ -14,7 +14,7 @@ export type VirtualDOMDiffStruct = {
 
 // This is similar to the MutationRecord type in the DOM spec, but it references StaticVirtualDOMElements instead of DOM nodes.
 export type StaticVirtualDOMMutationRecord = {
-  type: "attributes" | "characterData" | "childList";
+  type: "attributes" | "characterData" | "childList" | "snapshot";
   target: StaticVirtualDOMElement;
   addedNodes: Array<StaticVirtualDOMElement>;
   removedNodes: Array<StaticVirtualDOMElement>;

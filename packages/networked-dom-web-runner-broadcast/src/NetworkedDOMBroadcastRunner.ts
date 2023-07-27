@@ -59,6 +59,13 @@ export class NetworkedDOMBroadcastRunner {
     }
   }
 
+  public dispose() {
+    if (this.currentDOM !== null) {
+      this.currentDOM.dispose();
+      this.currentDOM = null;
+    }
+  }
+
   public load(observableDOMParameters: ObservableDOMParameters) {
     const revisionId = ++this.currentRevisionId;
 

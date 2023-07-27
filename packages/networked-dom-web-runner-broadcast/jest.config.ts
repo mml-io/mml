@@ -1,11 +1,11 @@
 import type { Config } from "jest";
 
 const config: Config = {
+  testEnvironment: "jsdom",
   verbose: true,
   collectCoverage: true,
   coverageDirectory: "coverage",
   coverageReporters: ["lcov", "text"],
-  testEnvironment: "node",
   setupFiles: ["jest-canvas-mock"],
   setupFilesAfterEnv: ["jest-expect-message"],
   transform: {
