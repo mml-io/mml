@@ -23,9 +23,12 @@ const defaultLabelFontSize = 24;
 const defaultLabelPadding = 8;
 const defaultLabelWidth = 1;
 const defaultLabelHeight = 1;
+const defaultLabelCastShadows = true;
 
 export class Label extends TransformableElement {
   static tagName = "m-label";
+
+  private static planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
 
   private props = {
     content: "",
@@ -34,8 +37,12 @@ export class Label extends TransformableElement {
     height: defaultLabelHeight,
     fontSize: defaultLabelFontSize,
     padding: defaultLabelPadding,
+    color: defaultLabelColor,
     fontColor: defaultFontColor,
+    castShadows: defaultLabelCastShadows,
   };
+  private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
+  private material: THREE.MeshStandardMaterial | null = null;
 
   private static attributeHandler = new AttributeHandler<Label>({
     width: (instance, newValue) => {
@@ -48,7 +55,7 @@ export class Label extends TransformableElement {
     },
     color: (instance, newValue) => {
       const color = parseColorAttribute(newValue, defaultLabelColor);
-      instance.mesh.material.color = color;
+      instance.props.color = color;
       instance.redrawText();
     },
     "font-color": (instance, newValue) => {
@@ -77,7 +84,8 @@ export class Label extends TransformableElement {
       instance.redrawText();
     },
     "cast-shadows": (instance, newValue) => {
-      instance.mesh.castShadow = parseBoolAttribute(newValue, true);
+      instance.props.castShadows = parseBoolAttribute(newValue, defaultLabelCastShadows);
+      instance.mesh.castShadow = instance.props.castShadows;
     },
   });
 
@@ -85,21 +93,14 @@ export class Label extends TransformableElement {
     return [...TransformableElement.observedAttributes, ...Label.attributeHandler.getAttributes()];
   }
 
-  private mesh: THREE.Mesh<
-    THREE.PlaneGeometry,
-    THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
-  >;
-
   constructor() {
     super();
-    const geometry = new THREE.PlaneGeometry(defaultLabelWidth, defaultLabelHeight, 1, 1);
-    const material = new THREE.MeshBasicMaterial({
-      color: defaultLabelColor,
-      side: THREE.DoubleSide,
-    });
-    this.mesh = new THREE.Mesh(geometry, material);
-    this.mesh.castShadow = false;
-    this.mesh.receiveShadow = false;
+
+    this.mesh = new THREE.Mesh(Label.planeGeometry);
+    this.mesh.scale.x = this.props.width;
+    this.mesh.scale.y = this.props.height;
+    this.mesh.castShadow = this.props.castShadows;
+    this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
   }
 
@@ -113,8 +114,8 @@ export class Label extends TransformableElement {
 
   public getLabel(): THREE.Mesh<
     THREE.PlaneGeometry,
-    THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
-  > {
+    THREE.Material | Array<THREE.Material>
+  > | null {
     return this.mesh;
   }
 
@@ -123,7 +124,31 @@ export class Label extends TransformableElement {
     Label.attributeHandler.handle(this, name, newValue);
   }
 
+  public connectedCallback(): void {
+    super.connectedCallback();
+    this.material = new THREE.MeshStandardMaterial({
+      transparent: true,
+    });
+    this.mesh.material = this.material;
+    this.redrawText();
+  }
+
+  public disconnectedCallback(): void {
+    if (this.material) {
+      this.material.dispose();
+      this.mesh.material = [];
+      this.material = null;
+    }
+    super.disconnectedCallback();
+  }
+
   private redrawText() {
+    if (!this.material) {
+      return;
+    }
+    if (this.material.map) {
+      this.material.map.dispose();
+    }
     const { texture, width, height } = THREECanvasTextTexture(this.props.content, {
       bold: true,
       fontSize: this.props.fontSize,
@@ -135,9 +160,9 @@ export class Label extends TransformableElement {
         a: 1.0,
       },
       backgroundColorRGB255A1: {
-        r: this.mesh.material.color.r * 255,
-        g: this.mesh.material.color.g * 255,
-        b: this.mesh.material.color.b * 255,
+        r: this.props.color.r * 255,
+        g: this.props.color.g * 255,
+        b: this.props.color.b * 255,
         a: 1.0,
       },
       dimensions: {
@@ -147,8 +172,8 @@ export class Label extends TransformableElement {
       alignment: this.props.alignment,
     });
 
-    this.mesh.material.map = texture;
-    this.mesh.material.needsUpdate = true;
+    this.material.map = texture;
+    this.material.needsUpdate = true;
 
     this.mesh.scale.x = width / 100;
     this.mesh.scale.y = height / 100;

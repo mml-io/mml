@@ -30,6 +30,7 @@ export class Model extends TransformableElement {
     castShadows: defaultModelCastShadows,
   };
 
+  private static gltfLoader = new GLTFLoader();
   protected gltfScene: THREE.Object3D | null = null;
   private animationGroup: THREE.AnimationObjectGroup = new THREE.AnimationObjectGroup();
   private animationMixer: THREE.AnimationMixer = new THREE.AnimationMixer(this.animationGroup);
@@ -44,44 +45,10 @@ export class Model extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Model>({
     src: (instance, newValue) => {
-      instance.props.src = (newValue || "").trim();
-      if (instance.gltfScene !== null) {
-        instance.collideableHelper.removeColliders();
-        instance.gltfScene.removeFromParent();
-        instance.gltfScene = null;
-        instance.registeredParentAttachment = null;
-      }
-
-      if (!instance.props.src) {
-        instance.latestSrcModelPromise = null;
-        return;
-      }
-
-      const srcModelPromise = instance.asyncLoadSourceAsset(
-        instance.contentSrcToContentAddress(instance.props.src),
-      );
-      instance.latestSrcModelPromise = srcModelPromise;
-      srcModelPromise.then((result) => {
-        if (instance.latestSrcModelPromise !== srcModelPromise) {
-          return;
-        }
-        instance.latestSrcModelPromise = null;
-        instance.gltfScene = result.scene;
-        if (instance.gltfScene) {
-          instance.container.add(instance.gltfScene);
-          instance.collideableHelper.updateCollider(instance.gltfScene);
-
-          const parent = instance.parentElement;
-          if (parent instanceof Model) {
-            parent.registerAttachment(instance.gltfScene);
-            instance.registeredParentAttachment = parent;
-          }
-
-          if (instance.currentAnimation) {
-            instance.playAnimation(instance.currentAnimation);
-          }
-        }
-      });
+      instance.setSrc(newValue);
+    },
+    anim: (instance, newValue) => {
+      instance.setAnim(newValue);
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultModelCastShadows);
@@ -92,42 +59,6 @@ export class Model extends TransformableElement {
           }
         });
       }
-    },
-    anim: (instance, newValue) => {
-      instance.props.anim = (newValue || "").trim();
-      if (!instance.props.anim) {
-        if (instance.currentAnimationAction) {
-          if (instance.gltfScene) {
-            instance.animationMixer.uncacheRoot(instance.gltfScene);
-          }
-          instance.animationMixer.stopAllAction();
-        }
-        instance.latestAnimPromise = null;
-        instance.currentAnimationAction = null;
-        instance.currentAnimation = null;
-        if (instance.gltfScene) {
-          instance.animationGroup.remove(instance.gltfScene);
-        }
-        return;
-      }
-
-      if (instance.currentAnimationAction !== null) {
-        instance.animationMixer.stopAllAction();
-        instance.currentAnimationAction = null;
-      }
-
-      const animPromise = loadGltfAsPromise(
-        Model.gltfLoader,
-        instance.contentSrcToContentAddress(instance.props.anim),
-      );
-      instance.latestAnimPromise = animPromise;
-      animPromise.then((result) => {
-        if (instance.latestAnimPromise !== animPromise) {
-          return;
-        }
-        instance.latestAnimPromise = null;
-        instance.playAnimation(result.animations[0]);
-      });
     },
     "anim-enabled": (instance, newValue) => {
       instance.props.animEnabled = parseBoolAttribute(newValue, defaultModelAnimEnabled);
@@ -174,13 +105,8 @@ export class Model extends TransformableElement {
     ];
   }
 
-  private static gltfLoader = new GLTFLoader();
-
   constructor() {
     super();
-
-    // TODO - only create this if there is an animation
-    window.requestAnimationFrame(() => this.tick());
   }
 
   public parentTransformed(): void {
@@ -189,6 +115,98 @@ export class Model extends TransformableElement {
 
   public isClickable(): boolean {
     return true;
+  }
+
+  private setSrc(newValue: string | null) {
+    this.props.src = (newValue || "").trim();
+    if (this.gltfScene !== null) {
+      this.collideableHelper.removeColliders();
+      this.gltfScene.removeFromParent();
+      Model.disposeOfGroup(this.gltfScene);
+      this.gltfScene = null;
+      this.registeredParentAttachment = null;
+    }
+    if (!this.props.src) {
+      this.latestSrcModelPromise = null;
+      return;
+    }
+    if (!this.isConnected) {
+      // Loading will happen when connected
+      return;
+    }
+
+    const srcModelPromise = this.asyncLoadSourceAsset(
+      this.contentSrcToContentAddress(this.props.src),
+    );
+    this.latestSrcModelPromise = srcModelPromise;
+    srcModelPromise.then((result) => {
+      if (this.latestSrcModelPromise !== srcModelPromise || !this.isConnected) {
+        // If we've loaded a different model since, or we're no longer connected, dispose of this one
+        Model.disposeOfGroup(result.scene);
+        return;
+      }
+      result.scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = this.props.castShadows;
+          child.receiveShadow = true;
+        }
+      });
+      this.latestSrcModelPromise = null;
+      this.gltfScene = result.scene;
+      if (this.gltfScene) {
+        this.container.add(this.gltfScene);
+        this.collideableHelper.updateCollider(this.gltfScene);
+
+        const parent = this.parentElement;
+        if (parent instanceof Model) {
+          parent.registerAttachment(this.gltfScene);
+          this.registeredParentAttachment = parent;
+        }
+
+        if (this.currentAnimation) {
+          this.playAnimation(this.currentAnimation);
+        }
+      }
+    });
+  }
+
+  private setAnim(newValue: string | null) {
+    this.props.anim = (newValue || "").trim();
+    if (!this.props.anim) {
+      if (this.currentAnimationAction) {
+        if (this.gltfScene) {
+          this.animationMixer.uncacheRoot(this.gltfScene);
+        }
+        this.animationMixer.stopAllAction();
+      }
+      this.latestAnimPromise = null;
+      this.currentAnimationAction = null;
+      this.currentAnimation = null;
+      if (this.gltfScene) {
+        this.animationGroup.remove(this.gltfScene);
+      }
+      return;
+    }
+
+    if (this.currentAnimationAction !== null) {
+      this.animationMixer.stopAllAction();
+      this.currentAnimationAction = null;
+    }
+
+    if (!this.isConnected) {
+      // Loading will happen when connected
+      return;
+    }
+
+    const animPromise = this.asyncLoadSourceAsset(this.contentSrcToContentAddress(this.props.anim));
+    this.latestAnimPromise = animPromise;
+    animPromise.then((result) => {
+      if (this.latestAnimPromise !== animPromise || !this.isConnected) {
+        return;
+      }
+      this.latestAnimPromise = null;
+      this.playAnimation(result.animations[0]);
+    });
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -201,8 +219,10 @@ export class Model extends TransformableElement {
     super.connectedCallback();
     this.animationFrameHandle = window.requestAnimationFrame(() => this.tick());
     if (this.gltfScene) {
-      this.collideableHelper.updateCollider(this.gltfScene);
+      throw new Error("gltfScene should be null upon connection");
     }
+    this.setSrc(this.props.src);
+    this.setAnim(this.props.anim);
   }
 
   disconnectedCallback() {
@@ -214,6 +234,11 @@ export class Model extends TransformableElement {
     if (this.gltfScene && this.registeredParentAttachment) {
       this.registeredParentAttachment.unregisterAttachment(this.gltfScene);
       this.registeredParentAttachment = null;
+    }
+    if (this.gltfScene) {
+      this.gltfScene.removeFromParent();
+      Model.disposeOfGroup(this.gltfScene);
+      this.gltfScene = null;
     }
     super.disconnectedCallback();
   }
@@ -266,13 +291,32 @@ export class Model extends TransformableElement {
   }
 
   async asyncLoadSourceAsset(url: string) {
-    const gltf = await loadGltfAsPromise(Model.gltfLoader, url);
-    gltf.scene.traverse((child) => {
+    return await loadGltfAsPromise(Model.gltfLoader, url);
+  }
+
+  private static disposeOfGroup(group: THREE.Object3D) {
+    group.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = this.props.castShadows;
-        child.receiveShadow = true;
+        const mesh = child as THREE.Mesh;
+        mesh.geometry.dispose();
+        if (Array.isArray(mesh.material)) {
+          for (const material of mesh.material) {
+            Model.disposeOfMaterial(material);
+          }
+        } else if (mesh.material) {
+          Model.disposeOfMaterial(mesh.material);
+        }
       }
     });
-    return gltf;
+  }
+
+  private static disposeOfMaterial(material: THREE.Material) {
+    material.dispose();
+    for (const key of Object.keys(material)) {
+      const value = (material as any)[key];
+      if (value && typeof value === "object" && "minFilter" in value) {
+        value.dispose();
+      }
+    }
   }
 }

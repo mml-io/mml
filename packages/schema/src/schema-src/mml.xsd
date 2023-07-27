@@ -476,6 +476,7 @@
           <xs:attributeGroup ref="colorable"/>
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="clickable"/>
+          <xs:attributeGroup ref="shadows"/>
           <xs:attribute name="radius" type="xs:float">
             <xs:annotation>
               <xs:documentation>
@@ -487,6 +488,13 @@
             <xs:annotation>
               <xs:documentation>
                 The height of the cylinder in meters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="opacity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The opacity of the cylinder, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -577,6 +585,13 @@
             <xs:annotation>
               <xs:documentation>
                 The height of the plane in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="opacity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The opacity of the plane, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -825,6 +840,13 @@
             <xs:annotation>
               <xs:documentation>
                 The height of the image in meters. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="opacity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The opacity of the image, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

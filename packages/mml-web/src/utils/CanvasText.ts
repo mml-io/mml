@@ -71,6 +71,7 @@ export function CanvasText(message: string, options: CanvasTextOptions): HTMLCan
     // we always do it first
     canvas.width = options.dimensions.width;
     canvas.height = options.dimensions.height;
+    ct.clearRect(0, 0, canvas.width, canvas.height);
     ct.font = fontString;
     ct.textAlign = textAlign;
     ct.fillStyle = `rgba(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b}, ${backgroundColor.a})`;
@@ -97,6 +98,7 @@ export function CanvasText(message: string, options: CanvasTextOptions): HTMLCan
     const textHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
     canvas.width = textWidth + padding * 2;
     canvas.height = textHeight + padding;
+    ct.clearRect(0, 0, canvas.width, canvas.height);
     ct.font = fontString;
     ct.textAlign = textAlign;
     ct.fillStyle = `rgba(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b}, ${backgroundColor.a})`;

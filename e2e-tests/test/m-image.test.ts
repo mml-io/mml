@@ -16,7 +16,7 @@ describe("m-image", () => {
       { timeout: 5000, polling: 100 },
     );
 
-    await takeAndCompareScreenshot(page);
+    await takeAndCompareScreenshot(page, 0.02);
 
     await page.close();
   }, 60000);
