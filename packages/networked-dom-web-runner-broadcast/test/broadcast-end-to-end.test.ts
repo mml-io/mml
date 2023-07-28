@@ -13,7 +13,7 @@ import {
   ToBroadcastInstanceMessage,
 } from "../src";
 
-describe("broadcast", function() {
+describe("broadcast", function () {
   test("end-to-end", async () => {
     const logs: LogMessage[] = [];
 
@@ -142,6 +142,8 @@ describe("broadcast", function() {
       },
       IframeObservableDOMFactory,
     );
+    const broadcastRunnerOneHandlerSpy = jest.spyOn(broadcastRunnerOne, "handleMessage");
+
     const broadcastRunnerTwo = new NetworkedDOMBroadcastRunner(
       (fromBroadcastInstanceMessage: FromBroadcastInstanceMessage) => {
         if (currentRunner !== broadcastRunnerTwo) {
@@ -151,6 +153,8 @@ describe("broadcast", function() {
       },
       IframeObservableDOMFactory,
     );
+    const broadcastRunnerTwoHandlerSpy = jest.spyOn(broadcastRunnerTwo, "handleMessage");
+
     let currentRunner = broadcastRunnerOne;
 
     const clientsHolder = document.createElement("div");
@@ -171,6 +175,12 @@ describe("broadcast", function() {
       return client.element.querySelectorAll("#inner-element-one").length > 0;
     });
 
+    expect(broadcastRunnerOneHandlerSpy).toHaveBeenCalledWith({
+      message: { connectionId: 1, type: "addConnectedUserId" },
+      revisionId: 1,
+      type: "instance",
+    });
+
     broadcastRunnerOne.dispose();
 
     broadcastReceiver.clearRevisionState();
@@ -186,6 +196,18 @@ describe("broadcast", function() {
 
     await waitFor(() => {
       return client.element.querySelectorAll("#inner-element-two").length > 0;
+    });
+
+    expect(broadcastRunnerOneHandlerSpy).toHaveBeenCalledWith({
+      message: { connectionId: 1, type: "addConnectedUserId" },
+      revisionId: 1,
+      type: "instance",
+    });
+
+    expect(broadcastRunnerTwoHandlerSpy).toHaveBeenNthCalledWith(1, {
+      message: { connectionId: 1, type: "addConnectedUserId" },
+      revisionId: 1,
+      type: "instance",
     });
   });
 });

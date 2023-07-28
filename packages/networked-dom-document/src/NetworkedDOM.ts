@@ -458,9 +458,6 @@ export class NetworkedDOM {
 
   public dispose(): void {
     this.disposed = true;
-    for (const [, connectionId] of this.webSocketToConnectionId) {
-      this.observableDOM.removeConnectedUserId(connectionId);
-    }
 
     // Handle all of the remaining mutations that the disconnections could have caused
     this.observableDOM.dispose();
