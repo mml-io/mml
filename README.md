@@ -1,11 +1,11 @@
 # MML: Metaverse Markup Language
 
+[![main github actions](https://github.com/mml-io/mml/actions/workflows/main.yaml/badge.svg)](https://github.com/mml-io/mml/actions/workflows/main.yaml)
+[![npm version](https://img.shields.io/npm/v/mml-web.svg?style=flat)](https://www.npmjs.com/package/mml-web)
+![GitHub top language](https://img.shields.io/github/languages/top/mml-io/mml)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/mml-io/mml/blob/main/LICENSE)
+
 MML is a markup language for describing 3D multi-user interactive Metaversal objects and experiences based on HTML.
-
-## Announcements
-
-| MML v0.1 has been released! [Check out the blog post](https://mml.io/blog/introducing-mml) |
-|-|
 
 ## Getting Started
 
@@ -15,16 +15,20 @@ MML is a markup language for describing 3D multi-user interactive Metaversal obj
 
 ## What is MML?
 
-### Language
+The "MML stack" is a combination of two main pieces usually combined together:
+* **MML (Language)** - 3D HTML elements and attributes for describing 3D objects and experiences
+* **Networked DOM (Networking)** - A library and network protocol for running MML/HTML documents on a server so that multiple users can interact with them in a multi-user mode.
+
+### MML (Language)
 
 E.g.
 ```html
 <m-cube id="my-cube" color="red"></m-cube>
 <script>
-    const cube = document.getElementById('my-cube');
-    cube.addEventListener('click', () => {
-        cube.setAttribute('color', 'blue');
-    });
+  const cube = document.getElementById('my-cube');
+  cube.addEventListener('click', () => {
+    cube.setAttribute('color', 'blue');
+  });
 </script>
 ```
 
@@ -34,7 +38,7 @@ HTML and JavaScript in the form of the DOM (Document Object Model) provide an ex
 
 In the common use case an MML document is run on a server and is observed and interacted with by multiple users.
 
-This capability is achieved by running an MML Document on a server using a library (built expressly for MML) called "Networked DOM". 
+This capability is achieved by running an MML Document on a server using a library (built expressly for MML) called "Networked DOM".
 
 The server and network components necessary to support this multi-user mode are independent of the MML additions to HTML (and can be used with regular 2D HTML).
 
@@ -83,9 +87,9 @@ This repo contains libraries and schema definitions for MML. The most likely way
 1. Clone the repo
 1. `npm install`
 1. `npm run iterate` Builds and starts incrementally building package artefacts from sources
-   * Servers should start for examples:
-     * [http://localhost:7070](http://localhost:7070) - MML Example Server
-     * [http://localhost:7071](http://localhost:7071) - Networked DOM Example Server
+  * Servers should start for examples:
+    * [http://localhost:7070](http://localhost:7070) - MML Example Server
+    * [http://localhost:7071](http://localhost:7071) - Networked DOM Example Server
 
 To use any of the libraries in this repo in another project, you can use `npm link` to make these dependencies linkable to your other npm project.
 * `npm run link-all` Runs `npm link` in all would-be-published packages to allow using as local dependencies to develop with. It will also print the commands to link the dependencies.
@@ -97,37 +101,39 @@ The below diagram shows the high-level architecture of the MML system when used 
 
 ```mermaid
 graph TD
-      subgraph Networked DOM Server
-          networked-dom-server[Networked DOM Server]
-          networked-dom-document[Networked DOM Document]
-          jsdom[JSDOM]
-          websocket[Websocket]
-          networked-dom-server --> networked-dom-document
-          networked-dom-document --> jsdom
+  subgraph Networked DOM Server
+    networked-dom-server[Networked DOM Server]
+    networked-dom-document[Networked DOM Document]
+    jsdom[JSDOM]
+    websocket[Websocket Handler]
+    networked-dom-server --> networked-dom-document
+    networked-dom-document --> jsdom
+  end
+  mml-source["MML Source Code (HTML)"]
+  mml-source --> networked-dom-document
+  subgraph Web Browser
+    web-browser[Web Browser]
+    subgraph "3D Web Experience"
+      three-js-scene[THREE.js Scene]
+      subgraph Networked DOM Client
+        networked-dom-client[Networked DOM Client]
+        dom["DOM (HTML)"]
+        networked-dom-client --> dom
       end
-      mml-source["MML Source Code (HTML)"]
-      mml-source --> networked-dom-document
-    subgraph Web Browser
-        web-browser[Web Browser]
-        subgraph MML Client
-            subgraph Networked DOM Client
-                networked-dom-client[Networked DOM Client]
-                dom["DOM (HTML)"]
-                networked-dom-client --> dom
-            end
-            subgraph MML Client
-                web-browser-mml-client[MML Client]
-                three-js[MML THREE.js]
-                three-js -- Events --> web-browser-mml-client
-                web-browser-mml-client --> three-js
-            end
-            dom -- Rendered By --> three-js
-        end
+      subgraph MML Client Library
+        web-browser-mml-client[MML Remote\nDocument Instance]
+        mml-three-js[MML THREE.js]
+        mml-three-js -- Events --> web-browser-mml-client
+        web-browser-mml-client --> mml-three-js
+      end
+      dom -- Rendered By --> mml-three-js
+      mml-three-js -- Composed into --> three-js-scene
     end
-    networked-dom-client --> ws-addr
-    ws-addr --> websocket
-    ws-addr["ws://..."]
-    websocket --> networked-dom-server
-    web-browser --> web-browser-mml-client 
-    web-browser-mml-client --> networked-dom-client
+  end
+  networked-dom-client --> ws-addr
+  ws-addr --> websocket
+  ws-addr["ws://..."]
+  websocket --> networked-dom-server
+  web-browser --> web-browser-mml-client
+  web-browser-mml-client --> networked-dom-client
 ```
