@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {
   FakeWebsocket,
   IframeObservableDOMFactory,
@@ -17,104 +13,201 @@ import {
   ToBroadcastInstanceMessage,
 } from "../src";
 
-test("broadcast end-to-end", async () => {
-  const logs: LogMessage[] = [];
+describe("broadcast", function () {
+  test("end-to-end", async () => {
+    const logs: LogMessage[] = [];
 
-  const fakeWebSocket = new FakeWebsocket("");
+    const fakeWebSocket = new FakeWebsocket("");
 
-  const broadcastReceiver = new NetworkedDOMBroadcastReceiver(
-    (toBroadcastInstanceMessage: ToBroadcastInstanceMessage) => {
-      fakeWebSocket.serverSideWebsocket.send(JSON.stringify(toBroadcastInstanceMessage));
-    },
-    true,
-    (logMessage) => {
-      logs.push(logMessage);
-    },
-  );
+    const broadcastReceiver = new NetworkedDOMBroadcastReceiver(
+      (toBroadcastInstanceMessage: ToBroadcastInstanceMessage) => {
+        fakeWebSocket.serverSideWebsocket.send(JSON.stringify(toBroadcastInstanceMessage));
+      },
+      true,
+      (logMessage) => {
+        logs.push(logMessage);
+      },
+    );
 
-  fakeWebSocket.serverSideWebsocket.addEventListener("message", (message: MessageEvent) => {
-    broadcastReceiver.handleMessage(JSON.parse(message.data) as FromBroadcastInstanceMessage);
+    fakeWebSocket.serverSideWebsocket.addEventListener("message", (message: MessageEvent) => {
+      broadcastReceiver.handleMessage(JSON.parse(message.data) as FromBroadcastInstanceMessage);
+    });
+
+    const broadcastRunner = new NetworkedDOMBroadcastRunner(
+      (fromBroadcastInstanceMessage: FromBroadcastInstanceMessage) => {
+        fakeWebSocket.clientSideWebsocket.send(JSON.stringify(fromBroadcastInstanceMessage));
+      },
+      IframeObservableDOMFactory,
+    );
+
+    fakeWebSocket.clientSideWebsocket.addEventListener("message", (message: MessageEvent) => {
+      broadcastRunner.handleMessage(JSON.parse(message.data) as ToBroadcastInstanceMessage);
+    });
+
+    const clientsHolder = document.createElement("div");
+    document.body.append(clientsHolder);
+
+    const client = new NetworkedDOMWebRunnerClient();
+    clientsHolder.append(client.element);
+    client.connect(broadcastReceiver.editableNetworkedDOM);
+
+    broadcastRunner.load({
+      htmlContents: `<div 
+        id="test-element" 
+        onclick="
+          this.setAttribute('attr','new-value'); 
+          console.log('broadcast-end-to-end-test-level-log'); 
+          console.info('broadcast-end-to-end-test-level-info'); 
+          console.warn('broadcast-end-to-end-test-level-warn'); 
+          console.error('broadcast-end-to-end-test-level-error'); 
+          undef[1];
+        "
+      ></div>`,
+      htmlPath: "file://test.html",
+      ignoreTextNodes: false,
+      params: {},
+    });
+
+    await waitFor(() => {
+      return client.element.querySelectorAll("#test-element").length > 0;
+    });
+    const testElement = client.element.querySelectorAll("#test-element")[0];
+
+    testElement.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await waitFor(() => testElement.getAttribute("attr") === "new-value");
+
+    expect(logs).toEqual([
+      expect.objectContaining({
+        level: "log",
+        content: ["broadcast-end-to-end-test-level-log"],
+      }),
+      expect.objectContaining({
+        level: "info",
+        content: ["broadcast-end-to-end-test-level-info"],
+      }),
+      expect.objectContaining({
+        level: "warn",
+        content: ["broadcast-end-to-end-test-level-warn"],
+      }),
+      expect.objectContaining({
+        level: "error",
+        content: ["broadcast-end-to-end-test-level-error"],
+      }),
+      expect.objectContaining({
+        level: "system",
+        content: [
+          expect.objectContaining({
+            message: "undef is not defined",
+            type: "ReferenceError",
+          }),
+        ],
+      }),
+    ]);
+
+    broadcastRunner.load({
+      htmlContents: `<div id="different-element"></div>`,
+      htmlPath: "file://test.html",
+      ignoreTextNodes: false,
+      params: {},
+    });
+
+    await waitFor(() => {
+      return client.element.querySelectorAll("#different-element").length > 0;
+    });
+
+    broadcastReceiver.clearState();
+
+    await waitFor(() => {
+      return client.element.querySelectorAll("#different-element").length === 0;
+    });
   });
 
-  const broadcastRunner = new NetworkedDOMBroadcastRunner(
-    (fromBroadcastInstanceMessage: FromBroadcastInstanceMessage) => {
-      fakeWebSocket.clientSideWebsocket.send(JSON.stringify(fromBroadcastInstanceMessage));
-    },
-    IframeObservableDOMFactory,
-  );
+  test("replace runner", async () => {
+    const broadcastReceiver = new NetworkedDOMBroadcastReceiver(
+      (toBroadcastInstanceMessage: ToBroadcastInstanceMessage) => {
+        currentRunner.handleMessage(toBroadcastInstanceMessage);
+      },
+      true,
+      (logMessage) => {
+        console.log("logMessage", logMessage);
+      },
+    );
 
-  fakeWebSocket.clientSideWebsocket.addEventListener("message", (message: MessageEvent) => {
-    broadcastRunner.handleMessage(JSON.parse(message.data) as ToBroadcastInstanceMessage);
-  });
+    const broadcastRunnerOne = new NetworkedDOMBroadcastRunner(
+      (fromBroadcastInstanceMessage: FromBroadcastInstanceMessage) => {
+        if (currentRunner !== broadcastRunnerOne) {
+          throw new Error("currentRunner !== broadcastRunnerOne");
+        }
+        broadcastReceiver.handleMessage(fromBroadcastInstanceMessage);
+      },
+      IframeObservableDOMFactory,
+    );
+    const broadcastRunnerOneHandlerSpy = jest.spyOn(broadcastRunnerOne, "handleMessage");
 
-  const clientsHolder = document.createElement("div");
-  document.body.append(clientsHolder);
+    const broadcastRunnerTwo = new NetworkedDOMBroadcastRunner(
+      (fromBroadcastInstanceMessage: FromBroadcastInstanceMessage) => {
+        if (currentRunner !== broadcastRunnerTwo) {
+          throw new Error("currentRunner !== broadcastRunnerTwo");
+        }
+        broadcastReceiver.handleMessage(fromBroadcastInstanceMessage);
+      },
+      IframeObservableDOMFactory,
+    );
+    const broadcastRunnerTwoHandlerSpy = jest.spyOn(broadcastRunnerTwo, "handleMessage");
 
-  const client = new NetworkedDOMWebRunnerClient();
-  clientsHolder.append(client.element);
-  client.connect(broadcastReceiver.editableNetworkedDOM);
+    let currentRunner = broadcastRunnerOne;
 
-  broadcastRunner.load({
-    htmlContents: `<div 
-      data-some-id="test-element" 
-      onclick="
-        this.setAttribute('data-some-attr','new-value'); 
-        console.log('broadcast-end-to-end-test-level-log'); 
-        console.info('broadcast-end-to-end-test-level-info'); 
-        console.warn('broadcast-end-to-end-test-level-warn'); 
-        console.error('broadcast-end-to-end-test-level-error'); 
-        undef[1];
-      "
-    ></div>`,
-    htmlPath: "file://test.html",
-    ignoreTextNodes: false,
-    params: {},
-  });
+    const clientsHolder = document.createElement("div");
+    document.body.append(clientsHolder);
 
-  await waitFor(() => {
-    return client.element.querySelectorAll("[data-some-id='test-element']").length > 0;
-  });
-  const testElement = client.element.querySelectorAll("[data-some-id='test-element']")[0];
+    const client = new NetworkedDOMWebRunnerClient();
+    clientsHolder.append(client.element);
+    client.connect(broadcastReceiver.editableNetworkedDOM);
 
-  testElement.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-  await waitFor(() => testElement.getAttribute("data-some-attr") === "new-value");
+    broadcastRunnerOne.load({
+      htmlContents: `<div id="test-element-one"></div><div id="inner-element-one"></div></div>`,
+      htmlPath: "file://test.html",
+      ignoreTextNodes: false,
+      params: {},
+    });
 
-  expect(logs).toEqual([
-    expect.objectContaining({
-      level: "log",
-      content: ["broadcast-end-to-end-test-level-log"],
-    }),
-    expect.objectContaining({
-      level: "info",
-      content: ["broadcast-end-to-end-test-level-info"],
-    }),
-    expect.objectContaining({
-      level: "warn",
-      content: ["broadcast-end-to-end-test-level-warn"],
-    }),
-    expect.objectContaining({
-      level: "error",
-      content: ["broadcast-end-to-end-test-level-error"],
-    }),
-    expect.objectContaining({
-      level: "system",
-      content: [
-        expect.objectContaining({
-          message: "undef is not defined",
-          type: "ReferenceError",
-        }),
-      ],
-    }),
-  ]);
+    await waitFor(() => {
+      return client.element.querySelectorAll("#inner-element-one").length > 0;
+    });
 
-  broadcastRunner.load({
-    htmlContents: `<div data-some-id="different-element"></div>`,
-    htmlPath: "file://test.html",
-    ignoreTextNodes: false,
-    params: {},
-  });
+    expect(broadcastRunnerOneHandlerSpy).toHaveBeenCalledWith({
+      message: { connectionId: 1, type: "addConnectedUserId" },
+      revisionId: 1,
+      type: "instance",
+    });
 
-  await waitFor(() => {
-    return client.element.querySelectorAll("[data-some-id='different-element']").length > 0;
+    broadcastRunnerOne.dispose();
+
+    broadcastReceiver.clearRevisionState();
+
+    currentRunner = broadcastRunnerTwo;
+
+    broadcastRunnerTwo.load({
+      htmlContents: `<div id="test-element-two"><div id="inner-element-two"></div></div>`,
+      htmlPath: "file://test.html",
+      ignoreTextNodes: false,
+      params: {},
+    });
+
+    await waitFor(() => {
+      return client.element.querySelectorAll("#inner-element-two").length > 0;
+    });
+
+    expect(broadcastRunnerOneHandlerSpy).toHaveBeenCalledWith({
+      message: { connectionId: 1, type: "addConnectedUserId" },
+      revisionId: 1,
+      type: "instance",
+    });
+
+    expect(broadcastRunnerTwoHandlerSpy).toHaveBeenNthCalledWith(1, {
+      message: { connectionId: 1, type: "addConnectedUserId" },
+      revisionId: 1,
+      type: "instance",
+    });
   });
 });

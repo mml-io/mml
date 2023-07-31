@@ -4,6 +4,7 @@ import {
   Diff,
   ElementNodeDescription,
   NodeDescription,
+  SnapshotMessage,
   TextChangedDiff,
   TextNodeDescription,
 } from "@mml-io/networked-dom-protocol";
@@ -25,143 +26,156 @@ export function diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
 ): Diff | null {
   const virtualDOMElement = mutation.target;
 
-  if (mutation.type === "attributes") {
-    const visible = visibleNodesForConnection.has(virtualDOMElement.nodeId);
-
-    if (!parentNode) {
-      throw new Error("Node has no parent");
-    }
-    const parentNodeId = parentNode.nodeId;
-    const shouldBeVisible =
-      shouldShowNodeToConnectionId(virtualDOMElement, connectionId) &&
-      visibleNodesForConnection.has(parentNodeId);
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const attributeName = mutation.attributeName!;
-
-    if (visible && shouldBeVisible) {
-      let newValue = null; // null indicates deleted
-      if (virtualDOMElement.attributes[attributeName] !== undefined) {
-        newValue = virtualDOMElement.attributes[attributeName];
-      }
-      const diff: AttributeChangedDiff = {
-        type: "attributeChange",
-        nodeId: virtualDOMElement.nodeId,
-        attribute: attributeName,
-        newValue,
-      };
-      return diff;
-    } else if (!visible && shouldBeVisible) {
-      // Need to add this child to the connection's view now
-      visibleNodesForConnection.add(virtualDOMElement.nodeId);
-
-      const index = parentNode.childNodes.indexOf(virtualDOMElement);
-      if (index === -1) {
-        throw new Error("Node not found in parent's children");
-      }
-
-      let previousNodeId = null;
-      if (index > 0) {
-        previousNodeId = getNodeIdOfPreviousVisibleSibling(
-          parentNode,
-          index - 1,
-          visibleNodesForConnection,
-        );
-      }
-
+  switch (mutation.type) {
+    case "snapshot": {
       const nodeDescription = describeNodeWithChildrenForConnectionId(
         virtualDOMElement,
         connectionId,
         visibleNodesForConnection,
       );
       if (!nodeDescription) {
-        throw new Error("Node description not found");
+        return null;
       }
+      const diff: SnapshotMessage = {
+        type: "snapshot",
+        snapshot: nodeDescription,
+        documentTime: 0,
+      };
+      return diff;
+    }
+    case "attributes": {
+      const visible = visibleNodesForConnection.has(virtualDOMElement.nodeId);
+
+      if (!parentNode) {
+        throw new Error("Node has no parent");
+      }
+      const parentNodeId = parentNode.nodeId;
+      const shouldBeVisible =
+        shouldShowNodeToConnectionId(virtualDOMElement, connectionId) &&
+        visibleNodesForConnection.has(parentNodeId);
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const attributeName = mutation.attributeName!;
+
+      if (visible && shouldBeVisible) {
+        let newValue = null; // null indicates deleted
+        if (virtualDOMElement.attributes[attributeName] !== undefined) {
+          newValue = virtualDOMElement.attributes[attributeName];
+        }
+        const diff: AttributeChangedDiff = {
+          type: "attributeChange",
+          nodeId: virtualDOMElement.nodeId,
+          attribute: attributeName,
+          newValue,
+        };
+        return diff;
+      } else if (!visible && shouldBeVisible) {
+        // Need to add this child to the connection's view now
+        visibleNodesForConnection.add(virtualDOMElement.nodeId);
+
+        const index = parentNode.childNodes.indexOf(virtualDOMElement);
+        if (index === -1) {
+          throw new Error("Node not found in parent's children");
+        }
+
+        let previousNodeId = null;
+        if (index > 0) {
+          previousNodeId = getNodeIdOfPreviousVisibleSibling(
+            parentNode,
+            index - 1,
+            visibleNodesForConnection,
+          );
+        }
+
+        const nodeDescription = describeNodeWithChildrenForConnectionId(
+          virtualDOMElement,
+          connectionId,
+          visibleNodesForConnection,
+        );
+        if (!nodeDescription) {
+          throw new Error("Node description not found");
+        }
+        const diff: ChildrenChangedDiff = {
+          type: "childrenChanged",
+          nodeId: parentNodeId,
+          previousNodeId,
+          addedNodes: [nodeDescription],
+          removedNodes: [],
+        };
+        return diff;
+      } else if (visible && !shouldBeVisible) {
+        removeNodeAndChildrenFromVisibleNodes(virtualDOMElement, visibleNodesForConnection);
+        const diff: ChildrenChangedDiff = {
+          type: "childrenChanged",
+          nodeId: parentNodeId,
+          previousNodeId: null,
+          addedNodes: [],
+          removedNodes: [virtualDOMElement.nodeId],
+        };
+        return diff;
+      } else if (!visible && !shouldBeVisible) {
+        return null;
+      }
+      break;
+    }
+    case "characterData": {
+      const diff: TextChangedDiff = {
+        type: "textChanged",
+        nodeId: virtualDOMElement.nodeId,
+        text: virtualDOMElement.textContent || "",
+      };
+      return diff;
+    }
+    case "childList": {
+      let previousSibling = mutation.previousSibling;
+      let previousNodeId: number | null = null;
+      if (previousSibling) {
+        let previousIndex = virtualDOMElement.childNodes.indexOf(previousSibling);
+        while (previousIndex !== -1) {
+          previousSibling = virtualDOMElement.childNodes[previousIndex];
+          if (visibleNodesForConnection.has(previousSibling.nodeId)) {
+            previousNodeId = previousSibling.nodeId;
+            break;
+          }
+          previousIndex--;
+        }
+      }
+
       const diff: ChildrenChangedDiff = {
         type: "childrenChanged",
-        nodeId: parentNodeId,
+        nodeId: virtualDOMElement.nodeId,
         previousNodeId,
-        addedNodes: [nodeDescription],
+        addedNodes: [],
         removedNodes: [],
       };
-      return diff;
-    } else if (visible && !shouldBeVisible) {
-      removeNodeAndChildrenFromVisibleNodes(virtualDOMElement, visibleNodesForConnection);
-      const diff: ChildrenChangedDiff = {
-        type: "childrenChanged",
-        nodeId: parentNodeId,
-        previousNodeId: null,
-        addedNodes: [],
-        removedNodes: [virtualDOMElement.nodeId],
-      };
-      return diff;
-    } else if (!visible && !shouldBeVisible) {
+
+      mutation.addedNodes.forEach((childVirtualDOMElement: StaticVirtualDOMElement) => {
+        const describedNode = describeNodeWithChildrenForConnectionId(
+          childVirtualDOMElement,
+          connectionId,
+          visibleNodesForConnection,
+        );
+        if (!describedNode) {
+          return;
+        }
+        diff.addedNodes.push(describedNode);
+      });
+      mutation.removedNodes.forEach((childVirtualDOMElement: StaticVirtualDOMElement) => {
+        if (visibleNodesForConnection.has(childVirtualDOMElement.nodeId)) {
+          removeNodeAndChildrenFromVisibleNodes(childVirtualDOMElement, visibleNodesForConnection);
+          diff.removedNodes.push(childVirtualDOMElement.nodeId);
+        }
+      });
+
+      if (diff.addedNodes.length > 0 || diff.removedNodes.length > 0) {
+        return diff;
+      }
       return null;
     }
+    default:
+      console.error("Unknown mutation type: " + mutation.type);
+      break;
   }
-
-  if (!visibleNodesForConnection.has(virtualDOMElement.nodeId)) {
-    // This element is not visible to the connection, so we don't need to send a diff for it or its children
-    return null;
-  }
-
-  if (mutation.type === "characterData") {
-    const diff: TextChangedDiff = {
-      type: "textChanged",
-      nodeId: virtualDOMElement.nodeId,
-      text: virtualDOMElement.textContent || "",
-    };
-    return diff;
-  }
-
-  if (mutation.type === "childList") {
-    let previousSibling = mutation.previousSibling;
-    let previousNodeId: number | null = null;
-    if (previousSibling) {
-      let previousIndex = virtualDOMElement.childNodes.indexOf(previousSibling);
-      while (previousIndex !== -1) {
-        previousSibling = virtualDOMElement.childNodes[previousIndex];
-        if (visibleNodesForConnection.has(previousSibling.nodeId)) {
-          previousNodeId = previousSibling.nodeId;
-          break;
-        }
-        previousIndex--;
-      }
-    }
-
-    const diff: ChildrenChangedDiff = {
-      type: "childrenChanged",
-      nodeId: virtualDOMElement.nodeId,
-      previousNodeId,
-      addedNodes: [],
-      removedNodes: [],
-    };
-
-    mutation.addedNodes.forEach((childVirtualDOMElement: StaticVirtualDOMElement) => {
-      const describedNode = describeNodeWithChildrenForConnectionId(
-        childVirtualDOMElement,
-        connectionId,
-        visibleNodesForConnection,
-      );
-      if (!describedNode) {
-        return;
-      }
-      diff.addedNodes.push(describedNode);
-    });
-    mutation.removedNodes.forEach((childVirtualDOMElement: StaticVirtualDOMElement) => {
-      if (visibleNodesForConnection.has(childVirtualDOMElement.nodeId)) {
-        removeNodeAndChildrenFromVisibleNodes(childVirtualDOMElement, visibleNodesForConnection);
-        diff.removedNodes.push(childVirtualDOMElement.nodeId);
-      }
-    });
-
-    if (diff.addedNodes.length > 0 || diff.removedNodes.length > 0) {
-      return diff;
-    }
-    return null;
-  }
-
-  console.error("Unknown mutation type: " + mutation.type);
   return null;
 }
 
@@ -344,55 +358,73 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
     }
     const addedNodes: Array<StaticVirtualDOMElement> = [];
     const removedNodes: Array<StaticVirtualDOMElement> = [];
-    if (domDiff.op === "add") {
-      addedNodes.push(domDiff.value);
-      return [
-        {
-          type: "childList",
-          target: node,
-          addedNodes,
-          removedNodes,
-          previousSibling,
-          attributeName: null,
-        },
-      ];
-    } else if (domDiff.op === "remove") {
-      const removedNode = pointer.get(virtualStructure) as StaticVirtualDOMElement;
-      removedNodes.push(removedNode);
-      return [
-        {
-          type: "childList",
-          target: node,
-          addedNodes,
-          removedNodes,
-          previousSibling,
-          attributeName: null,
-        },
-      ];
-    } else if (domDiff.op === "replace") {
-      // This is a replacement of a single node
-      const removedNode = pointer.get(virtualStructure) as StaticVirtualDOMElement;
-      removedNodes.push(removedNode);
-      addedNodes.push(domDiff.value);
-      return [
-        {
-          type: "childList",
-          target: node,
-          addedNodes: [],
-          removedNodes,
-          previousSibling,
-          attributeName: null,
-        },
-        {
-          type: "childList",
-          target: node,
-          addedNodes,
-          removedNodes: [],
-          previousSibling,
-          attributeName: null,
-        },
-      ];
+    switch (domDiff.op) {
+      case "add": {
+        addedNodes.push(domDiff.value);
+        return [
+          {
+            type: "childList",
+            target: node,
+            addedNodes,
+            removedNodes,
+            previousSibling,
+            attributeName: null,
+          },
+        ];
+      }
+      case "remove": {
+        const removedNode = pointer.get(virtualStructure) as StaticVirtualDOMElement;
+        removedNodes.push(removedNode);
+        return [
+          {
+            type: "childList",
+            target: node,
+            addedNodes,
+            removedNodes,
+            previousSibling,
+            attributeName: null,
+          },
+        ];
+      }
+      case "replace": {
+        // This is a replacement of a single node
+        const removedNode = pointer.get(virtualStructure) as StaticVirtualDOMElement;
+        removedNodes.push(removedNode);
+        addedNodes.push(domDiff.value);
+        return [
+          {
+            type: "childList",
+            target: node,
+            addedNodes: [],
+            removedNodes,
+            previousSibling,
+            attributeName: null,
+          },
+          {
+            type: "childList",
+            target: node,
+            addedNodes,
+            removedNodes: [],
+            previousSibling,
+            attributeName: null,
+          },
+        ];
+      }
     }
+  }
+
+  if (domDiff.op === "replace" && domDiff.path === "") {
+    const node = domDiff.value as StaticVirtualDOMElement;
+    return [
+      {
+        type: "snapshot",
+        target: node,
+        addedNodes: [],
+        removedNodes: [],
+        previousSibling: null,
+        attributeName: null,
+      },
+    ];
   }
 
   console.error("Unhandled JSON diff:", JSON.stringify(domDiff, null, 2));

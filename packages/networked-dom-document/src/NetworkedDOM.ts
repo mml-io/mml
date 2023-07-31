@@ -257,21 +257,21 @@ export class NetworkedDOM {
           virtualDOMDiff,
         );
 
-        const patchResults = applyPatch(domDiff.originalState, [virtualDOMDiff]);
-        for (const patchResult of patchResults) {
-          if (patchResult !== null) {
-            console.error("Patching virtual dom structure resulted in error", patchResult);
-            throw patchResult;
+        if (virtualDOMDiff.path === "" && virtualDOMDiff.op === "replace") {
+          // The patch is a snapshot replacement - no need to check the patch validity
+        } else {
+          const patchResults = applyPatch(domDiff.originalState, [virtualDOMDiff]);
+          for (const patchResult of patchResults) {
+            if (patchResult !== null) {
+              console.error("Patching virtual dom structure resulted in error", patchResult);
+              throw patchResult;
+            }
           }
         }
 
         for (const mutationRecordLike of mutationRecordLikes) {
           const targetNodeId = mutationRecordLike.target.nodeId;
           const virtualElementParent = findParentNodeOfNodeId(domDiff.originalState, targetNodeId);
-          if (!virtualElementParent) {
-            throw new Error(`could not find parent node of nodeId ${targetNodeId}`);
-          }
-
           diffsByConnectionId.forEach((diffs, connectionId) => {
             const mutationDiff = diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
               mutationRecordLike,
@@ -458,9 +458,6 @@ export class NetworkedDOM {
 
   public dispose(): void {
     this.disposed = true;
-    for (const [, connectionId] of this.webSocketToConnectionId) {
-      this.observableDOM.removeConnectedUserId(connectionId);
-    }
 
     // Handle all of the remaining mutations that the disconnections could have caused
     this.observableDOM.dispose();
