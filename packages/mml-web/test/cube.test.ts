@@ -127,24 +127,28 @@ describe("m-cube", () => {
     const element = document.createElement("m-cube") as Cube;
     expect(Array.from((scene as any).colliders)).toEqual([]);
     const addColliderSpy = jest.spyOn(scene, "addCollider");
+    const updateColliderSpy = jest.spyOn(scene, "updateCollider");
     const removeColliderSpy = jest.spyOn(scene, "removeCollider");
     sceneAttachment.append(element);
     expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
     expect(addColliderSpy).toHaveBeenCalledTimes(1);
+    expect(updateColliderSpy).toHaveBeenCalledTimes(0);
     expect(removeColliderSpy).toHaveBeenCalledTimes(0);
     expect(addColliderSpy).toHaveBeenCalledWith(element.getCube(), element);
 
     element.setAttribute("collide", "false");
+    expect(addColliderSpy).toHaveBeenCalledTimes(1);
+    expect(updateColliderSpy).toHaveBeenCalledTimes(0);
     expect(removeColliderSpy).toHaveBeenCalledTimes(1);
     expect(removeColliderSpy).toHaveBeenCalledWith(element.getCube(), element);
-    expect(addColliderSpy).toHaveBeenCalledTimes(1);
     expect(Array.from((scene as any).colliders)).toEqual([]);
 
     element.setAttribute("collide", "true");
-    expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
     expect(addColliderSpy).toHaveBeenCalledTimes(2);
+    expect(updateColliderSpy).toHaveBeenCalledTimes(0);
     expect(removeColliderSpy).toHaveBeenCalledTimes(1);
-    expect(addColliderSpy).toHaveBeenCalledWith(element.getCube(), element);
+    expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
+    expect(addColliderSpy).toHaveBeenNthCalledWith(2, element.getCube(), element);
   });
 
   test("collide - update", () => {

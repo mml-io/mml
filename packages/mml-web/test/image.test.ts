@@ -5,8 +5,9 @@
 import { AudioContext } from "standardized-audio-context-mock";
 import { Cache } from "three";
 
-import { createSceneAttachedElement } from "./scene-test-utils";
+import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { Cube } from "../src";
 import { Image } from "../src/elements/Image";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
@@ -135,6 +136,53 @@ describe("m-image", () => {
     await (image as any).srcApplyPromise;
     expect(image.getImageMesh().scale.y).toBe(5);
     expect(image.getImageMesh().scale.x).toBe(10);
+  });
+
+  test("collider is updated", async () => {
+    const { scene, sceneAttachment } = createTestScene();
+    const image = document.createElement("m-image") as Image;
+    expect(Array.from((scene as any).colliders)).toEqual([]);
+    const addColliderSpy = jest.spyOn(scene, "addCollider");
+    const updateColliderSpy = jest.spyOn(scene, "updateCollider");
+    const removeColliderSpy = jest.spyOn(scene, "removeCollider");
+    sceneAttachment.append(image);
+
+    expect(Array.from((scene as any).colliders)).toEqual([image.getImageMesh()]);
+    expect(removeColliderSpy).toHaveBeenCalledTimes(0);
+    expect(addColliderSpy).toHaveBeenCalledTimes(1);
+    expect(addColliderSpy).toHaveBeenNthCalledWith(1, image.getImageMesh(), image);
+
+    const originalImageWidth = 200;
+    const originalImageHeight = 100;
+
+    // mock calls to THREE's Cache class to prevent the loaders attempting to
+    // fetch images from the web
+    const cacheSpy = jest.spyOn(Cache, "get").mockImplementation(() => {
+      const htmlImageElement = document.createElement("img");
+      htmlImageElement.width = originalImageWidth;
+      htmlImageElement.height = originalImageHeight;
+      return htmlImageElement;
+    });
+
+    image.setAttribute("width", "10");
+    expect(updateColliderSpy).toHaveBeenCalledTimes(1);
+    expect(image.getImageMesh().scale.y).toBe(1);
+    expect(image.getImageMesh().scale.x).toBe(10);
+
+    image.setAttribute("src", "SOME_ASSET_URL");
+    expect(cacheSpy).toHaveBeenCalled();
+    expect((image as any).srcApplyPromise).toBeTruthy();
+    await (image as any).srcApplyPromise;
+    expect(updateColliderSpy).toHaveBeenCalledTimes(2);
+    expect(image.getImageMesh().scale.y).toBe(5);
+    expect(image.getImageMesh().scale.x).toBe(10);
+
+    image.setAttribute("collide", "true");
+    expect(addColliderSpy).toHaveBeenCalledTimes(1);
+    expect(updateColliderSpy).toHaveBeenCalledTimes(2);
+    expect(Array.from((scene as any).colliders)).toEqual([image.getImageMesh()]);
+    expect(updateColliderSpy).toHaveBeenNthCalledWith(1, image.getImageMesh(), image);
+    expect(removeColliderSpy).toHaveBeenCalledTimes(0);
   });
 
   test("setting width and height ignores aspect ratio", async () => {
