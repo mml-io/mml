@@ -54,7 +54,7 @@ export class DragFlyCameraControls {
   private zoomTimestamp: number;
   private debounceTime = 20;
   private clickTimestamp: number;
-  private clickTime = 200;
+  private clickThresholdMilliseconds = 200;
 
   constructor(camera: Camera, domElement: HTMLElement, speed = 15.0) {
     this.camera = camera;
@@ -86,7 +86,6 @@ export class DragFlyCameraControls {
     this.eventHandlerCollection.add(document, "touchstart", this.handleTouchStart.bind(this));
     this.eventHandlerCollection.add(document, "touchend", this.handleTouchEnd.bind(this));
     this.eventHandlerCollection.add(document, "touchmove", this.handleTouchMove.bind(this));
-    // this.eventHandlerCollection.add(document, "click", this.handleClick.bind(this));
   }
 
   public disable() {
@@ -236,11 +235,6 @@ export class DragFlyCameraControls {
     this.speed = Math.max(5, Math.min(this.speed, 1000));
   }
 
-  // private handleClick(event: TouchEvent) {
-  //   console.log("Click event detected with the following details: ", event);
-  // }
-
-  // Function to handle touch start event
   private handleTouchStart(event: TouchEvent) {
     let startX: number;
     let startY: number;
@@ -266,7 +260,7 @@ export class DragFlyCameraControls {
       this.clickTimestamp = Date.now();
     }
   }
-  // Function to handle touch end event
+
   private handleTouchEnd(event: TouchEvent) {
     if (this.isMoving) {
       this.zoomTimestamp = Date.now();
@@ -281,7 +275,7 @@ export class DragFlyCameraControls {
       }
     }
 
-    if (Date.now() - this.clickTimestamp < this.clickTime) {
+    if (Date.now() - this.clickTimestamp < this.clickThresholdMilliseconds) {
       /* this is a click */
       // Create and dispatch a new mouse event with specific x and y coordinates
       const clickEvent = new MouseEvent("click", {
@@ -295,7 +289,6 @@ export class DragFlyCameraControls {
     }
   }
 
-  // Function to handle touch move event
   private handleTouchMove(event: TouchEvent) {
     for (const touch of Array.from(event.touches)) {
       const touchState = this.touchesMap.get(touch.identifier);
