@@ -7,16 +7,13 @@ import { IMMLScene } from "../MMLScene";
 
 const collideAttributeName = "collide";
 const collisionIntervalAttributeName = "collision-interval";
-const debugAttributeName = "debug";
 const defaultCollideable = true;
-const defaultDebug = false;
 
 export class CollideableHelper {
   private element: MElement;
 
   private props = {
     collide: defaultCollideable,
-    debug: false,
   };
 
   static AttributeHandler = new AttributeHandler<CollideableHelper>({
@@ -30,11 +27,6 @@ export class CollideableHelper {
     [collisionIntervalAttributeName]: () => {
       // Collision interval is handled by the MMLCollisionTrigger, but is here for completeness of attribute handling
     },
-    [debugAttributeName]: (instance, newValue) => {
-      const debug = parseBoolAttribute(newValue, defaultDebug);
-      instance.props.debug = debug;
-      instance.colliderUpdated();
-    },
   });
   static observedAttributes = CollideableHelper.AttributeHandler.getAttributes();
 
@@ -42,16 +34,15 @@ export class CollideableHelper {
     this.element = element;
   }
 
-  private colliderState: { scene: IMMLScene | null; collider: THREE.Object3D | null } = {
+  private colliderState: {
+    scene: IMMLScene | null;
+    collider: THREE.Object3D | null;
+    added: boolean;
+  } = {
     scene: null,
     collider: null,
+    added: false,
   };
-
-  private colliderUpdated() {
-    if (this.props.collide && this.colliderState.scene && this.colliderState.collider) {
-      this.colliderState.scene.updateCollider?.(this.colliderState.collider, this.element);
-    }
-  }
 
   public updateCollider(collider: THREE.Object3D | null) {
     if (!this.element.isConnected) {
@@ -65,10 +56,14 @@ export class CollideableHelper {
 
     const previousCollider = this.colliderState.collider;
     const colliderChanged = previousCollider !== collider;
+    if (colliderChanged) {
+      this.colliderState.added = false;
+    }
     this.colliderState.collider = collider;
 
     const collide = this.props.collide;
     if (!collide && previousCollider === null) {
+      this.colliderState.added = false;
       return;
     }
 
@@ -77,10 +72,16 @@ export class CollideableHelper {
         this.colliderState.scene.removeCollider?.(previousCollider, this.element);
       }
       if (collider !== null) {
-        this.colliderState.scene.addCollider?.(collider, this.element);
+        if (this.colliderState.added) {
+          this.colliderState.scene.updateCollider?.(collider, this.element);
+        } else {
+          this.colliderState.added = true;
+          this.colliderState.scene.addCollider?.(collider, this.element);
+        }
       }
     } else {
       if (previousCollider !== null) {
+        this.colliderState.added = false;
         this.colliderState.scene.removeCollider?.(previousCollider, this.element);
       }
     }
@@ -108,11 +109,11 @@ export class CollideableHelper {
 
     // if the changed attribute is in TransformableElement, then the collider may have changed its position, rotation or scale
     if (TransformableElement.observedAttributes.includes(name)) {
-      this.colliderUpdated();
+      this.updateCollider(this.colliderState.collider);
     }
   }
 
   public parentTransformed() {
-    this.colliderUpdated();
+    this.updateCollider(this.colliderState.collider);
   }
 }
