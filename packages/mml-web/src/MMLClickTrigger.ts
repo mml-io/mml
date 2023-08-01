@@ -13,7 +13,6 @@ let touchX: number;
 let touchY: number;
 let touchTimestamp: number;
 
-
 export class MMLClickTrigger {
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
   private scene: IMMLScene;
@@ -64,7 +63,8 @@ export class MMLClickTrigger {
   }
 
   private handleTouchEnd(event: TouchEvent) {
-    if (Date.now() - touchTimestamp < touchThresholdMilliseconds) { /* a short touch, i.e., a click */
+    if (Date.now() - touchTimestamp < touchThresholdMilliseconds) {
+      /* a short touch, i.e., a click */
       if ((event.detail as any).element) {
         // Avoid infinite loop of handling click events that originated from this trigger
         return;
@@ -114,7 +114,9 @@ export class MMLClickTrigger {
     /* remember the x and y position of the touch, so that it can be used in touchEnd */
     touchX = event.touches[0].clientX;
     touchY = event.touches[0].clientY;
-    touchTimestamp = Date.now(); /* remember the start time of the touch to calculate the touch duration in touchEnd */
+
+    /* remember the start time of the touch to calculate the touch duration in touchEnd */
+    touchTimestamp = Date.now();
   }
 
   private handleClick(event: MouseEvent) {
