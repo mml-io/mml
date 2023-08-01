@@ -52,7 +52,7 @@ export class DragFlyCameraControls {
   private panStartX: number;
   private panStartY: number;
   private zoomTimestamp: number;
-  private debounceTime = 20;
+  private debounceThresholdMilliseconds = 20;
   private clickTimestamp: number;
   private clickThresholdMilliseconds = 200;
 
@@ -345,7 +345,7 @@ export class DragFlyCameraControls {
       this.isMoving = true;
     } else if (event.touches.length === 1) {
       // Pan
-      if (!this.zoomTimestamp || Date.now() > this.zoomTimestamp + this.debounceTime) {
+      if (!this.zoomTimestamp || Date.now() > this.zoomTimestamp + this.debounceThresholdMilliseconds) {
         this.isMoving = false;
 
         const movementX = event.touches[0].clientX - this.panStartX;
