@@ -345,7 +345,10 @@ export class DragFlyCameraControls {
       this.isMoving = true;
     } else if (event.touches.length === 1) {
       // Pan
-      if (!this.zoomTimestamp || Date.now() > this.zoomTimestamp + this.debounceThresholdMilliseconds) {
+      if (
+        !this.zoomTimestamp ||
+        Date.now() > this.zoomTimestamp + this.debounceThresholdMilliseconds
+      ) {
         this.isMoving = false;
 
         const movementX = event.touches[0].clientX - this.panStartX;
