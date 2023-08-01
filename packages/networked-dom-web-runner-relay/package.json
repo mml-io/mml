@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-web-runner-relay",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -17,8 +17,8 @@
     "test-iterate": "jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web-runner": "^0.3.0",
-    "@mml-io/observable-dom-common": "^0.3.0"
+    "@mml-io/networked-dom-web-runner": "^0.4.0",
+    "@mml-io/observable-dom-common": "^0.4.0"
   },
   "devDependencies": {
     "jest-environment-jsdom": "29.5.0",

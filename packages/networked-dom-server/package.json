@@ -1,6 +1,6 @@
 {
   "name": "networked-dom-server",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -15,8 +15,8 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/networked-dom-document": "^0.3.0",
-    "@mml-io/observable-dom": "^0.3.0",
-    "@mml-io/observable-dom-common": "^0.3.0"
+    "@mml-io/networked-dom-document": "^0.4.0",
+    "@mml-io/observable-dom": "^0.4.0",
+    "@mml-io/observable-dom-common": "^0.4.0"
   }
 }

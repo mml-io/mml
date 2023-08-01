@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-web",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -17,7 +17,7 @@
     "test-iterate": "jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-protocol": "^0.3.0"
+    "@mml-io/networked-dom-protocol": "^0.4.0"
   },
   "devDependencies": {
     "jest-canvas-mock": "2.5.1",
