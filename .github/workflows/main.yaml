@@ -32,9 +32,6 @@ jobs:
           node-version-file: ".nvmrc"
           cache: npm
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
       - name: Install dependencies
         run: npm ci
 
@@ -52,6 +49,96 @@ jobs:
 
       - name: End to End Test
         run: npm run ci:e2e-tests
+
+      - name: Publish Package - mml-web
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/mml-web/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - mml-web-client
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/mml-web-client/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - mml-web-runner
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/mml-web-runner/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - networked-dom-document
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/networked-dom-document/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - networked-dom-protocol
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/networked-dom-protocol/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - networked-dom-server
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/networked-dom-server/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - networked-dom-web
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/networked-dom-web/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - networked-dom-web-client
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/networked-dom-web-client/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - networked-dom-web-runner
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/networked-dom-web-runner/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - networked-dom-web-runner-broadcast
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/networked-dom-web-runner-broadcast/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - networked-dom-web-runner-relay
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/networked-dom-web-runner-relay/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - observable-dom
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/observable-dom/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - observable-dom-common
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/observable-dom-common/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - schema
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/schema/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Package - schema-validator
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          package: packages/schema-validator/package.json
+          token: ${{ secrets.NPM_TOKEN }}
 
       - name: Upload End to End Test Images
         if: failure()
