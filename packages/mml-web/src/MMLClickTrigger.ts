@@ -7,6 +7,12 @@ import { getRelativePositionAndRotationRelativeToObject } from "./utils/position
 
 const mouseMovePixelsThreshold = 10;
 const mouseMoveTimeThresholdMilliseconds = 500;
+const touchThresholdMilliseconds = 200;
+
+let touchX: number;
+let touchY: number;
+let touchTimestamp: number;
+
 
 /**
  * The MMLClickTrigger class is responsible for handling click events on the MML scene and raycasts into the scene to
@@ -33,6 +39,7 @@ export class MMLClickTrigger {
     this.eventHandlerCollection.add(clickTarget, "mouseup", this.handleMouseUp.bind(this));
     this.eventHandlerCollection.add(clickTarget, "mousemove", this.handleMouseMove.bind(this));
     this.eventHandlerCollection.add(clickTarget, "touchstart", this.handleTouchStart.bind(this));
+    this.eventHandlerCollection.add(clickTarget, "touchend", this.handleTouchEnd.bind(this));
   }
 
   private handleMouseDown() {
@@ -60,49 +67,58 @@ export class MMLClickTrigger {
     }
   }
 
-  private handleTouchStart(event: TouchEvent) {
-    if ((event.detail as any).element) {
-      // Avoid infinite loop of handling click events that originated from this trigger
-      return;
-    }
-    let x = 0;
-    let y = 0;
-    if (!document.pointerLockElement) {
-      let width = window.innerWidth;
-      let height = window.innerHeight;
-      if (this.clickTarget instanceof HTMLElement) {
-        width = this.clickTarget.offsetWidth;
-        height = this.clickTarget.offsetHeight;
+  private handleTouchEnd(event: TouchEvent) {
+    if (Date.now() - touchTimestamp < touchThresholdMilliseconds) { /* a short touch, i.e., a click */
+      if ((event.detail as any).element) {
+        // Avoid infinite loop of handling click events that originated from this trigger
+        return;
       }
-      x = (event.touches[0].clientX / width) * 2 - 1;
-      y = -((event.touches[0].clientY / height) * 2 - 1);
-    }
-    this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.scene.getCamera());
-    const intersections = this.raycaster.intersectObject(this.scene.getRootContainer(), true);
-    if (intersections.length > 0) {
-      for (const intersection of intersections) {
-        let obj: THREE.Object3D | null = intersection.object;
-        while (obj) {
-          /*
-             Ignore scene objects that have a transparent or wireframe material
-            */
-          if (this.isMaterialIgnored(obj)) {
-            break;
-          }
+      let x = 0;
+      let y = 0;
+      if (!document.pointerLockElement) {
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        if (this.clickTarget instanceof HTMLElement) {
+          width = this.clickTarget.offsetWidth;
+          height = this.clickTarget.offsetHeight;
+        }
+        x = (touchX / width) * 2 - 1;
+        y = -((touchY / height) * 2 - 1);
+      }
+      this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.scene.getCamera());
+      const intersections = this.raycaster.intersectObject(this.scene.getRootContainer(), true);
+      if (intersections.length > 0) {
+        for (const intersection of intersections) {
+          let obj: THREE.Object3D | null = intersection.object;
+          while (obj) {
+            /*
+               Ignore scene objects that have a transparent or wireframe material
+              */
+            if (this.isMaterialIgnored(obj)) {
+              break;
+            }
 
-          const mElement = MElement.getMElementFromObject(obj);
-          if (mElement && mElement.isClickable()) {
-            mElement.dispatchEvent(
-              new MouseEvent("click", {
-                bubbles: true,
-              }),
-            );
-            return;
+            const mElement = MElement.getMElementFromObject(obj);
+            if (mElement && mElement.isClickable()) {
+              mElement.dispatchEvent(
+                new MouseEvent("click", {
+                  bubbles: true,
+                }),
+              );
+              return;
+            }
+            obj = obj.parent;
           }
-          obj = obj.parent;
         }
       }
     }
+  }
+
+  private handleTouchStart(event: TouchEvent) {
+    /* remember the x and y position of the touch, so that it can be used in touchEnd */
+    touchX = event.touches[0].clientX;
+    touchY = event.touches[0].clientY;
+    touchTimestamp = Date.now(); /* remember the start time of the touch to calculate the touch duration in touchEnd */
   }
 
   private handleClick(event: MouseEvent) {
