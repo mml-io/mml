@@ -643,14 +643,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="anim-start-time" type="xs:int">
+          <xs:attribute name="anim-start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the animation should begin. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="anim-pause-time" type="xs:int">
+          <xs:attribute name="anim-pause-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the animation should pause. If there is no value the animation will not be paused.
@@ -705,14 +705,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="anim-start-time" type="xs:int">
+          <xs:attribute name="anim-start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the character animation should begin. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="anim-pause-time" type="xs:int">
+          <xs:attribute name="anim-pause-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the character animation should pause. If there is no value the animation will not be paused.
@@ -789,14 +789,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="start-time" type="xs:int">
+          <xs:attribute name="start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the audio should start playing. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="pause-time" type="xs:int">
+          <xs:attribute name="pause-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the audio should pause. If there is no value the audio will not be paused.
@@ -911,14 +911,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="start-time" type="xs:int">
+          <xs:attribute name="start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the video should start playing. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="pause-time" type="xs:int">
+          <xs:attribute name="pause-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the video should pause. If there is no value the video will not be paused.
@@ -1025,7 +1025,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="interval" type="xs:int">
+          <xs:attribute name="interval" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds between user positions being sent to the position probe. Default value is 1000 (1 second).
@@ -1136,7 +1136,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="priority" type="xs:int">
+          <xs:attribute name="priority" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The priority of this interaction. Lower priority interactions will be shown first. Default value is 1.
