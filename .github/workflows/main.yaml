@@ -50,95 +50,25 @@ jobs:
       - name: End to End Test
         run: npm run ci:e2e-tests
 
-      - name: Publish Package - mml-web
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/mml-web/package.json
-          token: ${{ secrets.NPM_TOKEN }}
+      - name: Publish
+        run: |
+          # Set up git user for lerna to create a local commit with
+          git config --global user.email "lerna-ci@mml.io"
+          git config --global user.name "lerna-ci-mml"
 
-      - name: Publish Package - mml-web-client
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/mml-web-client/package.json
-          token: ${{ secrets.NPM_TOKEN }}
+          # Set up npm auth token from secret for publishing
+          echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
 
-      - name: Publish Package - mml-web-runner
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/mml-web-runner/package.json
-          token: ${{ secrets.NPM_TOKEN }}
+          # Attempt to publish at the current version - this will skip if the version already exists
+          echo "Attempting to publishing latest version"
+          ./node_modules/.bin/lerna publish from-package --no-private --dist-tag latest --ignore-scripts --ignore-changes --no-push --yes
 
-      - name: Publish Package - networked-dom-document
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/networked-dom-document/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - networked-dom-protocol
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/networked-dom-protocol/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - networked-dom-server
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/networked-dom-server/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - networked-dom-web
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/networked-dom-web/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - networked-dom-web-client
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/networked-dom-web-client/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - networked-dom-web-runner
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/networked-dom-web-runner/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - networked-dom-web-runner-broadcast
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/networked-dom-web-runner-broadcast/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - networked-dom-web-runner-relay
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/networked-dom-web-runner-relay/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - observable-dom
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/observable-dom/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - observable-dom-common
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/observable-dom-common/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - schema
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/schema/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish Package - schema-validator
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: packages/schema-validator/package.json
-          token: ${{ secrets.NPM_TOKEN }}
+          # Publish the current commit as an "experimental" version
+          version="0.0.0-experimental-$(git rev-parse --short HEAD)-$(date +'%Y%m%d')"
+          echo "Publishing experimental version $version"
+          ./node_modules/.bin/lerna publish $version --no-private --dist-tag experimental --ignore-scripts --ignore-changes --no-push --yes
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Upload End to End Test Images
         if: failure()
