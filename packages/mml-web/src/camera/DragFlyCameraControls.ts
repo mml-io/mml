@@ -52,7 +52,7 @@ export class DragFlyCameraControls {
   private panStartX: number;
   private panStartY: number;
   private zoomTimestamp: number;
-  private debounceThresholdMilliseconds = 20;
+  private zoomThresholdMilliseconds = 200;
   private clickTimestamp: number;
   private clickThresholdMilliseconds = 200;
 
@@ -347,7 +347,7 @@ export class DragFlyCameraControls {
       // Pan
       if (
         !this.zoomTimestamp ||
-        Date.now() > this.zoomTimestamp + this.debounceThresholdMilliseconds
+        Date.now() > this.zoomTimestamp + this.zoomThresholdMilliseconds
       ) {
         this.isMoving = false;
 
@@ -374,6 +374,10 @@ export class DragFlyCameraControls {
         );
 
         this.camera.quaternion.setFromEuler(this.tempEuler);
+      } else {
+        // Update the start coordinates for the next move event so that transitioning from zoom to pan does not flick the view
+        this.panStartX = event.touches[0].clientX;
+        this.panStartY = event.touches[0].clientY;
       }
     }
 
