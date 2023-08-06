@@ -363,8 +363,8 @@ export class DragFlyCameraControls {
 
         this.tempEuler.setFromQuaternion(this.camera.quaternion);
 
-        this.tempEuler.y -= movementX * 0.002;
-        this.tempEuler.x -= movementY * 0.002;
+        this.tempEuler.y += movementX * 0.002;
+        this.tempEuler.x += movementY * 0.002;
 
         this.tempEuler.x = Math.max(
           Math.PI / 2 - this.maxPolarAngle,
