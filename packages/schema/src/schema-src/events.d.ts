@@ -104,7 +104,7 @@ export interface MMLPositionLeaveEvent extends RemoteEvent {
 /**
  * Received when a user starts colliding with an element.
  */
-export interface CollisionStartEvent extends RemoteEvent {
+export interface MMLCollisionStartEvent extends RemoteEvent {
   readonly type: "collisionstart";
   readonly detail: {
     /**
@@ -121,7 +121,7 @@ export interface CollisionStartEvent extends RemoteEvent {
 /**
  * Received when a user moves the collision point they are colliding at on an element.
  */
-export interface CollisionMoveEvent extends RemoteEvent {
+export interface MMLCollisionMoveEvent extends RemoteEvent {
   readonly type: "collisionmove";
   readonly detail: {
     /**
@@ -138,6 +138,6 @@ export interface CollisionMoveEvent extends RemoteEvent {
 /**
  * Received when a user stops colliding with an element.
  */
-export interface CollisionEndEvent extends RemoteEvent {
+export interface MMLCollisionEndEvent extends RemoteEvent {
   readonly type: "collisionend";
 }

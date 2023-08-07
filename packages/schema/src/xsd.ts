@@ -40,6 +40,12 @@ export type XsAnnotation = {
   "xs:documentation": Array<{
     _text: Array<string>;
   }>;
+  "xs:eventName"?: Array<{
+    _text: Array<string>;
+  }>;
+  "xs:eventClass"?: Array<{
+    _text: Array<string>;
+  }>;
 };
 
 export type XsBasicElementAttributes = {

@@ -20,6 +20,8 @@ export type Attribute = {
   description?: Array<string>;
   type?: string;
   enum?: Array<string>;
+  eventName?: string;
+  eventClass?: string;
 };
 
 export type Element = {
@@ -29,31 +31,57 @@ export type Element = {
   attributes: Array<Attribute>;
 };
 
-function parseAnnotations(annotations: Array<XsAnnotation> | undefined): Array<string> {
+function parseAnnotations(annotations: Array<XsAnnotation> | undefined): {
+  description: Array<string>;
+  eventName?: string;
+  eventClass?: string;
+} {
   if (!annotations) {
-    return [];
+    return { description: [] };
   }
-  const descriptions: Array<string> = [];
+  let eventName: string | undefined = undefined;
+  let eventClass: string | undefined = undefined;
+  const description: Array<string> = [];
   for (const xsAnnotation of annotations) {
     const documentationArray = xsAnnotation["xs:documentation"];
-    for (const documentation of documentationArray) {
-      const textArray = documentation._text;
-      for (const text of textArray) {
-        const documentationText: string = text.trim();
-        if (documentationText) {
-          descriptions.push(documentationText);
+    if (documentationArray) {
+      for (const documentation of documentationArray) {
+        const textArray = documentation._text;
+        for (const text of textArray) {
+          const documentationText: string = text.trim();
+          if (documentationText) {
+            description.push(documentationText);
+          }
+        }
+      }
+    }
+    const eventNameElements = xsAnnotation["xs:eventName"];
+    if (eventNameElements) {
+      for (const eventNameElement of eventNameElements) {
+        const textArray = eventNameElement._text;
+        for (const text of textArray) {
+          eventName = text.trim();
+        }
+      }
+    }
+    const eventClassElements = xsAnnotation["xs:eventClass"];
+    if (eventClassElements) {
+      for (const eventClassElement of eventClassElements) {
+        const textArray = eventClassElement._text;
+        for (const text of textArray) {
+          eventClass = text.trim();
         }
       }
     }
   }
-  return descriptions;
+  return {description, eventName, eventClass};
 }
 
 function xsAttributesToAttributes(xsAttributes: Array<XsGroupAttribute>): Array<Attribute> {
   const attributes: Array<Attribute> = [];
   for (const xsAttribute of xsAttributes) {
     const simpleTypeArray: XsSimpleType[] | undefined = xsAttribute["xs:simpleType"];
-    const description = parseAnnotations(xsAttribute["xs:annotation"]);
+    const { description, eventName, eventClass } = parseAnnotations(xsAttribute["xs:annotation"]);
     if (simpleTypeArray) {
       if (simpleTypeArray.length !== 1) {
         throw new Error("Expected simpleTypeArray to have length 1");
@@ -81,6 +109,8 @@ function xsAttributesToAttributes(xsAttributes: Array<XsGroupAttribute>): Array<
         name: xsAttribute._attributes.name,
         type: xsAttribute._attributes.type,
         description,
+        eventName,
+        eventClass,
       });
     }
   }
@@ -121,7 +151,7 @@ export function createSchemaDefinition(schemaJSON: XSD): SchemaDefinition {
 
   const elements: { [key: string]: Element } = {};
   schemaElement["xs:element"].forEach((element: XsElement) => {
-    const description = parseAnnotations(element["xs:annotation"]);
+    const { description } = parseAnnotations(element["xs:annotation"]);
     const attributeGroupRefs: Array<string> = [];
     const attributes: Array<Attribute> = [];
     const complexTypes = element["xs:complexType"];

@@ -82,6 +82,10 @@
     </xs:annotation>
     <xs:attribute name="onclick" type="Script">
       <xs:annotation>
+        <xs:eventName>click</xs:eventName>
+        <xs:eventClass>MMLClickEvent</xs:eventClass>
+      </xs:annotation>
+      <xs:annotation>
         <xs:documentation>
           A script expression that is executed when the element is clicked. Events are also dispatched to "click" event listeners.
         </xs:documentation>
@@ -219,6 +223,10 @@
     </xs:attribute>
     <xs:attribute name="oncollisionstart" type="Script">
       <xs:annotation>
+        <xs:eventName>collisionstart</xs:eventName>
+        <xs:eventClass>MMLCollisionStart</xs:eventClass>
+      </xs:annotation>
+      <xs:annotation>
         <xs:documentation>
           A script expression to be executed when a user starts colliding with the element. Receives a `CollisionStartEvent`.
         </xs:documentation>
@@ -226,12 +234,20 @@
     </xs:attribute>
     <xs:attribute name="oncollisionmove" type="Script">
       <xs:annotation>
+        <xs:eventName>collisionmove</xs:eventName>
+        <xs:eventClass>MMLCollisionMove</xs:eventClass>
+      </xs:annotation>
+      <xs:annotation>
         <xs:documentation>
           A script expression to be executed when a user moves the collision point they are colliding at on the element. Receives a `CollisionMoveEvent`.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="oncollisionend" type="Script">
+      <xs:annotation>
+        <xs:eventName>collisionend</xs:eventName>
+        <xs:eventClass>MMLCollisionEnd</xs:eventClass>
+      </xs:annotation>
       <xs:annotation>
         <xs:documentation>
           A script expression to be executed when a user stops colliding with the element. Receives a `CollisionEndEvent`.
@@ -1034,6 +1050,10 @@
           </xs:attribute>
           <xs:attribute name="onpositionenter" type="Script">
             <xs:annotation>
+              <xs:eventName>positionenter</xs:eventName>
+              <xs:eventClass>MMLPositionEnter</xs:eventClass>
+            </xs:annotation>
+            <xs:annotation>
               <xs:documentation>
                 A script expression to be executed when a user enters the range of the position probe. Receives a `PositionEnterEvent`.
               </xs:documentation>
@@ -1041,12 +1061,20 @@
           </xs:attribute>
           <xs:attribute name="onpositionmove" type="Script">
             <xs:annotation>
+              <xs:eventName>positionmove</xs:eventName>
+              <xs:eventClass>MMLPositionMove</xs:eventClass>
+            </xs:annotation>
+            <xs:annotation>
               <xs:documentation>
                 A script expression to be executed when a user moves within the range of the position probe. Receives a `PositionMoveEvent`.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="onpositionleave" type="Script">
+            <xs:annotation>
+              <xs:eventName>positionleave</xs:eventName>
+              <xs:eventClass>MMLPositionLeave</xs:eventClass>
+            </xs:annotation>
             <xs:annotation>
               <xs:documentation>
                 A script expression to be executed when a user leaves the range of the position probe. Receives a `PositionLeaveEvent`.
@@ -1092,6 +1120,10 @@
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="onprompt" type="Script">
+            <xs:annotation>
+              <xs:eventName>prompt</xs:eventName>
+              <xs:eventClass>MMLPromptEvent</xs:eventClass>
+            </xs:annotation>
             <xs:annotation>
               <xs:documentation>
                 A script expression to be executed when a user submits their input.
@@ -1152,6 +1184,10 @@
           </xs:attribute>
           <xs:attribute name="oninteract" type="Script">
             <xs:annotation>
+              <xs:eventName>interact</xs:eventName>
+              <xs:eventClass>MMLInteractionEvent</xs:eventClass>
+            </xs:annotation>
+            <xs:annotation>
               <xs:documentation>
                 A script expression that is executed when the element is interacted with. Events are also dispatched to "interact" event listeners.
               </xs:documentation>
@@ -1189,6 +1225,10 @@
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="onchat" type="Script">
+            <xs:annotation>
+              <xs:eventName>chat</xs:eventName>
+              <xs:eventClass>MMLChatEvent</xs:eventClass>
+            </xs:annotation>
             <xs:annotation>
               <xs:documentation>
                 A script expression that is executed when a chat message is forwarded to the probe. The message itself is contained within the `message` parameter.
