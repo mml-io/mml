@@ -521,4 +521,121 @@ describe("reloading", () => {
       ],
     ]);
   });
+
+  test("should not send hidden elements on reload", async () => {
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    currentDoc = doc;
+    doc.load(`
+<m-group id="one" visible-to="0">
+  <m-cube></m-cube>
+</m-group>
+<m-group id="two"></m-group>
+`);
+
+    const clientWs = new MockWebsocket();
+    doc.addWebSocket(clientWs as unknown as WebSocket);
+
+    expect(await clientWs.waitForTotalMessageCount(1)).toEqual([
+      [
+        {
+          documentTime: expect.any(Number),
+          snapshot: {
+            attributes: {},
+            children: [
+              {
+                attributes: {},
+                children: [
+                  {
+                    attributes: {},
+                    children: [],
+                    nodeId: 3,
+                    tag: "HEAD",
+                    type: "element",
+                  },
+                  {
+                    attributes: {},
+                    children: [
+                      {
+                        attributes: {
+                          id: "two",
+                        },
+                        children: [],
+                        nodeId: 7,
+                        tag: "M-GROUP",
+                        type: "element",
+                      },
+                    ],
+                    nodeId: 4,
+                    tag: "BODY",
+                    type: "element",
+                  },
+                ],
+                nodeId: 2,
+                tag: "HTML",
+                type: "element",
+              },
+            ],
+            nodeId: 1,
+            tag: "DIV",
+            type: "element",
+          },
+          type: "snapshot",
+        },
+      ],
+    ]);
+
+    doc.load(`<m-light id="zero"></m-light>
+<m-group id="one" visible-to="0">
+  <m-cube></m-cube>
+</m-group>
+<m-group id="two"></m-group>
+`);
+
+    expect(await clientWs.waitForTotalMessageCount(2, 1)).toEqual([
+      [
+        {
+          addedNodes: [
+            {
+              attributes: {
+                id: "zero",
+              },
+              children: [],
+              nodeId: 5,
+              tag: "M-LIGHT",
+              type: "element",
+            },
+          ],
+          documentTime: expect.any(Number),
+          nodeId: 4,
+          previousNodeId: null,
+          removedNodes: [],
+          type: "childrenChanged",
+        },
+        {
+          addedNodes: [],
+          nodeId: 4,
+          previousNodeId: null,
+          removedNodes: [7],
+          type: "childrenChanged",
+        },
+        {
+          addedNodes: [
+            {
+              attributes: {
+                id: "two",
+              },
+              children: [],
+              nodeId: 8,
+              tag: "M-GROUP",
+              type: "element",
+            },
+          ],
+          nodeId: 4,
+          previousNodeId: null,
+          removedNodes: [],
+          type: "childrenChanged",
+        },
+      ],
+    ]);
+  });
 });

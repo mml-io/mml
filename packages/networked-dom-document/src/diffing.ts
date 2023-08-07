@@ -119,6 +119,10 @@ export function diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
       break;
     }
     case "characterData": {
+      const visible = visibleNodesForConnection.has(virtualDOMElement.nodeId);
+      if (!visible) {
+        return null;
+      }
       const diff: TextChangedDiff = {
         type: "textChanged",
         nodeId: virtualDOMElement.nodeId,
@@ -127,6 +131,10 @@ export function diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
       return diff;
     }
     case "childList": {
+      const visible = visibleNodesForConnection.has(virtualDOMElement.nodeId);
+      if (!visible) {
+        return null;
+      }
       let previousSibling = mutation.previousSibling;
       let previousNodeId: number | null = null;
       if (previousSibling) {
