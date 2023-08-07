@@ -54,6 +54,8 @@ type AttributeGroups = {
     attributes?: Array<{
       name: string;
       type: keyof typeof schemaToTSTypeMap;
+      eventName?: string;
+      eventClass?: string;
     }>;
   };
 };
@@ -123,6 +125,7 @@ function createAttributeGroupsDefinitions(attributes: AttributeGroups) {
     });
 
     if (hasScriptAttributes) {
+      console.log(attributeGroup);
       const eventMapTypeName = ts.factory.createIdentifier(`${capitalizedTypeName}EventMap`);
 
       const eventMapInterfaceDeclaration = ts.factory.createInterfaceDeclaration(
@@ -133,18 +136,16 @@ function createAttributeGroupsDefinitions(attributes: AttributeGroups) {
         (attributeGroup.attributes || [])
           .filter((attribute) => attribute.type === "Script")
           .map((attribute) => {
-            const eventName = attribute.name.replace(/^on/, "");
-            const eventTypeNode = ts.factory.createTypeReferenceNode(
-              ts.factory.createIdentifier(
-                `${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}Event`,
-              ),
+            const eventName = attribute.eventName as string;
+            const eventClassNode = ts.factory.createTypeReferenceNode(
+              ts.factory.createIdentifier(attribute.eventClass as string),
               undefined,
             );
             return ts.factory.createPropertySignature(
               undefined,
               eventName,
               undefined,
-              eventTypeNode,
+              eventClassNode,
             );
           }),
       );
@@ -591,11 +592,12 @@ function getGlobalDeclaration(elements: Elements) {
 }
 
 export function createTSDefinitionFile(schemaDefinition: JSONSchema) {
+  const importResults: Array<any> = [];
   const nodeResults: Array<any> = [];
 
   // This is to create the required type imports at the top of the file
   const reactImport = createReactImport();
-  nodeResults.push(reactImport);
+  importResults.push(reactImport);
 
   // Here we create the Coreattrs interface that will be used by all elements
   const coreAttributesType = createCoreAttributesType(schemaDefinition);
@@ -613,25 +615,31 @@ export function createTSDefinitionFile(schemaDefinition: JSONSchema) {
 
   nodeResults.push(globalDeclaration);
 
-  console.log(attributesInterfaceToSchemaNameMap);
-
-  const resultFile = ts.createSourceFile(
-    "someFileName.ts",
-    "",
-    ts.ScriptTarget.Latest,
-    /*setParentNodes*/ false,
-    ts.ScriptKind.TS,
-  );
-
   const printer = ts.createPrinter({
     newLine: ts.NewLineKind.LineFeed,
   });
 
-  resultFile.statements = ts.factory.createNodeArray(nodeResults);
+  ts.factory.createNodeArray(nodeResults);
 
-  const dirtyFile = printer.printFile(resultFile);
-  const sourceCodeWithDeclare = dirtyFile.replace("global", "declare global");
-  const prettified = format(sourceCodeWithDeclare, {
+  const importFile = ts.factory.createSourceFile(
+    importResults,
+    ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+    ts.NodeFlags.None,
+  );
+
+  const resultFile = ts.factory.createSourceFile(
+    nodeResults,
+    ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+    ts.NodeFlags.None,
+  );
+
+  const rawImportFile = printer.printFile(importFile);
+  const rawFile = printer.printFile(resultFile);
+  const sourceCodeWithDeclare = rawFile.replace("global", "declare global");
+  // need to get this file from current folder /schema-src/events.d.ts // no such file or directory
+  const eventsFile = fs.readFileSync("./src/schema-src/events.d.ts", "utf8");
+  const fileCombinedWithEvents = rawImportFile + "\n" + eventsFile + "\n" + sourceCodeWithDeclare;
+  const prettified = format(fileCombinedWithEvents, {
     parser: "typescript",
     printWidth: 120,
     tabWidth: 2,

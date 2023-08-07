@@ -224,7 +224,7 @@
     <xs:attribute name="oncollisionstart" type="Script">
       <xs:annotation>
         <xs:eventName>collisionstart</xs:eventName>
-        <xs:eventClass>MMLCollisionStart</xs:eventClass>
+        <xs:eventClass>MMLCollisionStartEvent</xs:eventClass>
       </xs:annotation>
       <xs:annotation>
         <xs:documentation>
@@ -235,7 +235,7 @@
     <xs:attribute name="oncollisionmove" type="Script">
       <xs:annotation>
         <xs:eventName>collisionmove</xs:eventName>
-        <xs:eventClass>MMLCollisionMove</xs:eventClass>
+        <xs:eventClass>MMLCollisionMoveEvent</xs:eventClass>
       </xs:annotation>
       <xs:annotation>
         <xs:documentation>
@@ -246,7 +246,7 @@
     <xs:attribute name="oncollisionend" type="Script">
       <xs:annotation>
         <xs:eventName>collisionend</xs:eventName>
-        <xs:eventClass>MMLCollisionEnd</xs:eventClass>
+        <xs:eventClass>MMLCollisionEndEvent</xs:eventClass>
       </xs:annotation>
       <xs:annotation>
         <xs:documentation>

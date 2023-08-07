@@ -74,7 +74,7 @@ function parseAnnotations(annotations: Array<XsAnnotation> | undefined): {
       }
     }
   }
-  return {description, eventName, eventClass};
+  return { description, eventName, eventClass };
 }
 
 function xsAttributesToAttributes(xsAttributes: Array<XsGroupAttribute>): Array<Attribute> {
