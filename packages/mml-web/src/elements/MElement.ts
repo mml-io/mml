@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 import { RemoteDocument } from "./RemoteDocument";
-import { consumeEventEventName, documentTimeChangedEventName } from "../common";
+import { consumeEventEventName } from "../common";
 import { getGlobalMScene } from "../global";
 import { IMMLScene, PositionAndRotation } from "../MMLScene";
 
@@ -36,6 +36,16 @@ export abstract class MElement extends HTMLElement {
   public abstract isClickable(): boolean;
 
   public abstract parentTransformed(): void;
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public addSideEffectChild(child: MElement): void {
+    // no-op
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public removeSideEffectChild(child: MElement): void {
+    // no-op
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -110,22 +120,36 @@ export abstract class MElement extends HTMLElement {
     return null;
   }
 
-  protected addDocumentTimeListener(cb: (documentTimeEvent: CustomEvent<number>) => void): {
+  public addDocumentTimeListener(cb: (documentTime: number) => void): {
     remove: () => void;
   } {
-    const documentTimeContextProvider = this.getRemoteDocument();
-    if (documentTimeContextProvider) {
-      (documentTimeContextProvider as RemoteDocument).addEventListener(
-        documentTimeChangedEventName,
-        cb,
-      );
-
+    const remoteDocument = this.getRemoteDocument();
+    if (remoteDocument) {
+      remoteDocument.addDocumentTimeListenerCallback(cb);
       return {
         remove: () => {
-          (documentTimeContextProvider as RemoteDocument).removeEventListener(
-            documentTimeChangedEventName,
-            cb,
-          );
+          (remoteDocument as RemoteDocument).removeDocumentTimeListenerCallback(cb);
+        },
+      };
+    } else {
+      console.warn("No document time context provider found to add listener to");
+      return {
+        remove: () => {
+          // no-op
+        },
+      };
+    }
+  }
+
+  public addDocumentTimeTickListener(cb: (documentTime: number) => void): {
+    remove: () => void;
+  } {
+    const remoteDocument = this.getRemoteDocument();
+    if (remoteDocument) {
+      remoteDocument.addDocumentTimeTickListenerCallback(cb);
+      return {
+        remove: () => {
+          (remoteDocument as RemoteDocument).removeDocumentTimeTickListenerCallback(cb);
         },
       };
     } else {

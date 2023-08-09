@@ -17,6 +17,7 @@ declare global {
   interface Window {
     "mml-web-client": {
       mmlScene: MMLScene;
+      remoteDocuments: RemoteDocumentWrapper[];
     };
   }
 }
@@ -53,14 +54,6 @@ function createStatusElement() {
     // Make a fixed-position centered status element
     const fullScreenMScene = new FullScreenMScene();
 
-    const defineGlobals = scriptUrl.searchParams.get("defineGlobals") === "true";
-    if (defineGlobals) {
-      // Define the global mml-web-client object on the window for testing purposes
-      window["mml-web-client"] = {
-        mmlScene: fullScreenMScene,
-      };
-    }
-
     const useIframe = new URL(window.location.href).searchParams.get("iframe") === "true";
     const documentWebsocketUrls = websocketUrl.split(",");
 
@@ -77,6 +70,7 @@ function createStatusElement() {
     }
     registerCustomElementsToWindow(windowTarget);
 
+    const remoteDocuments: RemoteDocumentWrapper[] = [];
     for (const documentWebsocketUrl of documentWebsocketUrls) {
       let overriddenHandler: ((element: HTMLElement, event: CustomEvent) => void) | null = null;
       const eventHandler = (element: HTMLElement, event: CustomEvent) => {
@@ -92,6 +86,7 @@ function createStatusElement() {
         fullScreenMScene,
         eventHandler,
       );
+      remoteDocuments.push(remoteDocumentWrapper);
       targetForWrappers.append(remoteDocumentWrapper.element);
       const websocket = new NetworkedDOMWebsocket(
         documentWebsocketUrl,
@@ -111,6 +106,15 @@ function createStatusElement() {
       );
       overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
         websocket.handleEvent(element, event);
+      };
+    }
+
+    const defineGlobals = scriptUrl.searchParams.get("defineGlobals") === "true";
+    if (defineGlobals) {
+      // Define the global mml-web-client object on the window for testing purposes
+      window["mml-web-client"] = {
+        mmlScene: fullScreenMScene,
+        remoteDocuments,
       };
     }
 

@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -28,6 +31,57 @@ const defaultLabelCastShadows = true;
 export class Label extends TransformableElement {
   static tagName = "m-label";
 
+  private labelAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    color: [
+      AnimationType.Color,
+      defaultLabelColor,
+      (newValue: THREE.Color) => {
+        this.props.color = newValue;
+        this.redrawText();
+      },
+    ],
+    "font-color": [
+      AnimationType.Color,
+      defaultFontColor,
+      (newValue: THREE.Color) => {
+        this.props.fontColor = newValue;
+        this.redrawText();
+      },
+    ],
+    width: [
+      AnimationType.Number,
+      defaultLabelWidth,
+      (newValue: number) => {
+        this.props.width = newValue;
+        this.redrawText();
+      },
+    ],
+    height: [
+      AnimationType.Number,
+      defaultLabelHeight,
+      (newValue: number) => {
+        this.props.height = newValue;
+        this.redrawText();
+      },
+    ],
+    padding: [
+      AnimationType.Number,
+      defaultLabelPadding,
+      (newValue: number) => {
+        this.props.padding = newValue;
+        this.redrawText();
+      },
+    ],
+    "font-size": [
+      AnimationType.Number,
+      defaultLabelFontSize,
+      (newValue: number) => {
+        this.props.fontSize = newValue;
+        this.redrawText();
+      },
+    ],
+  });
+
   private static planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
 
   private props = {
@@ -46,30 +100,40 @@ export class Label extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Label>({
     width: (instance, newValue) => {
-      instance.props.width = parseFloatAttribute(newValue, defaultLabelWidth);
-      instance.redrawText();
+      instance.labelAnimatedAttributeHelper.elementSetAttribute(
+        "width",
+        parseFloatAttribute(newValue, defaultLabelWidth),
+      );
     },
     height: (instance, newValue) => {
-      instance.props.height = parseFloatAttribute(newValue, defaultLabelHeight);
-      instance.redrawText();
+      instance.labelAnimatedAttributeHelper.elementSetAttribute(
+        "height",
+        parseFloatAttribute(newValue, defaultLabelHeight),
+      );
     },
     color: (instance, newValue) => {
-      const color = parseColorAttribute(newValue, defaultLabelColor);
-      instance.props.color = color;
-      instance.redrawText();
+      instance.labelAnimatedAttributeHelper.elementSetAttribute(
+        "color",
+        parseColorAttribute(newValue, defaultLabelColor),
+      );
     },
     "font-color": (instance, newValue) => {
-      const color = parseColorAttribute(newValue, defaultFontColor);
-      instance.props.fontColor = color;
-      instance.redrawText();
+      instance.labelAnimatedAttributeHelper.elementSetAttribute(
+        "font-color",
+        parseColorAttribute(newValue, defaultFontColor),
+      );
     },
     "font-size": (instance, newValue) => {
-      instance.props.fontSize = parseFloatAttribute(newValue, defaultLabelFontSize);
-      instance.redrawText();
+      instance.labelAnimatedAttributeHelper.elementSetAttribute(
+        "font-size",
+        parseFloatAttribute(newValue, defaultLabelFontSize),
+      );
     },
     padding: (instance, newValue) => {
-      instance.props.padding = parseFloatAttribute(newValue, defaultLabelPadding);
-      instance.redrawText();
+      instance.labelAnimatedAttributeHelper.elementSetAttribute(
+        "padding",
+        parseFloatAttribute(newValue, defaultLabelPadding),
+      );
     },
     content: (instance, newValue) => {
       instance.props.content = newValue || "";
@@ -102,6 +166,26 @@ export class Label extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.labelAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.labelAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {

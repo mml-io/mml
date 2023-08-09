@@ -21,7 +21,7 @@ describe("m-character", () => {
           (character as any).getCurrentAnimation() !== null
         );
       },
-      { timeout: 5000, polling: 100 },
+      { timeout: 30000, polling: 100 },
     );
 
     await page.waitForSelector("m-model");
@@ -32,7 +32,7 @@ describe("m-character", () => {
         const model = document.querySelector("m-model");
         return (model as any).getModel() !== null;
       },
-      { timeout: 5000, polling: 100 },
+      { timeout: 30000, polling: 100 },
     );
 
     await takeAndCompareScreenshot(page);

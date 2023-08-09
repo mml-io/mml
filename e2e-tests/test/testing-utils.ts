@@ -11,6 +11,20 @@ export async function clickElement(page: puppeteer.Page, selector: string) {
   });
 }
 
+export async function setDocumentTime(page: puppeteer.Page, documentTime: number) {
+  await page.evaluate(async (documentTime: number) => {
+    const { remoteDocuments } = window["mml-web-client"];
+    for (const remoteDocument of remoteDocuments) {
+      remoteDocument.overrideDocumentTime(documentTime);
+    }
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  }, documentTime);
+}
+
 export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold = 0.01) {
   expect(await page.screenshot()).toMatchImageSnapshot({
     failureThresholdType: "percent",

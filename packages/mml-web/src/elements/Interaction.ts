@@ -1,7 +1,10 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { IMMLScene } from "../MMLScene";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -17,9 +20,24 @@ const defaultInteractionDebug = false;
 
 export class Interaction extends TransformableElement {
   static tagName = "m-interaction";
+
+  private interactionAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    range: [
+      AnimationType.Number,
+      defaultInteractionRange,
+      (newValue: number) => {
+        this.props.range = newValue;
+        this.showDebug();
+      },
+    ],
+  });
+
   private static attributeHandler = new AttributeHandler<Interaction>({
     range: (instance, newValue) => {
-      instance.props.range = parseFloatAttribute(newValue, defaultInteractionRange);
+      instance.interactionAnimatedAttributeHelper.elementSetAttribute(
+        "range",
+        parseFloatAttribute(newValue, defaultInteractionRange),
+      );
     },
     "in-focus": (instance, newValue) => {
       instance.props.inFocus = parseBoolAttribute(newValue, defaultInteractionInFocus);
@@ -58,6 +76,26 @@ export class Interaction extends TransformableElement {
 
   constructor() {
     super();
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.interactionAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.interactionAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {

@@ -1,3 +1,4 @@
+import { AttributeAnimation } from "./AttributeAnimation";
 import { Audio } from "./Audio";
 import { Character } from "./Character";
 import { Cube } from "./Cube";
@@ -38,4 +39,5 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Audio.tagName, Audio);
   targetWindow.customElements.define(PositionProbe.tagName, PositionProbe);
   targetWindow.customElements.define(Interaction.tagName, Interaction);
+  targetWindow.customElements.define(AttributeAnimation.tagName, AttributeAnimation);
 }

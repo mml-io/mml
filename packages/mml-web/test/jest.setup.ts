@@ -12,3 +12,12 @@ Object.defineProperty(window, "ResizeObserver", {
   configurable: false,
   value: ResizeObserver,
 });
+
+const documentStartTime = Date.now();
+const timeline = {};
+Object.defineProperty(timeline, "currentTime", {
+  get: () => {
+    return Date.now() - documentStartTime;
+  },
+});
+(window.document as any).timeline = timeline;

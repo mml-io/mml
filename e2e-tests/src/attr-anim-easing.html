@@ -1,0 +1,70 @@
+<m-plane color="white" width="15" height="15" rx="-90"></m-plane>
+<m-light type="point" x="10" y="10" z="10"></m-light>
+
+<m-group id="timeline" y="0.25">
+  <m-cube width="15" height="0.25" depth="0.1" color="black"></m-cube>
+  <m-cube width="1" height="0.25" depth="0.1" z="0.1" color="red">
+    <m-attr-anim attr="x" start="-7" end="7" loop="true" start-time="0" duration="10000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="3">
+  <m-label content="linear" width="5" y="2.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="5" height="5" depth="0.1" color="red"></m-cube>
+  <m-cube width="4" height="4" z="0.1" depth="0.1" color="green"></m-cube>
+  <m-cube width="0.25" height="0.25" z="0.3" depth="0.25" color="white" id="cube-linear">
+    <m-attr-anim attr="x" start="-2" end="2" start-time="0" duration="5000"></m-attr-anim>
+    <m-attr-anim attr="y" start="-2" end="2" start-time="0" duration="5000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="-5" y="3">
+  <m-label content="easeInOutQuint" width="5" y="2.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="5" height="5" depth="0.1" color="red"></m-cube>
+  <m-cube width="4" height="4" z="0.1" depth="0.1" color="green"></m-cube>
+  <m-cube width="0.25" height="0.25" z="0.3" depth="0.25" color="white" id="cube-easeInOutQuint">
+    <m-attr-anim attr="x" easing="easeInOutQuint" start="-2" end="2" start-time="0" duration="5000"></m-attr-anim>
+    <m-attr-anim attr="y" start="-2" end="2" start-time="0" duration="5000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="5" y="3">
+  <m-label content="easeInOutElastic" width="5" y="2.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="5" height="5" depth="0.1" color="red"></m-cube>
+  <m-cube width="4" height="4" z="0.1" depth="0.1" color="green"></m-cube>
+  <m-cube width="0.25" height="0.25" z="0.3" depth="0.25" color="white" id="cube-easeInOutElastic">
+    <m-attr-anim attr="x" easing="easeInOutElastic" start="-2" end="2" start-time="0" duration="5000"></m-attr-anim>
+    <m-attr-anim attr="y" start="-2" end="2" start-time="0" duration="5000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+
+<m-group x="0" y="9">
+  <m-label content="linear - ping-pong" width="5" y="2.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="5" height="5" depth="0.1" color="red"></m-cube>
+  <m-cube width="4" height="4" z="0.1" depth="0.1" color="purple"></m-cube>
+  <m-cube width="0.25" height="0.25" z="0.3" depth="0.25" color="white" id="cube-linear-ping-pong">
+    <m-attr-anim attr="x" ping-pong="true" start="-2" end="2" start-time="0" duration="10000"></m-attr-anim>
+    <m-attr-anim attr="y" ping-pong="true" start="-2" end="2" start-time="0" duration="10000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="-5" y="9">
+  <m-label content="easeInOutQuint - ping-pong" width="5" y="2.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="5" height="5" depth="0.1" color="red"></m-cube>
+  <m-cube width="4" height="4" z="0.1" depth="0.1" color="purple"></m-cube>
+  <m-cube width="0.25" height="0.25" z="0.3" depth="0.25" color="white" id="cube-easeInOutQuint-ping-pong">
+    <m-attr-anim attr="x" ping-pong="true" easing="easeInOutQuint" start="-2" end="2" start-time="0" duration="10000"></m-attr-anim>
+    <m-attr-anim attr="y" ping-pong="true" start="-2" end="2" start-time="0" duration="10000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="5" y="9">
+  <m-label content="easeInOutElastic - ping-pong" width="5" y="2.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="5" height="5" depth="0.1" color="red"></m-cube>
+  <m-cube width="4" height="4" z="0.1" depth="0.1" color="purple"></m-cube>
+  <m-cube width="0.25" height="0.25" z="0.3" depth="0.25" color="white" id="cube-easeInOutElastic-ping-pong">
+    <m-attr-anim attr="x" ping-pong="true" easing="easeInOutElastic" start="-2" end="2" start-time="0" duration="10000"></m-attr-anim>
+    <m-attr-anim attr="y" ping-pong="true" start="-2" end="2" start-time="0" duration="10000"></m-attr-anim>
+  </m-cube>
+</m-group>

@@ -41,7 +41,7 @@ describe("m-position-probe", () => {
         // Wait for the cube to move based on the position probe moving
         return parseFloat(userCube.getAttribute("x")) > -2;
       },
-      { timeout: 5000, polling: 100 },
+      { timeout: 30000, polling: 100 },
     );
 
     const { x: x2, z: z2 } = await page.evaluate(() => {

@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -17,6 +20,50 @@ const defaultCylinderCastShadows = true;
 
 export class Cylinder extends TransformableElement {
   static tagName = "m-cylinder";
+
+  private cylinderAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    color: [
+      AnimationType.Color,
+      defaultCylinderColor,
+      (newValue: THREE.Color) => {
+        this.props.color = newValue;
+        if (this.material) {
+          this.material.color = this.props.color;
+        }
+      },
+    ],
+    radius: [
+      AnimationType.Number,
+      defaultCylinderRadius,
+      (newValue: number) => {
+        this.props.radius = newValue;
+        this.mesh.scale.set(this.props.radius * 2, this.props.height, this.props.radius * 2);
+        this.collideableHelper.updateCollider(this.mesh);
+      },
+    ],
+    height: [
+      AnimationType.Number,
+      defaultCylinderHeight,
+      (newValue: number) => {
+        this.props.height = newValue;
+        this.mesh.scale.y = this.props.height;
+        this.collideableHelper.updateCollider(this.mesh);
+      },
+    ],
+    opacity: [
+      AnimationType.Number,
+      defaultCylinderOpacity,
+      (newValue: number) => {
+        this.props.opacity = newValue;
+        if (this.material) {
+          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
+          this.material.transparent = this.props.opacity !== 1;
+          this.material.needsUpdate = needsUpdate;
+          this.material.opacity = newValue;
+        }
+      },
+    ],
+  });
 
   static cylinderGeometry = new THREE.CylinderGeometry(
     defaultCylinderRadius,
@@ -39,37 +86,28 @@ export class Cylinder extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Cylinder>({
     height: (instance, newValue) => {
-      instance.props.height = parseFloatAttribute(newValue, defaultCylinderHeight);
-      instance.mesh.scale.set(
-        instance.props.radius * 2,
-        instance.props.height,
-        instance.props.radius * 2,
+      instance.cylinderAnimatedAttributeHelper.elementSetAttribute(
+        "height",
+        parseFloatAttribute(newValue, defaultCylinderHeight),
       );
-      instance.collideableHelper.updateCollider(instance.mesh);
     },
     radius: (instance, newValue) => {
-      instance.props.radius = parseFloatAttribute(newValue, defaultCylinderRadius);
-      instance.mesh.scale.set(
-        instance.props.radius * 2,
-        instance.props.height,
-        instance.props.radius * 2,
+      instance.cylinderAnimatedAttributeHelper.elementSetAttribute(
+        "radius",
+        parseFloatAttribute(newValue, defaultCylinderRadius),
       );
-      instance.collideableHelper.updateCollider(instance.mesh);
     },
     color: (instance, newValue) => {
-      instance.props.color = parseColorAttribute(newValue, defaultCylinderColor);
-      if (instance.material) {
-        instance.material.color = instance.props.color;
-      }
+      instance.cylinderAnimatedAttributeHelper.elementSetAttribute(
+        "color",
+        parseColorAttribute(newValue, defaultCylinderColor),
+      );
     },
     opacity: (instance, newValue) => {
-      instance.props.opacity = parseFloatAttribute(newValue, defaultCylinderOpacity);
-      if (instance.material) {
-        const needsUpdate = instance.material.transparent === (instance.props.opacity === 1);
-        instance.material.transparent = instance.props.opacity !== 1;
-        instance.material.needsUpdate = needsUpdate;
-        instance.material.opacity = parseFloatAttribute(newValue, 1);
-      }
+      instance.cylinderAnimatedAttributeHelper.elementSetAttribute(
+        "opacity",
+        parseFloatAttribute(newValue, defaultCylinderOpacity),
+      );
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultCylinderCastShadows);
@@ -95,6 +133,26 @@ export class Cylinder extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.cylinderAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.cylinderAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {

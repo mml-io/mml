@@ -23,4 +23,8 @@ export class RemoteDocumentWrapper {
   public setDocumentTime(documentTime: number) {
     this.element.setDocumentTime(documentTime);
   }
+
+  public overrideDocumentTime(documentTime: number) {
+    this.element.overrideDocumentTime(documentTime);
+  }
 }

@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -19,6 +22,17 @@ const positionProbeLeaveEventName = "positionleave";
 export class PositionProbe extends TransformableElement {
   static tagName = "m-position-probe";
 
+  private positionProbeAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    range: [
+      AnimationType.Number,
+      defaultPositionProbeRange,
+      (newValue: number) => {
+        this.props.range = newValue;
+        this.updateDebugVisualisation();
+      },
+    ],
+  });
+
   private props = {
     intervalMs: defaultPositionProbeInterval,
     debug: defaultPositionProbeDebug,
@@ -35,7 +49,10 @@ export class PositionProbe extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<PositionProbe>({
     range: (instance, newValue) => {
-      instance.props.range = parseFloatAttribute(newValue, defaultPositionProbeRange);
+      instance.positionProbeAnimatedAttributeHelper.elementSetAttribute(
+        "range",
+        parseFloatAttribute(newValue, defaultPositionProbeRange),
+      );
     },
     interval: (instance, newValue) => {
       instance.props.intervalMs = Math.max(
@@ -64,6 +81,26 @@ export class PositionProbe extends TransformableElement {
 
   constructor() {
     super();
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.positionProbeAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.positionProbeAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {

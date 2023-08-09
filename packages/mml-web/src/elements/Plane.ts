@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -18,6 +21,50 @@ const defaultPlaneCastShadows = true;
 export class Plane extends TransformableElement {
   static tagName = "m-plane";
 
+  private planeAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    color: [
+      AnimationType.Color,
+      defaultPlaneColor,
+      (newValue: THREE.Color) => {
+        this.props.color = newValue;
+        if (this.material) {
+          this.material.color = this.props.color;
+        }
+      },
+    ],
+    width: [
+      AnimationType.Number,
+      defaultPlaneWidth,
+      (newValue: number) => {
+        this.props.width = newValue;
+        this.mesh.scale.x = this.props.width;
+        this.collideableHelper.updateCollider(this.mesh);
+      },
+    ],
+    height: [
+      AnimationType.Number,
+      defaultPlaneHeight,
+      (newValue: number) => {
+        this.props.height = newValue;
+        this.mesh.scale.y = this.props.height;
+        this.collideableHelper.updateCollider(this.mesh);
+      },
+    ],
+    opacity: [
+      AnimationType.Number,
+      defaultPlaneOpacity,
+      (newValue: number) => {
+        this.props.opacity = newValue;
+        if (this.material) {
+          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
+          this.material.transparent = this.props.opacity !== 1;
+          this.material.needsUpdate = needsUpdate;
+          this.material.opacity = newValue;
+        }
+      },
+    ],
+  });
+
   private static planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
 
   private props = {
@@ -33,29 +80,28 @@ export class Plane extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Plane>({
     width: (instance, newValue) => {
-      instance.props.width = parseFloatAttribute(newValue, defaultPlaneWidth);
-      instance.mesh.scale.x = instance.props.width;
-      instance.collideableHelper.updateCollider(instance.mesh);
+      instance.planeAnimatedAttributeHelper.elementSetAttribute(
+        "width",
+        parseFloatAttribute(newValue, defaultPlaneWidth),
+      );
     },
     height: (instance, newValue) => {
-      instance.props.height = parseFloatAttribute(newValue, defaultPlaneHeight);
-      instance.mesh.scale.y = instance.props.height;
-      instance.collideableHelper.updateCollider(instance.mesh);
+      instance.planeAnimatedAttributeHelper.elementSetAttribute(
+        "height",
+        parseFloatAttribute(newValue, defaultPlaneHeight),
+      );
     },
     color: (instance, newValue) => {
-      instance.props.color = parseColorAttribute(newValue, defaultPlaneColor);
-      if (instance.material) {
-        instance.material.color = instance.props.color;
-      }
+      instance.planeAnimatedAttributeHelper.elementSetAttribute(
+        "color",
+        parseColorAttribute(newValue, defaultPlaneColor),
+      );
     },
     opacity: (instance, newValue) => {
-      instance.props.opacity = parseFloatAttribute(newValue, defaultPlaneOpacity);
-      if (instance.material) {
-        const needsUpdate = instance.material.transparent === (instance.props.opacity === 1);
-        instance.material.transparent = instance.props.opacity !== 1;
-        instance.material.needsUpdate = needsUpdate;
-        instance.material.opacity = parseFloatAttribute(newValue, 1);
-      }
+      instance.planeAnimatedAttributeHelper.elementSetAttribute(
+        "opacity",
+        parseFloatAttribute(newValue, defaultPlaneOpacity),
+      );
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultPlaneCastShadows);
@@ -80,6 +126,26 @@ export class Plane extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.planeAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.planeAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {

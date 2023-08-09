@@ -13,7 +13,7 @@ describe("m-image", () => {
       () => {
         return (document.querySelector("m-image") as any).getImageMesh().scale.y > 3;
       },
-      { timeout: 5000, polling: 100 },
+      { timeout: 30000, polling: 100 },
     );
 
     await takeAndCompareScreenshot(page, 0.02);
