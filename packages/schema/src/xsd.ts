@@ -40,10 +40,7 @@ export type XsAnnotation = {
   "xs:documentation": Array<{
     _text: Array<string>;
   }>;
-  "xs:eventName"?: Array<{
-    _text: Array<string>;
-  }>;
-  "xs:eventClass"?: Array<{
+  "xs:appinfo"?: Array<{
     _text: Array<string>;
   }>;
 };

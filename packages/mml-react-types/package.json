@@ -10,7 +10,7 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "build": "ts-node --esm ./src/index.ts",
-    "iterate": "node ./build.js --watch",
+    "iterate": "ts-node --esm ./src/index.ts",
     "npm-publish": "npm run build && publish-if-not-exists --access=public"
   },
   "dependencies": {},

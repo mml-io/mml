@@ -55,22 +55,17 @@ function parseAnnotations(annotations: Array<XsAnnotation> | undefined): {
         }
       }
     }
-    const eventNameElements = xsAnnotation["xs:eventName"];
+    const eventNameElements = xsAnnotation["xs:appinfo"];
+
     if (eventNameElements) {
       for (const eventNameElement of eventNameElements) {
         const textArray = eventNameElement._text;
-        for (const text of textArray) {
-          eventName = text.trim();
-        }
-      }
-    }
-    const eventClassElements = xsAnnotation["xs:eventClass"];
-    if (eventClassElements) {
-      for (const eventClassElement of eventClassElements) {
-        const textArray = eventClassElement._text;
-        for (const text of textArray) {
-          eventClass = text.trim();
-        }
+        const trimmedTextArray = textArray.map((text) => text.trim()).join("");
+
+        const [eventNameString, eventClassString] = trimmedTextArray.split("|");
+
+        eventName = eventNameString;
+        eventClass = eventClassString;
       }
     }
   }
