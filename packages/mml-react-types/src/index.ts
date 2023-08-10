@@ -4,7 +4,8 @@ import * as url from "url";
 
 import { createSchemaDefinition, schemaJSON } from "@mml-io/mml-schema";
 
-import { createTSDefinitionFile, JSONSchema } from "./buildDeclarationFile.ts";
+import { JSONSchema } from "./buildDeclarationFile.ts";
+import { createTSDefinitionFile } from "./createTSDefinitionFile.ts";
 
 const schemaDefinition = createSchemaDefinition(schemaJSON);
 

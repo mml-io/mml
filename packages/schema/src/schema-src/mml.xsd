@@ -1038,7 +1038,7 @@
           </xs:attribute>
           <xs:attribute name="onpositionenter" type="Script">
             <xs:annotation>
-              <xs:appinfo>positionenter|MMLPositionEnter</xs:appinfo>
+              <xs:appinfo>positionenter|MMLPositionEnterEvent</xs:appinfo>
               <xs:documentation>
                 A script expression to be executed when a user enters the range of the position probe. Receives a `PositionEnterEvent`.
               </xs:documentation>
@@ -1046,7 +1046,7 @@
           </xs:attribute>
           <xs:attribute name="onpositionmove" type="Script">
             <xs:annotation>
-              <xs:appinfo>positionmove|MMLPositionMove</xs:appinfo>
+              <xs:appinfo>positionmove|MMLPositionMoveEvent</xs:appinfo>
               <xs:documentation>
                 A script expression to be executed when a user moves within the range of the position probe. Receives a `PositionMoveEvent`.
               </xs:documentation>
@@ -1054,7 +1054,7 @@
           </xs:attribute>
           <xs:attribute name="onpositionleave" type="Script">
             <xs:annotation>
-              <xs:appinfo>positionleave|MMLPositionLeave</xs:appinfo>
+              <xs:appinfo>positionleave|MMLPositionLeaveEvent</xs:appinfo>
               <xs:documentation>
                 A script expression to be executed when a user leaves the range of the position probe. Receives a `PositionLeaveEvent`.
               </xs:documentation>

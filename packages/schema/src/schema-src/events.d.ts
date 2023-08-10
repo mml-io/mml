@@ -141,3 +141,7 @@ export interface MMLCollisionMoveEvent extends RemoteEvent {
 export interface MMLCollisionEndEvent extends RemoteEvent {
   readonly type: "collisionend";
 }
+
+export interface MMLChatEvent extends RemoteEvent {
+  readonly type: "chat";
+}
