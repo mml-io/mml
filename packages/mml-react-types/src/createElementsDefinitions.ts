@@ -18,6 +18,10 @@ function getMMLElementTypeName(elementName: string): string {
   return getMMLElementName(elementName) + "Element";
 }
 
+function getElementEventListenersName(name: string) {
+  return getMMLElementName(name) + "EventHandlers";
+}
+
 function createElementTypes(element: Element): [unknown, unknown, unknown?, unknown?] {
   const attributes = element.attributes as Element["attributes"];
   const attributeGroupNames = element.attributeGroups as Array<string>;
@@ -43,7 +47,7 @@ function createElementTypes(element: Element): [unknown, unknown, unknown?, unkn
 
     eventInstanceDeclaration = factory.createInterfaceDeclaration(
       [factory.createToken(SyntaxKind.ExportKeyword)],
-      getMMLElementName(element.name),
+      getElementEventListenersName(element.name),
       [factory.createTypeParameterDeclaration(undefined, "T")],
       undefined,
       eventHandlersDeclarations,
@@ -100,6 +104,13 @@ function createElementTypes(element: Element): [unknown, unknown, unknown?, unkn
         factory.createTypeReferenceNode(getAttributeGroupAttributesName(attributeGroupName)),
       );
     });
+  if (hasScriptsAttributes) {
+    const eventClassNode = factory.createTypeReferenceNode(
+      getElementEventListenersName(element.name),
+      [factory.createTypeReferenceNode(mmlElementTypeName)],
+    );
+    instanceHeritageClauses.push(eventClassNode);
+  }
 
   const instanceDefaultHeritageClauses = [factory.createTypeReferenceNode("HTMLElement")];
 

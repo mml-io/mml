@@ -8,7 +8,7 @@ export function createCoreAttributesType(schemaJSON: JSONSchema) {
   // We add a few types used by React for all elements then add the core attributes for MML
   return factory.createInterfaceDeclaration(
     undefined,
-    factory.createIdentifier("Coreattrs"),
+    factory.createIdentifier("CoreattrsReact"),
     // add generic T to the interface
     [factory.createTypeParameterDeclaration(undefined, "T")],
     undefined,
@@ -31,19 +31,6 @@ export function createCoreAttributesType(schemaJSON: JSONSchema) {
         factory.createToken(SyntaxKind.QuestionToken),
         factory.createTypeReferenceNode("LegacyRef<T>", undefined),
       ),
-      // MML Core attributes
-      ...schemaJSON.attributeGroups.coreattrs.attributes!.map((attribute) => {
-        const type = getReturnAttributeType(attribute);
-
-        const typeNode = factory.createTypeReferenceNode(type, /*typeArguments*/ undefined);
-
-        return factory.createPropertySignature(
-          undefined,
-          factory.createStringLiteral(attribute.name),
-          factory.createToken(SyntaxKind.QuestionToken),
-          typeNode,
-        );
-      }),
     ],
   );
 }

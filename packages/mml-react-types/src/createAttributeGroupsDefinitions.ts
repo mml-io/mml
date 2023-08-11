@@ -15,9 +15,6 @@ export function createAttributeGroupsDefinitions(attributes: AttributeGroups) {
   const attributeGroups = [];
 
   for (const attributeGroupName in attributes) {
-    // we skip coreattrs because we handle it separately
-    if (attributeGroupName === "coreattrs") continue;
-
     const attributeGroup = attributes[attributeGroupName];
     const [instanceDeclaration, attributeDeclaration, eventMapInterfaceDeclaration] =
       createAttributeGroupDeclarations(attributeGroupName, attributeGroup);
