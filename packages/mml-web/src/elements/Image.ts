@@ -97,6 +97,16 @@ export class Image extends TransformableElement {
       return;
     }
 
+    if (this.props.src.startsWith("data:image/")) {
+      // if the src is a data url, load it directly rather than using the loader - this avoids a potential frame skip
+      this.loadedImage = document.createElement("img");
+      this.loadedImage.src = this.props.src;
+      this.material.map = new THREE.CanvasTexture(this.loadedImage);
+      this.material.needsUpdate = true;
+      this.updateHeightAndWidth();
+      return;
+    }
+
     const srcApplyPromise = loadImageAsPromise(
       Image.imageLoader,
       this.contentSrcToContentAddress(this.props.src),
@@ -110,7 +120,7 @@ export class Image extends TransformableElement {
           return;
         }
         this.loadedImage = image;
-        this.material.map = new THREE.CanvasTexture(image);
+        this.material.map = new THREE.CanvasTexture(this.loadedImage);
         this.material.needsUpdate = true;
         this.updateHeightAndWidth();
       })
