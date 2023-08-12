@@ -1,15 +1,9 @@
-import ts from "typescript";
+import { Element } from "@mml-io/mml-schema";
+import { factory, NodeFlags } from "typescript";
 
-const { factory, NodeFlags, NewLineKind, createPrinter, SyntaxKind } = ts;
+import { getMMLElementAttributesName } from "./util";
 
-import {
-  Elements,
-  getMMLElementAttributesName,
-  getMMLElementName,
-} from "./buildDeclarationFile.ts";
-
-// Todo: Split types between react core attributes and MML core attributes
-export function getGlobalDeclaration(elements: Elements) {
+export function getGlobalDeclaration(elements: { [key: string]: Element }) {
   return factory.createModuleDeclaration(
     undefined,
     factory.createIdentifier("global"),

@@ -14,7 +14,7 @@
     "downlevelIteration": true,
     "outDir": "./build",
     "incremental": true,
-    "allowImportingTsExtensions": true
+    "esModuleInterop": true
   },
   "include": ["src/**/*"],
   "exclude": ["**/build/*", "types-src", "**/build.js"]

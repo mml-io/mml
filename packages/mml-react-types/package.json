@@ -2,19 +2,18 @@
   "name": "@mml-io/mml-react-types",
   "version": "0.4.0",
   "main": "./build/index.d.ts",
-  "type": "module",
   "types": "./build/index.d.ts",
   "files": [
     "/build"
   ],
   "scripts": {
     "type-check": "tsc --noEmit",
-    "build": "ts-node --esm ./src/index.ts",
-    "iterate": "ts-node --esm ./src/index.ts",
-    "npm-publish": "npm run build && publish-if-not-exists --access=public"
+    "build": "tsx ./src/index.ts"
   },
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "@mml-io/mml-schema": "^0.4.0"
+  },
   "peerDependencies": {
     "@types/react": "*",
     "react": "*"
