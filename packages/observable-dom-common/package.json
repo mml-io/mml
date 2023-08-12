@@ -10,7 +10,6 @@
     "type-check": "tsc --noEmit",
     "build": "node ./build.js --build",
     "iterate": "node ./build.js --watch",
-    "npm-publish": "npm run build && publish-if-not-exists --access=public",
     "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
