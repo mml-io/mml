@@ -112,7 +112,7 @@ export class Video extends TransformableElement {
     const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
     const material = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      transparent: true,
+      transparent: false,
       side: THREE.DoubleSide,
     });
     this.mesh = new THREE.Mesh(geometry, material);

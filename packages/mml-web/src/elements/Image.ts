@@ -51,6 +51,7 @@ export class Image extends TransformableElement {
     opacity: (instance, newValue) => {
       instance.props.opacity = parseFloatAttribute(newValue, defaultImageOpacity);
       if (instance.material) {
+        instance.material.transparent = instance.props.opacity === 1 ? false : true;
         instance.material.opacity = parseFloatAttribute(newValue, 1);
       }
     },
@@ -148,7 +149,7 @@ export class Image extends TransformableElement {
     super.connectedCallback();
     this.material = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      transparent: true,
+      transparent: this.props.opacity === 1 ? false : true,
       opacity: this.props.opacity,
       side: THREE.DoubleSide,
     });

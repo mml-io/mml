@@ -58,6 +58,7 @@ export class Cube extends TransformableElement {
     opacity: (instance, newValue) => {
       instance.props.opacity = parseFloatAttribute(newValue, defaultCubeOpacity);
       if (instance.material) {
+        instance.material.transparent = instance.props.opacity === 1 ? false : true;
         instance.material.opacity = parseFloatAttribute(newValue, 1);
       }
     },
@@ -108,7 +109,7 @@ export class Cube extends TransformableElement {
     super.connectedCallback();
     this.material = new THREE.MeshStandardMaterial({
       color: this.props.color,
-      transparent: true,
+      transparent: this.props.opacity === 1 ? false : true,
       opacity: this.props.opacity,
     });
     this.mesh.material = this.material;
