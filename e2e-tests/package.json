@@ -8,7 +8,7 @@
     "serve": "node --enable-source-maps ./build/index.js",
     "ci:e2e-tests": "npm run wait-for-ports && HEADLESS=true jest --runInBand",
     "e2e-tests": "npm run wait-for-ports && HEADLESS=false jest --runInBand",
-    "wait-for-ports": "npx wait-on http://127.0.0.1:7079 -t 60000 && npx wait-on http://127.0.0.1:28891 -t 60000"
+    "wait-for-ports": "npx wait-on http://127.0.0.1:7079 -t 60000"
   },
   "dependencies": {
     "chokidar": "3.5.3",

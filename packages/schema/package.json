@@ -11,7 +11,6 @@
     "build": "node ./build.js --build",
     "generate-events-docs": "node ./generate-events-docs.js",
     "iterate": "node ./build.js --watch",
-    "npm-publish": "npm run build && publish-if-not-exists --access=public",
     "test": "jest"
   },
   "dependencies": {
