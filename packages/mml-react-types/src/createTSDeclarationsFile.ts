@@ -1,65 +1,65 @@
-import ts from "typescript";
-
-const { factory, NodeFlags, NewLineKind, createPrinter, SyntaxKind } = ts;
-
+import { SchemaDefinition } from "@mml-io/mml-schema";
 import { format } from "prettier";
+import {
+  createPrinter,
+  factory,
+  ImportDeclaration,
+  NewLineKind,
+  NodeFlags,
+  Statement,
+  SyntaxKind,
+} from "typescript";
 
-import { JSONSchema } from "./buildDeclarationFile.ts";
-import { createAttributeGroupsDefinitions } from "./createAttributeGroupsDefinitions.ts";
-import { createCoreAttributesType } from "./createCoreAttributesType.ts";
-import { createElementsDefinitions } from "./createElementsDefinitions.ts";
-import { getGlobalDeclaration } from "./getGlobalDeclaration.ts";
+import { createAttributeGroupsDefinitions } from "./createAttributeGroupsDefinitions";
+import { createElementsDeclarations } from "./createElementsDeclarations";
+import { createReactCoreAttributesType } from "./createReactCoreAttributesType";
+import { getGlobalDeclaration } from "./getGlobalDeclaration";
 
-export function createTSDefinitionFile(schemaDefinition: JSONSchema, eventsFileContent: string) {
-  // This is the import statement at the top
-  const importResults: Array<any> = [];
+export function createTSDeclarationsFile(
+  schemaDefinition: SchemaDefinition,
+  eventsFileContent: string,
+): string {
   // This is the rest of the file
-  const nodeResults: Array<any> = [];
+  const declarationStatements: Array<Statement> = [];
 
-  // This is to create the required type imports at the top of the file
-  const reactImport = createReactImport();
-  importResults.push(reactImport);
-
-  // Here we create the Coreattrs interface that will be used by all elements
-  const coreAttributesType = createCoreAttributesType(schemaDefinition);
-  nodeResults.push(coreAttributesType);
+  // Here we create an interface that will be used by all elements (ref etc.)
+  const coreAttributesType = createReactCoreAttributesType();
+  declarationStatements.push(coreAttributesType);
 
   const { attributeGroups: attributeGroupsJSON, elements: elementsJSON } = schemaDefinition;
 
   // We move forward to create the attribute groups and elements definitions
   const attributeGroups = createAttributeGroupsDefinitions(attributeGroupsJSON);
-  const elements = createElementsDefinitions(elementsJSON);
-  nodeResults.push(...attributeGroups, ...elements);
+  const elements = createElementsDeclarations(elementsJSON);
+  declarationStatements.push(...attributeGroups, ...elements);
 
   // We create the global declaration for the file
   const globalDeclaration = getGlobalDeclaration(elementsJSON);
-  nodeResults.push(globalDeclaration);
-
-  // We create the printer to print the file
-  const printer = createPrinter({
-    newLine: NewLineKind.LineFeed,
-  });
+  declarationStatements.push(globalDeclaration);
 
   // We create the AST for the file
-  factory.createNodeArray(nodeResults);
+  factory.createNodeArray(declarationStatements);
 
-  // We create a source file for the imports
+  // We create a source file for the imports of React at the top of the file
   const importFile = factory.createSourceFile(
-    importResults,
+    [createReactImport()],
     factory.createToken(SyntaxKind.EndOfFileToken),
     NodeFlags.None,
   );
 
   // We create a source file for the rest of the file
-  const resultFile = factory.createSourceFile(
-    nodeResults,
+  const declarationsFile = factory.createSourceFile(
+    declarationStatements,
     factory.createToken(SyntaxKind.EndOfFileToken),
     NodeFlags.None,
   );
 
   // We print the files
+  const printer = createPrinter({
+    newLine: NewLineKind.LineFeed,
+  });
   const rawImportFile = printer.printFile(importFile);
-  const rawFile = printer.printFile(resultFile);
+  const rawFile = printer.printFile(declarationsFile);
 
   // This is to change global to declare global. It doesn't see to be possible to do it with the AST
   const sourceCodeWithDeclare = rawFile.replace("global", "declare global");
@@ -69,17 +69,15 @@ export function createTSDefinitionFile(schemaDefinition: JSONSchema, eventsFileC
     rawImportFile + "\n" + eventsFileContent + "\n" + sourceCodeWithDeclare;
 
   // We prettify the file with prettier, changing the tab width to 2 and adding trailing commas
-  const prettified = format(fileCombinedWithEvents, {
+  return format(fileCombinedWithEvents, {
     parser: "typescript",
     printWidth: 120,
     tabWidth: 2,
     trailingComma: "all",
   });
-
-  return prettified;
 }
 
-function createReactImport() {
+function createReactImport(): ImportDeclaration {
   // This returns import { LegacyRef, ReactNode } from "react";
   return factory.createImportDeclaration(
     /*modifiers*/ undefined,

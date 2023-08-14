@@ -1,14 +1,12 @@
-import ts from "typescript";
+import { factory, SyntaxKind } from "typescript";
 
-const { factory, NodeFlags, NewLineKind, createPrinter, SyntaxKind } = ts;
+export const MMLReactCoreAttributesTypeIdentifier = "MMLReactCoreAttributes";
 
-import { getReturnAttributeType, JSONSchema } from "./buildDeclarationFile.ts";
-
-export function createCoreAttributesType(schemaJSON: JSONSchema) {
+export function createReactCoreAttributesType() {
   // We add a few types used by React for all elements then add the core attributes for MML
   return factory.createInterfaceDeclaration(
     undefined,
-    factory.createIdentifier("CoreattrsReact"),
+    factory.createIdentifier(MMLReactCoreAttributesTypeIdentifier),
     // add generic T to the interface
     [factory.createTypeParameterDeclaration(undefined, "T")],
     undefined,
