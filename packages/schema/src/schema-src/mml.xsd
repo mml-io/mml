@@ -82,6 +82,7 @@
     </xs:annotation>
     <xs:attribute name="onclick" type="Script">
       <xs:annotation>
+        <xs:appinfo>click|MMLClickEvent</xs:appinfo>
         <xs:documentation>
           A script expression that is executed when the element is clicked. Events are also dispatched to "click" event listeners.
         </xs:documentation>
@@ -219,6 +220,7 @@
     </xs:attribute>
     <xs:attribute name="oncollisionstart" type="Script">
       <xs:annotation>
+        <xs:appinfo>collisionstart|MMLCollisionStartEvent</xs:appinfo>
         <xs:documentation>
           A script expression to be executed when a user starts colliding with the element. Receives a `CollisionStartEvent`.
         </xs:documentation>
@@ -226,6 +228,7 @@
     </xs:attribute>
     <xs:attribute name="oncollisionmove" type="Script">
       <xs:annotation>
+        <xs:appinfo>collisionmove|MMLCollisionMoveEvent</xs:appinfo>
         <xs:documentation>
           A script expression to be executed when a user moves the collision point they are colliding at on the element. Receives a `CollisionMoveEvent`.
         </xs:documentation>
@@ -233,6 +236,7 @@
     </xs:attribute>
     <xs:attribute name="oncollisionend" type="Script">
       <xs:annotation>
+        <xs:appinfo>collisionend|MMLCollisionEndEvent</xs:appinfo>
         <xs:documentation>
           A script expression to be executed when a user stops colliding with the element. Receives a `CollisionEndEvent`.
         </xs:documentation>
@@ -643,14 +647,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="anim-start-time" type="xs:int">
+          <xs:attribute name="anim-start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the animation should begin. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="anim-pause-time" type="xs:int">
+          <xs:attribute name="anim-pause-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the animation should pause. If there is no value the animation will not be paused.
@@ -705,14 +709,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="anim-start-time" type="xs:int">
+          <xs:attribute name="anim-start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the character animation should begin. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="anim-pause-time" type="xs:int">
+          <xs:attribute name="anim-pause-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the character animation should pause. If there is no value the animation will not be paused.
@@ -736,7 +740,6 @@
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
           <xs:attributeGroup ref="coreattrs"/>
-          <xs:attributeGroup ref="clickable"/>
           <xs:attribute name="src" type="URI">
             <xs:annotation>
               <xs:documentation>
@@ -789,14 +792,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="start-time" type="xs:int">
+          <xs:attribute name="start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the audio should start playing. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="pause-time" type="xs:int">
+          <xs:attribute name="pause-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the audio should pause. If there is no value the audio will not be paused.
@@ -911,14 +914,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="start-time" type="xs:int">
+          <xs:attribute name="start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the video should start playing. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="pause-time" type="xs:int">
+          <xs:attribute name="pause-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the video should pause. If there is no value the video will not be paused.
@@ -1025,7 +1028,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="interval" type="xs:int">
+          <xs:attribute name="interval" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds between user positions being sent to the position probe. Default value is 1000 (1 second).
@@ -1034,6 +1037,7 @@
           </xs:attribute>
           <xs:attribute name="onpositionenter" type="Script">
             <xs:annotation>
+              <xs:appinfo>positionenter|MMLPositionEnterEvent</xs:appinfo>
               <xs:documentation>
                 A script expression to be executed when a user enters the range of the position probe. Receives a `PositionEnterEvent`.
               </xs:documentation>
@@ -1041,6 +1045,7 @@
           </xs:attribute>
           <xs:attribute name="onpositionmove" type="Script">
             <xs:annotation>
+              <xs:appinfo>positionmove|MMLPositionMoveEvent</xs:appinfo>
               <xs:documentation>
                 A script expression to be executed when a user moves within the range of the position probe. Receives a `PositionMoveEvent`.
               </xs:documentation>
@@ -1048,6 +1053,7 @@
           </xs:attribute>
           <xs:attribute name="onpositionleave" type="Script">
             <xs:annotation>
+              <xs:appinfo>positionleave|MMLPositionLeaveEvent</xs:appinfo>
               <xs:documentation>
                 A script expression to be executed when a user leaves the range of the position probe. Receives a `PositionLeaveEvent`.
               </xs:documentation>
@@ -1093,6 +1099,7 @@
           </xs:attribute>
           <xs:attribute name="onprompt" type="Script">
             <xs:annotation>
+              <xs:appinfo>prompt|MMLPromptEvent</xs:appinfo>
               <xs:documentation>
                 A script expression to be executed when a user submits their input.
               </xs:documentation>
@@ -1136,7 +1143,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="priority" type="xs:int">
+          <xs:attribute name="priority" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
                 The priority of this interaction. Lower priority interactions will be shown first. Default value is 1.
@@ -1152,6 +1159,7 @@
           </xs:attribute>
           <xs:attribute name="oninteract" type="Script">
             <xs:annotation>
+              <xs:appinfo>interact|MMLInteractionEvent</xs:appinfo>
               <xs:documentation>
                 A script expression that is executed when the element is interacted with. Events are also dispatched to "interact" event listeners.
               </xs:documentation>
@@ -1190,6 +1198,7 @@
           </xs:attribute>
           <xs:attribute name="onchat" type="Script">
             <xs:annotation>
+              <xs:appinfo>chat|MMLChatEvent</xs:appinfo>
               <xs:documentation>
                 A script expression that is executed when a chat message is forwarded to the probe. The message itself is contained within the `message` parameter.
               </xs:documentation>

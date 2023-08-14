@@ -40,6 +40,9 @@ export type XsAnnotation = {
   "xs:documentation": Array<{
     _text: Array<string>;
   }>;
+  "xs:appinfo"?: Array<{
+    _text: Array<string>;
+  }>;
 };
 
 export type XsBasicElementAttributes = {

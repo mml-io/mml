@@ -47,10 +47,10 @@
     "eslint-plugin-testing-library": "5.11.0",
     "jest": "29.5.0",
     "lerna": "^7.0.1",
-    "prettier": "2.8.8",
+    "prettier": "^2.8.8",
     "publish-if-not-exists": "1.1.0",
-    "ts-node": "^10.9.1",
-    "typescript": "5.0.4"
+    "typescript": "5.0.4",
+    "tsx": "3.12.7"
   },
   "optionalDependencies": {
     "@nrwl/nx-linux-x64-gnu": "15.9.3"
