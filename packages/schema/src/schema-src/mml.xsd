@@ -740,7 +740,6 @@
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
           <xs:attributeGroup ref="coreattrs"/>
-          <xs:attributeGroup ref="clickable"/>
           <xs:attribute name="src" type="URI">
             <xs:annotation>
               <xs:documentation>
