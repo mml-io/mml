@@ -58,7 +58,9 @@ export class Cube extends TransformableElement {
     opacity: (instance, newValue) => {
       instance.props.opacity = parseFloatAttribute(newValue, defaultCubeOpacity);
       if (instance.material) {
+        const needsUpdate = instance.material.transparent === (instance.props.opacity === 1);
         instance.material.transparent = instance.props.opacity !== 1;
+        instance.material.needsUpdate = needsUpdate;
         instance.material.opacity = parseFloatAttribute(newValue, 1);
       }
     },
