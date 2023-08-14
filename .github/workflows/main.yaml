@@ -144,7 +144,7 @@ jobs:
           # Publish the current commit as an "experimental" version
           version="0.0.0-experimental-$(git rev-parse --short HEAD)-$(date +'%Y%m%d')"
           echo "Publishing experimental version $version"
-          ./node_modules/.bin/lerna publish $version --no-private --access public --dist-tag experimental --ignore-scripts --ignore-changes --no-push --yes
+          ./node_modules/.bin/lerna publish $version --no-private --dist-tag experimental --ignore-scripts --ignore-changes --no-push --yes
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -175,6 +175,6 @@ jobs:
 
           # Attempt to publish at the current version - this will skip if the version already exists
           echo "Attempting to publishing latest version"
-          ./node_modules/.bin/lerna publish from-package --no-private --access public --dist-tag latest --ignore-scripts --ignore-changes --no-push --yes
+          ./node_modules/.bin/lerna publish from-package --no-private --dist-tag latest --ignore-scripts --ignore-changes --no-push --yes
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

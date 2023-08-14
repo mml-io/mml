@@ -1,6 +1,9 @@
 {
   "name": "@mml-io/networked-dom-web-runner-broadcast",
   "version": "0.4.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
