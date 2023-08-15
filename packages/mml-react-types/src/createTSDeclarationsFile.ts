@@ -18,7 +18,7 @@ import { getGlobalDeclaration } from "./getGlobalDeclaration";
 export function createTSDeclarationsFile(
   schemaDefinition: SchemaDefinition,
   eventsFileContent: string,
-): string {
+): Promise<string> {
   // This is the rest of the file
   const declarationStatements: Array<Statement> = [];
 

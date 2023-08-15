@@ -11,9 +11,9 @@
   ],
   "scripts": {
     "type-check": "tsc --noEmit",
-    "build": "node ./build.js --build",
-    "generate-events-docs": "node ./generate-events-docs.js",
-    "iterate": "node ./build.js --watch",
+    "build": "tsx ./build.ts --build",
+    "generate-events-docs": "tsx ./generate-events-docs.ts",
+    "iterate": "tsx ./build.ts --watch",
     "test": "jest"
   },
   "dependencies": {

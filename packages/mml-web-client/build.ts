@@ -1,11 +1,11 @@
-const esbuild = require("esbuild");
+import * as esbuild from "esbuild";
 
 const buildMode = "--build";
 const serveMode = "--serve";
 
 const helpString = `Mode must be provided as one of ${buildMode} or ${serveMode}`;
 
-const buildOptions = {
+const buildOptions: esbuild.BuildOptions = {
   entryPoints: ["src/index.ts"],
   bundle: true,
   write: true,

@@ -1,7 +1,7 @@
-const fs = require("fs");
-const path = require("path");
+import * as fs from "fs";
+import * as path from "path";
 
-const { handleLibraryBuild } = require("../../utils/build-library");
+import { handleLibraryBuild } from "../../utils/build-library";
 
 const pathToIframeJS = path.resolve(__dirname, "./networked-dom-web-runner-iframe/build/index.js");
 

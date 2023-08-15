@@ -12,10 +12,11 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "esModuleInterop": true,
     "downlevelIteration": true,
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*","build.ts"],
   "exclude": ["**/build/*", "types-src", "**/build.js"],
 }

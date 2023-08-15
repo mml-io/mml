@@ -1,7 +1,7 @@
-const process = require("process");
+import * as process from "process";
 
-const esbuild = require("esbuild");
-const { copy } = require("esbuild-plugin-copy");
+import * as esbuild from "esbuild";
+import { copy } from "esbuild-plugin-copy";
 
 const buildMode = "--build";
 const serveMode = "--serve";
@@ -15,7 +15,7 @@ if (args.length !== 1) {
 }
 const mode = args[0];
 
-const buildOptions = {
+const buildOptions: esbuild.BuildOptions = {
   entryPoints: {
     index: "src/index.tsx",
   },

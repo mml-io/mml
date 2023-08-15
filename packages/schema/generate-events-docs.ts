@@ -1,4 +1,4 @@
-const TypeDoc = require("typedoc");
+import * as TypeDoc from "typedoc";
 
 (async function main() {
   const app = new TypeDoc.Application();

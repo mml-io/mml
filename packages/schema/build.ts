@@ -1,13 +1,13 @@
-const fs = require("fs");
-const path = require("path");
+import * as fs from "fs";
+import * as path from "path";
 
-const TypeDoc = require("typedoc");
-const { xml2json } = require("xml-js");
+import * as TypeDoc from "typedoc";
+import { xml2json } from "xml-js";
 
 const pathToXSD = "./src/schema-src/mml.xsd";
 const pathToEventsSchema = "./src/schema-src/events.d.ts";
 
-const { handleLibraryBuild } = require("../../utils/build-library");
+import { handleLibraryBuild } from "../../utils/build-library";
 
 handleLibraryBuild(
   [
