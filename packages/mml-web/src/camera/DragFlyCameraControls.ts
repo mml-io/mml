@@ -67,14 +67,6 @@ export class DragFlyCameraControls {
       return;
     }
 
-    document.addEventListener(
-      "touchstart",
-      (e) => {
-        e.preventDefault();
-      },
-      { passive: false },
-    );
-
     this.enabled = true;
     this.eventHandlerCollection.add(document, "keydown", this.onKeyDown.bind(this));
     this.eventHandlerCollection.add(document, "keyup", this.onKeyUp.bind(this));
@@ -83,9 +75,9 @@ export class DragFlyCameraControls {
     this.eventHandlerCollection.add(this.domElement, "mousedown", this.onMouseDown.bind(this));
     this.eventHandlerCollection.add(document, "mouseup", this.onMouseUp.bind(this));
     this.eventHandlerCollection.add(document, "wheel", this.onMouseWheel.bind(this));
-    this.eventHandlerCollection.add(document, "touchstart", this.handleTouchStart.bind(this));
+    this.eventHandlerCollection.add(this.domElement, "touchstart", this.handleTouchStart.bind(this));
     this.eventHandlerCollection.add(document, "touchend", this.handleTouchEnd.bind(this));
-    this.eventHandlerCollection.add(document, "touchmove", this.handleTouchMove.bind(this));
+    this.eventHandlerCollection.add(this.domElement, "touchmove", this.handleTouchMove.bind(this));
   }
 
   public disable() {
@@ -238,6 +230,7 @@ export class DragFlyCameraControls {
   }
 
   private handleTouchStart(event: TouchEvent) {
+    event.preventDefault();
     let startX: number;
     let startY: number;
 
