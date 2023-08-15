@@ -75,7 +75,11 @@ export class DragFlyCameraControls {
     this.eventHandlerCollection.add(this.domElement, "mousedown", this.onMouseDown.bind(this));
     this.eventHandlerCollection.add(document, "mouseup", this.onMouseUp.bind(this));
     this.eventHandlerCollection.add(document, "wheel", this.onMouseWheel.bind(this));
-    this.eventHandlerCollection.add(this.domElement, "touchstart", this.handleTouchStart.bind(this));
+    this.eventHandlerCollection.add(
+      this.domElement,
+      "touchstart",
+      this.handleTouchStart.bind(this),
+    );
     this.eventHandlerCollection.add(document, "touchend", this.handleTouchEnd.bind(this));
     this.eventHandlerCollection.add(this.domElement, "touchmove", this.handleTouchMove.bind(this));
   }
