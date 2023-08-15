@@ -139,9 +139,10 @@ export class ObservableDOM implements ObservableDOMInterface {
     }
 
     if (mutationList.length > 1) {
-      // TODO - walk back through the records to derive the intermediate states (e.g. if an attribute is later added to
-      //  an element created in an earlier record then it should not have that attribute when the element is added.
-      //  This is important as incorrect attribute sets can affect visibility and expected client performance.
+      // TODO (https://github.com/mml-io/mml/issues/100) - walk back through the records to derive the intermediate
+      //  states (e.g. if an attribute is later added to an element created in an earlier record then it should not
+      //  have that attribute when the element is added. This is important as incorrect attribute sets can affect
+      //  visibility and expected client performance.
     }
 
     for (const mutation of mutationList) {
