@@ -72,14 +72,22 @@ export class MMLClickTrigger {
       let x = 0;
       let y = 0;
       if (!document.pointerLockElement) {
+        let offsetX = touchX;
+        let offsetY = touchY;
         let width = window.innerWidth;
         let height = window.innerHeight;
         if (this.clickTarget instanceof HTMLElement) {
           width = this.clickTarget.offsetWidth;
           height = this.clickTarget.offsetHeight;
         }
-        x = (touchX / width) * 2 - 1;
-        y = -((touchY / height) * 2 - 1);
+        if (event.target) {
+          /* get the equivalent of event.offset in a mouse event */
+          const bcr = (event.target as HTMLElement).getBoundingClientRect();
+          offsetX = offsetX - bcr.x;
+          offsetY = offsetY - bcr.y;
+        }
+        x = (offsetX / width) * 2 - 1;
+        y = -((offsetY / height) * 2 - 1);
       }
       this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.scene.getCamera());
       const intersections = this.raycaster.intersectObject(this.scene.getRootContainer(), true);
