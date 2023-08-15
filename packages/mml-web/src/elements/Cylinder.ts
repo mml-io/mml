@@ -65,6 +65,9 @@ export class Cylinder extends TransformableElement {
     opacity: (instance, newValue) => {
       instance.props.opacity = parseFloatAttribute(newValue, defaultCylinderOpacity);
       if (instance.material) {
+        const needsUpdate = instance.material.transparent === (instance.props.opacity === 1);
+        instance.material.transparent = instance.props.opacity !== 1;
+        instance.material.needsUpdate = needsUpdate;
         instance.material.opacity = parseFloatAttribute(newValue, 1);
       }
     },
@@ -104,7 +107,7 @@ export class Cylinder extends TransformableElement {
     super.connectedCallback();
     this.material = new THREE.MeshStandardMaterial({
       color: this.props.color,
-      transparent: true,
+      transparent: this.props.opacity === 1 ? false : true,
       opacity: this.props.opacity,
     });
     this.mesh.material = this.material;

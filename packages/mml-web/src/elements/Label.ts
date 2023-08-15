@@ -127,7 +127,7 @@ export class Label extends TransformableElement {
   public connectedCallback(): void {
     super.connectedCallback();
     this.material = new THREE.MeshStandardMaterial({
-      transparent: true,
+      transparent: false,
     });
     this.mesh.material = this.material;
     this.redrawText();
