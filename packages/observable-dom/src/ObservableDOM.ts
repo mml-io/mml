@@ -142,9 +142,6 @@ export class ObservableDOM implements ObservableDOMInterface {
       // TODO - walk back through the records to derive the intermediate states (e.g. if an attribute is later added to
       //  an element created in an earlier record then it should not have that attribute when the element is added.
       //  This is important as incorrect attribute sets can affect visibility and expected client performance.
-      console.error(
-        "More than one mutation record received. It is possible that intermediate states are incorrect.",
-      );
     }
 
     for (const mutation of mutationList) {
