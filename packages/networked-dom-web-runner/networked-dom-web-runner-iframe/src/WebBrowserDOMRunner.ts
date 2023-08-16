@@ -123,7 +123,7 @@ export class WebBrowserDOMRunner implements DOMRunnerInterface {
 
   getDocumentTime(): number {
     if (document.timeline && document.timeline.currentTime) {
-      return document.timeline.currentTime;
+      return document.timeline.currentTime as number;
     }
     return Date.now() - documentLoadTime;
   }

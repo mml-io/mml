@@ -1,16 +1,20 @@
-const esbuild = require("esbuild");
+import * as esbuild from "esbuild";
+
 const buildMode = "--build";
 const watchMode = "--watch";
 
 const helpString = `Mode must be provided as one of ${buildMode} or ${watchMode}`;
 
-const buildOptions = {
+const buildOptions: esbuild.BuildOptions = {
   entryPoints: ["src/index.ts"],
-  bundle: true,
   write: true,
+  bundle: true,
   format: "cjs",
-  sourcemap: "inline",
-  outfile: "build/index.js",
+  outdir: "build",
+  platform: "node",
+  packages: "external",
+  sourcemap: true,
+  target: "node14",
 };
 
 const args = process.argv.splice(2);

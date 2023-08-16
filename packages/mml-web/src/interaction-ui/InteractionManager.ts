@@ -116,7 +116,7 @@ export class InteractionManager {
 
   private possibleActions = new Map<Interaction, InteractionState>();
   private visibleActions = new Set<InteractionState>();
-  private tickInterval: NodeJS.Timer | null = null;
+  private tickInterval: NodeJS.Timeout | null = null;
   private threeJSScene: THREE.Scene;
   private sortedActions: InteractionState[] = [];
 

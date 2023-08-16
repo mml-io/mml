@@ -1,12 +1,16 @@
-const esbuild = require("esbuild");
-const { dtsPlugin } = require("esbuild-plugin-d.ts");
+import * as esbuild from "esbuild";
+
+import { dtsPlugin } from "./dtsPlugin";
 
 const buildMode = "--build";
 const watchMode = "--watch";
 
 const helpString = `Mode must be provided as one of ${buildMode} or ${watchMode}`;
 
-function handleLibraryBuild(plugins = [], loader = {}) {
+export function handleLibraryBuild(
+  plugins: Array<esbuild.Plugin> = [],
+  loader: { [key: string]: esbuild.Loader } = {},
+) {
   const args = process.argv.splice(2);
 
   if (args.length !== 1) {
@@ -16,7 +20,7 @@ function handleLibraryBuild(plugins = [], loader = {}) {
 
   const mode = args[0];
 
-  const buildOptions = {
+  const buildOptions: esbuild.BuildOptions = {
     entryPoints: ["src/index.ts"],
     write: true,
     bundle: true,
@@ -46,7 +50,3 @@ function handleLibraryBuild(plugins = [], loader = {}) {
       console.error(helpString);
   }
 }
-
-module.exports = {
-  handleLibraryBuild,
-};

@@ -244,7 +244,8 @@ export class Model extends TransformableElement {
   }
 
   private updateAnimation() {
-    const docTimeMs = this.getDocumentTime() || document.timeline.currentTime || 0;
+    const docTimeMs: number =
+      this.getDocumentTime() || (document.timeline.currentTime as number) || 0;
 
     if (this.currentAnimation) {
       if (!this.props.animEnabled) {

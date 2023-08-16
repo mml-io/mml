@@ -16,5 +16,5 @@
     "incremental": true
   },
   "include": ["src/**/*", "src/custom.d.ts"],
-  "exclude": ["**/build/*", "**/build.js"]
+  "exclude": ["**/build/*"]
 }

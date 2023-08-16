@@ -11,8 +11,8 @@
   ],
   "scripts": {
     "type-check": "tsc --noEmit",
-    "build": "node ./build.js --build",
-    "iterate": "node ./build.js --watch",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
     "test": "jest"
   },
   "dependencies": {

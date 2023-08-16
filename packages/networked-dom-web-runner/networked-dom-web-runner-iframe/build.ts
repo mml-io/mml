@@ -1,19 +1,16 @@
-const esbuild = require("esbuild");
+import * as esbuild from "esbuild";
 const buildMode = "--build";
 const watchMode = "--watch";
 
 const helpString = `Mode must be provided as one of ${buildMode} or ${watchMode}`;
 
-const buildOptions = {
+const buildOptions: esbuild.BuildOptions = {
   entryPoints: ["src/index.ts"],
-  write: true,
   bundle: true,
+  write: true,
   format: "cjs",
-  outdir: "build",
-  platform: "node",
-  packages: "external",
-  sourcemap: true,
-  target: "node14",
+  sourcemap: "inline",
+  outfile: "build/index.js",
 };
 
 const args = process.argv.splice(2);
@@ -30,7 +27,10 @@ switch (mode) {
     esbuild.build(buildOptions).catch(() => process.exit(1));
     break;
   case watchMode:
-    esbuild.context({ ...buildOptions}).then(context => context.watch()).catch(() => process.exit(1));
+    esbuild
+      .context({ ...buildOptions })
+      .then((context) => context.watch())
+      .catch(() => process.exit(1));
     break;
   default:
     console.error(helpString);

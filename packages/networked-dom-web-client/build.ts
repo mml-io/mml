@@ -1,41 +1,31 @@
-const process = require("process");
-
-const esbuild = require("esbuild");
-const { copy } = require("esbuild-plugin-copy");
+import * as esbuild from "esbuild";
 
 const buildMode = "--build";
 const serveMode = "--serve";
 
 const helpString = `Mode must be provided as one of ${buildMode} or ${serveMode}`;
 
+const buildOptions: esbuild.BuildOptions = {
+  entryPoints: ["src/index.ts"],
+  bundle: true,
+  write: true,
+  format: "cjs",
+  loader: {
+    ".glb": "file",
+  },
+  publicPath: "/",
+  sourcemap: true,
+  outdir: "build",
+};
+
 const args = process.argv.splice(2);
+
 if (args.length !== 1) {
   console.error(helpString);
   process.exit(1);
 }
-const mode = args[0];
 
-const buildOptions = {
-  entryPoints: {
-    index: "src/index.tsx",
-  },
-  bundle: true,
-  external: ["node:crypto"],
-  write: true,
-  publicPath: "/",
-  sourcemap: true,
-  outdir: "./build/",
-  plugins: [
-    copy({
-      resolveFrom: "cwd",
-      assets: {
-        from: ["./src/static/**/*"],
-        to: ["./build/"],
-        keepStructure: true,
-      },
-    }),
-  ],
-};
+const mode = args[0];
 
 switch (mode) {
   case buildMode:
@@ -48,13 +38,12 @@ switch (mode) {
       console.error("PORT environment variable is not set for server");
       process.exit(1);
     }
+
     esbuild
       .context({ ...buildOptions })
       .then((context) =>
         context.serve({
-          host: "127.0.0.1",
           port: parseInt(portArg, 10),
-          servedir: "./build/",
         }),
       )
       .catch((e) => {
@@ -64,5 +53,4 @@ switch (mode) {
     break;
   default:
     console.error(helpString);
-    process.exit(1);
 }

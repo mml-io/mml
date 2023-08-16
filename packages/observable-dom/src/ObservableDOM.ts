@@ -56,7 +56,7 @@ export class ObservableDOM implements ObservableDOMInterface {
   private htmlPath: string;
   private domRunner: DOMRunnerInterface;
 
-  private documentTimeIntervalTimer: NodeJS.Timer;
+  private documentTimeIntervalTimer: NodeJS.Timeout;
 
   constructor(
     observableDOMParameters: ObservableDOMParameters,

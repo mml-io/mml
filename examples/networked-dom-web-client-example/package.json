@@ -3,7 +3,7 @@
   "private": true,
   "main": "./src/index.js",
   "scripts": {
-    "build": "node ./build.js --build",
+    "build": "tsx ./build.ts --build",
     "iterate": "npm run build && npm run serve",
     "serve": "node --enable-source-maps ./build/index.js"
   },
