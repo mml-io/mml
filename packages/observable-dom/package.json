@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/observable-dom",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publishConfig": {
     "access": "public"
   },
@@ -17,7 +17,7 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/observable-dom-common": "^0.4.0",
+    "@mml-io/observable-dom-common": "^0.5.0",
     "jsdom": "22.1.0",
     "node-fetch": "2.6.12"
   },

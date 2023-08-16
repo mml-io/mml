@@ -1,6 +1,6 @@
 {
   "name": "mml-web-client",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publishConfig": {
     "access": "public"
   },
@@ -16,7 +16,7 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "mml-web": "^0.4.0",
+    "mml-web": "^0.5.0",
     "three": "0.153.0"
   },
   "devDependencies": {
