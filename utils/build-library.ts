@@ -7,7 +7,10 @@ const watchMode = "--watch";
 
 const helpString = `Mode must be provided as one of ${buildMode} or ${watchMode}`;
 
-export function handleLibraryBuild(plugins = [], loader = {}) {
+export function handleLibraryBuild(
+  plugins: Array<esbuild.Plugin> = [],
+  loader: { [key: string]: esbuild.Loader } = {},
+) {
   const args = process.argv.splice(2);
 
   if (args.length !== 1) {

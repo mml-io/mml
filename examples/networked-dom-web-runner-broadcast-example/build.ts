@@ -31,7 +31,6 @@ const buildOptions: esbuild.BuildOptions = {
       assets: {
         from: ["./src/static/**/*"],
         to: ["./build/"],
-        keepStructure: true,
       },
     }),
   ],

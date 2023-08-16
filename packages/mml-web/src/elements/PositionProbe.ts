@@ -58,7 +58,7 @@ export class PositionProbe extends TransformableElement {
 
   private debugMesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
 
-  private timer: NodeJS.Timer | null = null;
+  private timer: NodeJS.Timeout | null = null;
 
   private currentlyInRange = false;
 

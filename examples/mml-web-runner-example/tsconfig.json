@@ -18,5 +18,5 @@
     "incremental": true
   },
   "include": ["src/**/*","build.ts"],
-  "exclude": ["**/build/*", "types-src", "**/build.js"],
+  "exclude": ["**/build/*", "types-src"],
 }

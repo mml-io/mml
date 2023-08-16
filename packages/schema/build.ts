@@ -43,7 +43,7 @@ handleLibraryBuild(
             entryPoints: [pathToEventsSchema],
           });
 
-          const project = app.convert();
+          const project = app.convert()!;
           const eventDefinitions = app.serializer.projectToObject(project, process.cwd());
 
           return {
