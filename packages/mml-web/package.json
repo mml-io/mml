@@ -1,6 +1,6 @@
 {
   "name": "mml-web",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publishConfig": {
     "access": "public"
   },
@@ -19,7 +19,7 @@
     "test-iterate": "jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web": "^0.5.0"
+    "@mml-io/networked-dom-web": "^0.6.0"
   },
   "peerDependencies": {
     "three": "*"

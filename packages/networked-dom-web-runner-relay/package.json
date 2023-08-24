@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-web-runner-relay",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publishConfig": {
     "access": "public"
   },
@@ -19,8 +19,8 @@
     "test-iterate": "jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web-runner": "^0.5.0",
-    "@mml-io/observable-dom-common": "^0.5.0"
+    "@mml-io/networked-dom-web-runner": "^0.6.0",
+    "@mml-io/observable-dom-common": "^0.6.0"
   },
   "devDependencies": {
     "jest-environment-jsdom": "29.6.2",
