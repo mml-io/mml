@@ -159,6 +159,7 @@ export abstract class TransformableElement extends MElement {
   }
 
   private transformableAttributeChangedValue() {
+    this.parentTransformed();
     traverseChildren(this, (child) => {
       if (child instanceof MElement) {
         child.parentTransformed();

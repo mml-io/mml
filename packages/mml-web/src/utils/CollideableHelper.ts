@@ -2,7 +2,6 @@ import * as THREE from "three";
 
 import { AttributeHandler, parseBoolAttribute } from "./attribute-handling";
 import { MElement } from "../elements/MElement";
-import { TransformableElement } from "../elements/TransformableElement";
 import { IMMLScene } from "../MMLScene";
 
 const collideAttributeName = "collide";
@@ -106,11 +105,6 @@ export class CollideableHelper {
 
   public handle(name: string, newValue: string) {
     CollideableHelper.AttributeHandler.handle(this, name, newValue);
-
-    // if the changed attribute is in TransformableElement, then the collider may have changed its position, rotation or scale
-    if (TransformableElement.observedAttributes.includes(name)) {
-      this.updateCollider(this.colliderState.collider);
-    }
   }
 
   public parentTransformed() {

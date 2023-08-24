@@ -100,6 +100,7 @@ export class Interaction extends TransformableElement {
 
   public parentTransformed(): void {
     this.registeredScene?.updateInteraction?.(this);
+    this.showDebug();
   }
 
   public isClickable(): boolean {
@@ -120,12 +121,6 @@ export class Interaction extends TransformableElement {
 
   public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
-    if (TransformableElement.observedAttributes.includes(name)) {
-      if (this.registeredScene !== null) {
-        this.registeredScene.updateInteraction?.(this);
-      }
-      this.showDebug();
-    }
     if (Interaction.attributeHandler.handle(this, name, newValue)) {
       this.showDebug();
       if (this.registeredScene !== null) {
