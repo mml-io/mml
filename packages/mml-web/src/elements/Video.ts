@@ -443,8 +443,8 @@ export class Video extends TransformableElement {
     if (this.loadedVideoState) {
       const height = this.props.height;
       const width = this.props.width;
-      const loadedWidth = this.loadedVideoState.video.videoWidth;
-      const loadedHeight = this.loadedVideoState.video.videoHeight;
+      const loadedWidth = Math.max(this.loadedVideoState.video.videoWidth, 1);
+      const loadedHeight = Math.max(this.loadedVideoState.video.videoHeight, 1);
 
       if (height && width) {
         this.mesh.scale.x = width;

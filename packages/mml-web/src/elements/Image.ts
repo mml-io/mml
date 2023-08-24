@@ -244,8 +244,8 @@ export class Image extends TransformableElement {
     if (this.loadedImage) {
       const height = this.props.height;
       const width = this.props.width;
-      const loadedWidth = this.loadedImage.width;
-      const loadedHeight = this.loadedImage.height;
+      const loadedWidth = Math.max(this.loadedImage.width, 1);
+      const loadedHeight = Math.max(this.loadedImage.height, 1);
 
       if (height && width) {
         mesh.scale.x = width;
