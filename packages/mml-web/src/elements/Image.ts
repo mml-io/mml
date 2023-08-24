@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -16,6 +19,38 @@ const defaultImageCastShadows = true;
 
 export class Image extends TransformableElement {
   static tagName = "m-image";
+
+  private imageAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    width: [
+      AnimationType.Number,
+      defaultImageWidth,
+      (newValue: number) => {
+        this.props.width = newValue;
+        this.updateHeightAndWidth();
+      },
+    ],
+    height: [
+      AnimationType.Number,
+      defaultImageHeight,
+      (newValue: number) => {
+        this.props.height = newValue;
+        this.updateHeightAndWidth();
+      },
+    ],
+    opacity: [
+      AnimationType.Number,
+      defaultImageOpacity,
+      (newValue: number) => {
+        this.props.opacity = newValue;
+        if (this.material) {
+          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
+          this.material.transparent = this.props.opacity !== 1;
+          this.material.needsUpdate = needsUpdate;
+          this.material.opacity = newValue;
+        }
+      },
+    ],
+  });
 
   private static imageLoader = new THREE.ImageLoader();
   private static planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
@@ -38,24 +73,25 @@ export class Image extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Image>({
     width: (instance, newValue) => {
-      instance.props.width = parseFloatAttribute(newValue, defaultImageWidth);
-      instance.updateHeightAndWidth();
+      instance.imageAnimatedAttributeHelper.elementSetAttribute(
+        "width",
+        parseFloatAttribute(newValue, defaultImageWidth),
+      );
     },
     height: (instance, newValue) => {
-      instance.props.height = parseFloatAttribute(newValue, defaultImageHeight);
-      instance.updateHeightAndWidth();
+      instance.imageAnimatedAttributeHelper.elementSetAttribute(
+        "height",
+        parseFloatAttribute(newValue, defaultImageHeight),
+      );
     },
     src: (instance, newValue) => {
       instance.setSrc(newValue);
     },
     opacity: (instance, newValue) => {
-      instance.props.opacity = parseFloatAttribute(newValue, defaultImageOpacity);
-      if (instance.material) {
-        const needsUpdate = instance.material.transparent === (instance.props.opacity === 1);
-        instance.material.transparent = instance.props.opacity !== 1;
-        instance.material.needsUpdate = needsUpdate;
-        instance.material.opacity = parseFloatAttribute(newValue, 1);
-      }
+      instance.imageAnimatedAttributeHelper.elementSetAttribute(
+        "opacity",
+        parseFloatAttribute(newValue, defaultImageOpacity),
+      );
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultImageCastShadows);
@@ -77,6 +113,26 @@ export class Image extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.imageAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.imageAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   private setSrc(newValue: string | null) {
@@ -188,8 +244,8 @@ export class Image extends TransformableElement {
     if (this.loadedImage) {
       const height = this.props.height;
       const width = this.props.width;
-      const loadedWidth = this.loadedImage.width;
-      const loadedHeight = this.loadedImage.height;
+      const loadedWidth = Math.max(this.loadedImage.width, 1);
+      const loadedHeight = Math.max(this.loadedImage.height, 1);
 
       if (height && width) {
         mesh.scale.x = width;

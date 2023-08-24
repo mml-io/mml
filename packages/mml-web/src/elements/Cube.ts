@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -19,6 +22,59 @@ const defaultCubeCastShadows = true;
 export class Cube extends TransformableElement {
   static tagName = "m-cube";
 
+  private cubeAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    color: [
+      AnimationType.Color,
+      defaultCubeColor,
+      (newValue: THREE.Color) => {
+        this.props.color = newValue;
+        if (this.material) {
+          this.material.color = this.props.color;
+        }
+      },
+    ],
+    width: [
+      AnimationType.Number,
+      defaultCubeWidth,
+      (newValue: number) => {
+        this.props.width = newValue;
+        this.mesh.scale.x = this.props.width;
+        this.collideableHelper.updateCollider(this.mesh);
+      },
+    ],
+    height: [
+      AnimationType.Number,
+      defaultCubeHeight,
+      (newValue: number) => {
+        this.props.height = newValue;
+        this.mesh.scale.y = this.props.height;
+        this.collideableHelper.updateCollider(this.mesh);
+      },
+    ],
+    depth: [
+      AnimationType.Number,
+      defaultCubeDepth,
+      (newValue: number) => {
+        this.props.depth = newValue;
+        this.mesh.scale.z = this.props.depth;
+        this.collideableHelper.updateCollider(this.mesh);
+      },
+    ],
+    opacity: [
+      AnimationType.Number,
+      defaultCubeOpacity,
+      (newValue: number) => {
+        this.props.opacity = newValue;
+        if (this.material) {
+          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
+          this.material.transparent = this.props.opacity !== 1;
+          this.material.needsUpdate = needsUpdate;
+          this.material.opacity = newValue;
+        }
+      },
+    ],
+  });
+
   static boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 
   private props = {
@@ -35,34 +91,34 @@ export class Cube extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Cube>({
     width: (instance, newValue) => {
-      instance.props.width = parseFloatAttribute(newValue, defaultCubeWidth);
-      instance.mesh.scale.x = instance.props.width;
-      instance.collideableHelper.updateCollider(instance.mesh);
+      instance.cubeAnimatedAttributeHelper.elementSetAttribute(
+        "width",
+        parseFloatAttribute(newValue, defaultCubeWidth),
+      );
     },
     height: (instance, newValue) => {
-      instance.props.height = parseFloatAttribute(newValue, defaultCubeHeight);
-      instance.mesh.scale.y = instance.props.height;
-      instance.collideableHelper.updateCollider(instance.mesh);
+      instance.cubeAnimatedAttributeHelper.elementSetAttribute(
+        "height",
+        parseFloatAttribute(newValue, defaultCubeHeight),
+      );
     },
     depth: (instance, newValue) => {
-      instance.props.depth = parseFloatAttribute(newValue, defaultCubeDepth);
-      instance.mesh.scale.z = instance.props.depth;
-      instance.collideableHelper.updateCollider(instance.mesh);
+      instance.cubeAnimatedAttributeHelper.elementSetAttribute(
+        "depth",
+        parseFloatAttribute(newValue, defaultCubeDepth),
+      );
     },
     color: (instance, newValue) => {
-      instance.props.color = parseColorAttribute(newValue, defaultCubeColor);
-      if (instance.material) {
-        instance.material.color = instance.props.color;
-      }
+      instance.cubeAnimatedAttributeHelper.elementSetAttribute(
+        "color",
+        parseColorAttribute(newValue, defaultCubeColor),
+      );
     },
     opacity: (instance, newValue) => {
-      instance.props.opacity = parseFloatAttribute(newValue, defaultCubeOpacity);
-      if (instance.material) {
-        const needsUpdate = instance.material.transparent === (instance.props.opacity === 1);
-        instance.material.transparent = instance.props.opacity !== 1;
-        instance.material.needsUpdate = needsUpdate;
-        instance.material.opacity = parseFloatAttribute(newValue, 1);
-      }
+      instance.cubeAnimatedAttributeHelper.elementSetAttribute(
+        "opacity",
+        parseFloatAttribute(newValue, defaultCubeOpacity),
+      );
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultCubeCastShadows);
@@ -87,6 +143,26 @@ export class Cube extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.cubeAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.cubeAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {

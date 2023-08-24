@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -24,6 +27,26 @@ const defaultVideoCastShadows = true;
 
 export class Video extends TransformableElement {
   static tagName = "m-video";
+
+  private videoAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    width: [
+      AnimationType.Number,
+      defaultVideoWidth,
+      (newValue: number) => {
+        this.props.width = newValue;
+        this.updateHeightAndWidth();
+      },
+    ],
+    height: [
+      AnimationType.Number,
+      defaultVideoHeight,
+      (newValue: number) => {
+        this.props.height = newValue;
+        this.updateHeightAndWidth();
+      },
+    ],
+  });
+
   private documentTimeListener: { remove: () => void };
   private delayedStartTimer: NodeJS.Timeout | null = null;
   private delayedPauseTimer: NodeJS.Timeout | null = null;
@@ -64,12 +87,16 @@ export class Video extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Video>({
     width: (instance, newValue) => {
-      instance.props.width = parseFloatAttribute(newValue, defaultVideoWidth);
-      instance.updateHeightAndWidth();
+      instance.videoAnimatedAttributeHelper.elementSetAttribute(
+        "width",
+        parseFloatAttribute(newValue, defaultVideoWidth),
+      );
     },
     height: (instance, newValue) => {
-      instance.props.height = parseFloatAttribute(newValue, defaultVideoHeight);
-      instance.updateHeightAndWidth();
+      instance.videoAnimatedAttributeHelper.elementSetAttribute(
+        "height",
+        parseFloatAttribute(newValue, defaultVideoHeight),
+      );
     },
     enabled: (instance, newValue) => {
       instance.props.enabled = parseBoolAttribute(newValue, defaultVideoEnabled);
@@ -119,6 +146,26 @@ export class Video extends TransformableElement {
     this.mesh.castShadow = true;
     this.mesh.receiveShadow = false;
     this.container.add(this.mesh);
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.videoAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.videoAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {
@@ -385,7 +432,7 @@ export class Video extends TransformableElement {
     super.disconnectedCallback();
   }
 
-  public getMesh(): THREE.Mesh<
+  public getVideoMesh(): THREE.Mesh<
     THREE.PlaneGeometry,
     THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
   > {
@@ -396,8 +443,8 @@ export class Video extends TransformableElement {
     if (this.loadedVideoState) {
       const height = this.props.height;
       const width = this.props.width;
-      const loadedWidth = this.loadedVideoState.video.videoWidth;
-      const loadedHeight = this.loadedVideoState.video.videoHeight;
+      const loadedWidth = Math.max(this.loadedVideoState.video.videoWidth, 1);
+      const loadedHeight = Math.max(this.loadedVideoState.video.videoHeight, 1);
 
       if (height && width) {
         this.mesh.scale.x = width;

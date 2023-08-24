@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -27,6 +30,29 @@ const defaultLightType = lightTypes.spotlight;
 
 export class Light extends TransformableElement {
   static tagName = "m-light";
+
+  private lightAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    color: [
+      AnimationType.Color,
+      defaultLightColor,
+      (newValue: THREE.Color) => {
+        this.props.color = newValue;
+        this.light.color.set(this.props.color);
+        if (this.lightHelper) {
+          this.lightHelper.color = this.props.color;
+        }
+      },
+    ],
+    intensity: [
+      AnimationType.Number,
+      defaultLightIntensity,
+      (newValue: number) => {
+        this.props.intensity = newValue;
+        this.light.intensity = this.props.intensity;
+      },
+    ],
+  });
+
   private lightHelper: LightHelper | null;
 
   private props = {
@@ -41,15 +67,16 @@ export class Light extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Light>({
     color: (instance, newValue) => {
-      instance.props.color = parseColorAttribute(newValue, defaultLightColor);
-      instance.light.color.set(instance.props.color);
-      if (instance.lightHelper) {
-        instance.lightHelper.color = instance.props.color;
-      }
+      instance.lightAnimatedAttributeHelper.elementSetAttribute(
+        "color",
+        parseColorAttribute(newValue, defaultLightColor),
+      );
     },
     intensity: (instance, newValue) => {
-      instance.props.intensity = parseFloatAttribute(newValue, defaultLightIntensity);
-      instance.light.intensity = instance.props.intensity;
+      instance.lightAnimatedAttributeHelper.elementSetAttribute(
+        "intensity",
+        parseFloatAttribute(newValue, defaultLightIntensity),
+      );
     },
     enabled: (instance, newValue) => {
       instance.props.enabled = parseBoolAttribute(newValue, defaultLightEnabled);
@@ -102,6 +129,26 @@ export class Light extends TransformableElement {
 
   public getLight(): THREE.Light {
     return this.light;
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.lightAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.lightAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {

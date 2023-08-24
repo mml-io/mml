@@ -1,16 +1,34 @@
 import { MElement } from "./MElement";
-import { documentTimeChangedEventName } from "../common";
+import { MMLDocumentRoot } from "../MMLDocumentRoot";
 import { IMMLScene } from "../MMLScene";
 
 export class RemoteDocument extends MElement {
   static tagName = "m-remote-document";
 
   private scene: IMMLScene | null = null;
-  private relativeDocumentStartTime: number | null = null;
   private documentAddress: string | null = null;
+  private documentRoot: MMLDocumentRoot;
+  private animationFrameCallback: number | null = null;
 
   constructor() {
     super();
+    this.documentRoot = new MMLDocumentRoot(this);
+  }
+
+  public addDocumentTimeListenerCallback(cb: (time: number) => void) {
+    this.documentRoot.addDocumentTimeListenerCallback(cb);
+  }
+
+  public removeDocumentTimeListenerCallback(cb: (time: number) => void) {
+    this.documentRoot.removeDocumentTimeListenerCallback(cb);
+  }
+
+  public addDocumentTimeTickListenerCallback(cb: (time: number) => void) {
+    this.documentRoot.addDocumentTimeTickListenerCallback(cb);
+  }
+
+  public removeDocumentTimeTickListenerCallback(cb: (time: number) => void) {
+    this.documentRoot.removeDocumentTimeTickListenerCallback(cb);
   }
 
   public parentTransformed(): void {
@@ -22,24 +40,22 @@ export class RemoteDocument extends MElement {
   }
 
   getDocumentTime(): number | null {
-    if (this.relativeDocumentStartTime === null) {
-      return null;
-    }
-    return Date.now() - this.relativeDocumentStartTime;
+    return this.documentRoot.getDocumentTime();
   }
 
   setDocumentTime(documentTime: number) {
-    this.relativeDocumentStartTime = Date.now() - documentTime;
+    this.documentRoot.setDocumentTime(documentTime);
+  }
 
-    // Use the super class' dispatchEvent method to avoid triggering remote event dispatching
-    HTMLElement.prototype.dispatchEvent.call(
-      this,
-      new CustomEvent(documentTimeChangedEventName, { detail: documentTime }),
-    );
+  overrideDocumentTime(documentTime: number) {
+    this.documentRoot.overrideDocumentTime(documentTime);
   }
 
   connectedCallback() {
     this.style.display = "none";
+    this.animationFrameCallback = window.requestAnimationFrame(() => {
+      this.tick();
+    });
   }
 
   dispatchEvent(event: CustomEvent): boolean {
@@ -52,6 +68,10 @@ export class RemoteDocument extends MElement {
 
   disconnectedCallback() {
     // no-op to avoid calling super class
+    if (this.animationFrameCallback) {
+      window.cancelAnimationFrame(this.animationFrameCallback);
+      this.animationFrameCallback = null;
+    }
   }
 
   init(mScene: IMMLScene, documentAddress: string) {
@@ -72,5 +92,12 @@ export class RemoteDocument extends MElement {
       throw new Error("Scene not set");
     }
     return this.scene;
+  }
+
+  private tick() {
+    this.documentRoot.tick();
+    this.animationFrameCallback = window.requestAnimationFrame(() => {
+      this.tick();
+    });
   }
 }

@@ -18,7 +18,7 @@ describe("m-model", () => {
         const model = document.querySelector("m-model");
         return (model as any).getModel() !== null;
       },
-      { timeout: 5000, polling: 100 },
+      { timeout: 30000, polling: 100 },
     );
 
     await takeAndCompareScreenshot(page);

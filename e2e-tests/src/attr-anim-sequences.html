@@ -1,0 +1,40 @@
+<m-plane color="white" width="15" height="15" rx="-90"></m-plane>
+<m-light type="point" x="10" y="10" z="10"></m-light>
+
+<m-group id="timeline" y="0.25">
+  <m-cube width="15" height="0.25" depth="0.1" color="black"></m-cube>
+  <m-cube width="1" height="0.25" depth="0.1" z="0.1" color="red">
+    <m-attr-anim attr="x" start="-7" end="7" loop="true" start-time="0" duration="10000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="-4" y="4">
+  <m-cube depth="0.1" color="red">
+    <m-attr-anim attr="x" easing="easeInOutQuint" start="-2" end="2" loop="false" start-time="0" duration="2500"></m-attr-anim>
+    <m-attr-anim attr="y" easing="easeInOutQuint" start="-2" end="2" loop="false" start-time="2500" duration="2500"></m-attr-anim>
+    <m-attr-anim attr="x" easing="easeInOutQuint" start="2" end="-2" loop="false" start-time="5000" duration="2500"></m-attr-anim>
+    <m-attr-anim attr="y" easing="easeInOutQuint" start="2" end="-2" loop="false" start-time="7500" duration="2500"></m-attr-anim>
+  </m-cube>
+  <m-cube color="green" width="5.5" y="-2" z="-0.1" height="1.5" depth="0.1"></m-cube>
+  <m-cube color="green" width="5.5" y="2" z="-0.1" height="1.5" depth="0.1"></m-cube>
+  <m-cube color="green" width="1.5" x="-2" z="-0.1" height="2.5" depth="0.1"></m-cube>
+  <m-cube color="green" width="1.5" x="2" z="-0.1" height="2.5" depth="0.1"></m-cube>
+</m-group>
+
+
+<m-group x="4" y="4">
+  <m-sphere color="red">
+    <m-attr-anim attr="x" easing="easeOutSine" start="0" end="2" loop="false" start-time="0" duration="2500"></m-attr-anim>
+    <m-attr-anim attr="y" easing="easeInSine" start="-2" end="0" loop="false" start-time="0" duration="2500"></m-attr-anim>
+
+    <m-attr-anim attr="x" easing="easeInSine" start="2" end="0" loop="false" start-time="2500" duration="2500"></m-attr-anim>
+    <m-attr-anim attr="y" easing="easeOutSine" start="0" end="2" loop="false" start-time="2500" duration="2500"></m-attr-anim>
+
+    <m-attr-anim attr="x" easing="easeOutSine" start="0" end="-2" loop="false" start-time="5000" duration="2500"></m-attr-anim>
+    <m-attr-anim attr="y" easing="easeInSine" start="2" end="0" loop="false" start-time="5000" duration="2500"></m-attr-anim>
+
+    <m-attr-anim attr="x" easing="easeInSine" start="-2" end="0" loop="false" start-time="7500" duration="2500"></m-attr-anim>
+    <m-attr-anim attr="y" easing="easeOutSine" start="0" end="-2" loop="false" start-time="7500" duration="2500"></m-attr-anim>
+  </m-sphere>
+  <m-sphere color="green" radius="2.5" y="0" z="-0.1" sz="0.001" height="1.5" depth="0.1"></m-sphere>
+</m-group>

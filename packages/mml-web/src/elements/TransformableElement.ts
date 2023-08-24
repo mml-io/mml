@@ -1,6 +1,8 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -14,33 +16,107 @@ function minimumNonZero(value: number): number {
 }
 
 export abstract class TransformableElement extends MElement {
+  private animatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    x: [
+      AnimationType.Number,
+      0,
+      (newValue: number) => {
+        this.container.position.x = newValue;
+        this.transformableAttributeChangedValue();
+      },
+    ],
+    y: [
+      AnimationType.Number,
+      0,
+      (newValue: number) => {
+        this.container.position.y = newValue;
+        this.transformableAttributeChangedValue();
+      },
+    ],
+    z: [
+      AnimationType.Number,
+      0,
+      (newValue: number) => {
+        this.container.position.z = newValue;
+        this.transformableAttributeChangedValue();
+      },
+    ],
+    rx: [
+      AnimationType.Number,
+      0,
+      (newValue: number) => {
+        this.container.rotation.x = newValue * THREE.MathUtils.DEG2RAD;
+        this.transformableAttributeChangedValue();
+      },
+    ],
+    ry: [
+      AnimationType.Number,
+      0,
+      (newValue: number) => {
+        this.container.rotation.y = newValue * THREE.MathUtils.DEG2RAD;
+        this.transformableAttributeChangedValue();
+      },
+    ],
+    rz: [
+      AnimationType.Number,
+      0,
+      (newValue: number) => {
+        this.container.rotation.z = newValue * THREE.MathUtils.DEG2RAD;
+        this.transformableAttributeChangedValue();
+      },
+    ],
+    sx: [
+      AnimationType.Number,
+      1,
+      (newValue: number) => {
+        this.container.scale.x = minimumNonZero(newValue);
+        this.transformableAttributeChangedValue();
+      },
+    ],
+    sy: [
+      AnimationType.Number,
+      1,
+      (newValue: number) => {
+        this.container.scale.y = minimumNonZero(newValue);
+        this.transformableAttributeChangedValue();
+      },
+    ],
+    sz: [
+      AnimationType.Number,
+      1,
+      (newValue: number) => {
+        this.container.scale.z = minimumNonZero(newValue);
+        this.transformableAttributeChangedValue();
+      },
+    ],
+  });
   private static TransformableElementAttributeHandler = new AttributeHandler<TransformableElement>({
     x: (instance, newValue) => {
-      instance.container.position.x = parseFloatAttribute(newValue, 0);
+      instance.animatedAttributeHelper.elementSetAttribute("x", parseFloatAttribute(newValue, 0));
     },
     y: (instance, newValue) => {
-      instance.container.position.y = parseFloatAttribute(newValue, 0);
+      instance.animatedAttributeHelper.elementSetAttribute("y", parseFloatAttribute(newValue, 0));
     },
     z: (instance, newValue) => {
-      instance.container.position.z = parseFloatAttribute(newValue, 0);
+      instance.animatedAttributeHelper.elementSetAttribute("z", parseFloatAttribute(newValue, 0));
     },
     rx: (instance, newValue) => {
-      instance.container.rotation.x = parseFloatAttribute(newValue, 0) * THREE.MathUtils.DEG2RAD;
+      instance.animatedAttributeHelper.elementSetAttribute("rx", parseFloatAttribute(newValue, 0));
     },
     ry: (instance, newValue) => {
-      instance.container.rotation.y = parseFloatAttribute(newValue, 0) * THREE.MathUtils.DEG2RAD;
+      instance.animatedAttributeHelper.elementSetAttribute("ry", parseFloatAttribute(newValue, 0));
     },
     rz: (instance, newValue) => {
-      instance.container.rotation.z = parseFloatAttribute(newValue, 0) * THREE.MathUtils.DEG2RAD;
+      instance.animatedAttributeHelper.elementSetAttribute("rz", parseFloatAttribute(newValue, 0));
     },
     sx: (instance, newValue) => {
-      instance.container.scale.x = minimumNonZero(parseFloatAttribute(newValue, 1));
+      instance.animatedAttributeHelper.elementSetAttribute("sx", parseFloatAttribute(newValue, 1));
     },
     sy: (instance, newValue) => {
-      instance.container.scale.y = minimumNonZero(parseFloatAttribute(newValue, 1));
+      instance.animatedAttributeHelper.elementSetAttribute("sy", parseFloatAttribute(newValue, 1));
     },
     sz: (instance, newValue) => {
-      instance.container.scale.z = minimumNonZero(parseFloatAttribute(newValue, 1));
+      instance.animatedAttributeHelper.elementSetAttribute("sz", parseFloatAttribute(newValue, 1));
     },
     visible: (instance, newValue) => {
       instance.container.visible = parseBoolAttribute(newValue, true);
@@ -60,19 +136,38 @@ export abstract class TransformableElement extends MElement {
     super();
   }
 
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.animatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.animatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+  }
+
   getBounds(): THREE.Box3 {
     return new THREE.Box3().setFromObject(this.container);
   }
 
+  private transformableAttributeChangedValue() {
+    traverseChildren(this, (child) => {
+      if (child instanceof MElement) {
+        child.parentTransformed();
+      }
+    });
+  }
+
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (TransformableElement.TransformableElementAttributeHandler.handle(this, name, newValue)) {
-      // Traverse the children and update their colliders as well
-      traverseChildren(this, (child) => {
-        if (child instanceof MElement) {
-          child.parentTransformed();
-        }
-      });
-    }
+    TransformableElement.TransformableElementAttributeHandler.handle(this, name, newValue);
     this.debugHelper.handle(name, newValue);
   }
 }

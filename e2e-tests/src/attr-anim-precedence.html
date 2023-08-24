@@ -1,0 +1,90 @@
+<m-plane color="white" width="15" height="15" rx="-90"></m-plane>
+<m-light type="point" x="10" y="10" z="10"></m-light>
+
+<m-label width="5" y="1" rx="-45" z="3" content="This test targets a snapshot of the state at 1000ms of document time. The document time is overridden in e2e tests"></m-label>
+
+<!--
+  This test determines that the order of precedence is applied correctly at
+  a particular time (1000ms of document time) is correct
+-->
+
+<m-group id="timeline" y="0.25">
+  <m-cube width="15" height="0.25" depth="0.1" color="black"></m-cube>
+  <m-cube width="1" x="-5.6" y="0.25" height="0.25" depth="0.1" z="0.1" color="green"></m-cube>
+  <m-cube width="1" height="0.25" depth="0.1" z="0.1" color="red">
+    <m-attr-anim attr="x" start="-7" end="7" loop="true" start-time="0" duration="10000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="2">
+  <m-label content="equal start" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Equal start time - first child is used -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="cube-equal-start">
+    <m-attr-anim attr="x" start="1" end="4.25" loop="false" start-time="0" duration="2000"></m-attr-anim>
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="0" duration="2000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="3.75">
+  <m-label content="later start time" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Later start time of later child - first child is still used -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="cube-later-start-time">
+    <m-attr-anim attr="x" start="1" end="4.25" loop="false" start-time="0" duration="2000"></m-attr-anim>
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="100" duration="1900"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="5.5">
+  <m-label content="earlier start time" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Earlier start time of later child - earlier start time child is used (until start time of first child were to pass) -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="cube-earlier-start-time">
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="2000" duration="2000"></m-attr-anim>
+    <m-attr-anim attr="x" start="1" end="4.25" loop="false" start-time="0" duration="2000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="7.25">
+  <m-label content="next to start" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Next to start amongst unstarted children (first child with the soonest start time) -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="cube-next-to-start">
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="2000" duration="100"></m-attr-anim>
+    <m-attr-anim attr="x" start="1" end="4.25" loop="false" start-time="1500" duration="1000"></m-attr-anim>
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="1500" duration="1000"></m-attr-anim>
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="0" duration="150"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="9">
+  <m-label content="latest end time" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Latest end time amongst ended children (first child with latest end time) -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="cube-latest-end-time">
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="0" duration="100"></m-attr-anim>
+    <m-attr-anim attr="x" start="1" end="4.25" loop="false" start-time="0" duration="200"></m-attr-anim>
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="0" duration="200"></m-attr-anim>
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="0" duration="150"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+
+<m-group x="0" y="10.75">
+  <m-label content="paused" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Paused attribute animations act as "running" in precedence. First paused attribute. -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="cube-paused">
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="0" duration="100"></m-attr-anim>
+    <m-attr-anim attr="x" start="1" end="4.25" loop="false" start-time="0" duration="200" pause-time="100"></m-attr-anim>
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="400" duration="200"></m-attr-anim>
+    <m-attr-anim attr="x" start="-1" end="-4.25" loop="false" start-time="0" duration="150" pause-time="200"></m-attr-anim>
+  </m-cube>
+</m-group>

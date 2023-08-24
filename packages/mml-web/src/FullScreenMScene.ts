@@ -12,6 +12,14 @@ export class FullScreenMScene extends MMLScene {
     document.documentElement.style.overflow = "hidden";
     document.documentElement.style.overscrollBehaviorX = "contain";
     document.documentElement.style.margin = "0";
-    document.body.style.margin = "0";
+    if (document.body) {
+      document.body.style.margin = "0";
+    } else {
+      window.addEventListener("load", () => {
+        if (document.body) {
+          document.body.style.margin = "0";
+        }
+      });
+    }
   }
 }

@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -19,6 +22,42 @@ const defaultSphereHeightSegments = 16;
 
 export class Sphere extends TransformableElement {
   static tagName = "m-sphere";
+
+  private sphereAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    color: [
+      AnimationType.Color,
+      defaultSphereColor,
+      (newValue: THREE.Color) => {
+        this.props.color = newValue;
+        if (this.material) {
+          this.material.color = this.props.color;
+        }
+      },
+    ],
+    radius: [
+      AnimationType.Number,
+      defaultSphereRadius,
+      (newValue: number) => {
+        this.props.radius = newValue;
+        const scale = this.props.radius * 2;
+        this.mesh.scale.set(scale, scale, scale);
+        this.collideableHelper.updateCollider(this.mesh);
+      },
+    ],
+    opacity: [
+      AnimationType.Number,
+      defaultSphereOpacity,
+      (newValue: number) => {
+        this.props.opacity = newValue;
+        if (this.material) {
+          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
+          this.material.transparent = this.props.opacity !== 1;
+          this.material.needsUpdate = needsUpdate;
+          this.material.opacity = newValue;
+        }
+      },
+    ],
+  });
 
   static sphereGeometry = new THREE.SphereGeometry(
     defaultSphereRadius,
@@ -40,25 +79,22 @@ export class Sphere extends TransformableElement {
 
   private static attributeHandler = new AttributeHandler<Sphere>({
     color: (instance, newValue) => {
-      instance.props.color = parseColorAttribute(newValue, defaultSphereColor);
-      if (instance.material) {
-        instance.material.color = instance.props.color;
-      }
+      instance.sphereAnimatedAttributeHelper.elementSetAttribute(
+        "color",
+        parseColorAttribute(newValue, defaultSphereColor),
+      );
     },
     radius: (instance, newValue) => {
-      instance.props.radius = parseFloatAttribute(newValue, defaultSphereRadius);
-      const scale = instance.props.radius * 2;
-      instance.mesh.scale.set(scale, scale, scale);
-      instance.collideableHelper.updateCollider(instance.mesh);
+      instance.sphereAnimatedAttributeHelper.elementSetAttribute(
+        "radius",
+        parseFloatAttribute(newValue, defaultSphereRadius),
+      );
     },
     opacity: (instance, newValue) => {
-      instance.props.opacity = parseFloatAttribute(newValue, defaultSphereOpacity);
-      if (instance.material) {
-        const needsUpdate = instance.material.transparent === (instance.props.opacity === 1);
-        instance.material.transparent = instance.props.opacity !== 1;
-        instance.material.needsUpdate = needsUpdate;
-        instance.material.opacity = parseFloatAttribute(newValue, 1);
-      }
+      instance.sphereAnimatedAttributeHelper.elementSetAttribute(
+        "opacity",
+        parseFloatAttribute(newValue, defaultSphereOpacity),
+      );
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultSphereCastShadows);
@@ -83,6 +119,26 @@ export class Sphere extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.sphereAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.sphereAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {

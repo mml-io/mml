@@ -1,6 +1,9 @@
 import * as THREE from "three";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -27,6 +30,20 @@ const defaultAudioSrc = null;
 
 export class Audio extends TransformableElement {
   static tagName = "m-audio";
+
+  private audioAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    volume: [
+      AnimationType.Number,
+      defaultAudioVolume,
+      (newValue: number) => {
+        this.props.volume = newValue;
+        if (this.loadedAudioState) {
+          this.loadedAudioState?.positionalAudio.setVolume(this.props.volume);
+        }
+      },
+    ],
+  });
+
   private documentTimeListener: { remove: () => void };
   private delayedStartTimer: NodeJS.Timeout | null = null;
   private delayedPauseTimer: NodeJS.Timeout | null = null;
@@ -78,10 +95,10 @@ export class Audio extends TransformableElement {
       instance.updateAudio();
     },
     volume: (instance, newValue) => {
-      instance.props.volume = parseFloatAttribute(newValue, defaultAudioVolume);
-      if (instance.loadedAudioState) {
-        instance.loadedAudioState?.positionalAudio.setVolume(instance.props.volume);
-      }
+      instance.audioAnimatedAttributeHelper.elementSetAttribute(
+        "volume",
+        parseFloatAttribute(newValue, defaultAudioVolume),
+      );
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, false);
@@ -91,6 +108,26 @@ export class Audio extends TransformableElement {
 
   constructor() {
     super();
+  }
+
+  public addSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.audioAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.audioAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
+    super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {

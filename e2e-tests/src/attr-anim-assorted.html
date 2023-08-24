@@ -1,0 +1,67 @@
+<m-plane color="white" width="30" height="30" rx="-90" y="-3" z="-10">
+  <m-attr-anim attr="width" ping-pong="true" easing="easeInOutQuint" start="10" end="30" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="height" ping-pong="true" easing="easeInOutQuint" start="10" end="30" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="color" start="white" end="blue" ping-pong="true" easing="easeInOutQuint" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-plane>
+
+<m-light type="point" x="10" y="10" z="10"></m-light>
+
+<m-group x="0" y="4" z="0">
+  <m-attr-anim attr="sx" ping-pong="true" easing="easeInOutQuint" start="1" end="2" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="sy" ping-pong="true" easing="easeInOutQuint" start="1" end="0.5" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="sz" ping-pong="true" easing="easeInOutQuint" start="1" end="3" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-cube width="2" height="0.1" depth="2"></m-cube>
+  <m-cube width="2" y="2" height="0.1" depth="2"></m-cube>
+  <m-cube rx="90" y="1" z="-0.95" width="1.8" height="0.1" depth="2"></m-cube>
+  <m-cube rz="90" y="1" x="-0.95" width="1.9" height="0.1" depth="2"></m-cube>
+  <m-cube rz="90" y="1" x="0.95" width="1.9" height="0.1" depth="2"></m-cube>
+  <m-light type="point" y="1" color="red" distance="10">
+    <m-attr-anim attr="intensity" start="0.1" end="1" ping-pong="true" easing="easeInOutQuint" loop="true" start-time="0" duration="4000"></m-attr-anim>
+    <m-attr-anim attr="color" start="red" end="green" ping-pong="true" easing="easeInOutQuint" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  </m-light>
+</m-group>
+
+<m-interaction x="-8" y="3" debug="true">
+  <m-attr-anim attr="range" ping-pong="true" easing="easeInOutQuint" start="1" end="2" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-interaction>
+
+<m-position-probe x="8" y="3" debug="true">
+  <m-attr-anim attr="range" ping-pong="true" easing="easeInOutQuint" start="1" end="2" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-position-probe>
+
+<m-image y="7" x="7" src="https://public.mml.io/test-image.jpg">
+  <m-attr-anim attr="width" ping-pong="true" easing="easeInOutQuint" start="1" end="5" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="opacity" ping-pong="true" easing="easeInOutQuint" start="1" end="0.5" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-image>
+
+<m-video volume="0" y="8" src="/assets/timestamp-video.ogg" pause-time="1000">
+  <m-attr-anim attr="width" ping-pong="true" easing="easeInOutQuint" start="1" end="4" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="opacity" ping-pong="true" easing="easeInOutQuint" start="1" end="0.5" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-video>
+
+<m-label y="7" x="-7" content="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin lectus eros, cursus quis malesuada interdum, convallis quis ante. Maecenas et risus at nulla tristique molestie.">
+  <m-attr-anim attr="width" ping-pong="true" easing="easeInOutQuint" start="1" end="3" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="height" ping-pong="true" easing="easeInOutQuint" start="1" end="3" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="padding" ping-pong="true" easing="easeInOutQuint" start="1" end="30" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="font-size" ping-pong="true" easing="easeInOutQuint" start="15" end="70" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-label>
+
+<m-sphere x="-4" y="2" color="red">
+  <m-attr-anim attr="radius" ping-pong="true" easing="easeInOutQuint" start="0.5" end="2" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="opacity" ping-pong="true" easing="easeInOutQuint" start="1" end="0.5" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="color" start="white" end="red" ping-pong="true" easing="easeInOutQuint" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-sphere>
+
+<m-cube y="2" color="green">
+  <m-attr-anim attr="width" ping-pong="true" easing="easeInOutQuint" start="1" end="3" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="height" ping-pong="true" easing="easeInOutQuint" start="1" end="3" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="depth" ping-pong="true" easing="easeInOutQuint" start="1" end="3" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="color" start="white" end="green" ping-pong="true" easing="easeInOutQuint" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-cube>
+
+<m-cylinder x="4" y="2" color="blue">
+  <m-attr-anim attr="radius" ping-pong="true" easing="easeInOutQuint" start="0.5" end="2" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="height" ping-pong="true" easing="easeInOutQuint" start="1" end="3" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="opacity" ping-pong="true" easing="easeInOutQuint" start="1" end="0.5" loop="true" start-time="0" duration="4000"></m-attr-anim>
+  <m-attr-anim attr="color" start="white" end="blue" ping-pong="true" easing="easeInOutQuint" loop="true" start-time="0" duration="4000"></m-attr-anim>
+</m-cylinder>

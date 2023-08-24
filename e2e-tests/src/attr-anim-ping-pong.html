@@ -1,0 +1,51 @@
+<m-plane color="white" width="15" height="15" rx="-90"></m-plane>
+<m-light type="point" x="10" y="10" z="10"></m-light>
+
+<m-group id="timeline" y="0.25">
+  <m-cube width="15" height="0.25" depth="0.1" color="black"></m-cube>
+  <m-cube width="1" x="-5.6" y="0.25" height="0.25" depth="0.1" z="0.1" color="green"></m-cube>
+  <m-cube width="1" height="0.25" depth="0.1" z="0.1" color="red">
+    <m-attr-anim attr="x" start="-7" end="7" loop="true" start-time="0" duration="10000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="2">
+  <m-label content="ping-pong" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="11.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="ping-pong">
+    <m-attr-anim attr="x" start="-5" end="5" loop="false" start-time="0" duration="5000" ping-pong="true"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="3.75">
+  <m-label content="ping-pong-delay" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="11.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="ping-pong-delay">
+    <m-attr-anim attr="x" start="-5" end="5" start-time="0" duration="5000" loop="false" ping-pong="true" ping-pong-delay="1000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="5.5">
+  <m-label content="ping-pong-looping" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="11.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="ping-pong-looping">
+    <m-attr-anim attr="x" start="-5" end="5" loop="true" start-time="0" duration="5000" ping-pong="true"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="7.25">
+  <m-label content="ping-pong-delay-looping" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="11.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="ping-pong-delay-looping">
+    <m-attr-anim attr="x" start="-5" end="5" start-time="0" duration="5000" loop="true" ping-pong="true" ping-pong-delay="1000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="9">
+  <m-label content="ping-pong-paused" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <m-cube width="11.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube depth="0.1" height="0.5" color="white" id="ping-pong-paused">
+    <m-attr-anim attr="x" start="-5" end="5" start-time="0" pause-time="1000" duration="5000" loop="true" ping-pong="true" ping-pong-delay="1000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
