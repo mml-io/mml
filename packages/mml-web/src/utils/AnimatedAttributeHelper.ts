@@ -90,7 +90,7 @@ export class AnimatedAttributeHelper {
       const state = this.stateByAttribute[key];
       let stale: { value: number | THREE.Color; state: number } | null = null;
       const animationType = state.valueAndHandler[0];
-      for (const animation of state.animationsInOrder) {
+      animationsForKey: for (const animation of state.animationsInOrder) {
         switch (animationType) {
           case AnimationType.Color:
             {
@@ -98,7 +98,7 @@ export class AnimatedAttributeHelper {
               if (active === 0) {
                 state.valueAndHandler[2](newValue);
                 stale = null;
-                break;
+                break animationsForKey;
               } else {
                 if (stale === null) {
                   stale = { value: newValue, state: active };
@@ -119,7 +119,7 @@ export class AnimatedAttributeHelper {
               if (active === 0) {
                 state.valueAndHandler[2](newValue);
                 stale = null;
-                break;
+                break animationsForKey;
               } else {
                 if (stale === null) {
                   stale = { value: newValue, state: active };
