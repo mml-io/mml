@@ -28,7 +28,6 @@ const defaultPingPongDelay = 0;
 export enum AnimationType {
   Number,
   Color,
-  Unknown,
 }
 
 const defaultColor = new THREE.Color(0xffffff);

@@ -91,42 +91,51 @@ export class AnimatedAttributeHelper {
       let stale: { value: number | THREE.Color; state: number } | null = null;
       const animationType = state.valueAndHandler[0];
       for (const animation of state.animationsInOrder) {
-        if (animationType === AnimationType.Color) {
-          const [newValue, active] = animation.getColorValueForTime(documentTime);
-          if (active === 0) {
-            state.valueAndHandler[2](newValue);
-            stale = null;
-            break;
-          } else {
-            if (stale === null) {
-              stale = { value: newValue, state: active };
-            } else {
-              const isAboutToStartRatherThanEnded = stale.state > 0 && active < 0;
-              const isMoreRecentEnd = stale.state > 0 && active > 0 && stale.state > active;
-              const isSoonerToStart = stale.state < 0 && active < 0 && stale.state < active;
-              if (isAboutToStartRatherThanEnded || isMoreRecentEnd || isSoonerToStart) {
-                stale = { value: newValue, state: active };
+        switch (animationType) {
+          case AnimationType.Color:
+            {
+              const [newValue, active] = animation.getColorValueForTime(documentTime);
+              if (active === 0) {
+                state.valueAndHandler[2](newValue);
+                stale = null;
+                break;
+              } else {
+                if (stale === null) {
+                  stale = { value: newValue, state: active };
+                } else {
+                  const isAboutToStartRatherThanEnded = stale.state > 0 && active < 0;
+                  const isMoreRecentEnd = stale.state > 0 && active > 0 && stale.state > active;
+                  const isSoonerToStart = stale.state < 0 && active < 0 && stale.state < active;
+                  if (isAboutToStartRatherThanEnded || isMoreRecentEnd || isSoonerToStart) {
+                    stale = { value: newValue, state: active };
+                  }
+                }
               }
             }
-          }
-        } else if (animationType === AnimationType.Number) {
-          const [newValue, active] = animation.getFloatValueForTime(documentTime);
-          if (active === 0) {
-            state.valueAndHandler[2](newValue);
-            stale = null;
             break;
-          } else {
-            if (stale === null) {
-              stale = { value: newValue, state: active };
-            } else {
-              const isAboutToStartRatherThanEnded = stale.state > 0 && active < 0;
-              const isMoreRecentEnd = stale.state > 0 && active > 0 && stale.state > active;
-              const isSoonerToStart = stale.state < 0 && active < 0 && stale.state < active;
-              if (isAboutToStartRatherThanEnded || isMoreRecentEnd || isSoonerToStart) {
-                stale = { value: newValue, state: active };
+          case AnimationType.Number:
+            {
+              const [newValue, active] = animation.getFloatValueForTime(documentTime);
+              if (active === 0) {
+                state.valueAndHandler[2](newValue);
+                stale = null;
+                break;
+              } else {
+                if (stale === null) {
+                  stale = { value: newValue, state: active };
+                } else {
+                  const isAboutToStartRatherThanEnded = stale.state > 0 && active < 0;
+                  const isMoreRecentEnd = stale.state > 0 && active > 0 && stale.state > active;
+                  const isSoonerToStart = stale.state < 0 && active < 0 && stale.state < active;
+                  if (isAboutToStartRatherThanEnded || isMoreRecentEnd || isSoonerToStart) {
+                    stale = { value: newValue, state: active };
+                  }
+                }
               }
             }
-          }
+            break;
+          default:
+            throw new Error("Unknown animation type");
         }
       }
       if (stale !== null) {
