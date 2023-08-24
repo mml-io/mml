@@ -1227,14 +1227,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="start" type="xs:float">
+          <xs:attribute name="start" type="xs:string">
             <xs:annotation>
               <xs:documentation>
                 The value of the attribute that the animation should start at.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="end" type="xs:float">
+          <xs:attribute name="end" type="xs:string">
             <xs:annotation>
               <xs:documentation>
                 The value of the attribute that the animation should end at.
