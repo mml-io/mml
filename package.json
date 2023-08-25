@@ -15,7 +15,7 @@
     "check": "npm run build && npm run type-check-all && npm run lint-all",
     "link-all": "lerna exec \"npm link\" --no-private && npm run print-links",
     "print-links": "echo \"Run this command in the package you would like to link this repo's packages to:\n\"; echo \"npm link\" $(lerna ls --loglevel=error)",
-    "version": "lerna version --no-push",
+    "version": "lerna version --no-push --force-publish",
     "ci:e2e-tests": "concurrently --success command-1 --kill-others \"lerna run serve --scope e2e-tests\" \"lerna run --stream ci:e2e-tests\"",
     "e2e-tests": "lerna run --stream e2e-tests"
   },
