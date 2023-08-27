@@ -16,7 +16,7 @@ import {
 
 const defaultAttribute: string | null = null;
 const defaultStart = 0;
-const defaultEnd = 1000;
+const defaultEnd = 0;
 const defaultLoop = true;
 const defaultPingPong = false;
 const defaultEasing = "";
