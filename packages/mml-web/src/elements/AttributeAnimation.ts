@@ -1,7 +1,6 @@
 import * as THREE from "three";
 
 import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import {
   EndOfAnimationSymbol,
   getEasedRatioForTime,
@@ -114,10 +113,7 @@ export class AttributeAnimation extends MElement {
   });
 
   static get observedAttributes(): Array<string> {
-    return [
-      ...TransformableElement.observedAttributes,
-      ...AttributeAnimation.attributeHandler.getAttributes(),
-    ];
+    return [...AttributeAnimation.attributeHandler.getAttributes()];
   }
   constructor() {
     super();
