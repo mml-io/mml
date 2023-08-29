@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-schema-validator",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "publishConfig": {
     "access": "public"
   },
@@ -16,7 +16,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@mml-io/mml-schema": "^0.6.1",
+    "@mml-io/mml-schema": "^0.6.2",
     "xsd-validator": "1.1.0"
   }
 }
