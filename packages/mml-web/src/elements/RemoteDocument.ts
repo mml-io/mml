@@ -94,7 +94,7 @@ export class RemoteDocument extends MElement {
     return this.scene;
   }
 
-  private tick() {
+  public tick() {
     this.documentRoot.tick();
     this.animationFrameCallback = window.requestAnimationFrame(() => {
       this.tick();
