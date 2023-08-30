@@ -39,7 +39,7 @@ test("invalid tag throws error", () => {
     </m-notathing>
   </body>
 </html>
-`);
+`)!;
   expect(validationErrors[0].message).toContain(
     "Element 'm-notathing': This element is not expected.",
   );
@@ -57,7 +57,7 @@ test("invalid attribute throws error", () => {
     </m-cube>
   </body>
 </html>
-`);
+`)!;
   expect(validationErrors[0].message).toContain(
     "attribute 'notathing': The attribute 'notathing' is not allowed.",
   );

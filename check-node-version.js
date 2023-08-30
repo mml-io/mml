@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const { readFileSync } = require("fs");
-const { resolve } = require("path");
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 let nvmrc;
 try {

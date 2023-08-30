@@ -1,17 +1,13 @@
-/**
- * @jest-environment jsdom
- */
-
-import { registerCustomElementsToWindow } from "mml-web";
+import { jest } from "@jest/globals";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { IframeObservableDOMFactory } from "@mml-io/networked-dom-web-runner";
-import { AudioContext } from "standardized-audio-context-mock";
+import { registerCustomElementsToWindow } from "mml-web";
 
 import { waitFor } from "./test-util";
 import { MMLWebRunnerClient } from "../build/index";
 
-jest.mock("three", () => {
-  const THREE = jest.requireActual("three");
+jest.unstable_mockModule("three", () => {
+  const THREE = jest.requireActual("three") as typeof import("three");
   return {
     ...THREE,
     WebGLRenderer: jest.fn().mockReturnValue({
@@ -28,9 +24,7 @@ jest.mock("three", () => {
   };
 });
 
-beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
-});
+beforeAll(() => {});
 test("mml-web-runner end-to-end", async () => {
   const networkedDOMDocument = new EditableNetworkedDOM(
     "http://example.com/index.html",

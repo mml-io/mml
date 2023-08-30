@@ -11,10 +11,11 @@
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
+    "esModuleInterop": true,
     "downlevelIteration": true,
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["src/**/*","./build.ts"],
+  "include": ["src/**/*", "test/**/*", "./build.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

@@ -17,8 +17,6 @@
     "outDir": "./build",
     "incremental": true
   },
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*", "test/**/*", "./build.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

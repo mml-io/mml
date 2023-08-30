@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {
   EndOfAnimationSymbol,
   getEasedRatioForTime,
@@ -10,7 +6,7 @@ import {
 
 const defaults = {
   startTime: 0,
-  pauseTime: null,
+  pauseTime: null as number | null,
   animDuration: 1000,
   loop: true,
   pingPong: false,

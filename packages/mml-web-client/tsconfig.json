@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "noImplicitAny": true,
-    "module": "esnext",
-    "target": "ES6",
+    "module": "commonjs",
+    "target": "es2020",
     "jsx": "react",
     "lib": ["es2020", "dom"],
     "sourceMap": true,
@@ -15,6 +15,6 @@
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["src/**/*","./build.ts"],
+  "include": ["src/**/*", "test/**/*", "./build.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

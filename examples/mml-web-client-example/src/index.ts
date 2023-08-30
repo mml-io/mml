@@ -4,14 +4,15 @@ import * as url from "url";
 
 import { NetworkedDOM } from "@mml-io/networked-dom-document";
 import * as chokidar from "chokidar";
-import express, { Request } from "express";
+import express, { static as expressStatic, Request } from "express";
 import enableWs from "express-ws";
 import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import ws from "ws";
 
 const port = process.env.PORT || 7070;
 
-const filePath = path.resolve(__dirname, "../src/mml-document.html");
+const dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const filePath = path.resolve(dirname, "../src/mml-document.html");
 
 const getMMLFileContents = () => fs.readFileSync(filePath, "utf8");
 
@@ -44,6 +45,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve mml-web-client
+app.use(
+  "/client/",
+  expressStatic(path.resolve(dirname, "../../../node_modules/mml-web-client/build/")),
+);
+
 app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -54,9 +61,7 @@ app.get("/", (req, res) => {
 `);
 });
 app.get("/static-example/", (req, res) => {
-  res.send(
-    `<html><script src="http://localhost:28891/index.js"></script>${getMMLFileContents()}</html>`,
-  );
+  res.send(`<html><script src="/client/index.js"></script>${getMMLFileContents()}</html>`);
 });
 app.ws("/mml-websocket", (ws: ws.WebSocket) => {
   document.addWebSocket(ws as unknown as WebSocket);
@@ -66,9 +71,7 @@ app.ws("/mml-websocket", (ws: ws.WebSocket) => {
 });
 app.get("/websocket-example/", (req, res) => {
   res.send(
-    `<html><script src="http://localhost:28891/index.js?websocketUrl=${getWebsocketUrl(
-      req,
-    )}"></script></html>`,
+    `<html><script src="/client/index.js?websocketUrl=${getWebsocketUrl(req)}"></script></html>`,
   );
 });
 

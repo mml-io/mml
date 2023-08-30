@@ -1,8 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
+import { jest } from "@jest/globals";
 import * as THREE from "three";
 
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
@@ -13,7 +9,6 @@ import { FullScreenMScene } from "../src/FullScreenMScene";
 import { GLTFResult } from "../src/utils/gltf";
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
 });
 
@@ -72,7 +67,7 @@ describe("m-character", () => {
     const loadModelPromise: Promise<GLTFResult> = (element as any).latestSrcModelPromise;
     expect(loadModelPromise).toBeTruthy();
     await loadModelPromise;
-    expect(element.getCharacter().name).toBe(testNode.name);
+    expect(element.getCharacter()!.name).toBe(testNode.name);
 
     mockGLTFLoad.mockRestore();
   });

@@ -1,19 +1,24 @@
-import type { Config } from "jest";
+import type { JestConfigWithTsJest } from "ts-jest";
 
-const config: Config = {
+const jestConfig: JestConfigWithTsJest = {
   verbose: true,
   collectCoverage: true,
+  testEnvironment: "jsdom",
   coverageDirectory: "coverage",
   coverageReporters: ["lcov", "text"],
-  testEnvironment: "node",
-  setupFiles: ["jest-canvas-mock"],
+  extensionsToTreatAsEsm: [".ts"],
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+  },
   setupFilesAfterEnv: ["jest-expect-message", "./test/jest.setup.ts"],
   transform: {
-    "^.+\\.(t|j)sx?$": ["@swc/jest", {}],
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        useESM: true,
+      },
+    ],
   },
-  // allow Jest to transform files in node_modules (required so that exports
-  // from THREE's examples folder can be imported)
-  transformIgnorePatterns: [],
 };
 
-export default config;
+export default jestConfig;

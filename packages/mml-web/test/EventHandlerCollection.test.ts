@@ -1,6 +1,4 @@
-/**
- * @jest-environment jsdom
- */
+import { jest } from "@jest/globals";
 
 import { EventHandlerCollection } from "../src/utils/events/EventHandlerCollection";
 
@@ -15,7 +13,7 @@ function mouseClickEvent(): MouseEvent {
 const clickFunc = jest.fn();
 const mockTarget = {
   addEventListener: jest.fn(),
-  dispatchEvent: jest.fn(),
+  dispatchEvent: jest.fn() as jest.MockedFunction<() => boolean>,
   removeEventListener: jest.fn(),
 };
 

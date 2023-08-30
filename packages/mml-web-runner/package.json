@@ -6,6 +6,7 @@
   },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
+  "type": "module",
   "files": [
     "/build"
   ],
@@ -13,10 +14,10 @@
     "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
     "iterate": "tsx ./build.ts --watch",
-    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix",
-    "test": "jest",
-    "test-iterate": "jest --watch"
+    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
     "@mml-io/networked-dom-web-runner": "^0.6.2"
@@ -25,7 +26,6 @@
     "jest-canvas-mock": "2.5.2",
     "jest-environment-jsdom": "29.6.2",
     "jest-expect-message": "1.1.3",
-    "resize-observer-polyfill": "1.5.1",
-    "standardized-audio-context-mock": "9.6.28"
+    "resize-observer-polyfill": "1.5.1"
   }
 }

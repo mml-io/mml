@@ -1,8 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
+import { jest } from "@jest/globals";
 import * as THREE from "three";
 
 import { createTestScene } from "./scene-test-utils";
@@ -13,7 +9,6 @@ import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMScene } from "../src/FullScreenMScene";
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
 });
 
@@ -67,7 +62,7 @@ describe("m-model", () => {
     expect(mockGLTFLoad).toBeCalledTimes(1);
     expect((element as any).latestSrcModelPromise).toBeTruthy();
     await (element as any).latestSrcModelPromise;
-    expect(element.getModel().name).toBe(testNode.name);
+    expect(element.getModel()!.name).toBe(testNode.name);
 
     mockGLTFLoad.mockRestore();
   });
@@ -145,7 +140,9 @@ describe("m-model", () => {
     expect((element as any).latestSrcModelPromise).toBeTruthy();
     await (element as any).latestSrcModelPromise;
 
-    expect(scene.getThreeScene().children[0].children[0].children[0].children[0].children[0]).toBe(secondMesh);
+    expect(scene.getThreeScene().children[0].children[0].children[0].children[0].children[0]).toBe(
+      secondMesh,
+    );
   });
 
   test("observes the schema-specified attributes", () => {

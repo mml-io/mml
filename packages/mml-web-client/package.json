@@ -7,13 +7,14 @@
   "files": [
     "/build"
   ],
+  "type": "module",
   "main": "build/index.js",
   "scripts": {
     "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
     "iterate": "cross-env PORT=28891 tsx ./build.ts --serve",
-    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
     "mml-web": "^0.6.2",

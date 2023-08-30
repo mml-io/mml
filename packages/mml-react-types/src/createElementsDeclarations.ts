@@ -1,12 +1,5 @@
 import { Attribute, Element } from "@mml-io/mml-schema";
-import {
-  factory,
-  InterfaceDeclaration,
-  PropertySignature,
-  SyntaxKind,
-  TypeAliasDeclaration,
-  TypeReferenceNode,
-} from "typescript";
+import ts from "typescript";
 
 import {
   createEventHandlerDeclarations,
@@ -30,49 +23,51 @@ function getElementEventListenersName(name: string) {
 }
 
 function createElementDeclarations(element: Element): {
-  eventInstanceDeclaration?: InterfaceDeclaration;
-  attributeType: TypeAliasDeclaration;
-  eventMapInterfaceDeclaration?: InterfaceDeclaration;
-  elementType: TypeAliasDeclaration;
+  eventInstanceDeclaration?: ts.InterfaceDeclaration;
+  attributeType: ts.TypeAliasDeclaration;
+  eventMapInterfaceDeclaration?: ts.InterfaceDeclaration;
+  elementType: ts.TypeAliasDeclaration;
 } {
   const attributeGroupNames = element.attributeGroups as Array<string>;
   const mmlElementTypeName = getMMLElementTypeName(element.name);
 
   const scriptAttributes: Array<Attribute> = [];
-  const directElementAttributes: Array<PropertySignature> = [];
+  const directElementAttributes: Array<ts.PropertySignature> = [];
   for (const attribute of element.attributes) {
     if (attribute.type === "Script") {
       scriptAttributes.push(attribute);
     } else {
       directElementAttributes.push(
-        factory.createPropertySignature(
+        ts.factory.createPropertySignature(
           undefined,
-          factory.createStringLiteral(attribute.name),
-          factory.createToken(SyntaxKind.QuestionToken),
-          factory.createTypeReferenceNode(getReturnAttributeType(attribute), undefined),
+          ts.factory.createStringLiteral(attribute.name),
+          ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+          ts.factory.createTypeReferenceNode(getReturnAttributeType(attribute), undefined),
         ),
       );
     }
   }
-  let eventMapInterfaceDeclaration: InterfaceDeclaration | undefined = undefined;
-  let eventInstanceDeclaration: InterfaceDeclaration | undefined = undefined;
+  let eventMapInterfaceDeclaration: ts.InterfaceDeclaration | undefined = undefined;
+  let eventInstanceDeclaration: ts.InterfaceDeclaration | undefined = undefined;
 
-  const instanceHeritageClauses: Array<TypeReferenceNode> = [];
-  const attributeHeritageClauses: Array<TypeReferenceNode> = [];
+  const instanceHeritageClauses: Array<ts.TypeReferenceNode> = [];
+  const attributeHeritageClauses: Array<ts.TypeReferenceNode> = [];
   for (const attributeGroup of attributeGroupNames) {
     const attributeGroupName = getAttributeGroupName(attributeGroup);
-    const typeArguments = [factory.createTypeReferenceNode(mmlElementTypeName)];
+    const typeArguments = [ts.factory.createTypeReferenceNode(mmlElementTypeName)];
     instanceHeritageClauses.push(
-      factory.createTypeReferenceNode(attributeGroupName, typeArguments),
+      ts.factory.createTypeReferenceNode(attributeGroupName, typeArguments),
     );
 
     attributeHeritageClauses.push(
-      factory.createTypeReferenceNode(getAttributeGroupAttributesName(attributeGroupName)),
+      ts.factory.createTypeReferenceNode(getAttributeGroupAttributesName(attributeGroupName)),
     );
   }
 
   if (scriptAttributes.length > 0) {
-    const eventMapTypeName = factory.createIdentifier(`${getMMLElementName(element.name)}EventMap`);
+    const eventMapTypeName = ts.factory.createIdentifier(
+      `${getMMLElementName(element.name)}EventMap`,
+    );
 
     eventMapInterfaceDeclaration = createEventMapInterfaceDeclaration(
       eventMapTypeName,
@@ -80,51 +75,51 @@ function createElementDeclarations(element: Element): {
     );
     const eventHandlersDeclarations = createEventHandlerDeclarations(eventMapTypeName);
 
-    eventInstanceDeclaration = factory.createInterfaceDeclaration(
-      [factory.createToken(SyntaxKind.ExportKeyword)],
+    eventInstanceDeclaration = ts.factory.createInterfaceDeclaration(
+      [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
       getElementEventListenersName(element.name),
-      [factory.createTypeParameterDeclaration(undefined, "T")],
+      [ts.factory.createTypeParameterDeclaration(undefined, "T")],
       undefined,
       eventHandlersDeclarations,
     );
-    const eventClassNode = factory.createTypeReferenceNode(
+    const eventClassNode = ts.factory.createTypeReferenceNode(
       getElementEventListenersName(element.name),
-      [factory.createTypeReferenceNode(mmlElementTypeName)],
+      [ts.factory.createTypeReferenceNode(mmlElementTypeName)],
     );
     instanceHeritageClauses.push(eventClassNode);
   }
 
-  const instanceDefaultHeritageClauses = [factory.createTypeReferenceNode("HTMLElement")];
+  const instanceDefaultHeritageClauses = [ts.factory.createTypeReferenceNode("HTMLElement")];
 
   // create a type for each element
-  const elementType = factory.createTypeAliasDeclaration(
-    [factory.createToken(SyntaxKind.ExportKeyword)],
-    factory.createIdentifier(mmlElementTypeName),
+  const elementType = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
+    ts.factory.createIdentifier(mmlElementTypeName),
     undefined,
-    factory.createIntersectionTypeNode(
+    ts.factory.createIntersectionTypeNode(
       instanceHeritageClauses.length
         ? [
             ...instanceDefaultHeritageClauses,
-            factory.createIntersectionTypeNode(instanceHeritageClauses),
+            ts.factory.createIntersectionTypeNode(instanceHeritageClauses),
           ]
         : instanceDefaultHeritageClauses,
     ),
   );
 
   const attributeDefaultHeritageClauses = [
-    factory.createTypeReferenceNode(MMLReactCoreAttributesTypeIdentifier, [
-      factory.createTypeReferenceNode(mmlElementTypeName),
+    ts.factory.createTypeReferenceNode(MMLReactCoreAttributesTypeIdentifier, [
+      ts.factory.createTypeReferenceNode(mmlElementTypeName),
     ]),
   ];
 
-  const attributeType = factory.createTypeAliasDeclaration(
-    [factory.createToken(SyntaxKind.ExportKeyword)],
-    factory.createIdentifier(getMMLElementAttributesName(element.name)),
+  const attributeType = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
+    ts.factory.createIdentifier(getMMLElementAttributesName(element.name)),
     undefined,
-    factory.createIntersectionTypeNode(
+    ts.factory.createIntersectionTypeNode(
       directElementAttributes.length
         ? [
-            factory.createTypeLiteralNode(directElementAttributes),
+            ts.factory.createTypeLiteralNode(directElementAttributes),
             ...attributeDefaultHeritageClauses,
             ...attributeHeritageClauses,
           ]
@@ -137,8 +132,8 @@ function createElementDeclarations(element: Element): {
 
 export function createElementsDeclarations(elements: {
   [key: string]: Element;
-}): Array<InterfaceDeclaration | TypeAliasDeclaration> {
-  const elementsDefinitions: Array<InterfaceDeclaration | TypeAliasDeclaration> = [];
+}): Array<ts.InterfaceDeclaration | ts.TypeAliasDeclaration> {
+  const elementsDefinitions: Array<ts.InterfaceDeclaration | ts.TypeAliasDeclaration> = [];
 
   for (const elementName in elements) {
     if (!elementName.startsWith("m-")) continue;

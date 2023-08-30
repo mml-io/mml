@@ -1,15 +1,24 @@
-import type { Config } from "jest";
+import type { JestConfigWithTsJest } from "ts-jest";
 
-const config: Config = {
+const jestConfig: JestConfigWithTsJest = {
   verbose: true,
+  collectCoverage: true,
+  testEnvironment: "jsdom",
+  coverageDirectory: "coverage",
+  coverageReporters: ["lcov", "text"],
+  extensionsToTreatAsEsm: [".ts"],
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+  },
+  setupFilesAfterEnv: ["jest-expect-message"],
   transform: {
-    "^.+\\.(tsx?)$": [
-      "esbuild-jest",
+    "^.+\\.tsx?$": [
+      "ts-jest",
       {
-        sourcemap: true,
+        useESM: true,
       },
     ],
   },
 };
 
-export default config;
+export default jestConfig;

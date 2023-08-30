@@ -6,6 +6,7 @@
   },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
+  "type": "module",
   "files": [
     "/build"
   ],
@@ -13,7 +14,7 @@
     "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
     "iterate": "tsx ./build.ts --watch",
-    "test": "jest"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
     "@mml-io/mml-schema": "^0.6.2",

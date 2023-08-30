@@ -9,34 +9,6 @@ import { DOMRunnerFactory, DOMRunnerInterface, DOMRunnerMessage } from "./Observ
 
 const ErrDOMWindowNotInitialized = "DOMWindow not initialized";
 
-// TODO - remove this monkeypatching if it's possible to avoid the race conditions in naive MutationObserver usage
-const monkeyPatchedMutationRecordCallbacks = new Set<() => void>();
-function installMutationObserverMonkeyPatch() {
-  /*
-   This monkey patch replaces the `createImpl` exported function implementation in the `MutationRecord` class in JSDOM
-   to insert an iteration through callbacks that are therefore fired before a subsequent MutationRecord is created.
-   This provides an opportunity to invoke the MutationObservers with a single MutationRecord rather than multiple.
-
-   This is necessary as (at least intuitive) usage of the MutationObserver API does not enable creating accurate
-   incremental diffs as the handling of all-but-the-last MutationRecord in a list requires collecting state from the
-   DOM that has been since been mutated further. (e.g. if an attribute is changed twice in a row the first event cannot
-   discover the intermediate value of the attribute as it can only query the latest DOM state). Whilst this simple case
-   is solvable by walking backwards through the list of MutationRecords and using `oldValue` there are cases where adding
-   child elements with the correct attributes is not possible when handling intermediate diffs.
-  */
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const MutationRecordExports = require("jsdom/lib/jsdom/living/generated/MutationRecord");
-  const originalCreateImpl = MutationRecordExports.createImpl;
-  // This overwrites the function property on the exports that mutation-observers.js uses to create MutationRecords.
-  MutationRecordExports.createImpl = (...args: any[]) => {
-    for (const callback of monkeyPatchedMutationRecordCallbacks) {
-      callback();
-    }
-    return originalCreateImpl.call(null, ...args);
-  };
-}
-let monkeyPatchInstalled = false;
-
 export const JSDOMRunnerFactory: DOMRunnerFactory = (
   htmlPath: string,
   htmlContents: string,
@@ -55,8 +27,6 @@ class RejectionResourceLoader extends ResourceLoader {
 }
 
 export class JSDOMRunner {
-  private monkeyPatchMutationRecordCallback: () => void;
-
   public domWindow: DOMWindow | null = null;
   private jsdom: JSDOM;
 
@@ -77,29 +47,6 @@ export class JSDOMRunner {
   ) {
     this.htmlPath = htmlPath;
     this.callback = callback;
-
-    if (!monkeyPatchInstalled) {
-      installMutationObserverMonkeyPatch();
-      monkeyPatchInstalled = true;
-    }
-
-    this.monkeyPatchMutationRecordCallback = () => {
-      /*
-       This is called before every creation of a MutationRecord so that it can be used to process an existing record to
-       avoid handling multiple MutationRecords at a time (see comment at the top of this file).
-      */
-      const records = this.mutationObserver?.takeRecords();
-      if (records && records.length > 1) {
-        throw new Error(
-          "The monkey patching should have prevented more than one record being handled at a time",
-        );
-      } else if (records && records.length > 0) {
-        this.callback({
-          mutationList: records,
-        });
-      }
-    };
-    monkeyPatchedMutationRecordCallbacks.add(this.monkeyPatchMutationRecordCallback);
 
     this.jsdom = new JSDOM(htmlContents, {
       runScripts: "dangerously",
@@ -190,7 +137,6 @@ export class JSDOMRunner {
     this.callback({
       mutationList: records,
     });
-    monkeyPatchedMutationRecordCallbacks.delete(this.monkeyPatchMutationRecordCallback);
     this.mutationObserver?.disconnect();
     this.jsdom.window.close();
   }

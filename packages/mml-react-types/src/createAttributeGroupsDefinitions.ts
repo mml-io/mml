@@ -1,11 +1,5 @@
 import { Attribute, AttributeGroup } from "@mml-io/mml-schema";
-import {
-  factory,
-  InterfaceDeclaration,
-  MethodSignature,
-  PropertySignature,
-  SyntaxKind,
-} from "typescript";
+import ts from "typescript";
 
 import {
   createEventHandlerDeclarations,
@@ -15,8 +9,8 @@ import { getAttributeGroupName, getReturnAttributeType } from "./util";
 
 export function createAttributeGroupsDefinitions(attributeGroups: {
   [key: string]: AttributeGroup;
-}): Array<InterfaceDeclaration> {
-  const attributeGroupDeclarations: Array<InterfaceDeclaration> = [];
+}): Array<ts.InterfaceDeclaration> {
+  const attributeGroupDeclarations: Array<ts.InterfaceDeclaration> = [];
 
   for (const attributeGroupName in attributeGroups) {
     const attributeGroup = attributeGroups[attributeGroupName];
@@ -34,32 +28,32 @@ export function createAttributeGroupsDefinitions(attributeGroups: {
 function createAttributeGroupDeclarations(
   attributeGroupName: string,
   attributeGroup: AttributeGroup,
-): [InterfaceDeclaration, InterfaceDeclaration, InterfaceDeclaration?] {
+): [ts.InterfaceDeclaration, ts.InterfaceDeclaration, ts.InterfaceDeclaration?] {
   const capitalizedTypeName = getAttributeGroupName(attributeGroupName);
-  const typeName = factory.createIdentifier(capitalizedTypeName);
+  const typeName = ts.factory.createIdentifier(capitalizedTypeName);
 
   const scriptAttributes: Array<Attribute> = [];
-  const directAttributes: Array<PropertySignature> = [];
+  const directAttributes: Array<ts.PropertySignature> = [];
   for (const attribute of attributeGroup.attributes) {
     if (attribute.type === "Script") {
       if (attribute.name === "onclick") {
         directAttributes.push(
-          factory.createPropertySignature(
+          ts.factory.createPropertySignature(
             undefined,
-            factory.createIdentifier("onClick"),
-            factory.createToken(SyntaxKind.QuestionToken),
-            factory.createFunctionTypeNode(
+            ts.factory.createIdentifier("onClick"),
+            ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+            ts.factory.createFunctionTypeNode(
               undefined,
               [
-                factory.createParameterDeclaration(
+                ts.factory.createParameterDeclaration(
                   undefined,
                   undefined,
                   "event",
                   undefined,
-                  factory.createTypeReferenceNode("MMLClickEvent", undefined),
+                  ts.factory.createTypeReferenceNode("MMLClickEvent", undefined),
                 ),
               ],
-              factory.createKeywordTypeNode(SyntaxKind.VoidKeyword),
+              ts.factory.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
             ),
           ),
         );
@@ -68,11 +62,11 @@ function createAttributeGroupDeclarations(
       }
     } else {
       directAttributes.push(
-        factory.createPropertySignature(
+        ts.factory.createPropertySignature(
           undefined,
-          factory.createStringLiteral(attribute.name),
-          factory.createToken(SyntaxKind.QuestionToken),
-          factory.createTypeReferenceNode(
+          ts.factory.createStringLiteral(attribute.name),
+          ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+          ts.factory.createTypeReferenceNode(
             getReturnAttributeType(attribute),
             /*typeArguments*/ undefined,
           ),
@@ -81,10 +75,10 @@ function createAttributeGroupDeclarations(
     }
   }
 
-  let eventHandlersDeclarations: Array<MethodSignature> = [];
+  let eventHandlersDeclarations: Array<ts.MethodSignature> = [];
   let eventMapInterfaceDeclaration;
   if (scriptAttributes.length > 0) {
-    const eventMapTypeName = factory.createIdentifier(`${capitalizedTypeName}EventMap`);
+    const eventMapTypeName = ts.factory.createIdentifier(`${capitalizedTypeName}EventMap`);
     eventMapInterfaceDeclaration = createEventMapInterfaceDeclaration(
       eventMapTypeName,
       scriptAttributes,
@@ -93,17 +87,17 @@ function createAttributeGroupDeclarations(
     eventHandlersDeclarations = createEventHandlerDeclarations(eventMapTypeName);
   }
 
-  const instanceDeclaration = factory.createInterfaceDeclaration(
-    [factory.createToken(SyntaxKind.ExportKeyword)],
+  const instanceDeclaration = ts.factory.createInterfaceDeclaration(
+    [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
     typeName,
-    [factory.createTypeParameterDeclaration(undefined, "T")],
+    [ts.factory.createTypeParameterDeclaration(undefined, "T")],
     undefined,
     eventHandlersDeclarations,
   );
 
-  const attributeDeclaration = factory.createInterfaceDeclaration(
-    [factory.createToken(SyntaxKind.ExportKeyword)],
-    factory.createIdentifier(`${capitalizedTypeName}Attributes`),
+  const attributeDeclaration = ts.factory.createInterfaceDeclaration(
+    [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
+    ts.factory.createIdentifier(`${capitalizedTypeName}Attributes`),
     undefined,
     undefined,
     directAttributes,

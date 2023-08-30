@@ -1,9 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
-
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Label } from "../src/elements/Label";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
@@ -11,7 +5,6 @@ import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMScene } from "../src/FullScreenMScene";
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
 });
 
@@ -55,9 +48,9 @@ describe("m-label", () => {
     expect(element.getContainer().scale.x).toBe(5);
 
     // Setting the width attribute - should affect the mesh
-    expect(element.getLabel().scale.x).toBe(1);
+    expect(element.getLabel()!.scale.x).toBe(1);
     element.setAttribute("width", "5");
-    expect(element.getLabel().scale.x).toBe(5);
+    expect(element.getLabel()!.scale.x).toBe(5);
   });
 
   test("observes the schema-specified attributes", () => {

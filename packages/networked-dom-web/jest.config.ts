@@ -2,7 +2,7 @@ import type { Config } from "jest";
 
 const config: Config = {
   verbose: true,
-  testEnvironment: "node",
+  testEnvironment: "jsdom",
   setupFiles: ["jest-canvas-mock"],
   setupFilesAfterEnv: ["jest-expect-message"],
   transform: {

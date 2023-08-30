@@ -1,8 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
+import { jest } from "@jest/globals";
 import * as THREE from "three";
 
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
@@ -11,7 +7,6 @@ import { Cube } from "../src/elements/Cube";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
 });
 
@@ -32,7 +27,7 @@ describe("m-cube", () => {
   test("sx, sy, sz", () => {
     const { element } = createSceneAttachedElement<Cube>("m-cube");
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-    expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
+    expect(element.getCube()!.scale).toMatchObject({ x: 1, y: 1, z: 1 });
 
     element.setAttribute("sx", "5");
     element.setAttribute("sy", "6");
@@ -40,8 +35,8 @@ describe("m-cube", () => {
 
     // Setting scale attributes should affect the container of the element, but not the (cube) mesh itself
     expect(element.getContainer().scale).toMatchObject({ x: 5, y: 6, z: 7 });
-    expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-    expect(element.getCube().getWorldScale(new THREE.Vector3())).toMatchObject({
+    expect(element.getCube()!.scale).toMatchObject({ x: 1, y: 1, z: 1 });
+    expect(element.getCube()!.getWorldScale(new THREE.Vector3())).toMatchObject({
       x: 5,
       y: 6,
       z: 7,
@@ -52,21 +47,21 @@ describe("m-cube", () => {
     element.removeAttribute("sy");
     element.removeAttribute("sz");
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-    expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
+    expect(element.getCube()!.scale).toMatchObject({ x: 1, y: 1, z: 1 });
   });
 
   test("width, height, depth", () => {
     const { element } = createSceneAttachedElement<Cube>("m-cube");
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-    expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
+    expect(element.getCube()!.scale).toMatchObject({ x: 1, y: 1, z: 1 });
     element.setAttribute("width", "5");
     element.setAttribute("height", "6");
     element.setAttribute("depth", "7");
 
     // Setting the width, height, and depth attributes should affect the (cube) mesh, but not the container
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-    expect(element.getCube().scale).toMatchObject({ x: 5, y: 6, z: 7 });
-    expect(element.getCube().getWorldScale(new THREE.Vector3())).toMatchObject({
+    expect(element.getCube()!.scale).toMatchObject({ x: 5, y: 6, z: 7 });
+    expect(element.getCube()!.getWorldScale(new THREE.Vector3())).toMatchObject({
       x: 5,
       y: 6,
       z: 7,
@@ -77,20 +72,20 @@ describe("m-cube", () => {
     element.removeAttribute("height");
     element.removeAttribute("depth");
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-    expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
+    expect(element.getCube()!.scale).toMatchObject({ x: 1, y: 1, z: 1 });
   });
 
   test("width and scale", () => {
     const { element } = createSceneAttachedElement<Cube>("m-cube");
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
-    expect(element.getCube().scale).toMatchObject({ x: 1, y: 1, z: 1 });
+    expect(element.getCube()!.scale).toMatchObject({ x: 1, y: 1, z: 1 });
     element.setAttribute("sx", "2");
     element.setAttribute("width", "3");
 
     // Setting the width, height, and depth attributes should affect the (cube) mesh, but not the container
     expect(element.getContainer().scale).toMatchObject({ x: 2, y: 1, z: 1 });
-    expect(element.getCube().scale).toMatchObject({ x: 3, y: 1, z: 1 });
-    expect(element.getCube().getWorldScale(new THREE.Vector3())).toMatchObject({
+    expect(element.getCube()!.scale).toMatchObject({ x: 3, y: 1, z: 1 });
+    expect(element.getCube()!.getWorldScale(new THREE.Vector3())).toMatchObject({
       x: 6,
       y: 1,
       z: 1,
@@ -99,7 +94,7 @@ describe("m-cube", () => {
 
   test("color", () => {
     const { element } = createSceneAttachedElement<Cube>("m-cube");
-    expect((element.getCube().material as THREE.MeshStandardMaterial).color).toMatchObject({
+    expect((element.getCube()!.material as THREE.MeshStandardMaterial).color).toMatchObject({
       r: 1,
       g: 1,
       b: 1,
@@ -107,7 +102,7 @@ describe("m-cube", () => {
 
     // Color set as string should be parsed to a THREE.Color
     element.setAttribute("color", "red");
-    expect((element.getCube().material as THREE.MeshStandardMaterial).color).toMatchObject({
+    expect((element.getCube()!.material as THREE.MeshStandardMaterial).color).toMatchObject({
       r: 1,
       g: 0,
       b: 0,
@@ -115,7 +110,7 @@ describe("m-cube", () => {
 
     // Removing the attribute should return the color to the default (white)
     element.removeAttribute("color");
-    expect((element.getCube().material as THREE.MeshStandardMaterial).color).toMatchObject({
+    expect((element.getCube()!.material as THREE.MeshStandardMaterial).color).toMatchObject({
       r: 1,
       g: 1,
       b: 1,
@@ -192,14 +187,14 @@ describe("m-cube", () => {
     expect(updateColliderSpy).toHaveBeenCalledTimes(1);
     expect(updateColliderSpy).toHaveBeenCalledWith(mCube.getCube(), mCube);
     const worldPos = new THREE.Vector3();
-    mCube.getCube().getWorldPosition(worldPos);
+    mCube.getCube()!.getWorldPosition(worldPos);
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 3 });
 
     innerGroup.setAttribute("z", "1");
     expect(updateColliderSpy).toHaveBeenCalledTimes(2);
     expect(updateColliderSpy).toHaveBeenNthCalledWith(2, mCube.getCube(), mCube);
     expect(addColliderSpy).toHaveBeenCalledTimes(1);
-    mCube.getCube().getWorldPosition(worldPos);
+    mCube.getCube()!.getWorldPosition(worldPos);
     // z should be increased by one due to the parent group - should now be 4
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 4 });
 
