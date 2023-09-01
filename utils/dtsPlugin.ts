@@ -4,9 +4,9 @@ import { existsSync, lstatSync, readFileSync } from "fs";
 import { basename, dirname, resolve } from "path";
 
 import { LogLevel, Plugin } from "esbuild";
-import { parse } from "jju";
-import { tmpdir } from "tmp";
-import * as ts from "typescript";
+import jju from "jju";
+import tmp from "tmp";
+import ts from "typescript";
 
 function getTSConfig(
   forcepath?: string,
@@ -15,7 +15,7 @@ function getTSConfig(
 ): { loc: string; conf: any } {
   let f = forcepath ?? ts.findConfigFile(wd, ts.sys.fileExists, conf);
   if (!f) throw "No config file found";
-  if (f.startsWith(".")) f = require.resolve(f);
+  if (f.startsWith(".")) f = new URL(f, import.meta.url).pathname;
   const c = ts.readConfigFile(f, (path) => readFileSync(path, "utf-8"));
   if (c.error) throw c.error;
   else return { loc: f, conf: c.config };
@@ -66,7 +66,7 @@ export const dtsPlugin = (opts: DTSPluginOpts = {}) =>
       // get extended config
       if (Object.prototype.hasOwnProperty.call(conf.conf, "extends")) {
         const extendedfile = readFileSync(resolve(dirname(conf.loc), conf.conf.extends), "utf-8");
-        const extended = parse(extendedfile);
+        const extended = jju.parse(extendedfile);
         if (
           Object.prototype.hasOwnProperty.call(extended, "compilerOptions") &&
           Object.prototype.hasOwnProperty.call(finalconf, "compilerOptions")
@@ -92,10 +92,10 @@ export const dtsPlugin = (opts: DTSPluginOpts = {}) =>
       // auto incremental
       const pjloc = resolve(conf.loc, "../", "package.json");
       if (existsSync(pjloc)) {
+        const packageData = JSON.parse(readFileSync(pjloc, "utf-8"));
         copts.tsBuildInfoFile = resolve(
-          tmpdir,
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          require(pjloc).name ?? "unnamed",
+          tmp.tmpdir,
+          packageData.name ?? "unnamed",
           ".esbuild",
           ".tsbuildinfo",
         );
@@ -126,10 +126,10 @@ export const dtsPlugin = (opts: DTSPluginOpts = {}) =>
       build.onEnd(() => {
         const finalprogram = copts.incremental
           ? ts.createIncrementalProgram({
-              options: copts,
-              host,
-              rootNames: files,
-            })
+            options: copts,
+            host,
+            rootNames: files,
+          })
           : ts.createProgram(files, copts, host);
 
         const start = Date.now();

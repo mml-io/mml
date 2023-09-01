@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import {
   FakeWebsocket,

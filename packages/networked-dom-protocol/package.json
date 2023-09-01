@@ -6,6 +6,7 @@
   },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
+  "type": "module",
   "files": [
     "/build"
   ],
@@ -13,7 +14,7 @@
     "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
     "iterate": "tsx ./build.ts --watch",
-    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix"
   }
 }

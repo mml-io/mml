@@ -1,20 +1,14 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
+import { jest } from "@jest/globals";
 import { Cache } from "three";
 
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
-import { Cube } from "../src";
 import { Image } from "../src/elements/Image";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMScene } from "../src/FullScreenMScene";
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
   Cache.clear();
 });
@@ -59,9 +53,9 @@ describe("m-image", () => {
     expect(element.getContainer().scale.x).toBe(5);
 
     // Setting the width attribute affects the mesh directly
-    expect(element.getImageMesh().scale.x).toBe(1);
+    expect(element.getImageMesh()!.scale.x).toBe(1);
     element.setAttribute("width", "5");
-    expect(element.getImageMesh().scale.x).toBe(5);
+    expect(element.getImageMesh()!.scale.x).toBe(5);
   });
 
   test("observes the schema-specified attributes", () => {
@@ -88,8 +82,8 @@ describe("m-image", () => {
     expect((image as any).srcApplyPromise).toBeTruthy();
     await (image as any).srcApplyPromise;
     // wait for 1 second
-    expect(image.getImageMesh().scale.y).toBe(0.5);
-    expect(image.getImageMesh().scale.x).toBe(1);
+    expect(image.getImageMesh()!.scale.y).toBe(0.5);
+    expect(image.getImageMesh()!.scale.x).toBe(1);
   });
 
   test("setting height but not width preserves image aspect ratio", async () => {
@@ -111,8 +105,8 @@ describe("m-image", () => {
     image.setAttribute("height", "10");
     expect((image as any).srcApplyPromise).toBeTruthy();
     await (image as any).srcApplyPromise;
-    expect(image.getImageMesh().scale.y).toBe(10);
-    expect(image.getImageMesh().scale.x).toBe(20);
+    expect(image.getImageMesh()!.scale.y).toBe(10);
+    expect(image.getImageMesh()!.scale.x).toBe(20);
   });
 
   test("setting width but not height preserves image aspect ratio", async () => {
@@ -134,8 +128,8 @@ describe("m-image", () => {
     image.setAttribute("width", "10");
     expect((image as any).srcApplyPromise).toBeTruthy();
     await (image as any).srcApplyPromise;
-    expect(image.getImageMesh().scale.y).toBe(5);
-    expect(image.getImageMesh().scale.x).toBe(10);
+    expect(image.getImageMesh()!.scale.y).toBe(5);
+    expect(image.getImageMesh()!.scale.x).toBe(10);
   });
 
   test("collider is updated", async () => {
@@ -166,16 +160,16 @@ describe("m-image", () => {
 
     image.setAttribute("width", "10");
     expect(updateColliderSpy).toHaveBeenCalledTimes(1);
-    expect(image.getImageMesh().scale.y).toBe(1);
-    expect(image.getImageMesh().scale.x).toBe(10);
+    expect(image.getImageMesh()!.scale.y).toBe(1);
+    expect(image.getImageMesh()!.scale.x).toBe(10);
 
     image.setAttribute("src", "SOME_ASSET_URL");
     expect(cacheSpy).toHaveBeenCalled();
     expect((image as any).srcApplyPromise).toBeTruthy();
     await (image as any).srcApplyPromise;
     expect(updateColliderSpy).toHaveBeenCalledTimes(2);
-    expect(image.getImageMesh().scale.y).toBe(5);
-    expect(image.getImageMesh().scale.x).toBe(10);
+    expect(image.getImageMesh()!.scale.y).toBe(5);
+    expect(image.getImageMesh()!.scale.x).toBe(10);
 
     image.setAttribute("collide", "true");
     expect(addColliderSpy).toHaveBeenCalledTimes(1);
@@ -205,7 +199,7 @@ describe("m-image", () => {
     image.setAttribute("height", "12");
     expect((image as any).srcApplyPromise).toBeTruthy();
     await (image as any).srcApplyPromise;
-    expect(image.getImageMesh().scale.y).toBe(12);
-    expect(image.getImageMesh().scale.x).toBe(12);
+    expect(image.getImageMesh()!.scale.y).toBe(12);
+    expect(image.getImageMesh()!.scale.x).toBe(12);
   });
 });

@@ -1,203 +1,203 @@
 import { Attribute } from "@mml-io/mml-schema";
-import { factory, Identifier, SyntaxKind } from "typescript";
+import ts from "typescript";
 
-export function createEventHandlerDeclarations(eventMapTypeName: Identifier) {
-  const addEventListenerMethod = factory.createMethodSignature(
+export function createEventHandlerDeclarations(eventMapTypeName: ts.Identifier) {
+  const addEventListenerMethod = ts.factory.createMethodSignature(
     undefined,
     "addEventListener",
     undefined,
     undefined,
     [
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "type",
         undefined,
-        factory.createTypeReferenceNode("keyof " + eventMapTypeName.text, undefined),
+        ts.factory.createTypeReferenceNode("keyof " + eventMapTypeName.text, undefined),
       ),
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "listener",
         undefined,
-        factory.createTypeReferenceNode(
-          factory.createIdentifier("EventListenerOrEventListenerObject"),
+        ts.factory.createTypeReferenceNode(
+          ts.factory.createIdentifier("EventListenerOrEventListenerObject"),
           undefined,
         ),
       ),
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "options",
-        factory.createToken(SyntaxKind.QuestionToken),
-        factory.createUnionTypeNode([
-          factory.createKeywordTypeNode(SyntaxKind.BooleanKeyword),
-          factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        ts.factory.createUnionTypeNode([
+          ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
+          ts.factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
         ]),
       ),
     ],
-    factory.createKeywordTypeNode(SyntaxKind.VoidKeyword),
+    ts.factory.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
   );
 
-  const addEventListenerMethodWithGenericType = factory.createMethodSignature(
+  const addEventListenerMethodWithGenericType = ts.factory.createMethodSignature(
     undefined,
     "addEventListener",
     undefined,
     [
-      factory.createTypeParameterDeclaration(
+      ts.factory.createTypeParameterDeclaration(
         undefined,
         "K",
-        factory.createTypeReferenceNode("keyof " + eventMapTypeName.text, undefined),
+        ts.factory.createTypeReferenceNode("keyof " + eventMapTypeName.text, undefined),
       ),
     ],
     [
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "type",
         undefined,
-        factory.createTypeReferenceNode("K", undefined),
+        ts.factory.createTypeReferenceNode("K", undefined),
       ),
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "listener",
         undefined,
-        factory.createFunctionTypeNode(
+        ts.factory.createFunctionTypeNode(
           undefined,
           [
-            factory.createParameterDeclaration(
+            ts.factory.createParameterDeclaration(
               undefined,
               undefined,
               "this",
               undefined,
-              factory.createTypeReferenceNode("T", undefined),
+              ts.factory.createTypeReferenceNode("T", undefined),
             ),
-            factory.createParameterDeclaration(
+            ts.factory.createParameterDeclaration(
               undefined,
               undefined,
               "ev",
               undefined,
-              factory.createIndexedAccessTypeNode(
-                factory.createTypeReferenceNode(eventMapTypeName, undefined),
-                factory.createTypeReferenceNode("K", undefined),
+              ts.factory.createIndexedAccessTypeNode(
+                ts.factory.createTypeReferenceNode(eventMapTypeName, undefined),
+                ts.factory.createTypeReferenceNode("K", undefined),
               ),
             ),
           ],
-          factory.createKeywordTypeNode(SyntaxKind.AnyKeyword),
+          ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
         ),
       ),
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "options",
-        factory.createToken(SyntaxKind.QuestionToken),
-        factory.createUnionTypeNode([
-          factory.createKeywordTypeNode(SyntaxKind.BooleanKeyword),
-          factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        ts.factory.createUnionTypeNode([
+          ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
+          ts.factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
         ]),
       ),
     ],
-    factory.createKeywordTypeNode(SyntaxKind.VoidKeyword),
+    ts.factory.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
   );
 
-  const removeEventListenerMethod = factory.createMethodSignature(
+  const removeEventListenerMethod = ts.factory.createMethodSignature(
     undefined,
     "removeEventListener",
     undefined,
     undefined,
     [
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "type",
         undefined,
-        factory.createTypeReferenceNode("keyof " + eventMapTypeName.text, undefined),
+        ts.factory.createTypeReferenceNode("keyof " + eventMapTypeName.text, undefined),
       ),
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "listener",
         undefined,
-        factory.createTypeReferenceNode(
-          factory.createIdentifier("EventListenerOrEventListenerObject"),
+        ts.factory.createTypeReferenceNode(
+          ts.factory.createIdentifier("EventListenerOrEventListenerObject"),
           undefined,
         ),
       ),
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "options",
-        factory.createToken(SyntaxKind.QuestionToken),
-        factory.createUnionTypeNode([
-          factory.createKeywordTypeNode(SyntaxKind.BooleanKeyword),
-          factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        ts.factory.createUnionTypeNode([
+          ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
+          ts.factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
         ]),
       ),
     ],
-    factory.createKeywordTypeNode(SyntaxKind.VoidKeyword),
+    ts.factory.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
   );
 
-  const removeEventListenerMethodWithGenericType = factory.createMethodSignature(
+  const removeEventListenerMethodWithGenericType = ts.factory.createMethodSignature(
     undefined,
     "removeEventListener",
     undefined,
     [
-      factory.createTypeParameterDeclaration(
+      ts.factory.createTypeParameterDeclaration(
         undefined,
         "K",
-        factory.createTypeReferenceNode("keyof " + eventMapTypeName.text, undefined),
+        ts.factory.createTypeReferenceNode("keyof " + eventMapTypeName.text, undefined),
       ),
     ],
     [
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "type",
         undefined,
-        factory.createTypeReferenceNode("K", undefined),
+        ts.factory.createTypeReferenceNode("K", undefined),
       ),
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "listener",
         undefined,
-        factory.createFunctionTypeNode(
+        ts.factory.createFunctionTypeNode(
           undefined,
           [
-            factory.createParameterDeclaration(
+            ts.factory.createParameterDeclaration(
               undefined,
               undefined,
               "this",
               undefined,
-              factory.createTypeReferenceNode("T", undefined),
+              ts.factory.createTypeReferenceNode("T", undefined),
             ),
-            factory.createParameterDeclaration(
+            ts.factory.createParameterDeclaration(
               undefined,
               undefined,
               "ev",
               undefined,
-              factory.createIndexedAccessTypeNode(
-                factory.createTypeReferenceNode(eventMapTypeName, undefined),
-                factory.createTypeReferenceNode("K", undefined),
+              ts.factory.createIndexedAccessTypeNode(
+                ts.factory.createTypeReferenceNode(eventMapTypeName, undefined),
+                ts.factory.createTypeReferenceNode("K", undefined),
               ),
             ),
           ],
-          factory.createKeywordTypeNode(SyntaxKind.AnyKeyword),
+          ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
         ),
       ),
-      factory.createParameterDeclaration(
+      ts.factory.createParameterDeclaration(
         undefined,
         undefined,
         "options",
-        factory.createToken(SyntaxKind.QuestionToken),
-        factory.createUnionTypeNode([
-          factory.createKeywordTypeNode(SyntaxKind.BooleanKeyword),
-          factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        ts.factory.createUnionTypeNode([
+          ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
+          ts.factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
         ]),
       ),
     ],
-    factory.createKeywordTypeNode(SyntaxKind.VoidKeyword),
+    ts.factory.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
   );
 
   return [
@@ -209,21 +209,21 @@ export function createEventHandlerDeclarations(eventMapTypeName: Identifier) {
 }
 
 export function createEventMapInterfaceDeclaration(
-  eventMapTypeName: Identifier,
+  eventMapTypeName: ts.Identifier,
   scriptAttributes: Array<Attribute>,
 ) {
-  return factory.createInterfaceDeclaration(
+  return ts.factory.createInterfaceDeclaration(
     undefined,
     eventMapTypeName,
     undefined,
     undefined,
     scriptAttributes.map((attribute) => {
       const eventName = attribute.eventName as string;
-      const eventClassNode = factory.createTypeReferenceNode(
-        factory.createIdentifier(attribute.eventClass as string),
+      const eventClassNode = ts.factory.createTypeReferenceNode(
+        ts.factory.createIdentifier(attribute.eventClass as string),
         undefined,
       );
-      return factory.createPropertySignature(undefined, eventName, undefined, eventClassNode);
+      return ts.factory.createPropertySignature(undefined, eventName, undefined, eventClassNode);
     }),
   );
 }

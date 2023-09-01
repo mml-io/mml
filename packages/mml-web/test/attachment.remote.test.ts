@@ -1,8 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
 import * as THREE from "three";
 
 import { Cube } from "../src/elements/Cube";
@@ -13,7 +8,6 @@ import { FullScreenMScene } from "../src/FullScreenMScene";
 
 describe("m-element m-remote-document attachment", () => {
   beforeAll(() => {
-    (window as any).AudioContext = AudioContext;
     registerCustomElementsToWindow(window);
   });
   test("test attachment via div", () => {
@@ -32,7 +26,7 @@ describe("m-element m-remote-document attachment", () => {
     div.append(cube);
 
     // The div should be skipped in the threejs scene
-    expect(group.getContainer().children[0].children[0]).toBe(cube.getCube());
+    expect(group.getContainer().children[0].children[0]).toBe(cube.getCube()!);
 
     expect(scene.getThreeScene()).toMatchObject({
       // Scene
@@ -60,7 +54,7 @@ describe("m-element m-remote-document attachment", () => {
       ],
     });
 
-    expect(cube.getCube().getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 0,
       y: 0,
       z: 0,
@@ -70,7 +64,7 @@ describe("m-element m-remote-document attachment", () => {
     cube.setAttribute("y", "2");
     cube.setAttribute("z", "3");
 
-    expect(cube.getCube().getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 1,
       y: 2,
       z: 3,
@@ -80,7 +74,7 @@ describe("m-element m-remote-document attachment", () => {
     group.setAttribute("x", "10");
     group.setAttribute("y", "20");
     group.setAttribute("z", "30");
-    expect(cube.getCube().getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 11,
       y: 22,
       z: 33,
@@ -95,7 +89,7 @@ describe("m-element m-remote-document attachment", () => {
     secondGroup.append(div);
 
     // The cube should now have the world position from the second group
-    expect(cube.getCube().getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 101,
       y: 202,
       z: 303,

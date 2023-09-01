@@ -1,3 +1,5 @@
+import ResizeObserverPolyfill from "resize-observer-polyfill";
+
 // Mock the pause method for HTMLMediaElement
 Object.defineProperty(window.HTMLMediaElement.prototype, "pause", {
   configurable: true,
@@ -6,11 +8,56 @@ Object.defineProperty(window.HTMLMediaElement.prototype, "pause", {
   },
 });
 
-import ResizeObserver from "resize-observer-polyfill";
 Object.defineProperty(window, "ResizeObserver", {
   writable: false,
   configurable: false,
-  value: ResizeObserver,
+  value: ResizeObserverPolyfill,
+});
+
+class AudioContextMock {
+  addEventListener() {
+    return;
+  }
+
+  createGain(): GainNode {
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      connect(destinationNode: AudioNode, output?: number, input?: number): AudioNode {
+        return {} as AudioNode;
+      },
+      gain: {
+        value: 1,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setTargetAtTime(target: number, startTime: number, timeConstant: number): AudioParam {
+          return {} as AudioParam;
+        },
+      },
+    } as GainNode;
+  }
+
+  createPanner(): PannerNode {
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      connect(destinationNode: AudioNode, output?: number, input?: number): AudioNode {
+        return {} as AudioNode;
+      },
+    } as PannerNode;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  createMediaElementSource(mediaElement: HTMLMediaElement): MediaElementAudioSourceNode {
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      connect(destinationNode: AudioNode, output?: number, input?: number): AudioNode {
+        return {} as AudioNode;
+      },
+    } as MediaElementAudioSourceNode;
+  }
+}
+Object.defineProperty(window, "AudioContext", {
+  get(): typeof AudioContext {
+    return AudioContextMock as unknown as typeof AudioContext;
+  },
 });
 
 const documentStartTime = Date.now();

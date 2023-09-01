@@ -16,7 +16,7 @@
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["src/**/*","./build.ts"],
+  "include": ["src/**/*", "test/**/*", "./build.ts"],
   "exclude": ["**/build/*", "types-src"],
   "files": ["../../node_modules/jest-expect-message/types/index.d.ts"]
 }

@@ -1,33 +1,33 @@
-import { factory, SyntaxKind } from "typescript";
+import ts from "typescript";
 
 export const MMLReactCoreAttributesTypeIdentifier = "MMLReactCoreAttributes";
 
 export function createReactCoreAttributesType() {
   // We add a few types used by React for all elements then add the core attributes for MML
-  return factory.createInterfaceDeclaration(
+  return ts.factory.createInterfaceDeclaration(
     undefined,
-    factory.createIdentifier(MMLReactCoreAttributesTypeIdentifier),
+    ts.factory.createIdentifier(MMLReactCoreAttributesTypeIdentifier),
     // add generic T to the interface
-    [factory.createTypeParameterDeclaration(undefined, "T")],
+    [ts.factory.createTypeParameterDeclaration(undefined, "T")],
     undefined,
     [
-      factory.createPropertySignature(
+      ts.factory.createPropertySignature(
         undefined,
-        factory.createIdentifier("key"),
-        factory.createToken(SyntaxKind.QuestionToken),
-        factory.createTypeReferenceNode("string | number", undefined),
+        ts.factory.createIdentifier("key"),
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        ts.factory.createTypeReferenceNode("string | number", undefined),
       ),
-      factory.createPropertySignature(
+      ts.factory.createPropertySignature(
         undefined,
-        factory.createIdentifier("children"),
-        factory.createToken(SyntaxKind.QuestionToken),
-        factory.createTypeReferenceNode("ReactNode | undefined", undefined),
+        ts.factory.createIdentifier("children"),
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        ts.factory.createTypeReferenceNode("ReactNode | undefined", undefined),
       ),
-      factory.createPropertySignature(
+      ts.factory.createPropertySignature(
         undefined,
-        factory.createIdentifier("ref"),
-        factory.createToken(SyntaxKind.QuestionToken),
-        factory.createTypeReferenceNode("LegacyRef<T>", undefined),
+        ts.factory.createIdentifier("ref"),
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        ts.factory.createTypeReferenceNode("LegacyRef<T>", undefined),
       ),
     ],
   );

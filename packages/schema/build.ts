@@ -1,13 +1,15 @@
 import * as fs from "fs";
 import * as path from "path";
+import url from "url";
 
 import * as TypeDoc from "typedoc";
 import { xml2json } from "xml-js";
 
+import { handleLibraryBuild } from "../../utils/build-library";
+
 const pathToXSD = "./src/schema-src/mml.xsd";
 const pathToEventsSchema = "./src/schema-src/events.d.ts";
-
-import { handleLibraryBuild } from "../../utils/build-library";
+const dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 handleLibraryBuild(
   [
@@ -39,7 +41,7 @@ handleLibraryBuild(
           app.options.addReader(new TypeDoc.TSConfigReader());
 
           app.bootstrap({
-            tsconfig: path.join(__dirname, "src/schema-src/tsconfig.json"),
+            tsconfig: path.join(dirname, "src/schema-src/tsconfig.json"),
             entryPoints: [pathToEventsSchema],
           });
 

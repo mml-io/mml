@@ -9,6 +9,7 @@
     "allowJs": true,
     "types": [
       "node",
+      "jest"
     ],
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
@@ -17,8 +18,6 @@
     "outDir": "./build",
     "incremental": true
   },
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*", "test/**/*", "./build.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

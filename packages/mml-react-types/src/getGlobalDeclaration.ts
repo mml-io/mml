@@ -1,30 +1,32 @@
 import { Element } from "@mml-io/mml-schema";
-import { factory, NodeFlags } from "typescript";
+import ts from "typescript";
 
 import { getMMLElementAttributesName } from "./util";
 
 export function getGlobalDeclaration(elements: { [key: string]: Element }) {
-  return factory.createModuleDeclaration(
+  return ts.factory.createModuleDeclaration(
     undefined,
-    factory.createIdentifier("global"),
-    factory.createModuleBlock([
-      factory.createModuleDeclaration(
+    ts.factory.createIdentifier("global"),
+    ts.factory.createModuleBlock([
+      ts.factory.createModuleDeclaration(
         undefined,
-        factory.createIdentifier("JSX"),
-        factory.createModuleBlock([
-          factory.createInterfaceDeclaration(
+        ts.factory.createIdentifier("JSX"),
+        ts.factory.createModuleBlock([
+          ts.factory.createInterfaceDeclaration(
             undefined,
-            factory.createIdentifier("IntrinsicElements"),
+            ts.factory.createIdentifier("IntrinsicElements"),
             undefined,
             undefined,
             Object.keys(elements)
               .filter((elementName) => elementName.startsWith("m-"))
               .map((elementName) =>
-                factory.createPropertySignature(
+                ts.factory.createPropertySignature(
                   undefined,
-                  factory.createComputedPropertyName(factory.createStringLiteral(elementName)),
+                  ts.factory.createComputedPropertyName(
+                    ts.factory.createStringLiteral(elementName),
+                  ),
                   undefined,
-                  factory.createTypeReferenceNode(
+                  ts.factory.createTypeReferenceNode(
                     getMMLElementAttributesName(elementName),
                     undefined,
                   ),
@@ -32,9 +34,9 @@ export function getGlobalDeclaration(elements: { [key: string]: Element }) {
               ),
           ),
         ]),
-        NodeFlags.Namespace,
+        ts.NodeFlags.Namespace,
       ),
     ]),
-    NodeFlags.GlobalAugmentation,
+    ts.NodeFlags.GlobalAugmentation,
   );
 }

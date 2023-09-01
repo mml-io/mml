@@ -1,8 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
 import { Cache } from "three";
 
 import { createSceneAttachedElement } from "./scene-test-utils";
@@ -10,7 +5,6 @@ import { Cube } from "../src";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
   Cache.clear();
 });

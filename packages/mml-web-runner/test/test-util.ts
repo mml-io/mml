@@ -12,4 +12,3 @@ export function waitFor(condition: () => boolean, timeout = 1000) {
     }, timeout);
   });
 }
-

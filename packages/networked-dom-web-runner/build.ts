@@ -1,9 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
+import url from "url";
 
 import { handleLibraryBuild } from "../../utils/build-library";
 
-const pathToIframeJS = path.resolve(__dirname, "./networked-dom-web-runner-iframe/build/index.js");
+const dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const pathToIframeJS = path.resolve(dirname, "./networked-dom-web-runner-iframe/build/index.js");
 
 handleLibraryBuild([
   {

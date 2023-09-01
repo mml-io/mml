@@ -1,14 +1,6 @@
 import { SchemaDefinition } from "@mml-io/mml-schema";
 import { format } from "prettier";
-import {
-  createPrinter,
-  factory,
-  ImportDeclaration,
-  NewLineKind,
-  NodeFlags,
-  Statement,
-  SyntaxKind,
-} from "typescript";
+import ts from "typescript";
 
 import { createAttributeGroupsDefinitions } from "./createAttributeGroupsDefinitions";
 import { createElementsDeclarations } from "./createElementsDeclarations";
@@ -20,7 +12,7 @@ export function createTSDeclarationsFile(
   eventsFileContent: string,
 ): Promise<string> {
   // This is the rest of the file
-  const declarationStatements: Array<Statement> = [];
+  const declarationStatements: Array<ts.Statement> = [];
 
   // Here we create an interface that will be used by all elements (ref etc.)
   const coreAttributesType = createReactCoreAttributesType();
@@ -38,25 +30,25 @@ export function createTSDeclarationsFile(
   declarationStatements.push(globalDeclaration);
 
   // We create the AST for the file
-  factory.createNodeArray(declarationStatements);
+  ts.factory.createNodeArray(declarationStatements);
 
   // We create a source file for the imports of React at the top of the file
-  const importFile = factory.createSourceFile(
+  const importFile = ts.factory.createSourceFile(
     [createReactImport()],
-    factory.createToken(SyntaxKind.EndOfFileToken),
-    NodeFlags.None,
+    ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+    ts.NodeFlags.None,
   );
 
   // We create a source file for the rest of the file
-  const declarationsFile = factory.createSourceFile(
+  const declarationsFile = ts.factory.createSourceFile(
     declarationStatements,
-    factory.createToken(SyntaxKind.EndOfFileToken),
-    NodeFlags.None,
+    ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+    ts.NodeFlags.None,
   );
 
   // We print the files
-  const printer = createPrinter({
-    newLine: NewLineKind.LineFeed,
+  const printer = ts.createPrinter({
+    newLine: ts.NewLineKind.LineFeed,
   });
   const rawImportFile = printer.printFile(importFile);
   const rawFile = printer.printFile(declarationsFile);
@@ -77,26 +69,26 @@ export function createTSDeclarationsFile(
   });
 }
 
-function createReactImport(): ImportDeclaration {
+function createReactImport(): ts.ImportDeclaration {
   // This returns import { LegacyRef, ReactNode } from "react";
-  return factory.createImportDeclaration(
+  return ts.factory.createImportDeclaration(
     /*modifiers*/ undefined,
-    factory.createImportClause(
+    ts.factory.createImportClause(
       /*isTypeOnly*/ false,
       /*name*/ undefined,
-      factory.createNamedImports([
-        factory.createImportSpecifier(
+      ts.factory.createNamedImports([
+        ts.factory.createImportSpecifier(
           true,
           /*propertyName*/ undefined,
-          factory.createIdentifier("LegacyRef"),
+          ts.factory.createIdentifier("LegacyRef"),
         ),
-        factory.createImportSpecifier(
+        ts.factory.createImportSpecifier(
           true,
           /*propertyName*/ undefined,
-          factory.createIdentifier("ReactNode"),
+          ts.factory.createIdentifier("ReactNode"),
         ),
       ]),
     ),
-    factory.createStringLiteral("react"),
+    ts.factory.createStringLiteral("react"),
   );
 }

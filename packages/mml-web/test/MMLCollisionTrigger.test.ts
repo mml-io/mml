@@ -1,8 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
+import { jest } from "@jest/globals";
 import * as THREE from "three";
 
 import { createTestScene } from "./scene-test-utils";
@@ -11,15 +7,14 @@ import { Cube } from "../src/elements/Cube";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
 });
 
 describe("MMLCollisionTrigger", () => {
-  test("cube - send start, move, end", async () => {
+  test("cube - send start, move, end", () => {
     const { scene, sceneAttachment } = createTestScene();
     const mockPerformanceNow = jest.fn();
-    window.performance.now = mockPerformanceNow;
+    window.performance.now = mockPerformanceNow as () => DOMHighResTimeStamp;
     mockPerformanceNow.mockReturnValue(1000);
 
     const mmlCollisionTrigger = MMLCollisionTrigger.init();
@@ -54,7 +49,7 @@ describe("MMLCollisionTrigger", () => {
     mmlCollisionTrigger.setCurrentCollisions(
       new Map([
         [
-          element.getCube(),
+          element.getCube()!,
           {
             position: new THREE.Vector3(1, 2, 3),
           },
@@ -62,7 +57,7 @@ describe("MMLCollisionTrigger", () => {
       ]),
     );
     expect(enterEventFn).toBeCalledTimes(1);
-    const enterEvent = enterEventFn.mock.calls[0][0];
+    const enterEvent = enterEventFn.mock.calls[0][0] as CustomEvent;
     expect(enterEvent.type).toEqual("collisionstart");
     expect(enterEvent.detail).toEqual({
       position: { x: 1, y: 2, z: 3 },
@@ -74,7 +69,7 @@ describe("MMLCollisionTrigger", () => {
     mmlCollisionTrigger.setCurrentCollisions(
       new Map([
         [
-          element.getCube(),
+          element.getCube()!,
           {
             position: new THREE.Vector3(2, 4, 6),
           },
@@ -82,7 +77,7 @@ describe("MMLCollisionTrigger", () => {
       ]),
     );
     expect(moveEventFn).toBeCalledTimes(1);
-    const moveEvent = moveEventFn.mock.calls[0][0];
+    const moveEvent = moveEventFn.mock.calls[0][0] as CustomEvent;
     expect(moveEvent.type).toEqual("collisionmove");
     expect(moveEvent.detail).toEqual({
       position: { x: 2, y: 4, z: 6 },
@@ -91,7 +86,7 @@ describe("MMLCollisionTrigger", () => {
     mmlCollisionTrigger.setCurrentCollisions(new Map());
 
     expect(endEventFn).toBeCalledTimes(1);
-    const endEvent = endEventFn.mock.calls[0][0];
+    const endEvent = endEventFn.mock.calls[0][0] as CustomEvent;
     expect(endEvent.type).toEqual("collisionend");
   });
 });

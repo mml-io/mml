@@ -1,9 +1,5 @@
 import * as THREE from "three";
-
-const {
-  GLTFLoader: GLTFLoaderImp,
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-} = require("three/examples/jsm/loaders/GLTFLoader.js");
+import { GLTFLoader as GLTFLoaderImp } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 declare class GLTFLoader {
   constructor(loadingManager?: THREE.LoadingManager);
@@ -12,7 +8,7 @@ declare class GLTFLoader {
     path: string,
     onLoad: (result: GLTFResult) => void,
     onProgress?: (xhr: ProgressEvent) => void,
-    onError?: (error: Error) => void,
+    onError?: (error: ErrorEvent) => void,
   ): void;
 }
 export { GLTFLoaderImp as GLTFLoader };
@@ -41,7 +37,7 @@ export function loadGltfAsPromise(gltfLoader: GLTFLoader, path: string): Promise
         resolve(object);
       },
       undefined,
-      (error: Error) => {
+      (error: ErrorEvent) => {
         reject(error);
       },
     );

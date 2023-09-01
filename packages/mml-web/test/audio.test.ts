@@ -1,15 +1,11 @@
-/**
- * @jest-environment jsdom
- */
+import { jest } from "@jest/globals";
 
-import AudioContext from "./__mocks__/AudioContext";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Audio, FullScreenMScene, registerCustomElementsToWindow, RemoteDocument } from "../src";
 
 jest.mock("../src/utils/audio");
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
 });
 

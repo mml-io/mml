@@ -22,7 +22,7 @@ export class MockWebsocket {
     totalMessageCount: number,
     startFrom = 0,
   ): Promise<Array<ServerMessage>> {
-    let resolveProm;
+    let resolveProm: (value: Array<ServerMessage>) => void;
     const promise = new Promise<Array<ServerMessage>>((resolve) => {
       resolveProm = resolve;
     });

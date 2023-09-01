@@ -9,7 +9,6 @@ const buildOptions: esbuild.BuildOptions = {
   entryPoints: ["src/index.ts"],
   bundle: true,
   write: true,
-  format: "cjs",
   sourcemap: true,
   outdir: "build",
 };

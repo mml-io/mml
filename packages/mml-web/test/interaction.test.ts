@@ -1,8 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
-import { AudioContext } from "standardized-audio-context-mock";
+import { jest } from "@jest/globals";
 import * as THREE from "three";
 
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
@@ -11,7 +7,6 @@ import { Interaction } from "../src/elements/Interaction";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 
 beforeAll(() => {
-  (window as any).AudioContext = AudioContext;
   registerCustomElementsToWindow(window);
 });
 

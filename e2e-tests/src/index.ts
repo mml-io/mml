@@ -9,7 +9,8 @@ import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-s
 
 const port = process.env.PORT || 7079;
 
-const srcPath = path.resolve(__dirname, "../src");
+const dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const srcPath = path.resolve(dirname, "../src");
 
 const documents: { [key: string]: { documentPath: string; document: EditableNetworkedDOM } } = {};
 
@@ -104,7 +105,7 @@ app.get("/:documentPath/", (req, res) => {
 
 app.use(
   "/client/",
-  express.static(path.resolve(__dirname, "../../node_modules/mml-web-client/build/")),
+  express.static(path.resolve(dirname, "../../node_modules/mml-web-client/build/")),
 );
 
 app.get("/:documentPath/reset", (req, res) => {

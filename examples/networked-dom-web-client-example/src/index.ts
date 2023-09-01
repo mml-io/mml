@@ -3,15 +3,17 @@ import * as path from "path";
 import * as url from "url";
 
 import { NetworkedDOM } from "@mml-io/networked-dom-document";
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import ws from "ws";
+
+const dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 const port = process.env.PORT || 7071;
 
-const filePath = path.resolve(__dirname, "../src/networked-dom-document.html");
+const filePath = path.resolve(dirname, "../src/networked-dom-document.html");
 
 const getHTMLFileContents = () => fs.readFileSync(filePath, "utf8");
 

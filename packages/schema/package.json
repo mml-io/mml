@@ -6,6 +6,7 @@
   },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
+  "type": "module",
   "files": [
     "/build"
   ],
@@ -14,7 +15,7 @@
     "build": "tsx ./build.ts --build",
     "generate-events-docs": "tsx ./generate-events-docs.ts",
     "iterate": "tsx ./build.ts --watch",
-    "test": "jest"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
     "typedoc": "^0.24.8"
