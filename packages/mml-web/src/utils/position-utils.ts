@@ -16,7 +16,7 @@ export function getRelativePositionAndRotationRelativeToObject(
   const { x, y, z } = positionAndRotation.position;
   const { x: rx, y: ry, z: rz } = positionAndRotation.rotation;
 
-  container.updateMatrixWorld();
+  container.updateWorldMatrix(true, false);
   tempContainerMatrix.copy(container.matrixWorld).invert();
 
   tempPositionVector.set(x, y, z);
