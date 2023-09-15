@@ -1,13 +1,17 @@
 import { Element } from "@mml-io/mml-schema";
 import ts from "typescript";
 
+import { createWindowInterfaceDeclaration } from "./createWindowEvents";
 import { getMMLElementAttributesName } from "./util";
 
 export function getGlobalDeclaration(elements: { [key: string]: Element }) {
+  const windowEventMapDeclaration = createWindowInterfaceDeclaration();
+
   return ts.factory.createModuleDeclaration(
     undefined,
     ts.factory.createIdentifier("global"),
     ts.factory.createModuleBlock([
+      windowEventMapDeclaration,
       ts.factory.createModuleDeclaration(
         undefined,
         ts.factory.createIdentifier("JSX"),

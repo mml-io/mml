@@ -131,7 +131,7 @@ export function createEventHandlerDeclarations(eventMapTypeName: ts.Identifier) 
         ts.factory.createToken(ts.SyntaxKind.QuestionToken),
         ts.factory.createUnionTypeNode([
           ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
-          ts.factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
+          ts.factory.createTypeReferenceNode("EventListenerOptions", undefined),
         ]),
       ),
     ],
@@ -193,7 +193,7 @@ export function createEventHandlerDeclarations(eventMapTypeName: ts.Identifier) 
         ts.factory.createToken(ts.SyntaxKind.QuestionToken),
         ts.factory.createUnionTypeNode([
           ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
-          ts.factory.createTypeReferenceNode("AddEventListenerOptions", undefined),
+          ts.factory.createTypeReferenceNode("EventListenerOptions", undefined),
         ]),
       ),
     ],
