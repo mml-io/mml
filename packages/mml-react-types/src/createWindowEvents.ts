@@ -153,7 +153,7 @@ export function createWindowInterfaceDeclaration() {
   );
 
   const windowInstanceDeclaration = ts.factory.createInterfaceDeclaration(
-    [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
+    undefined,
     ts.factory.createIdentifier("Window"),
     undefined,
     [
