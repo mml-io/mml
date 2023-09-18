@@ -5,6 +5,7 @@ import ts from "typescript";
 import { createAttributeGroupsDefinitions } from "./createAttributeGroupsDefinitions";
 import { createElementsDeclarations } from "./createElementsDeclarations";
 import { createReactCoreAttributesType } from "./createReactCoreAttributesType";
+import { createWindowEventMapDeclaration } from "./createWindowEvents";
 import { getGlobalDeclaration } from "./getGlobalDeclaration";
 
 export function createTSDeclarationsFile(
@@ -24,6 +25,9 @@ export function createTSDeclarationsFile(
   const attributeGroups = createAttributeGroupsDefinitions(attributeGroupsJSON);
   const elements = createElementsDeclarations(elementsJSON);
   declarationStatements.push(...attributeGroups, ...elements);
+
+  const windowEventsMap = createWindowEventMapDeclaration();
+  declarationStatements.push(windowEventsMap);
 
   // We create the global declaration for the file
   const globalDeclaration = getGlobalDeclaration(elementsJSON);

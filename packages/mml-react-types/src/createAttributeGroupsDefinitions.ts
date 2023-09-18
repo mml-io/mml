@@ -77,8 +77,10 @@ function createAttributeGroupDeclarations(
 
   let eventHandlersDeclarations: Array<ts.MethodSignature> = [];
   let eventMapInterfaceDeclaration;
+
   if (scriptAttributes.length > 0) {
     const eventMapTypeName = ts.factory.createIdentifier(`${capitalizedTypeName}EventMap`);
+
     eventMapInterfaceDeclaration = createEventMapInterfaceDeclaration(
       eventMapTypeName,
       scriptAttributes,
