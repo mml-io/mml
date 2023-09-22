@@ -23,6 +23,7 @@ const schemaToTSTypeMap = {
   "xs:string": "string",
   "xs:boolean": "boolean",
   URI: "string",
+  StringOrFloat: "number",
 } as const;
 
 export function getAttributeGroupName(attributeGroupName: string) {
