@@ -797,6 +797,20 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="cone-angle" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                A double value describing the angle, in degrees, of a cone inside of which there will be no volume reduction.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="cone-falloff-angle" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                A double value describing the angle, in degrees, of a cone outside of which the volume will be reduced by a constant value (0).
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
