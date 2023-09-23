@@ -63,6 +63,7 @@ export type IMMLScene = {
   prompt: (promptProps: PromptProps, callback: (message: string | null) => void) => void;
 
   getLoadingProgressManager?: () => LoadingProgressManager | null;
+  link: (href: string) => void;
 };
 
 export enum ControlsType {
@@ -272,6 +273,10 @@ export class MMLScene implements IMMLScene {
       return;
     }
     this.promptManager.prompt(promptProps, callback);
+  }
+
+  public link(href: string) {
+    this.promptManager.link(href);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

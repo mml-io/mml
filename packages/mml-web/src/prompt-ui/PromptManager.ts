@@ -1,3 +1,4 @@
+import { ConfirmModal } from "./ConfirmModal";
 import { PromptModal } from "./PromptModal";
 import { PromptProps } from "../MMLScene";
 
@@ -7,13 +8,17 @@ type PromptState = {
   resolve: (result: string | null) => void;
 };
 
+type LinkState = {
+  href: string;
+};
+
 export class PromptManager {
   private promptHolderElement: HTMLDivElement;
 
   private container: HTMLElement;
 
-  private promptQueue = new Array<PromptState>();
-  private currentPrompt: PromptState | null = null;
+  private queue = new Array<PromptState | LinkState>();
+  private currentPrompt: PromptState | LinkState | null = null;
 
   private constructor(container: HTMLElement) {
     this.container = container;
@@ -37,18 +42,36 @@ export class PromptManager {
     this.promptHolderElement.remove();
   }
 
-  private showPrompt(promptState: PromptState) {
+  private showPrompt(promptState: PromptState | LinkState) {
     this.currentPrompt = promptState;
-    const promptModal = new PromptModal(promptState.promptProps, (result: string | null) => {
-      this.currentPrompt = null;
-      promptState.resolve(result);
-      const nextPrompt = this.promptQueue.shift();
-      if (nextPrompt !== undefined) {
-        this.showPrompt(nextPrompt);
-      }
-    });
-    this.promptHolderElement.appendChild(promptModal.element);
-    promptModal.focus();
+    if ("href" in promptState) {
+      const confirmModal = new ConfirmModal(
+        "Confirm",
+        "Are you sure you want to navigate to: " + promptState.href,
+        (result: boolean) => {
+          this.currentPrompt = null;
+          if (result) {
+            window.open(promptState.href);
+          }
+          const nextPrompt = this.queue.shift();
+          if (nextPrompt !== undefined) {
+            this.showPrompt(nextPrompt);
+          }
+        },
+      );
+      this.promptHolderElement.appendChild(confirmModal.element);
+    } else {
+      const promptModal = new PromptModal(promptState.promptProps, (result: string | null) => {
+        this.currentPrompt = null;
+        promptState.resolve(result);
+        const nextPrompt = this.queue.shift();
+        if (nextPrompt !== undefined) {
+          this.showPrompt(nextPrompt);
+        }
+      });
+      this.promptHolderElement.appendChild(promptModal.element);
+      promptModal.focus();
+    }
   }
 
   public prompt(promptProps: PromptProps, callback: (message: string | null) => void) {
@@ -57,9 +80,20 @@ export class PromptManager {
       resolve: callback,
     };
     if (this.currentPrompt !== null) {
-      this.promptQueue.push(promptState);
+      this.queue.push(promptState);
       return;
     }
     this.showPrompt(promptState);
+  }
+
+  public link(href: string) {
+    const linkState: LinkState = {
+      href,
+    };
+    if (this.currentPrompt !== null) {
+      this.queue.push(linkState);
+      return;
+    }
+    this.showPrompt(linkState);
   }
 }
