@@ -1,4 +1,5 @@
 import { ConfirmModal } from "./ConfirmModal";
+import { Modal } from "./Modal";
 import { PromptModal } from "./PromptModal";
 import { PromptProps } from "../MMLScene";
 
@@ -10,6 +11,7 @@ type PromptState = {
 
 type LinkState = {
   href: string;
+  windowCallback: (openedWindow: Window | null) => void;
 };
 
 export class PromptManager {
@@ -19,6 +21,7 @@ export class PromptManager {
 
   private queue = new Array<PromptState | LinkState>();
   private currentPrompt: PromptState | LinkState | null = null;
+  private currentModal: Modal | null = null;
 
   private constructor(container: HTMLElement) {
     this.container = container;
@@ -50,31 +53,57 @@ export class PromptManager {
         "Are you sure you want to navigate to: " + promptState.href,
         (result: boolean) => {
           this.currentPrompt = null;
+          this.currentModal = null;
           if (result) {
-            window.open(promptState.href);
+            const openedWindow = window.open(
+              promptState.href,
+              "_blank",
+              // "scrollbars=no," +
+              //   "resizable=no," +
+              //   "status=no," +
+              //   "location=no," +
+              "toolbar=no," + "menubar=no," + "width=500," + "height=500,", // +
+              // "left=-1000," +
+              // "top=-1000",
+            );
+            promptState.windowCallback(openedWindow);
           }
-          const nextPrompt = this.queue.shift();
-          if (nextPrompt !== undefined) {
-            this.showPrompt(nextPrompt);
-          }
+          this.showNextPromptIfAny();
         },
       );
+      this.currentModal = confirmModal;
       this.promptHolderElement.appendChild(confirmModal.element);
     } else {
       const promptModal = new PromptModal(promptState.promptProps, (result: string | null) => {
         this.currentPrompt = null;
+        this.currentModal = null;
         promptState.resolve(result);
-        const nextPrompt = this.queue.shift();
-        if (nextPrompt !== undefined) {
-          this.showPrompt(nextPrompt);
-        }
+        this.showNextPromptIfAny();
       });
+      this.currentModal = promptModal;
       this.promptHolderElement.appendChild(promptModal.element);
       promptModal.focus();
     }
   }
 
-  public prompt(promptProps: PromptProps, callback: (message: string | null) => void) {
+  public prompt(
+    promptProps: PromptProps,
+    abortSignal: AbortSignal,
+    callback: (message: string | null) => void,
+  ) {
+    abortSignal.addEventListener("abort", () => {
+      if (this.currentPrompt === promptState) {
+        // The current prompt is the one we are aborting
+        console.log("Abort current prompt");
+        this.currentPrompt = null;
+        this.currentModal?.dispose();
+        this.showNextPromptIfAny();
+      } else {
+        // Remove the link from the queue
+        console.log("Abort queued prompt");
+        this.queue = this.queue.filter((item) => item !== promptState);
+      }
+    });
     const promptState: PromptState = {
       promptProps,
       resolve: callback,
@@ -86,14 +115,39 @@ export class PromptManager {
     this.showPrompt(promptState);
   }
 
-  public link(href: string) {
+  public link(
+    href: string,
+    abortSignal: AbortSignal,
+    windowCallback: (openedWindow: Window | null) => void,
+  ) {
+    abortSignal.addEventListener("abort", () => {
+      if (this.currentPrompt === linkState) {
+        console.log("Abort current link");
+        // The current prompt is the one we are aborting
+        this.currentPrompt = null;
+        this.currentModal?.dispose();
+        this.showNextPromptIfAny();
+      } else {
+        console.log("Abort queued link");
+        // Remove the link from the queue
+        this.queue = this.queue.filter((item) => item !== linkState);
+      }
+    });
     const linkState: LinkState = {
       href,
+      windowCallback,
     };
     if (this.currentPrompt !== null) {
       this.queue.push(linkState);
       return;
     }
     this.showPrompt(linkState);
+  }
+
+  private showNextPromptIfAny() {
+    const nextPrompt = this.queue.shift();
+    if (nextPrompt !== undefined) {
+      this.showPrompt(nextPrompt);
+    }
   }
 }

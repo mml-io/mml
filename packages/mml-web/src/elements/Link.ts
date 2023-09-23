@@ -4,6 +4,8 @@ import { AttributeHandler } from "../utils/attribute-handling";
 export class Link extends TransformableElement {
   static tagName = "m-link";
 
+  private abortController: AbortController | null = null;
+
   private props = {
     href: undefined as string | undefined,
   };
@@ -23,7 +25,18 @@ export class Link extends TransformableElement {
 
     this.addEventListener("click", () => {
       if (this.props.href) {
-        this.getScene().link(this.props.href);
+        if (this.abortController) {
+          this.abortController.abort();
+          this.abortController = null;
+        }
+        this.abortController = new AbortController();
+        this.getScene().link(
+          this.props.href,
+          this.abortController.signal,
+          (openedWindow: Window | null) => {
+            this.abortController = null;
+          },
+        );
       }
     });
   }

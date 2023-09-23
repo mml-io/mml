@@ -1,0 +1,46 @@
+<html>
+<head>
+  <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const sent = document.getElementById("sent");
+        const sentMessages = [];
+        function updateView() {
+          sent.textContent = JSON.stringify(sentMessages, null, 2);
+        }
+        function sendMessageToOpener(msg) {
+          if (!window.opener || window.opener.closed) {
+            return;
+          }
+          window.opener.postMessage(msg, "*");
+          sentMessages.push(msg);
+          updateView();
+        }
+        sendMessageToOpener({ type: "initial-load", time: Date.now() });
+        window.addEventListener("unload", () => {
+          sendMessageToOpener({ type: "message", content: "Unloading" });
+        });
+        document.getElementById("color-picker").addEventListener("change", (event) => {
+          sendMessageToOpener({ type: "color", content: event.target.value });
+        });
+        document.getElementById("send-message").addEventListener("click", () => {
+          sendMessageToOpener({ type: "message", content: document.getElementById("message").value });
+        });
+        updateView();
+        setInterval(() => {
+          // If the opener window is closed, close this window
+          if (!window.opener || window.opener.closed) {
+            window.close();
+          }
+        }, 500);
+      });
+  </script>
+</head>
+<body>
+This is a web page that sends messages using postMessage
+<input type="text" id="message" placeholder="Message to send"/>
+<button id="send-message">Send message</button>
+<div>Pick a color to send: <input type="color" id="color-picker"/></div>
+<div>Sent Messages:</div>
+<pre id="sent"></pre>
+</body>
+</html>
