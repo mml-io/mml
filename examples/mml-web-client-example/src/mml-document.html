@@ -1,12 +1,39 @@
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
-<m-light type="spotlight" intensity="900" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
-<m-cube y="2" id="my-cube" color="red"></m-cube>
+<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+
+<m-message-link id="my-message-link" href="http://localhost:7079/assets/message-test.html">
+  <m-label content="Open" z="0.1" y="2" id="open-label" color="red"></m-label>
+</m-message-link>
+
+<m-label content="Clear" z="0.1" x="1.5" y="2" id="clear-label" color="black" font-color="white"></m-label>
+
+<m-label id="messages-label" y="5" width="5" height="6" font-size="20" content="Messages:"></m-label>
 
 <script>
-  let toggle = false;
-  const myCube = document.getElementById("my-cube");
-  myCube.addEventListener("click", () => {
-    toggle = !toggle;
-    myCube.setAttribute("color", toggle ? "green" : "red");
+  const messages = [];
+  const myLabel = document.getElementById("messages-label");
+  const myMessageLink = document.getElementById("my-message-link");
+  function updateView() {
+    myLabel.setAttribute("content", "Messages (latest first): " + JSON.stringify(messages, null, 2));
+  }
+  myMessageLink.addEventListener("opened", (event) => {
+    messages.unshift("opened by " + event.detail.connectionId);
+    updateView();
+  });
+  myMessageLink.addEventListener("message", (event) => {
+    const message = event.detail;
+    messages.unshift(message);
+    updateView();
+    if (message.type === "color") {
+      document.getElementById("open-label").setAttribute("color", message.content);
+    }
+  });
+  myMessageLink.addEventListener("closed", (event) => {
+    messages.unshift("closed by " + event.detail.connectionId);
+    updateView();
+  });
+  document.getElementById("clear-label").addEventListener("click", () => {
+    messages.length = 0;
+    updateView();
   });
 </script>
