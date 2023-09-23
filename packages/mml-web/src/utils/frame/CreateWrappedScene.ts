@@ -71,6 +71,9 @@ export function createWrappedScene(
     prompt(promptProps: PromptProps, callback: (result: string | null) => void) {
       scene.prompt(promptProps, callback);
     },
+    link(href: string) {
+      scene.link(href);
+    },
     getRootContainer: () => {
       return container;
     },

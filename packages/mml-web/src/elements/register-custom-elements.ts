@@ -11,6 +11,7 @@ import { Image } from "./Image";
 import { Interaction } from "./Interaction";
 import { Label } from "./Label";
 import { Light } from "./Light";
+import { Link } from "./Link";
 import { MElement } from "./MElement";
 import { Model } from "./Model";
 import { Plane } from "./Plane";
@@ -35,6 +36,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Label.tagName, Label);
   targetWindow.customElements.define(Group.tagName, Group);
   targetWindow.customElements.define(Prompt.tagName, Prompt);
+  targetWindow.customElements.define(Link.tagName, Link);
   targetWindow.customElements.define(Sphere.tagName, Sphere);
   targetWindow.customElements.define(Image.tagName, Image);
   targetWindow.customElements.define(Video.tagName, Video);
