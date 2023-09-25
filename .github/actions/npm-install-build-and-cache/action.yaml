@@ -16,6 +16,12 @@ runs:
         node-version-file: ".nvmrc"
         cache: npm
 
+    # Set NX_REJECT_UNKNOWN_LOCAL_CACHE=0 to allow NX to use the local cache even if the cache was built by a different machine
+    # https://nx.dev/recipes/troubleshooting/unknown-local-cache
+    - name: Allow NX to use unknown local cache
+      shell: bash
+      run: echo "NX_REJECT_UNKNOWN_LOCAL_CACHE=0" >> $GITHUB_ENV
+
     - name: Cache NPM dependencies
       uses: actions/cache@v3
       id: cache-npm-deps
