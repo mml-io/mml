@@ -800,14 +800,14 @@
           <xs:attribute name="cone-angle" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                A double value describing the angle, in degrees, of a cone inside of which there will be no volume reduction.
+               The angle within which sound is at full volume. Default value is 360 (the sound is not directional).
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="cone-falloff-angle" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                A double value describing the angle, in degrees, of a cone outside of which the volume will be reduced by a constant value (0).
+                The angle beyond which sound is inaudible. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

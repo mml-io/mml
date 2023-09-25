@@ -29,8 +29,12 @@ const defaultAudioEnabled = true;
 const defaultAudioStartTime = 0;
 const defaultAudioPauseTime = null;
 const defaultAudioSrc = null;
-const defaultAudioConeAngle: number = 360;
-const defaultAudioConeFalloffAngle = 0;
+const defaultAudioInnerConeAngle: number = 360;
+const defaultAudioOuterConeAngle = 0;
+
+function clampAudioConeAngle(angle: number) {
+  return Math.max(Math.min(angle, 360), 0);
+}
 
 export class Audio extends TransformableElement {
   static tagName = "m-audio";
@@ -48,16 +52,14 @@ export class Audio extends TransformableElement {
     ],
     "cone-angle": [
       AnimationType.Number,
-      defaultAudioConeAngle,
+      defaultAudioInnerConeAngle,
       (newValue: number | null) => {
-        this.props["cone-angle"] = newValue;
-
-        console.log(newValue);
+        this.props.innerCone = newValue === null ? null : clampAudioConeAngle(newValue);
 
         if (this.loadedAudioState) {
           this.loadedAudioState.positionalAudio.setDirectionalCone(
-            this.props["cone-angle"] ?? defaultAudioConeAngle,
-            this.props["cone-falloff-angle"] ?? defaultAudioConeFalloffAngle,
+            this.props.innerCone ?? defaultAudioInnerConeAngle,
+            this.props.outerCone ?? defaultAudioOuterConeAngle,
             0,
           );
         }
@@ -67,13 +69,13 @@ export class Audio extends TransformableElement {
     ],
     "cone-falloff-angle": [
       AnimationType.Number,
-      defaultAudioConeFalloffAngle,
+      defaultAudioOuterConeAngle,
       (newValue: number) => {
-        this.props["cone-falloff-angle"] = newValue;
+        this.props.outerCone = clampAudioConeAngle(newValue);
         if (this.loadedAudioState) {
           this.loadedAudioState.positionalAudio.setDirectionalCone(
-            this.props["cone-angle"] ?? defaultAudioConeAngle,
-            this.props["cone-falloff-angle"],
+            this.props.innerCone ?? defaultAudioInnerConeAngle,
+            this.props.outerCone,
             0,
           );
 
@@ -109,8 +111,8 @@ export class Audio extends TransformableElement {
     loop: defaultAudioLoop,
     enabled: defaultAudioEnabled,
     volume: defaultAudioVolume,
-    "cone-angle": null as number | null,
-    "cone-falloff-angle": defaultAudioConeFalloffAngle,
+    innerCone: null as number | null,
+    outerCone: defaultAudioOuterConeAngle,
     debug: false,
   };
 
@@ -154,7 +156,7 @@ export class Audio extends TransformableElement {
     "cone-falloff-angle": (instance, newValue) => {
       instance.audioAnimatedAttributeHelper.elementSetAttribute(
         "cone-falloff-angle",
-        parseFloatAttribute(newValue, defaultAudioConeFalloffAngle),
+        parseFloatAttribute(newValue, defaultAudioOuterConeAngle),
       );
     },
     debug: (instance, newValue) => {
@@ -358,10 +360,10 @@ export class Audio extends TransformableElement {
       this.positionalAudio.setMediaElementSource(audio);
       this.positionalAudio.setVolume(this.props.volume);
       this.positionalAudio.setDirectionalCone(
-        this.props["cone-angle"] ?? defaultAudioConeAngle,
-        this.props["cone-falloff-angle"],
+        this.props.innerCone ?? defaultAudioInnerConeAngle,
+        this.props.outerCone,
         0,
-      ); // 60 deg inner cone, 90 deg outer cone, 0.1 gain outside outer cone
+      );
       this.positionalAudio.setRefDistance(audioRefDistance);
       this.positionalAudio.setRolloffFactor(audioRolloffFactor);
 
@@ -467,14 +469,14 @@ export class Audio extends TransformableElement {
         this.audioDebugHelper = new THREE.Mesh(debugAudioGeometry, debugAudioMaterial);
         this.container.add(this.audioDebugHelper);
       }
-      if (!this.audioDebugConeX && this.props["cone-angle"]) {
+      if (!this.audioDebugConeX && this.props.innerCone) {
         this.audioDebugConeX = new PositionalAudioHelper(this.positionalAudio, 10);
         this.positionalAudio.add(this.audioDebugConeX);
         this.audioDebugConeY = new PositionalAudioHelper(this.positionalAudio, 10);
         this.audioDebugConeY.rotation.z = Math.PI / 2;
         this.positionalAudio.add(this.audioDebugConeY);
       }
-      if (!this.props["cone-angle"] && this.audioDebugConeX) {
+      if (!this.props.innerCone && this.audioDebugConeX) {
         this.audioDebugConeX.removeFromParent();
         this.audioDebugConeX = null;
         this.audioDebugConeY?.removeFromParent();
