@@ -54,11 +54,40 @@ export class MessageLink extends TransformableElement {
                 }
               }, 1000);
 
-              window.addEventListener("message", (event) => {
+              window.addEventListener("focus", () => {
+                console.log("Opener window focused");
+                if (openedWindow && !openedWindow.closed) {
+                  console.log("Opener window focused - focusing opened window");
+                  openedWindow.focus();
+                  setTimeout(() => {
+                    console.log("Opener window focused - focusing opened window - again");
+                    openedWindow.focus();
+                  },100);
+                }
+
+              });
+              (window as any).openedWindow = openedWindow;
+
+              const unload = () => {
+                if (openedWindow && !openedWindow.closed) {
+                  openedWindow.close();
+                }
+              };
+
+              const messageListener = (event: MessageEvent) => {
                 if (event.source !== openedWindow) return;
                 console.log("Link message", event.data);
                 this.dispatchEvent(new CustomEvent("message", { detail: event.data }));
-              });
+              };
+
+              const clearListeners = () => {
+                window.removeEventListener("unload", unload);
+                window.removeEventListener("message", messageListener);
+              };
+
+              window.addEventListener("unload", unload);
+
+              window.addEventListener("message", messageListener);
             }
           },
         );
