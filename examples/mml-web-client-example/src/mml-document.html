@@ -10,6 +10,15 @@
 <m-label id="messages-label" y="5" width="5" height="6" font-size="20" content="Messages:"></m-label>
 
 <script>
+  const connectedUsers = new Map();
+  window.addEventListener("disconnected", (event) => {
+    const entry = connectedUsers.get(event.detail.connectionId);
+    if (entry) {
+      entry.label.remove();
+      connectedUsers.delete(event.detail.connectionId);
+    }
+  });
+
   const messages = [];
   const myLabel = document.getElementById("messages-label");
   const myMessageLink = document.getElementById("my-message-link");
@@ -18,6 +27,15 @@
   }
   myMessageLink.addEventListener("opened", (event) => {
     messages.unshift("opened by " + event.detail.connectionId);
+    // Create a label for the new connection
+    const label = document.createElement("m-label");
+    label.setAttribute("content", "Connected - " + event.detail.connectionId);
+    label.setAttribute("x", "3");
+    label.setAttribute("y", "1.5");
+    label.setAttribute("z", "0.3");
+    label.setAttribute("width", "3");
+    document.body.append(label);
+    connectedUsers.set(event.detail.connectionId, { label });
     updateView();
   });
   myMessageLink.addEventListener("message", (event) => {
@@ -31,6 +49,11 @@
   myMessageLink.addEventListener("closed", (event) => {
     messages.unshift("closed by " + event.detail.connectionId);
     updateView();
+    const entry = connectedUsers.get(event.detail.connectionId);
+    if (entry) {
+      entry.label.remove();
+      connectedUsers.delete(event.detail.connectionId);
+    }
   });
   document.getElementById("clear-label").addEventListener("click", () => {
     messages.length = 0;
