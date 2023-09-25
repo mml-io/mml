@@ -28,6 +28,10 @@
     <xs:restriction base="xs:string"/>
   </xs:simpleType>
 
+  <xs:simpleType name="StringOrFloat">
+    <xs:union memberTypes="xs:string xs:float" />
+  </xs:simpleType>
+
   <xs:simpleType name="URI">
     <xs:annotation>
       <xs:documentation>
@@ -1227,14 +1231,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="start" type="xs:string">
+          <xs:attribute name="start" type="StringOrFloat">
             <xs:annotation>
               <xs:documentation>
                 The value of the attribute that the animation should start at.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="end" type="xs:string">
+          <xs:attribute name="end" type="StringOrFloat">
             <xs:annotation>
               <xs:documentation>
                 The value of the attribute that the animation should end at.
@@ -1329,3 +1333,4 @@
     </xs:complexType>
   </xs:element>
 </xs:schema>
+
