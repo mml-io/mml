@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { PositionalAudioHelper } from "three/addons/helpers/PositionalAudioHelper.js";
 
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
@@ -18,6 +19,7 @@ const debugAudioMaterial = new THREE.MeshBasicMaterial({
   toneMapped: false,
   color: 0x00ff00,
 });
+
 const audioRefDistance = 1;
 const audioRolloffFactor = 1;
 
@@ -27,6 +29,12 @@ const defaultAudioEnabled = true;
 const defaultAudioStartTime = 0;
 const defaultAudioPauseTime = null;
 const defaultAudioSrc = null;
+const defaultAudioInnerConeAngle: number = 360;
+const defaultAudioOuterConeAngle = 0;
+
+function clampAudioConeAngle(angle: number) {
+  return Math.max(Math.min(angle, 360), 0);
+}
 
 export class Audio extends TransformableElement {
   static tagName = "m-audio";
@@ -42,16 +50,53 @@ export class Audio extends TransformableElement {
         }
       },
     ],
+    "cone-angle": [
+      AnimationType.Number,
+      defaultAudioInnerConeAngle,
+      (newValue: number | null) => {
+        this.props.innerCone = newValue === null ? null : clampAudioConeAngle(newValue);
+
+        if (this.loadedAudioState) {
+          this.loadedAudioState.positionalAudio.setDirectionalCone(
+            this.props.innerCone ?? defaultAudioInnerConeAngle,
+            this.props.outerCone ?? defaultAudioOuterConeAngle,
+            0,
+          );
+        }
+
+        this.updateDebugVisualisation();
+      },
+    ],
+    "cone-falloff-angle": [
+      AnimationType.Number,
+      defaultAudioOuterConeAngle,
+      (newValue: number) => {
+        this.props.outerCone = clampAudioConeAngle(newValue);
+        if (this.loadedAudioState) {
+          this.loadedAudioState.positionalAudio.setDirectionalCone(
+            this.props.innerCone ?? defaultAudioInnerConeAngle,
+            this.props.outerCone,
+            0,
+          );
+
+          this.updateDebugVisualisation();
+        }
+      },
+    ],
   });
 
   private documentTimeListener: { remove: () => void };
   private delayedStartTimer: NodeJS.Timeout | null = null;
   private delayedPauseTimer: NodeJS.Timeout | null = null;
   private audioDebugHelper: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
+  private audioDebugConeX: PositionalAudioHelper | null;
+  private audioDebugConeY: PositionalAudioHelper | null;
 
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes, ...Audio.attributeHandler.getAttributes()];
   }
+
+  private positionalAudio: THREE.PositionalAudio;
 
   private loadedAudioState: {
     paused: boolean;
@@ -66,6 +111,8 @@ export class Audio extends TransformableElement {
     loop: defaultAudioLoop,
     enabled: defaultAudioEnabled,
     volume: defaultAudioVolume,
+    innerCone: null as number | null,
+    outerCone: defaultAudioOuterConeAngle,
     debug: false,
   };
 
@@ -98,6 +145,18 @@ export class Audio extends TransformableElement {
       instance.audioAnimatedAttributeHelper.elementSetAttribute(
         "volume",
         parseFloatAttribute(newValue, defaultAudioVolume),
+      );
+    },
+    "cone-angle": (instance, newValue) => {
+      instance.audioAnimatedAttributeHelper.elementSetAttribute(
+        "cone-angle",
+        parseFloatAttribute(newValue, null),
+      );
+    },
+    "cone-falloff-angle": (instance, newValue) => {
+      instance.audioAnimatedAttributeHelper.elementSetAttribute(
+        "cone-falloff-angle",
+        parseFloatAttribute(newValue, defaultAudioOuterConeAngle),
       );
     },
     debug: (instance, newValue) => {
@@ -297,19 +356,24 @@ export class Audio extends TransformableElement {
         this.syncAudioTime();
       });
 
-      const positionalAudio = new THREE.PositionalAudio(audioListener);
-      positionalAudio.setMediaElementSource(audio);
-      positionalAudio.setVolume(this.props.volume);
-      positionalAudio.setRefDistance(audioRefDistance);
-      positionalAudio.setRolloffFactor(audioRolloffFactor);
+      this.positionalAudio = new THREE.PositionalAudio(audioListener);
+      this.positionalAudio.setMediaElementSource(audio);
+      this.positionalAudio.setVolume(this.props.volume);
+      this.positionalAudio.setDirectionalCone(
+        this.props.innerCone ?? defaultAudioInnerConeAngle,
+        this.props.outerCone,
+        0,
+      );
+      this.positionalAudio.setRefDistance(audioRefDistance);
+      this.positionalAudio.setRolloffFactor(audioRolloffFactor);
 
       this.loadedAudioState = {
         paused: false,
         audioElement: audio,
-        positionalAudio,
+        positionalAudio: this.positionalAudio,
       };
 
-      this.container.add(positionalAudio);
+      this.container.add(this.positionalAudio);
     }
 
     const tag = this.loadedAudioState.audioElement;
@@ -389,6 +453,12 @@ export class Audio extends TransformableElement {
       this.audioDebugHelper.removeFromParent();
       this.audioDebugHelper = null;
     }
+    if (this.audioDebugConeX) {
+      this.audioDebugConeX.removeFromParent();
+      this.audioDebugConeX = null;
+      this.audioDebugConeY?.removeFromParent();
+      this.audioDebugConeY = null;
+    }
   }
 
   private updateDebugVisualisation() {
@@ -399,6 +469,21 @@ export class Audio extends TransformableElement {
         this.audioDebugHelper = new THREE.Mesh(debugAudioGeometry, debugAudioMaterial);
         this.container.add(this.audioDebugHelper);
       }
+      if (!this.audioDebugConeX && this.props.innerCone) {
+        this.audioDebugConeX = new PositionalAudioHelper(this.positionalAudio, 10);
+        this.positionalAudio.add(this.audioDebugConeX);
+        this.audioDebugConeY = new PositionalAudioHelper(this.positionalAudio, 10);
+        this.audioDebugConeY.rotation.z = Math.PI / 2;
+        this.positionalAudio.add(this.audioDebugConeY);
+      }
+      if (!this.props.innerCone && this.audioDebugConeX) {
+        this.audioDebugConeX.removeFromParent();
+        this.audioDebugConeX = null;
+        this.audioDebugConeY?.removeFromParent();
+        this.audioDebugConeY = null;
+      }
     }
+    this.audioDebugConeX?.update();
+    this.audioDebugConeY?.update();
   }
 }

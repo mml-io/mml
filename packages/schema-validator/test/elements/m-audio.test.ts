@@ -19,6 +19,8 @@ test("<m-audio>", () => {
   loop="true"
   enabled="true"
   volume="1.5"
+  cone-angle="120"
+  cone-falloff-angle="180"
 ></m-audio>
 `);
   expect(validationErrors).toBeNull();

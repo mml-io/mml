@@ -797,6 +797,20 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="cone-angle" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The angle in degrees within which sound is at full volume. Default value is 360 (the sound is not directional).
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="cone-falloff-angle" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The angle in degrees beyond which sound is inaudible. Must be greater than `cone-angle` to have an effect. Default value is 0 (there is no gradual drop-off).
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="start-time" type="xs:integer">
             <xs:annotation>
               <xs:documentation>
