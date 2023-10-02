@@ -108,6 +108,23 @@ export class WebBrowserDOMRunner implements DOMRunnerInterface {
       detail: { ...remoteEvent.params, connectionId },
     });
 
+    const eventTypeLowerCase = remoteEvent.name.toLowerCase();
+
+    // TODO - check if there are other events that automatically wire up similarly to click->onclick and avoid those too
+    if (eventTypeLowerCase !== "click") {
+      const handlerAttributeName = "on" + eventTypeLowerCase;
+      const handlerAttributeValue = realElement.getAttribute(handlerAttributeName);
+      if (handlerAttributeValue) {
+        // This event is defined as an HTML event attribute.
+        try {
+          const fn = Function("event", handlerAttributeValue);
+          fn.apply(realElement, [remoteEventObject]);
+        } catch (e) {
+          console.error("Error running event handler:", e);
+        }
+      }
+    }
+
     // Dispatch the event via JavaScript.
     realElement.dispatchEvent(remoteEventObject);
   }
