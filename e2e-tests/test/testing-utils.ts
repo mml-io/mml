@@ -1,13 +1,14 @@
 import * as puppeteer from "puppeteer";
 
-export async function clickElement(page: puppeteer.Page, selector: string) {
+export async function clickElement(page: puppeteer.Page, selector: string, coordsOffset?: { x: number; y: number }) {
   const coords = await page.evaluate((selector: string) => {
     const { mmlScene } = window["mml-web-client"];
     return mmlScene.getBoundingBoxForElement(document.querySelector(selector));
   }, selector);
 
+  const { x: xMltp, y: yMltp } = coordsOffset ?? { x: 0.5, y: 0.5 };
   return page.click("canvas", {
-    offset: { x: coords.x + coords.width / 2, y: coords.y + coords.height / 2 },
+    offset: { x: coords.x + coords.width * xMltp, y: coords.y + coords.height * yMltp },
   });
 }
 

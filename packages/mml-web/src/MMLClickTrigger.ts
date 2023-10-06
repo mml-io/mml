@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { MElement } from "./elements/MElement";
 import { IMMLScene } from "./MMLScene";
 import { EventHandlerCollection } from "./utils/events/EventHandlerCollection";
+import { getRelativePositionAndRotationRelativeToObject } from "./utils/position-utils";
 
 const mouseMovePixelsThreshold = 10;
 const mouseMoveTimeThresholdMilliseconds = 500;
@@ -86,9 +87,28 @@ export class MMLClickTrigger {
 
           const mElement = MElement.getMElementFromObject(obj);
           if (mElement && mElement.isClickable()) {
+            // let's get the intersection point relative to the element origin
+
+            const elementRelative = getRelativePositionAndRotationRelativeToObject(
+              {
+                position: intersection.point,
+                rotation: {
+                  x: 0,
+                  y: 0,
+                  z: 0,
+                },
+              },
+              mElement.getContainer(),
+            );
+
             mElement.dispatchEvent(
-              new MouseEvent("click", {
+              new CustomEvent("click", {
                 bubbles: true,
+                detail: {
+                  position: {
+                    ...elementRelative.position,
+                  },
+                },
               }),
             );
             return;
