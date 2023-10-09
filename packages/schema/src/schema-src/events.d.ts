@@ -39,6 +39,17 @@ export interface MMLPromptEvent extends RemoteEvent {
  */
 export interface MMLClickEvent extends RemoteEvent {
   readonly type: "click";
+
+  readonly detail: {
+    /**
+     * The position of the click relative to the element's origin
+     */
+    readonly position: {
+      x: number;
+      y: number;
+      z: number;
+    };
+  } & RemoteEvent["detail"];
 }
 
 type PositionAndRotation = {
