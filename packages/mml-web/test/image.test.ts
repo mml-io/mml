@@ -6,7 +6,7 @@ import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Image } from "../src/elements/Image";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMScene } from "../src/FullScreenMScene";
+import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -15,13 +15,13 @@ beforeAll(() => {
 
 describe("m-image", () => {
   test("test attachment to scene", () => {
-    const scene = new FullScreenMScene();
-    const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-    sceneAttachment.init(scene, "ws://localhost:8080");
-    document.body.append(sceneAttachment);
+    const scene = new FullScreenMMLScene();
+    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
+    remoteDocument.init(scene, "ws://localhost:8080");
+    document.body.append(remoteDocument);
 
     const element = document.createElement("m-image") as Image;
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
 
     expect(scene.getThreeScene().children[0].children[0].children[0].children[0]).toBe(
       element.getImageMesh(),
@@ -133,13 +133,13 @@ describe("m-image", () => {
   });
 
   test("collider is updated", async () => {
-    const { scene, sceneAttachment } = createTestScene();
+    const { scene, remoteDocument } = createTestScene();
     const image = document.createElement("m-image") as Image;
     expect(Array.from((scene as any).colliders)).toEqual([]);
     const addColliderSpy = jest.spyOn(scene, "addCollider");
     const updateColliderSpy = jest.spyOn(scene, "updateCollider");
     const removeColliderSpy = jest.spyOn(scene, "removeCollider");
-    sceneAttachment.append(image);
+    remoteDocument.append(image);
 
     expect(Array.from((scene as any).colliders)).toEqual([image.getImageMesh()]);
     expect(removeColliderSpy).toHaveBeenCalledTimes(0);

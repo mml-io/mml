@@ -36,7 +36,7 @@ export class StaticHTMLFrameInstance {
         // Events targeting static MML frames should not be sent
       },
     );
-    this.targetForWrapper.append(this.remoteDocumentWrapper.element);
+    this.targetForWrapper.append(this.remoteDocumentWrapper.remoteDocument);
     // Promise is intentionally ignored here
     this.fetch(address);
   }
@@ -55,10 +55,10 @@ export class StaticHTMLFrameInstance {
       "text/html",
     );
     DOMSanitizer.sanitise(remoteDocumentAsHTMLNode.body);
-    this.remoteDocumentWrapper.element.append(remoteDocumentAsHTMLNode.body);
+    this.remoteDocumentWrapper.remoteDocument.append(remoteDocumentAsHTMLNode.body);
   }
 
   public dispose() {
-    this.targetForWrapper.removeChild(this.remoteDocumentWrapper.element);
+    this.targetForWrapper.removeChild(this.remoteDocumentWrapper.remoteDocument);
   }
 }

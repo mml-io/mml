@@ -3,26 +3,28 @@ import { NetworkedDOMWebsocket } from "@mml-io/networked-dom-web";
 
 import { FakeWebsocket } from "./FakeWebsocket";
 
+/**
+ * The NetworkedDOMWebRunnerClient class can be used to view and interact with a NetworkedDOM document instance that is
+ * available directly in the browser (rather than exposed over the network). This is useful for usage modes where the
+ * document does not need to be available to other clients, such as a single-user or an edit/preview mode.
+ *
+ * The class takes arguments for where the view of the document should be synchronized to in the DOM, and which window
+ * instance to use to create any other elements (to allow for using iframes to isolate the document from the rest of
+ * the page).
+ */
 export class NetworkedDOMWebRunnerClient {
-  public readonly element: HTMLDivElement;
-  protected remoteDocumentHolder: HTMLElement;
+  public readonly element: HTMLElement;
 
-  protected connectedState: {
+  public connectedState: {
     document: NetworkedDOM | EditableNetworkedDOM;
     domWebsocket: NetworkedDOMWebsocket;
     fakeWebsocket: FakeWebsocket;
   } | null = null;
   private enableEventHandling: boolean;
 
-  constructor(enableEventHandling = true) {
+  constructor(enableEventHandling = true, element?: HTMLElement) {
     this.enableEventHandling = enableEventHandling;
-    this.element = document.createElement("div");
-    this.element.style.position = "relative";
-    this.element.style.width = "100%";
-    this.element.style.height = "100%";
-
-    this.remoteDocumentHolder = document.createElement("div");
-    this.element.append(this.remoteDocumentHolder);
+    this.element = element || document.createElement("div");
   }
 
   public disconnect() {
@@ -37,7 +39,6 @@ export class NetworkedDOMWebRunnerClient {
 
   public dispose() {
     this.disconnect();
-    this.remoteDocumentHolder.remove();
     this.element.remove();
   }
 
@@ -58,7 +59,7 @@ export class NetworkedDOMWebRunnerClient {
     };
 
     if (this.enableEventHandling) {
-      this.remoteDocumentHolder.addEventListener("click", (event: Event) => {
+      this.element.addEventListener("click", (event: Event) => {
         eventHandler(event.target as HTMLElement, event as CustomEvent);
         event.stopPropagation();
         event.preventDefault();
@@ -69,7 +70,7 @@ export class NetworkedDOMWebRunnerClient {
     const domWebsocket = new NetworkedDOMWebsocket(
       "ws://localhost",
       () => fakeWebsocket.clientSideWebsocket as unknown as WebSocket,
-      this.remoteDocumentHolder,
+      this.element,
       timeCallback,
     );
     overriddenHandler = (element: HTMLElement, event: CustomEvent) => {

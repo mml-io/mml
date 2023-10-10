@@ -58,6 +58,13 @@ function updateIfChangedValue<T extends AnimationType>(
   }
 }
 
+/**
+ * The AnimatedAttributeHelper is a utility class that manages the application of attribute animations to an element.
+ *
+ * It is used by an MElement that has animateable attributes and is responsible for applying the animations to the
+ * element according to the precedence rules defined in the AttributeAnimation class, and falling back to the element's
+ * attribute value if no animations are active.
+ */
 export class AnimatedAttributeHelper {
   private element: MElement;
   private stateByAttribute: {

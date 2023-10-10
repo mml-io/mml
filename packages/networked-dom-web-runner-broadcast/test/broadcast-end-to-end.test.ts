@@ -14,6 +14,26 @@ import {
   ToBroadcastInstanceMessage,
 } from "../src";
 
+const jestConsoleLog = console.log;
+const jestConsoleInfo = console.info;
+const jestConsoleWarn = console.warn;
+const jestConsoleError = console.error;
+
+// Suppress log output during these test because the test itself is logging and errors can confuse the test output.
+beforeEach(() => {
+  console.log = () => {};
+  console.info = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+});
+
+afterEach(() => {
+  console.log = jestConsoleLog;
+  console.info = jestConsoleInfo;
+  console.warn = jestConsoleWarn;
+  console.error = jestConsoleError;
+});
+
 describe("broadcast", function () {
   test("end-to-end", async () => {
     const logs: LogMessage[] = [];

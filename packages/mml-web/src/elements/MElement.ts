@@ -2,7 +2,8 @@ import * as THREE from "three";
 
 import { RemoteDocument } from "./RemoteDocument";
 import { consumeEventEventName } from "../common";
-import { getGlobalMScene } from "../global";
+import { getGlobalDocumentTimeManager, getGlobalMMLScene } from "../global";
+import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene, PositionAndRotation } from "../MMLScene";
 
 const MELEMENT_PROPERTY_NAME = "m-element-property";
@@ -53,11 +54,11 @@ export abstract class MElement extends HTMLElement {
   }
 
   public getScene(): IMMLScene {
-    const sceneAttachmentElement = this.getRemoteDocument();
-    if (sceneAttachmentElement) {
-      return (sceneAttachmentElement as RemoteDocument).getMScene();
+    const remoteDocumentElement = this.getRemoteDocument();
+    if (remoteDocumentElement) {
+      return (remoteDocumentElement as RemoteDocument).getMMLScene();
     }
-    const globalScene = getGlobalMScene();
+    const globalScene = getGlobalMMLScene();
     if (!globalScene) {
       throw new Error("No scene attachment found and no global scene found");
     }
@@ -113,9 +114,21 @@ export abstract class MElement extends HTMLElement {
   }
 
   protected getDocumentTime(): number | null {
-    const documentTimeContextProvider = this.getRemoteDocument();
+    const documentTimeContextProvider = this.getDocumentTimeManager();
     if (documentTimeContextProvider) {
-      return (documentTimeContextProvider as RemoteDocument).getDocumentTime();
+      return documentTimeContextProvider.getDocumentTime();
+    }
+    return null;
+  }
+
+  protected getDocumentTimeManager(): MMLDocumentTimeManager | null {
+    const remoteDocument = this.getRemoteDocument();
+    if (remoteDocument) {
+      return remoteDocument.getDocumentTimeManager();
+    }
+    const globalDocumentTimeManager = getGlobalDocumentTimeManager();
+    if (globalDocumentTimeManager) {
+      return globalDocumentTimeManager;
     }
     return null;
   }
@@ -123,12 +136,12 @@ export abstract class MElement extends HTMLElement {
   public addDocumentTimeListener(cb: (documentTime: number) => void): {
     remove: () => void;
   } {
-    const remoteDocument = this.getRemoteDocument();
-    if (remoteDocument) {
-      remoteDocument.addDocumentTimeListenerCallback(cb);
+    const documentTimeManager = this.getDocumentTimeManager();
+    if (documentTimeManager) {
+      documentTimeManager.addDocumentTimeListenerCallback(cb);
       return {
         remove: () => {
-          (remoteDocument as RemoteDocument).removeDocumentTimeListenerCallback(cb);
+          documentTimeManager.removeDocumentTimeListenerCallback(cb);
         },
       };
     } else {
@@ -144,12 +157,12 @@ export abstract class MElement extends HTMLElement {
   public addDocumentTimeTickListener(cb: (documentTime: number) => void): {
     remove: () => void;
   } {
-    const remoteDocument = this.getRemoteDocument();
-    if (remoteDocument) {
-      remoteDocument.addDocumentTimeTickListenerCallback(cb);
+    const documentTimeManager = this.getDocumentTimeManager();
+    if (documentTimeManager) {
+      documentTimeManager.addDocumentTimeTickListenerCallback(cb);
       return {
         remove: () => {
-          (remoteDocument as RemoteDocument).removeDocumentTimeTickListenerCallback(cb);
+          documentTimeManager.removeDocumentTimeTickListenerCallback(cb);
         },
       };
     } else {
@@ -171,21 +184,21 @@ export abstract class MElement extends HTMLElement {
   }
 
   getCamera(): THREE.Camera {
-    const sceneAttachment = this.getScene();
-    return sceneAttachment.getCamera();
+    const remoteDocument = this.getScene();
+    return remoteDocument.getCamera();
   }
 
   getUserPositionAndRotation(): PositionAndRotation {
-    const sceneAttachment = this.getScene();
-    if (!sceneAttachment) {
+    const remoteDocument = this.getScene();
+    if (!remoteDocument) {
       throw new Error("No scene to retrieve user position from");
     }
-    return sceneAttachment.getUserPositionAndRotation();
+    return remoteDocument.getUserPositionAndRotation();
   }
 
   getAudioListener(): THREE.AudioListener {
-    const sceneAttachment = this.getScene();
-    return sceneAttachment.getAudioListener();
+    const remoteDocument = this.getScene();
+    return remoteDocument.getAudioListener();
   }
 
   dispatchEvent(event: Event): boolean {

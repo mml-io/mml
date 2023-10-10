@@ -25,17 +25,17 @@ describe("m-attr-anim", () => {
   });
 
   test("animates parent element attribute - add and remove", () => {
-    const { sceneAttachment } = createTestScene();
+    const { remoteDocument } = createTestScene();
     const cube = document.createElement("m-cube") as Cube;
     cube.setAttribute("x", "0");
     cube.setAttribute("y", "2");
-    sceneAttachment.overrideDocumentTime(0);
+    remoteDocument.getDocumentTimeManager().overrideDocumentTime(0);
 
     const transformableAttributeChangedValueSpy = jest.spyOn(
       cube as any,
       "transformableAttributeChangedValue",
     );
-    sceneAttachment.append(cube);
+    remoteDocument.append(cube);
     expect(transformableAttributeChangedValueSpy).toHaveBeenCalledTimes(0);
     cube.setAttribute("x", "1");
     expect(transformableAttributeChangedValueSpy).toHaveBeenCalledTimes(1);
@@ -52,29 +52,29 @@ describe("m-attr-anim", () => {
     cube.append(attrAnim);
 
     // Halfway through the animation
-    sceneAttachment.overrideDocumentTime(500);
-    sceneAttachment.tick();
+    remoteDocument.getDocumentTimeManager().overrideDocumentTime(500);
+    remoteDocument.tick();
     expect(cube.getContainer().position.x).toEqual(15);
     expect(cube.getContainer().position.y).toEqual(2);
     expect(transformableAttributeChangedValueSpy).toHaveBeenCalledTimes(2);
 
     // Animation finishes
-    sceneAttachment.overrideDocumentTime(1000);
-    sceneAttachment.tick();
+    remoteDocument.getDocumentTimeManager().overrideDocumentTime(1000);
+    remoteDocument.tick();
     expect(cube.getContainer().position.x).toEqual(20);
     expect(cube.getContainer().position.y).toEqual(2);
     expect(transformableAttributeChangedValueSpy).toHaveBeenCalledTimes(3);
 
     // Animation remains finished - the value should not be repeatedly set
-    sceneAttachment.overrideDocumentTime(1500);
-    sceneAttachment.tick();
+    remoteDocument.getDocumentTimeManager().overrideDocumentTime(1500);
+    remoteDocument.tick();
     expect(cube.getContainer().position.x).toEqual(20);
     expect(cube.getContainer().position.y).toEqual(2);
     expect(transformableAttributeChangedValueSpy).toHaveBeenCalledTimes(3);
 
     // Removing the animation element should reset the value of the parent to the attribute value
     attrAnim.remove();
-    sceneAttachment.tick();
+    remoteDocument.tick();
     expect(cube.getContainer().position.x).toEqual(1);
     expect(cube.getContainer().position.y).toEqual(2);
     expect(transformableAttributeChangedValueSpy).toHaveBeenCalledTimes(4);

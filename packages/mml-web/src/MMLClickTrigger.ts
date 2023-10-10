@@ -8,6 +8,10 @@ import { getRelativePositionAndRotationRelativeToObject } from "./utils/position
 const mouseMovePixelsThreshold = 10;
 const mouseMoveTimeThresholdMilliseconds = 500;
 
+/**
+ * The MMLClickTrigger class is responsible for handling click events on the MML scene and raycasts into the scene to
+ * determine which object was clicked and then dispatches events to those elements.
+ */
 export class MMLClickTrigger {
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
   private scene: IMMLScene;
@@ -128,16 +132,16 @@ export class MMLClickTrigger {
     if (mesh) {
       if (
         ((mesh.material as THREE.Material) &&
-          (mesh.material as THREE.Material).transparent === true &&
+          (mesh.material as THREE.Material).transparent &&
           (mesh.material as THREE.Material).opacity < 1) ||
         ((mesh.material as THREE.MeshLambertMaterial) &&
-          (mesh.material as THREE.MeshLambertMaterial).wireframe === true) ||
+          (mesh.material as THREE.MeshLambertMaterial).wireframe) ||
         ((mesh.material as THREE.MeshPhongMaterial) &&
-          (mesh.material as THREE.MeshPhongMaterial).wireframe === true) ||
+          (mesh.material as THREE.MeshPhongMaterial).wireframe) ||
         ((mesh.material as THREE.MeshPhysicalMaterial) &&
-          (mesh.material as THREE.MeshPhysicalMaterial).wireframe === true) ||
+          (mesh.material as THREE.MeshPhysicalMaterial).wireframe) ||
         ((mesh.material as THREE.MeshStandardMaterial) &&
-          (mesh.material as THREE.MeshStandardMaterial).wireframe === true)
+          (mesh.material as THREE.MeshStandardMaterial).wireframe)
       ) {
         return true;
       }

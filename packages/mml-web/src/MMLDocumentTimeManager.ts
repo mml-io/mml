@@ -1,13 +1,15 @@
-export class MMLDocumentRoot {
-  private rootElement: HTMLElement;
+/**
+ * The MMLDocumentTimeManager class is responsible for tracking the current document time and notifying listeners of
+ * either shifts in time (e.g. media synced to time) and also ticking (e.g. for elements that are animating) when the
+ * document time changes.
+ */
+export class MMLDocumentTimeManager {
   private relativeDocumentStartTime = 0;
   private overridenDocumentTime: number | null = null;
   private documentTimeListeners = new Set<(time: number) => void>();
   private documentTimeTickListeners = new Set<(time: number) => void>();
 
-  constructor(rootElement: HTMLElement) {
-    this.rootElement = rootElement;
-  }
+  constructor() {}
 
   public tick() {
     const documentTime = this.getDocumentTime();

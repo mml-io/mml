@@ -26,7 +26,13 @@ class RejectionResourceLoader extends ResourceLoader {
   }
 }
 
-export class JSDOMRunner {
+/**
+ * The JSDOMRunner class is used to run HTML Documents using JSDOM and emit DOMRunnerMessages for document events such
+ * as mutations.
+ *
+ * It handles the receiving of remote events and the dispatching of them to the underlying DOM elements.
+ */
+export class JSDOMRunner implements DOMRunnerInterface {
   public domWindow: DOMWindow | null = null;
   private jsdom: JSDOM;
 

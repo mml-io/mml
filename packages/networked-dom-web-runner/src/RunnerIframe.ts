@@ -8,14 +8,17 @@ import {
 // eslint-disable-next-line import/no-unresolved
 import runnerText from "runner-iframe-js-text";
 
+/**
+ * RunnerIframe is a class that creates an iframe that includes the networked-dom-web-runner-iframe package in it and
+ * injects the provided HTML into it. This class then communicates with the iframe using postMessage.
+ */
 export class RunnerIframe {
   private iframe: HTMLIFrameElement;
-  private onMessageCallback: (message: FromObservableDOMInstanceMessage) => void;
   private postMessageListener: (messageEvent: MessageEvent) => void;
 
   constructor(
-    observableDOMParameters: ObservableDOMParameters,
-    onMessageCallback: (message: FromObservableDOMInstanceMessage) => void,
+    private observableDOMParameters: ObservableDOMParameters,
+    private onMessageCallback: (message: FromObservableDOMInstanceMessage) => void,
   ) {
     this.iframe = document.createElement("iframe");
     this.iframe.setAttribute("sandbox", "allow-scripts");
@@ -27,7 +30,7 @@ export class RunnerIframe {
     this.iframe.style.border = "none";
 
     const paramsMinusCode: Partial<ObservableDOMParameters> = {
-      ...observableDOMParameters,
+      ...this.observableDOMParameters,
     };
     delete paramsMinusCode.htmlContents;
 
@@ -60,12 +63,10 @@ export class RunnerIframe {
       document.body.append(this.iframe);
     }
 
-    this.onMessageCallback = onMessageCallback;
-
     this.postMessageListener = (e: MessageEvent) => {
       if (e.source === this.iframe.contentWindow || (isJSDOM && e.source === null)) {
         const parsed = JSON.parse(e.data) as FromObservableDOMInstanceMessage;
-        onMessageCallback(parsed);
+        this.onMessageCallback(parsed);
       }
     };
     window.addEventListener("message", this.postMessageListener);

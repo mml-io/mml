@@ -11,6 +11,9 @@ import {
 
 import { RunnerIframe } from "./RunnerIframe";
 
+/**
+ * Creates an ObservableDOMInterface that uses an iframe to run the document.
+ */
 export const IframeObservableDOMFactory: ObservableDOMFactory = (
   observableDOMParameters: ObservableDOMParameters,
   callback: (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => void,

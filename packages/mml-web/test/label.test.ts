@@ -2,7 +2,7 @@ import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Label } from "../src/elements/Label";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMScene } from "../src/FullScreenMScene";
+import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -10,13 +10,13 @@ beforeAll(() => {
 
 describe("m-label", () => {
   test("test attachment to scene", () => {
-    const scene = new FullScreenMScene();
-    const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-    sceneAttachment.init(scene, "ws://localhost:8080");
-    document.body.append(sceneAttachment);
+    const scene = new FullScreenMMLScene();
+    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
+    remoteDocument.init(scene, "ws://localhost:8080");
+    document.body.append(remoteDocument);
 
     const element = document.createElement("m-label") as Label;
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
 
     expect(scene.getThreeScene().children[0].children[0].children[0].children[0]).toBe(
       element.getLabel(),

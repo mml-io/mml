@@ -118,13 +118,13 @@ describe("m-cube", () => {
   });
 
   test("collide - remove and add", () => {
-    const { scene, sceneAttachment } = createTestScene();
+    const { scene, remoteDocument } = createTestScene();
     const element = document.createElement("m-cube") as Cube;
     expect(Array.from((scene as any).colliders)).toEqual([]);
     const addColliderSpy = jest.spyOn(scene, "addCollider");
     const updateColliderSpy = jest.spyOn(scene, "updateCollider");
     const removeColliderSpy = jest.spyOn(scene, "removeCollider");
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
     expect(Array.from((scene as any).colliders)).toEqual([element.getCube()]);
     expect(addColliderSpy).toHaveBeenCalledTimes(1);
     expect(updateColliderSpy).toHaveBeenCalledTimes(0);

@@ -16,8 +16,12 @@ import { NodeMapping, StaticVirtualDOMMutationRecord, VirtualDOMDiffStruct } fro
 export const visibleToAttrName = "visible-to";
 export const hiddenFromAttrName = "hidden-from";
 
-// This function does a lot of heavy lifting - it takes a mutation and applies it to the connection's view (affecting which nodes are visible based on attributes etc.)
-// As a result of that application it generates a diff for that client's view of the DOM.
+/**
+ * This function does a lot of heavy lifting - it takes a mutation and applies it to the connection's view (affecting
+ * which nodes are visible based on attributes etc.)
+ *
+ * As a result of the application it generates a diff for the particular connection's view of the DOM.
+ */
 export function diffFromApplicationOfStaticVirtualDOMMutationRecordToConnection(
   mutation: StaticVirtualDOMMutationRecord,
   parentNode: StaticVirtualDOMElement | null,
@@ -459,10 +463,10 @@ export function calculateStaticVirtualDOMDiff(
   for (const diff of jsonPatchDiffs) {
     if (diff.op === "replace" && diff.path.endsWith("/nodeId")) {
       const pointer = rfc6902.Pointer.fromJSON(diff.path);
-      const value = pointer.get(originalState);
+      const originalValue = pointer.get(originalState);
       nodeIdRemappings.push({
         internalNodeId: diff.value,
-        clientFacingNodeId: value,
+        clientFacingNodeId: originalValue,
       });
     } else {
       virtualDOMDiffs.push(diff);

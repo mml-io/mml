@@ -1,4 +1,4 @@
-import { IframeWrapper, registerCustomElementsToWindow } from "mml-web";
+import { IframeWrapper, MMLScene, registerCustomElementsToWindow } from "mml-web";
 import {
   EditableNetworkedDOM,
   IframeObservableDOMFactory,
@@ -41,8 +41,9 @@ function createCloseableClient(
   wrapperElement.style.border = "1px solid black";
   wrapperElement.style.flexShrink = "0";
   wrapperElement.style.flexGrow = "0";
-  const client = new MMLWebRunnerClient(windowTarget, iframeBody);
-  wrapperElement.append(client.element);
+  const mmlScene = new MMLScene();
+  const client = new MMLWebRunnerClient(windowTarget, iframeBody, mmlScene);
+  wrapperElement.append(mmlScene.element);
   const closeButton = document.createElement("button");
   closeButton.textContent = "Close";
   closeButton.style.position = "absolute";
@@ -56,6 +57,7 @@ function createCloseableClient(
   wrapperElement.append(closeButton);
   clientsHolder.append(wrapperElement);
   client.connect(networkedDOMDocument);
+  mmlScene.fitContainer();
   return client;
 }
 

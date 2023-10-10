@@ -7,9 +7,10 @@ export class DOMSanitizer {
         }
       }
     }
-    if (node.nodeName === "SCRIPT") {
-      // set text to empty string
-      node.innerText = "";
+    if (node.nodeName === "SCRIPT" || node.nodeName === "OBJECT" || node.nodeName === "IFRAME") {
+      // set contents to empty string
+      node.innerHTML = "";
+      DOMSanitizer.stripAllAttributes(node);
     } else {
       if (node.getAttributeNames) {
         for (const attr of node.getAttributeNames()) {
@@ -20,6 +21,14 @@ export class DOMSanitizer {
       }
       for (let i = 0; i < node.childNodes.length; i++) {
         DOMSanitizer.sanitise(node.childNodes[i] as HTMLElement);
+      }
+    }
+  }
+
+  static stripAllAttributes(node: HTMLElement) {
+    if (node.getAttributeNames) {
+      for (const attr of node.getAttributeNames()) {
+        node.removeAttribute(attr);
       }
     }
   }

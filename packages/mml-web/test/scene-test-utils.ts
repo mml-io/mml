@@ -1,23 +1,23 @@
-import { FullScreenMScene, RemoteDocument } from "../src";
+import { FullScreenMMLScene, RemoteDocument } from "../src";
 
 export function createSceneAttachedElement<T extends HTMLElement>(
   elementTag: string,
   documentAddress?: string,
-): { scene: FullScreenMScene; sceneAttachment: RemoteDocument; element: T } {
-  const { scene, sceneAttachment } = createTestScene(documentAddress);
+): { scene: FullScreenMMLScene; remoteDocument: RemoteDocument; element: T } {
+  const { scene, remoteDocument } = createTestScene(documentAddress);
 
   const element = document.createElement(elementTag) as T;
-  sceneAttachment.append(element);
-  return { scene, sceneAttachment, element };
+  remoteDocument.append(element);
+  return { scene, remoteDocument, element };
 }
 
 export function createTestScene(documentAddress?: string): {
-  scene: FullScreenMScene;
-  sceneAttachment: RemoteDocument;
+  scene: FullScreenMMLScene;
+  remoteDocument: RemoteDocument;
 } {
-  const scene = new FullScreenMScene();
-  const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-  sceneAttachment.init(scene, documentAddress || "ws://localhost:8080");
-  document.body.append(sceneAttachment);
-  return { scene, sceneAttachment };
+  const scene = new FullScreenMMLScene();
+  const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
+  remoteDocument.init(scene, documentAddress || "ws://localhost:8080");
+  document.body.append(remoteDocument);
+  return { scene, remoteDocument };
 }

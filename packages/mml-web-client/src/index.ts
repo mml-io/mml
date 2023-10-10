@@ -1,7 +1,7 @@
 import { NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 import {
   configureWindowForMML,
-  FullScreenMScene,
+  FullScreenMMLScene,
   IframeWrapper,
   MMLScene,
   NetworkedDOMWebsocket,
@@ -52,7 +52,7 @@ function createStatusElement() {
 
   window.addEventListener("load", async () => {
     // Make a fixed-position centered status element
-    const fullScreenMScene = new FullScreenMScene();
+    const fullScreenMMLScene = new FullScreenMMLScene();
 
     const useIframe = new URL(window.location.href).searchParams.get("iframe") === "true";
     const documentWebsocketUrls = websocketUrl.split(",");
@@ -83,15 +83,15 @@ function createStatusElement() {
       const remoteDocumentWrapper = new RemoteDocumentWrapper(
         window.location.href,
         windowTarget,
-        fullScreenMScene,
+        fullScreenMMLScene,
         eventHandler,
       );
       remoteDocuments.push(remoteDocumentWrapper);
-      targetForWrappers.append(remoteDocumentWrapper.element);
+      targetForWrappers.append(remoteDocumentWrapper.remoteDocument);
       const websocket = new NetworkedDOMWebsocket(
         documentWebsocketUrl,
         NetworkedDOMWebsocket.createWebSocket,
-        remoteDocumentWrapper.element,
+        remoteDocumentWrapper.remoteDocument,
         (time: number) => {
           remoteDocumentWrapper.setDocumentTime(time);
         },
@@ -113,11 +113,11 @@ function createStatusElement() {
     if (defineGlobals) {
       // Define the global mml-web-client object on the window for testing purposes
       window["mml-web-client"] = {
-        mmlScene: fullScreenMScene,
+        mmlScene: fullScreenMMLScene,
         remoteDocuments,
       };
     }
 
-    document.body.append(fullScreenMScene.element);
+    document.body.append(fullScreenMMLScene.element);
   });
 })();

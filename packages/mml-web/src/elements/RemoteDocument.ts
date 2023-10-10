@@ -1,5 +1,5 @@
 import { MElement } from "./MElement";
-import { MMLDocumentRoot } from "../MMLDocumentRoot";
+import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene } from "../MMLScene";
 
 export class RemoteDocument extends MElement {
@@ -7,28 +7,12 @@ export class RemoteDocument extends MElement {
 
   private scene: IMMLScene | null = null;
   private documentAddress: string | null = null;
-  private documentRoot: MMLDocumentRoot;
+  private documentTimeManager: MMLDocumentTimeManager;
   private animationFrameCallback: number | null = null;
 
   constructor() {
     super();
-    this.documentRoot = new MMLDocumentRoot(this);
-  }
-
-  public addDocumentTimeListenerCallback(cb: (time: number) => void) {
-    this.documentRoot.addDocumentTimeListenerCallback(cb);
-  }
-
-  public removeDocumentTimeListenerCallback(cb: (time: number) => void) {
-    this.documentRoot.removeDocumentTimeListenerCallback(cb);
-  }
-
-  public addDocumentTimeTickListenerCallback(cb: (time: number) => void) {
-    this.documentRoot.addDocumentTimeTickListenerCallback(cb);
-  }
-
-  public removeDocumentTimeTickListenerCallback(cb: (time: number) => void) {
-    this.documentRoot.removeDocumentTimeTickListenerCallback(cb);
+    this.documentTimeManager = new MMLDocumentTimeManager();
   }
 
   public parentTransformed(): void {
@@ -39,16 +23,8 @@ export class RemoteDocument extends MElement {
     return false;
   }
 
-  getDocumentTime(): number | null {
-    return this.documentRoot.getDocumentTime();
-  }
-
-  setDocumentTime(documentTime: number) {
-    this.documentRoot.setDocumentTime(documentTime);
-  }
-
-  overrideDocumentTime(documentTime: number) {
-    this.documentRoot.overrideDocumentTime(documentTime);
+  getDocumentTimeManager(): MMLDocumentTimeManager {
+    return this.documentTimeManager;
   }
 
   connectedCallback() {
@@ -74,11 +50,11 @@ export class RemoteDocument extends MElement {
     }
   }
 
-  init(mScene: IMMLScene, documentAddress: string) {
+  init(mmlScene: IMMLScene, documentAddress: string) {
     if (this.scene) {
       throw new Error("Scene already set");
     }
-    this.scene = mScene;
+    this.scene = mmlScene;
     this.documentAddress = documentAddress;
     this.scene.getRootContainer().add(this.container);
   }
@@ -87,7 +63,7 @@ export class RemoteDocument extends MElement {
     return this.documentAddress;
   }
 
-  getMScene(): IMMLScene {
+  getMMLScene(): IMMLScene {
     if (!this.scene) {
       throw new Error("Scene not set");
     }
@@ -95,7 +71,7 @@ export class RemoteDocument extends MElement {
   }
 
   public tick() {
-    this.documentRoot.tick();
+    this.documentTimeManager.tick();
     this.animationFrameCallback = window.requestAnimationFrame(() => {
       this.tick();
     });

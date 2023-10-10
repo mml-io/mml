@@ -12,7 +12,7 @@ beforeAll(() => {
 
 describe("MMLCollisionTrigger", () => {
   test("cube - send start, move, end", () => {
-    const { scene, sceneAttachment } = createTestScene();
+    const { scene, remoteDocument } = createTestScene();
     const mockPerformanceNow = jest.fn();
     window.performance.now = mockPerformanceNow as () => DOMHighResTimeStamp;
     mockPerformanceNow.mockReturnValue(1000);
@@ -30,7 +30,7 @@ describe("MMLCollisionTrigger", () => {
     });
 
     const element = document.createElement("m-cube") as Cube;
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
     element.setAttribute("collision-interval", "100");
 
     const enterEventFn = jest.fn();

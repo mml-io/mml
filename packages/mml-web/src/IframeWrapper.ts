@@ -5,6 +5,15 @@ export type IframeWrapperResult = {
   iframeBody: HTMLElement;
 };
 
+/**
+ * The IframeWrapper class creates an iframe that can be used to load a document and then be disposed of. This is useful
+ * for running a full NetworkedDOM document in an iframe and then disposing of it when it is no longer needed which will
+ * clear up the <script> tags that were added to the document and their side-effects.
+ *
+ * The other use case this is intended for is as a target for a client connected to a document to synchronise the
+ * document state to and have the custom element implementations for the elements in the document run in the iframe (and
+ * therefore not pollute/conflict with the root window)
+ */
 export class IframeWrapper {
   public readonly iframe: HTMLIFrameElement;
 
