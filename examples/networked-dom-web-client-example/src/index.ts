@@ -60,9 +60,7 @@ app.ws("/networked-dom-websocket", (ws: ws.WebSocket) => {
 });
 app.get("/websocket-example/", (req, res) => {
   res.send(
-    `<html><script src="http://192.168.50.117:28892/index.js?websocketUrl=${getWebsocketUrl(
-      req,
-    )}"></script></html>`,
+    `<html><script src="/client/index.js?websocketUrl=${getWebsocketUrl(req)}"></script></html>`,
   );
 });
 
