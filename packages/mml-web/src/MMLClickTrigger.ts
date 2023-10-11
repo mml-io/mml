@@ -5,6 +5,11 @@ import { IMMLScene } from "./MMLScene";
 import { EventHandlerCollection } from "./utils/events/EventHandlerCollection";
 import { getRelativePositionAndRotationRelativeToObject } from "./utils/position-utils";
 
+export type DragData = {
+  mElement: MElement;
+  lastUpdate: number;
+};
+
 const mouseMovePixelsThreshold = 10;
 const mouseMoveTimeThresholdMilliseconds = 500;
 const touchThresholdMilliseconds = 200;
@@ -12,6 +17,22 @@ const touchThresholdMilliseconds = 200;
 let touchX: number;
 let touchY: number;
 let touchTimestamp: number;
+const dragIntervalMinimumMilliseconds = 100;
+
+const dragIntervalAttrName = "drag-interval";
+export const dragEventName = "drag";
+
+export function getDragInterval(mElement: MElement): null | number {
+  const dragEventsAttr = mElement.getAttribute(dragIntervalAttrName);
+  if (dragEventsAttr === null) {
+    return null;
+  }
+  const parsed = parseFloat(dragEventsAttr);
+  if (isNaN(parsed)) {
+    return null;
+  }
+  return parsed;
+}
 
 
 /**
@@ -19,6 +40,7 @@ let touchTimestamp: number;
  * determine which object was clicked and then dispatches events to those elements.
  */
 export class MMLClickTrigger {
+  private dragIdToElementMap = new Map<number, DragData>();
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
   private scene: IMMLScene;
   private raycaster: THREE.Raycaster;
@@ -42,12 +64,15 @@ export class MMLClickTrigger {
     this.eventHandlerCollection.add(clickTarget, "touchend", this.handleTouchEnd.bind(this));
   }
 
-  private handleMouseDown() {
+  private handleMouseDown(e: MouseEvent) {
     this.mouseDownTime = Date.now();
     this.mouseMoveDelta = 0;
+    this.handleDragStart(e);
   }
 
   private handleMouseUp(event: MouseEvent) {
+    this.dragIdToElementMap.delete(event.button);
+
     if (!this.mouseDownTime) {
       return;
     }
@@ -61,9 +86,42 @@ export class MMLClickTrigger {
     }
   }
 
+  private getIntersections(event: MouseEvent) {
+    let x = 0;
+    let y = 0;
+    if (!document.pointerLockElement) {
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      if (this.clickTarget instanceof HTMLElement) {
+        width = this.clickTarget.offsetWidth;
+        height = this.clickTarget.offsetHeight;
+      }
+      x = (event.offsetX / width) * 2 - 1;
+      y = -((event.offsetY / height) * 2 - 1);
+    }
+    this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.scene.getCamera());
+    return this.raycaster.intersectObject(this.scene.getRootContainer(), true);
+  }
+
   private handleMouseMove(event: MouseEvent) {
     if (this.mouseDownTime) {
       this.mouseMoveDelta += Math.abs(event.movementX) + Math.abs(event.movementY);
+    }
+    const currentTime = performance.now();
+
+    const dragData = this.dragIdToElementMap.get(event.button);
+
+    if (dragData) {
+      let listeningInterval = getDragInterval(dragData.mElement);
+      if (listeningInterval === null) {
+        dragData.lastUpdate = currentTime;
+      } else {
+        listeningInterval = Math.max(listeningInterval, dragIntervalMinimumMilliseconds);
+        if (dragData.lastUpdate < currentTime - listeningInterval) {
+          dragData.lastUpdate = currentTime;
+          this.handleDrag(event);
+        }
+      }
     }
   }
 
@@ -132,68 +190,125 @@ export class MMLClickTrigger {
     touchTimestamp = Date.now();
   }
 
-  private handleClick(event: MouseEvent) {
-    if ((event.detail as any).element) {
-      // Avoid infinite loop of handling click events that originated from this trigger
-      return;
-    }
-    let x = 0;
-    let y = 0;
-    if (!document.pointerLockElement) {
-      let width = window.innerWidth;
-      let height = window.innerHeight;
-      if (this.clickTarget instanceof HTMLElement) {
-        width = this.clickTarget.offsetWidth;
-        height = this.clickTarget.offsetHeight;
-      }
-      x = (event.offsetX / width) * 2 - 1;
-      y = -((event.offsetY / height) * 2 - 1);
-    }
-    this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.scene.getCamera());
-    const intersections = this.raycaster.intersectObject(this.scene.getRootContainer(), true);
+  private getFirstIntersectionElement(event: MouseEvent) {
+    const intersections = this.getIntersections(event);
+
     if (intersections.length > 0) {
       for (const intersection of intersections) {
         let obj: THREE.Object3D | null = intersection.object;
         while (obj) {
           /*
-             Ignore scene objects that have a transparent or wireframe material
-            */
+               Ignore scene objects that have a transparent or wireframe material
+              */
           if (this.isMaterialIgnored(obj)) {
             break;
           }
 
           const mElement = MElement.getMElementFromObject(obj);
+
           if (mElement && mElement.isClickable()) {
-            // let's get the intersection point relative to the element origin
-
-            const elementRelative = getRelativePositionAndRotationRelativeToObject(
-              {
-                position: intersection.point,
-                rotation: {
-                  x: 0,
-                  y: 0,
-                  z: 0,
-                },
-              },
-              mElement.getContainer(),
-            );
-
-            mElement.dispatchEvent(
-              new CustomEvent("click", {
-                bubbles: true,
-                detail: {
-                  position: {
-                    ...elementRelative.position,
-                  },
-                },
-              }),
-            );
-            return;
+            return {
+              element: mElement,
+              intersection,
+            };
           }
+
           obj = obj.parent;
         }
       }
     }
+  }
+
+  private handleDragStart(event: MouseEvent) {
+    if ((event.detail as any).element) {
+      // Avoid infinite loop of handling click events that originated from this trigger
+      return;
+    }
+
+    const { element } = this.getFirstIntersectionElement(event) || {};
+
+    if (element && getDragInterval(element)) {
+      this.dragIdToElementMap.set(event.button, {
+        mElement: element,
+        lastUpdate: performance.now(),
+      });
+    }
+
+    console.log(this.dragIdToElementMap.get(event.button));
+  }
+
+  private handleDrag(event: MouseEvent) {
+    if ((event.detail as any).element) {
+      // Avoid infinite loop of handling click events that originated from this trigger
+      return;
+    }
+
+    const { element, intersection } = this.getFirstIntersectionElement(event) || {};
+
+    if (!element || !intersection) {
+      return;
+    }
+
+    const elementRelative = getRelativePositionAndRotationRelativeToObject(
+      {
+        position: intersection.point,
+        rotation: {
+          x: 0,
+          y: 0,
+          z: 0,
+        },
+      },
+      element.getContainer(),
+    );
+
+    element.dispatchEvent(
+      new CustomEvent(dragEventName, {
+        bubbles: true,
+        detail: {
+          position: {
+            ...elementRelative.position,
+          },
+          dragId: event.button,
+        },
+      }),
+    );
+  }
+
+  private handleClick(event: MouseEvent) {
+    if ((event.detail as any).element) {
+      // Avoid infinite loop of handling click events that originated from this trigger
+      return;
+    }
+
+    const { element, intersection } = this.getFirstIntersectionElement(event) || {};
+
+    if (!element || !intersection) {
+      return;
+    }
+
+    const elementRelative = getRelativePositionAndRotationRelativeToObject(
+      {
+        position: intersection.point,
+        rotation: {
+          x: 0,
+          y: 0,
+          z: 0,
+        },
+      },
+      element.getContainer(),
+    );
+
+    element.dispatchEvent(
+      new CustomEvent("click", {
+        bubbles: true,
+        detail: {
+          position: {
+            ...elementRelative.position,
+          },
+          dragId: event.button,
+        },
+      }),
+    );
   }
 
   dispose() {
