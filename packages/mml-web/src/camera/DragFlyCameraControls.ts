@@ -1,5 +1,6 @@
 import { Camera, Euler, Vector3 } from "three";
 
+import { MMLClickTrigger } from "../MMLClickTrigger";
 import { EventHandlerCollection } from "../utils/events/EventHandlerCollection";
 
 const WorldUp = new Vector3(0, 1, 0);
@@ -18,6 +19,7 @@ export class DragFlyCameraControls {
 
   private camera: Camera;
   private domElement: HTMLElement;
+  private mmlClickTrigger: MMLClickTrigger;
 
   private speed: number;
   private vForward = new Vector3();
@@ -56,10 +58,16 @@ export class DragFlyCameraControls {
   private clickTimestamp: number;
   private clickThresholdMilliseconds = 200;
 
-  constructor(camera: Camera, domElement: HTMLElement, speed = 15.0) {
+  constructor(
+    camera: Camera,
+    domElement: HTMLElement,
+    mmlClickTrigger: MMLClickTrigger,
+    speed = 15.0,
+  ) {
     this.camera = camera;
     this.domElement = domElement;
     this.speed = speed;
+    this.mmlClickTrigger = mmlClickTrigger;
   }
 
   public enable() {
@@ -195,7 +203,7 @@ export class DragFlyCameraControls {
   }
 
   private onMouseMove(event: MouseEvent) {
-    if (!this.mouseDown) {
+    if (!this.mouseDown || this.mmlClickTrigger.isDragging) {
       return;
     }
     const movementX = event.movementX;
@@ -297,7 +305,7 @@ export class DragFlyCameraControls {
       touchState.touch = touch;
     }
 
-    if (event.touches.length > 1) {
+    if (event.touches.length > 1 && !this.mmlClickTrigger.isDragging) {
       let currentAverageX = 0;
       let latestAverageX = 0;
       let currentAverageY = 0;
