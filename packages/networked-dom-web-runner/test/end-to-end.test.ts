@@ -4,6 +4,26 @@ import { LogMessage } from "@mml-io/observable-dom-common";
 import { waitFor } from "./test-util";
 import { IframeObservableDOMFactory, NetworkedDOMWebRunnerClient } from "../build/index";
 
+const jestConsoleLog = console.log;
+const jestConsoleInfo = console.info;
+const jestConsoleWarn = console.warn;
+const jestConsoleError = console.error;
+
+// Suppress log output during these test because the test itself is logging and errors can confuse the test output.
+beforeEach(() => {
+  console.log = () => {};
+  console.info = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+});
+
+afterEach(() => {
+  console.log = jestConsoleLog;
+  console.info = jestConsoleInfo;
+  console.warn = jestConsoleWarn;
+  console.error = jestConsoleError;
+});
+
 test("networked-dom-web-runner end-to-end", async () => {
   const logs: LogMessage[] = [];
 

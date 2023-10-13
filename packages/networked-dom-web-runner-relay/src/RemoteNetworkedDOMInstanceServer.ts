@@ -17,6 +17,13 @@ export type RemoteObservableDOMInstance = {
   dispose(): void;
 };
 
+/**
+ * The RemoteNetworkedDOMInstanceServer class is used to run ObservableDOM instances controlled by messages received
+ * from a RemoteNetworkedDOMInstanceClient across a network using serializable ToRemoteServerMessage messages.
+ *
+ * The RemoteNetworkedDOMInstanceServer uses a provided instanceCreateFn to create instances of
+ * RemoteObservableDOMInstance.
+ */
 export class RemoteNetworkedDOMInstanceServer {
   private currentInstances = 0;
   private instances = new Map<number, RemoteObservableDOMInstance>();

@@ -9,9 +9,11 @@ type LoadedState = {
   loaded: boolean;
 };
 
-// EditableNetworkedDOM wraps NetworkedDOM instances and presents them as a single document that can iterate through
-// revisions by being loaded multiple times with different contents. The connected clients receive deltas between the
-// revisions rather than a complete refresh.
+/**
+ * EditableNetworkedDOM wraps NetworkedDOM instances and presents them as a single document that can iterate through
+ * revisions by being loaded multiple times with different contents. The connected clients receive deltas between the
+ * revisions rather than a complete refresh.
+ */
 export class EditableNetworkedDOM {
   private htmlPath: string;
   private params: object = {};

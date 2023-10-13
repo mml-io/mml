@@ -123,6 +123,7 @@ export class DragFlyCameraControls {
         this.down = true;
         break;
     }
+    event.preventDefault();
   }
 
   private onKeyUp(event: KeyboardEvent) {
@@ -162,8 +163,9 @@ export class DragFlyCameraControls {
     this.down = false;
   }
 
-  private onMouseDown() {
+  private onMouseDown(event: MouseEvent) {
     this.mouseDown = true;
+    event.preventDefault();
   }
 
   private onMouseMove(event: MouseEvent) {

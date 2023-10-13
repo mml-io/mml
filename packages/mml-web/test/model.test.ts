@@ -6,7 +6,7 @@ import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Model } from "../src/elements/Model";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMScene } from "../src/FullScreenMScene";
+import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -14,12 +14,12 @@ beforeAll(() => {
 
 describe("m-model", () => {
   test("test attachment to scene", async () => {
-    const scene = new FullScreenMScene();
-    const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-    sceneAttachment.init(scene, "ws://localhost:8080");
-    document.body.append(sceneAttachment);
+    const scene = new FullScreenMMLScene();
+    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
+    remoteDocument.init(scene, "ws://localhost:8080");
+    document.body.append(remoteDocument);
     const element = document.createElement("m-model") as Model;
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
     expect(scene.getThreeScene()).toMatchObject({
       // Scene
       children: [
@@ -68,7 +68,7 @@ describe("m-model", () => {
   });
 
   test("geometries are disposed of when elements are removed", async () => {
-    const { scene, sceneAttachment } = createTestScene();
+    const { scene, remoteDocument } = createTestScene();
     const element = document.createElement("m-model") as Model;
 
     // mock the loader to return a specific THREE node
@@ -99,7 +99,7 @@ describe("m-model", () => {
     expect(firstMaterialDisposeSpy).toBeCalledTimes(0);
 
     // Appending the element to the document should cause the model to be loaded
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
 
     expect(asyncLoadSpy).toBeCalledTimes(1);
     expect(firstGeometryDisposeSpy).toBeCalledTimes(0);
@@ -135,7 +135,7 @@ describe("m-model", () => {
     });
 
     // Re-appending the element should cause the model to be re-loaded
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
 
     expect((element as any).latestSrcModelPromise).toBeTruthy();
     await (element as any).latestSrcModelPromise;

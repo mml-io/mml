@@ -8,6 +8,12 @@ const collideAttributeName = "collide";
 const collisionIntervalAttributeName = "collision-interval";
 const defaultCollideable = true;
 
+/**
+ * CollideableHelper is a helper class for MML elements that have meshes that should be able to be collided with.
+ *
+ * It reacts to the attribute values for the collide and collision-interval attributes and adds, updates, or removes the
+ * collider from the MMLScene as appropriate.
+ */
 export class CollideableHelper {
   private element: MElement;
 

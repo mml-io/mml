@@ -46,6 +46,10 @@ export type LiveVirtualDOMElement = Omit<StaticVirtualDOMElement, "childNodes"> 
   parent: LiveVirtualDOMElement | null;
 };
 
+/**
+ * The ObservableDOM class handles the running of an HTML document using a provided DOMRunnerFactory and converting the
+ * mutations that are structured as references to live DOM elements into messages that refer to elements by nodeIds.
+ */
 export class ObservableDOM implements ObservableDOMInterface {
   private nodeToNodeId = new Map<LiveVirtualDOMElement, number>();
   private nodeIdToNode = new Map<number, LiveVirtualDOMElement>();
@@ -55,6 +59,8 @@ export class ObservableDOM implements ObservableDOMInterface {
   private nextNodeId = 1;
   private htmlPath: string;
   private domRunner: DOMRunnerInterface;
+  private loaded = false;
+  private preLoadLogMessages: Array<LogMessage> = [];
 
   private documentTimeIntervalTimer: NodeJS.Timeout;
 
@@ -82,6 +88,7 @@ export class ObservableDOM implements ObservableDOMInterface {
       observableDOMParameters.params,
       (domRunnerMessage: DOMRunnerMessage) => {
         if (domRunnerMessage.loaded) {
+          this.loaded = true;
           this.createVirtualDOMElementWithChildren(
             this.domRunner.getDocument() as unknown as Element,
             null,
@@ -100,9 +107,23 @@ export class ObservableDOM implements ObservableDOMInterface {
             },
             this,
           );
+          for (const logMessage of this.preLoadLogMessages) {
+            this.callback(
+              {
+                logMessage,
+                documentTime: this.getDocumentTime(),
+              },
+              this,
+            );
+          }
+          this.preLoadLogMessages = [];
         } else if (domRunnerMessage.mutationList) {
           this.processModificationList(domRunnerMessage.mutationList);
         } else if (domRunnerMessage.logMessage) {
+          if (!this.loaded) {
+            this.preLoadLogMessages.push(domRunnerMessage.logMessage);
+            return;
+          }
           this.callback(
             {
               logMessage: domRunnerMessage.logMessage,

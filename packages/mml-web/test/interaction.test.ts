@@ -25,12 +25,12 @@ describe("m-interaction", () => {
   });
 
   test("interaction - add and remove", () => {
-    const { scene, sceneAttachment } = createTestScene();
+    const { scene, remoteDocument } = createTestScene();
     const element = document.createElement("m-interaction") as Interaction;
     expect(Array.from((scene as any).interactions)).toEqual([]);
     const addInteractionSpy = jest.spyOn(scene, "addInteraction");
     const removeInteractionSpy = jest.spyOn(scene, "removeInteraction");
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
 
     expect(addInteractionSpy).toHaveBeenCalledTimes(1);
     expect(addInteractionSpy).toHaveBeenCalledWith(element);
@@ -45,12 +45,12 @@ describe("m-interaction", () => {
   });
 
   test("interaction - update", () => {
-    const { scene, sceneAttachment } = createTestScene();
+    const { scene, remoteDocument } = createTestScene();
     const element = document.createElement("m-interaction") as Interaction;
     expect(Array.from((scene as any).interactions)).toEqual([]);
     const addInteractionSpy = jest.spyOn(scene, "addInteraction");
     const updateInteractionSpy = jest.spyOn(scene, "updateInteraction");
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
 
     expect(addInteractionSpy).toHaveBeenCalledTimes(1);
     expect(addInteractionSpy).toHaveBeenCalledWith(element);

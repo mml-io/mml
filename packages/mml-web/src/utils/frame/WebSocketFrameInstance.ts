@@ -43,11 +43,11 @@ export class WebSocketFrameInstance {
       wrappedScene,
       eventHandler,
     );
-    this.targetForWrapper.append(this.remoteDocumentWrapper.element);
+    this.targetForWrapper.append(this.remoteDocumentWrapper.remoteDocument);
     this.domWebsocket = new NetworkedDOMWebsocket(
       websocketAddress,
       NetworkedDOMWebsocket.createWebSocket,
-      this.remoteDocumentWrapper.element,
+      this.remoteDocumentWrapper.remoteDocument,
       (time: number) => {
         this.remoteDocumentWrapper.setDocumentTime(time);
       },
@@ -101,6 +101,6 @@ export class WebSocketFrameInstance {
 
   dispose() {
     this.domWebsocket.stop();
-    this.targetForWrapper.removeChild(this.remoteDocumentWrapper.element);
+    this.targetForWrapper.removeChild(this.remoteDocumentWrapper.remoteDocument);
   }
 }

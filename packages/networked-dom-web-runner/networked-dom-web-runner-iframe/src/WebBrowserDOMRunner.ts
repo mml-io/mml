@@ -7,23 +7,26 @@ export const WebBrowserDOMRunnerFactory: DOMRunnerFactory = (
   params: object,
   callback: (mutationList: DOMRunnerMessage) => void,
 ): DOMRunnerInterface => {
-  return new WebBrowserDOMRunner(htmlPath, htmlContents, params, callback);
+  return new WebBrowserDOMRunner(params, callback);
 };
 
-const documentLoadTime = Date.now();
+let documentLoadTime = Date.now();
+if (document.timeline && document.timeline.currentTime) {
+  documentLoadTime = Date.now() - (document.timeline.currentTime as number);
+}
 
+/**
+ * WebBrowserDOMRunner is a DOMRunnerInterface implementation that runs in a web browser. It is intended to be run in
+ * an iframe and the parent window is expected to send messages to it to dispatch events and to receive mutation
+ * messages.
+ *
+ * It is expected that the document contents is injected immediately after this class is instantiated.
+ */
 export class WebBrowserDOMRunner implements DOMRunnerInterface {
   private mutationObserver: MutationObserver;
-  private htmlPath: string;
   private callback: (domRunnerMessage: DOMRunnerMessage) => void;
 
-  constructor(
-    htmlPath: string,
-    htmlContents: string,
-    params: object,
-    callback: (domRunnerMessage: DOMRunnerMessage) => void,
-  ) {
-    this.htmlPath = htmlPath;
+  constructor(params: object, callback: (domRunnerMessage: DOMRunnerMessage) => void) {
     this.callback = callback;
 
     // Forward console messages
@@ -139,10 +142,18 @@ export class WebBrowserDOMRunner implements DOMRunnerInterface {
   }
 
   getDocumentTime(): number {
+    const dateBasedDocumentTime = Date.now() - documentLoadTime;
     if (document.timeline && document.timeline.currentTime) {
-      return document.timeline.currentTime as number;
+      const time = document.timeline.currentTime as number;
+      if (dateBasedDocumentTime > time + 500) {
+        // The timeline can be "left behind" if the tab is backgrounded for a while, so we use the date-based time
+        // instead. If/when the document is brought back into the foreground, the timeline will catch up.
+        return dateBasedDocumentTime;
+      }
+      // Ideal case - use the document.timeline as it's what is available to the document script
+      return time;
     }
-    return Date.now() - documentLoadTime;
+    return dateBasedDocumentTime;
   }
 
   // TODO - resolve types (Window needs to expose classes such as CustomEvent as properties)

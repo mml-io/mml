@@ -34,6 +34,13 @@ export type ObservableDOMFactory = (
   callback: (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => void,
 ) => ObservableDOMInterface;
 
+/**
+ * NetworkedDOM is the main class for the networked-dom-document package. It is responsible for managing the state of
+ * the document and the connections to the clients.
+ *
+ * It is constructed with an ObservableDOMFactory, which is responsible for creating the ObservableDOMInterface
+ * implementation that is used to run the document.
+ */
 export class NetworkedDOM {
   // First to last in order of preference
   public static SupportedWebsocketSubProtocolsPreferenceOrder = [

@@ -34,8 +34,8 @@ export class Model extends TransformableElement {
   protected gltfScene: THREE.Object3D | null = null;
   private animationGroup: THREE.AnimationObjectGroup = new THREE.AnimationObjectGroup();
   private animationMixer: THREE.AnimationMixer = new THREE.AnimationMixer(this.animationGroup);
+  private documentTimeTickListener: null | { remove: () => void } = null;
 
-  private animationFrameHandle: number | null = null;
   private currentAnimation: THREE.AnimationClip | null = null;
   private currentAnimationAction: THREE.AnimationAction | null = null;
   private collideableHelper = new CollideableHelper(this);
@@ -90,7 +90,7 @@ export class Model extends TransformableElement {
 
   public registerAttachment(attachment: THREE.Object3D) {
     this.animationGroup.add(attachment);
-    this.updateAnimation();
+    this.updateAnimation(this.getDocumentTime() || 0);
   }
 
   public unregisterAttachment(attachment: THREE.Object3D) {
@@ -217,7 +217,9 @@ export class Model extends TransformableElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    this.animationFrameHandle = window.requestAnimationFrame(() => this.tick());
+    this.documentTimeTickListener = this.addDocumentTimeTickListener((documentTime) => {
+      this.updateAnimation(documentTime);
+    });
     if (this.gltfScene) {
       throw new Error("gltfScene should be null upon connection");
     }
@@ -226,9 +228,10 @@ export class Model extends TransformableElement {
   }
 
   disconnectedCallback() {
-    if (this.animationFrameHandle !== null) {
-      window.cancelAnimationFrame(this.animationFrameHandle);
-      this.animationFrameHandle = null;
+    // stop listening to document time ticking
+    if (this.documentTimeTickListener) {
+      this.documentTimeTickListener.remove();
+      this.documentTimeTickListener = null;
     }
     this.collideableHelper.removeColliders();
     if (this.gltfScene && this.registeredParentAttachment) {
@@ -243,10 +246,7 @@ export class Model extends TransformableElement {
     super.disconnectedCallback();
   }
 
-  private updateAnimation() {
-    const docTimeMs: number =
-      this.getDocumentTime() || (document.timeline.currentTime as number) || 0;
-
+  private updateAnimation(docTimeMs: number) {
     if (this.currentAnimation) {
       if (!this.props.animEnabled) {
         this.animationMixer.stopAllAction();
@@ -276,11 +276,6 @@ export class Model extends TransformableElement {
         this.animationMixer.setTime(animationTimeMs / 1000);
       }
     }
-  }
-
-  private tick() {
-    this.updateAnimation();
-    this.animationFrameHandle = window.requestAnimationFrame(() => this.tick());
   }
 
   public getModel(): THREE.Object3D<THREE.Event> | null {

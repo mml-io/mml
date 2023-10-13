@@ -29,6 +29,10 @@ export function getCollisionInterval(mElement: MElement): null | number {
   return parsed;
 }
 
+/**
+ * The MMLCollisionTrigger class is responsible for keeping track of which colliders the "user" (avatar) is currently
+ * colliding with, and dispatches events to the elements if they are listening for collisions.
+ */
 export class MMLCollisionTrigger {
   private colliderToElementMap = new Map<THREE.Object3D, ColliderData>();
   private currentCollidingColliders = new Set<THREE.Object3D>();

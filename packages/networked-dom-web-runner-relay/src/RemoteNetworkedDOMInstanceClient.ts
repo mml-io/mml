@@ -20,6 +20,13 @@ type InstanceHandle = {
   dispose: () => void;
 };
 
+/**
+ * The RemoteNetworkedDOMInstanceClient class is used to coordinate the running of ObservableDOM instances across a
+ * network to the companion RemoteNetworkedDOMInstanceServer class using serializable ToRemoteServerMessage messages.
+ *
+ * This approach is used to allow the ObservableDOM instances to be run in a separate process from the server that is
+ * handling the user network connections.
+ */
 export class RemoteNetworkedDOMInstanceClient {
   private instanceIdCounter = 1;
   private instanceHandles = new Map<number, InstanceHandle>();

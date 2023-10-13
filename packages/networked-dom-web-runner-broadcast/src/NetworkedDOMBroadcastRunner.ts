@@ -13,6 +13,13 @@ import {
   ToBroadcastInstanceMessage,
 } from "./broadcast-messages";
 
+/**
+ * The NetworkedDOMBroadcastRunner class is used to run ObservableDOM instances and have their messages broadcast to
+ * a NetworkedDOMBroadcastReceiver across a network using serializable FromBroadcastInstanceMessage messages.
+ *
+ * The instance expects to receive ToObservableDOMInstanceMessage messages from a NetworkedDOMBroadcastReceiver for
+ * events such as users connecting and disconnecting, and for remote users interacting with the document.
+ */
 export class NetworkedDOMBroadcastRunner {
   private sendMessage: (message: FromBroadcastInstanceMessage) => void;
   private domFactory: ObservableDOMFactory;

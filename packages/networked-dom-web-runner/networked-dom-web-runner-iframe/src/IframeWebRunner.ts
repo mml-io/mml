@@ -12,7 +12,10 @@ import {
 
 import { WebBrowserDOMRunnerFactory } from "./WebBrowserDOMRunner";
 
-// This runs in the iframe that will execute the document script to setup the listening for events messages
+/**
+ * This is run in the iframe that will execute the document script to setup the listening for events messages and
+ * observing of DOM mutation using the WebBrowserDOMRunner class.
+ */
 export function setupIframeWebRunner(argsString: string) {
   const observableDOMParams = JSON.parse(atob(argsString)) as ObservableDOMParameters;
 

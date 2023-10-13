@@ -2,6 +2,12 @@ type ListenerFunc = (...args: any[]) => void;
 
 type EventSpecificationTuple = [EventTarget, string, ListenerFunc, AddEventListenerOptions?];
 
+/**
+ * The EventHandlerCollection is a utility class that allows you to add event listeners to a collection of targets and
+ * then clear them all at once.
+ *
+ * This avoids the caller needing to keep references to the functions applied to the event listeners.
+ */
 export class EventHandlerCollection {
   private eventsByTarget: Map<EventTarget, Map<string, Set<ListenerFunc>>> = new Map();
 

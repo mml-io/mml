@@ -6,13 +6,21 @@ export type NodeMapping = {
   internalNodeId: number;
 };
 
+/**
+ * VirtualDOMDiffStruct is a representation of how a VirtualDOM has changed. It contains the original state of the
+ * VirtualDOM, a list of node ID remappings, and a list of RFC6902 operations that can be applied to the original state
+ * to produce the new state.
+ */
 export type VirtualDOMDiffStruct = {
   originalState: StaticVirtualDOMElement;
   nodeIdRemappings: Array<NodeMapping>;
   virtualDOMDiffs: Array<rfc6902.Operation>;
 };
 
-// This is similar to the MutationRecord type in the DOM spec, but it references StaticVirtualDOMElements instead of DOM nodes.
+/**
+ * StaticVirtualDOMMutationRecord is a plain object representation of a MutationRecord that can be serialized as it
+ * contains no references to DOM elements and instead uses node IDs to refer to elements.
+ */
 export type StaticVirtualDOMMutationRecord = {
   type: "attributes" | "characterData" | "childList" | "snapshot";
   target: StaticVirtualDOMElement;

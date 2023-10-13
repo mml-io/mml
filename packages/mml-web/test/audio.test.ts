@@ -1,37 +1,33 @@
-import { jest } from "@jest/globals";
-
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
-import { Audio, FullScreenMScene, registerCustomElementsToWindow, RemoteDocument } from "../src";
-
-jest.mock("../src/utils/audio");
+import { Audio, FullScreenMMLScene, registerCustomElementsToWindow, RemoteDocument } from "../src";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
 });
 
 function setupScene() {
-  const scene = new FullScreenMScene();
-  const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-  sceneAttachment.init(scene, "ws://localhost:8080");
-  document.body.append(sceneAttachment);
-  return { scene, sceneAttachment };
+  const scene = new FullScreenMMLScene();
+  const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
+  remoteDocument.init(scene, "ws://localhost:8080");
+  document.body.append(remoteDocument);
+  return { scene, remoteDocument };
 }
 
 describe("m-audio", () => {
   test("test attachment to scene", () => {
-    const { scene, sceneAttachment } = setupScene();
+    const { scene, remoteDocument } = setupScene();
 
     const element = document.createElement("m-audio") as Audio;
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
 
     expect(scene.getThreeScene().children[0].children[0].children[0]).toBe(element.getContainer());
   });
 
   test("loading and playing audio", () => {
-    const { sceneAttachment } = setupScene();
+    const { remoteDocument } = setupScene();
 
     const element = document.createElement("m-audio") as Audio;
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
 
     element.setAttribute("src", "http://example.com/some_asset_path");
     element.setAttribute("enabled", "true");

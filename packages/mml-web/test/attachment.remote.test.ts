@@ -4,20 +4,20 @@ import { Cube } from "../src/elements/Cube";
 import { Group } from "../src/elements/Group";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMScene } from "../src/FullScreenMScene";
+import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
 
 describe("m-element m-remote-document attachment", () => {
   beforeAll(() => {
     registerCustomElementsToWindow(window);
   });
   test("test attachment via div", () => {
-    const scene = new FullScreenMScene();
-    const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-    sceneAttachment.init(scene, "ws://localhost:8080");
-    document.body.append(sceneAttachment);
+    const scene = new FullScreenMMLScene();
+    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
+    remoteDocument.init(scene, "ws://localhost:8080");
+    document.body.append(remoteDocument);
 
     const group = document.createElement("m-group") as Group;
-    sceneAttachment.append(group);
+    remoteDocument.append(group);
 
     const div = document.createElement("div");
     group.append(div);
@@ -82,7 +82,7 @@ describe("m-element m-remote-document attachment", () => {
 
     // Create a second group that has a different position and move the div to it. The cube should move with the div
     const secondGroup = document.createElement("m-group") as Group;
-    sceneAttachment.append(secondGroup);
+    remoteDocument.append(secondGroup);
     secondGroup.setAttribute("x", "100");
     secondGroup.setAttribute("y", "200");
     secondGroup.setAttribute("z", "300");

@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { IframeObservableDOMFactory } from "@mml-io/networked-dom-web-runner";
-import { registerCustomElementsToWindow } from "mml-web";
+import { MMLScene, registerCustomElementsToWindow } from "mml-web";
 
 import { waitFor } from "./test-util";
 import { MMLWebRunnerClient } from "../build/index";
@@ -38,9 +38,11 @@ test("mml-web-runner end-to-end", async () => {
   const windowTarget = window;
   registerCustomElementsToWindow(windowTarget);
 
-  const client = new MMLWebRunnerClient(windowTarget, clientsHolder);
-  clientsHolder.append(client.element);
+  const mmlScene = new MMLScene();
+  const client = new MMLWebRunnerClient(windowTarget, clientsHolder, mmlScene);
+  clientsHolder.append(mmlScene.element);
   client.connect(networkedDOMDocument);
+  mmlScene.fitContainer();
 
   networkedDOMDocument.load(
     "<m-cube color=\"red\" onclick=\"this.setAttribute('color','green')\"></m-cube>",

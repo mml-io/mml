@@ -7,7 +7,6 @@ import { Interaction } from "./elements/Interaction";
 import { MElement } from "./elements/MElement";
 import { InteractionManager } from "./interaction-ui";
 import { MMLClickTrigger } from "./MMLClickTrigger";
-import { MMLCollisionTrigger } from "./MMLCollisionTrigger";
 import { PromptManager } from "./prompt-ui";
 
 export type PositionAndRotation = {
@@ -27,6 +26,10 @@ export type PromptProps = {
   prefill?: string;
 };
 
+/**
+ * The IMMLScene interface is the public interface for attaching content (E.g. an MML Document) into the underlying
+ * (THREE.js) Scene, but it can be implemented by classes other than MMLScene.
+ */
 export type IMMLScene = {
   getAudioListener: () => THREE.AudioListener;
   getRenderer: () => THREE.Renderer;
@@ -58,6 +61,12 @@ export type MMLSceneOptions = {
   controlsType?: ControlsType;
 };
 
+/**
+ * The MMLScene class creates a HTML Element that renders a THREE.js scene and includes the various manager instances
+ * for handling clicks, interaction events, and controls.
+ *
+ * It is the default implementation of the IMMLScene interface and presents a fly camera with drag controls.
+ */
 export class MMLScene implements IMMLScene {
   public readonly element: HTMLDivElement;
 
@@ -72,12 +81,12 @@ export class MMLScene implements IMMLScene {
   private interactionListeners = new Set<InteractionListener>();
 
   private animationFrameCallback: () => void;
+  private animationFrameRequest: number;
   private resizeListener: () => void;
   private clickTrigger: MMLClickTrigger;
   private promptManager: PromptManager;
   private interactionManager: InteractionManager;
   private resizeObserver: ResizeObserver;
-  private collisionTrigger: MMLCollisionTrigger;
 
   constructor(mmlSceneOptions: MMLSceneOptions = {}) {
     this.element = document.createElement("div");
@@ -134,7 +143,6 @@ export class MMLScene implements IMMLScene {
     }
 
     this.clickTrigger = MMLClickTrigger.init(this.element, this);
-    this.collisionTrigger = MMLCollisionTrigger.init();
     this.promptManager = PromptManager.init(this.element);
     const { interactionManager, interactionListener } = InteractionManager.init(
       this.element,
@@ -147,13 +155,13 @@ export class MMLScene implements IMMLScene {
     const clock = new THREE.Clock();
 
     this.animationFrameCallback = () => {
-      requestAnimationFrame(this.animationFrameCallback);
+      this.animationFrameRequest = requestAnimationFrame(this.animationFrameCallback);
       if (this.controls) {
         this.controls.update(clock.getDelta());
       }
       this.renderer.render(this.threeScene, this.camera);
     };
-    requestAnimationFrame(this.animationFrameCallback);
+    this.animationFrameRequest = requestAnimationFrame(this.animationFrameCallback);
 
     this.resizeListener = () => {
       this.fitContainer();
@@ -218,7 +226,7 @@ export class MMLScene implements IMMLScene {
 
   public fitContainer() {
     if (!this) {
-      console.error("MScene not initialized");
+      console.error("MMLScene not initialized");
       return;
     }
     const width = this.element.clientWidth;
@@ -229,6 +237,7 @@ export class MMLScene implements IMMLScene {
   }
 
   public dispose() {
+    cancelAnimationFrame(this.animationFrameRequest);
     window.removeEventListener("resize", this.resizeListener);
     this.resizeObserver.disconnect();
     this.rootContainer.clear();
@@ -239,7 +248,7 @@ export class MMLScene implements IMMLScene {
 
   public prompt(promptProps: PromptProps, callback: (message: string | null) => void) {
     if (!this) {
-      console.error("MScene not initialized");
+      console.error("MMLScene not initialized");
       return;
     }
     this.promptManager.prompt(promptProps, callback);

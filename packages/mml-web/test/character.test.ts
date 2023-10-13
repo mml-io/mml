@@ -5,7 +5,7 @@ import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Character } from "../src/elements/Character";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMScene } from "../src/FullScreenMScene";
+import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
 import { GLTFResult } from "../src/utils/gltf";
 
 beforeAll(() => {
@@ -14,12 +14,12 @@ beforeAll(() => {
 
 describe("m-character", () => {
   test("attachment to scene", async () => {
-    const scene = new FullScreenMScene();
-    const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-    sceneAttachment.init(scene, "ws://localhost:8080");
-    document.body.append(sceneAttachment);
+    const scene = new FullScreenMMLScene();
+    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
+    remoteDocument.init(scene, "ws://localhost:8080");
+    document.body.append(remoteDocument);
     const element = document.createElement("m-character") as Character;
-    sceneAttachment.append(element);
+    remoteDocument.append(element);
     expect(scene.getThreeScene()).toMatchObject({
       // Scene
       children: [

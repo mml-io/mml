@@ -1,3 +1,7 @@
+/**
+ * WebsocketEnd is one end of a FakeWebsocket connection. It is used to simulate a websocket connection for testing or
+ * matching the interface of a real websocket connection without doing any actual networking.
+ */
 class WebsocketEnd extends EventTarget {
   private readonly sendCallback: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => void;
   public readonly protocol: string;
@@ -32,6 +36,10 @@ class WebsocketEnd extends EventTarget {
   }
 }
 
+/**
+ * FakeWebsocket is a pair of WebsocketEnds that are connected to each other. It is used to simulate a websocket
+ * connection for testing or matching the interface of a real websocket connection without doing any actual networking.
+ */
 export class FakeWebsocket {
   public clientSideWebsocket: WebsocketEnd;
   public serverSideWebsocket: WebsocketEnd;

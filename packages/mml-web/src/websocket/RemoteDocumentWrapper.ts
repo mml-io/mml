@@ -2,29 +2,35 @@ import { consumeEventEventName } from "../common";
 import { RemoteDocument } from "../elements/RemoteDocument";
 import { IMMLScene } from "../MMLScene";
 
+/**
+ * The RemoteDocumentWrapper class creates an m-remote-document (RemoteDocument) element and initialises it with the
+ * given address. It is expected that the `remoteDocument` element will be added to the DOM by the caller.
+ */
 export class RemoteDocumentWrapper {
-  public readonly element: RemoteDocument;
+  public readonly remoteDocument: RemoteDocument;
 
   constructor(
     address: string,
     targetWindow: Window,
-    mScene: IMMLScene,
+    mmlScene: IMMLScene,
     handleEvent: (element: HTMLElement, event: CustomEvent) => void,
   ) {
-    this.element = targetWindow.document.createElement(RemoteDocument.tagName) as RemoteDocument;
-    this.element.addEventListener(consumeEventEventName, (wrappedEvent: CustomEvent) => {
+    this.remoteDocument = targetWindow.document.createElement(
+      RemoteDocument.tagName,
+    ) as RemoteDocument;
+    this.remoteDocument.addEventListener(consumeEventEventName, (wrappedEvent: CustomEvent) => {
       const { originalEvent, element } = wrappedEvent.detail;
       handleEvent(element, originalEvent);
       wrappedEvent.stopPropagation();
     });
-    this.element.init(mScene, address);
+    this.remoteDocument.init(mmlScene, address);
   }
 
   public setDocumentTime(documentTime: number) {
-    this.element.setDocumentTime(documentTime);
+    this.remoteDocument.getDocumentTimeManager().setDocumentTime(documentTime);
   }
 
   public overrideDocumentTime(documentTime: number) {
-    this.element.overrideDocumentTime(documentTime);
+    this.remoteDocument.getDocumentTimeManager().overrideDocumentTime(documentTime);
   }
 }

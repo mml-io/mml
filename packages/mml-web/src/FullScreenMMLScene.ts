@@ -1,6 +1,6 @@
 import { MMLScene } from "./MMLScene";
 
-export class FullScreenMScene extends MMLScene {
+export class FullScreenMMLScene extends MMLScene {
   constructor() {
     super();
     this.configureWindowStyling();

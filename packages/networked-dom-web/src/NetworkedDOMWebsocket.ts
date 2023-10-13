@@ -26,6 +26,12 @@ export enum NetworkedDOMWebsocketStatus {
   Disconnected,
 }
 
+/**
+ * NetworkedDOMWebsocket is a client for a NetworkedDOMServer. It connects to a server on the provided url and receives
+ * updates to the DOM. It also sends events to the server for interactions with the DOM.
+ *
+ * The NetworkedDOMWebsocket is attached to a parentElement and synchronizes the received DOM under that element.
+ */
 export class NetworkedDOMWebsocket {
   private idToElement = new Map<number, Node>();
   private elementToId = new Map<Node, number>();

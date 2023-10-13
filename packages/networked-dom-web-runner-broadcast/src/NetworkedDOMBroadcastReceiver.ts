@@ -15,6 +15,13 @@ import {
   ToBroadcastInstanceMessage,
 } from "./broadcast-messages";
 
+/**
+ * The NetworkedDOMBroadcastReceiver class is used to receive messages from one or more NetworkedDOMBroadcastRunner
+ * (i.e. one after the other).
+ *
+ * The instance presents an EditableNetworkedDOM that can be used as a normal EditableNetworkedDOM, but the state is
+ * derived from the messages received from the NetworkedDOMBroadcastRunner(s).
+ */
 export class NetworkedDOMBroadcastReceiver {
   public readonly editableNetworkedDOM: EditableNetworkedDOM;
   private currentRevisionState: null | {
