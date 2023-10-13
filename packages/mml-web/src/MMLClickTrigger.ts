@@ -23,7 +23,9 @@ let touchTimestamp: number;
 const dragIntervalMinimumMilliseconds = 100;
 
 const dragIntervalAttrName = "drag-interval";
+export const dragStartEventName = "dragstart";
 export const dragEventName = "drag";
+export const dragEndEventName = "dragend";
 
 export function getDragInterval(mElement: MElement): null | number {
   const dragEventsAttr = mElement.getAttribute(dragIntervalAttrName);
@@ -76,48 +78,13 @@ export class MMLClickTrigger {
   private getPressId(event: MouseEvent | TouchEvent) {
     if (event instanceof MouseEvent) return event.button;
 
-    return event.touches[event.touches.length - 1].identifier;
+    return event.changedTouches[event.changedTouches.length - 1].identifier;
   }
 
   private handleMouseDown(e: MouseEvent) {
     this.mouseDownTime = Date.now();
     this.mouseMoveDelta = 0;
     this.handleDragStart(e);
-  }
-
-  private handleMouseUp(event: MouseEvent) {
-    const pressId = this.getPressId(event);
-    this.dragIdToElementMap.delete(pressId);
-    this.pressIdToTouchPosition.delete(pressId);
-
-    if (!this.mouseDownTime) {
-      return;
-    }
-    const duration = Date.now() - this.mouseDownTime;
-    this.mouseDownTime = null;
-    if (
-      this.mouseMoveDelta < mouseMovePixelsThreshold &&
-      duration < mouseMoveTimeThresholdMilliseconds
-    ) {
-      this.handleClick(event);
-    }
-  }
-
-  private getIntersections(event: MouseEvent) {
-    let x = 0;
-    let y = 0;
-    if (!document.pointerLockElement) {
-      let width = window.innerWidth;
-      let height = window.innerHeight;
-      if (this.clickTarget instanceof HTMLElement) {
-        width = this.clickTarget.offsetWidth;
-        height = this.clickTarget.offsetHeight;
-      }
-      x = (event.offsetX / width) * 2 - 1;
-      y = -((event.offsetY / height) * 2 - 1);
-    }
-    this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.scene.getCamera());
-    return this.raycaster.intersectObject(this.scene.getRootContainer(), true);
   }
 
   private handleMouseMove(event: MouseEvent) {
@@ -142,6 +109,41 @@ export class MMLClickTrigger {
     }
   }
 
+  private handleMouseUp(event: MouseEvent) {
+    if (!this.mouseDownTime) {
+      return;
+    }
+
+    const duration = Date.now() - this.mouseDownTime;
+    this.mouseDownTime = null;
+    if (
+      this.mouseMoveDelta < mouseMovePixelsThreshold &&
+      duration < mouseMoveTimeThresholdMilliseconds
+    ) {
+      this.handleClick(event);
+    }
+
+    const pressId = this.getPressId(event);
+
+    const { element } = this.getFirstIntersectionElement(event) || {};
+
+    if (!element) return;
+
+    if (this.dragIdToElementMap.get(pressId)) {
+      this.dragIdToElementMap.delete(pressId);
+      this.pressIdToTouchPosition.delete(pressId);
+      element.dispatchEvent(
+        new CustomEvent(dragEndEventName, {
+          bubbles: true,
+          detail: {
+            dragId: this.getPressId(event),
+            type: "click",
+          },
+        }),
+      );
+    }
+  }
+
   private handleTouchStart(event: TouchEvent) {
     const pressId = this.getPressId(event);
     /* remember the x and y position of the touch, so that it can be used in touchEnd */
@@ -152,12 +154,6 @@ export class MMLClickTrigger {
 
     /* remember the start time of the touch to calculate the touch duration in touchEnd */
     touchTimestamp = Date.now();
-
-    // Dragging for mobile devices should only happening if the user is already touching the screen with one finger
-    // and then moves another finger on the screen to drag
-    if (event.touches.length < 2) {
-      return;
-    }
 
     this.handleDragStart(event);
   }
@@ -190,11 +186,10 @@ export class MMLClickTrigger {
   }
 
   private handleTouchEnd(event: TouchEvent) {
-    const {
-      changedTouches,
-      changedTouches: { length },
-    } = event;
-    this.dragIdToElementMap.delete(changedTouches[length - 1].identifier);
+    const { element, intersection } = this.getFirstIntersectionElement(event) || {};
+
+    if (!element || !intersection) return;
+
     if (Date.now() - touchTimestamp < touchThresholdMilliseconds) {
       /* a short touch, i.e., a click */
       if ((event.detail as any).element) {
@@ -202,15 +197,30 @@ export class MMLClickTrigger {
         return;
       }
 
-      const { element, intersection } = this.getFirstIntersectionElement(event) || {};
-
-      if (!element || !intersection) return;
-
       element.dispatchEvent(
         new MouseEvent("click", {
           bubbles: true,
         }),
       );
+    }
+
+    const {
+      changedTouches,
+      changedTouches: { length },
+    } = event;
+
+    if (this.dragIdToElementMap.get(changedTouches[length - 1].identifier)) {
+      element.dispatchEvent(
+        new CustomEvent(dragEndEventName, {
+          bubbles: true,
+          detail: {
+            dragId: this.getPressId(event),
+            type: "touch",
+          },
+        }),
+      );
+
+      this.dragIdToElementMap.delete(changedTouches[length - 1].identifier);
     }
   }
 
@@ -236,14 +246,10 @@ export class MMLClickTrigger {
     let y = 0;
     if (!document.pointerLockElement) {
       const pressId = this.getPressId(event);
+
       const touchPosition = this.pressIdToTouchPosition.get(pressId);
       let offsetX = touchPosition?.x || 0;
       let offsetY = touchPosition?.y || 0;
-
-      console.log({
-        offsetX,
-        offsetY,
-      });
 
       let width = window.innerWidth;
       let height = window.innerHeight;
@@ -304,18 +310,39 @@ export class MMLClickTrigger {
       return;
     }
 
-    const { element } = this.getFirstIntersectionElement(event) || {};
-
+    const { element, intersection } = this.getFirstIntersectionElement(event) || {};
+    if (!element || !intersection || !getDragInterval(element)) return;
     const pressId = this.getPressId(event);
 
-    if (element && getDragInterval(element)) {
-      this.dragIdToElementMap.set(pressId, {
-        mElement: element,
-        lastUpdate: performance.now(),
-      });
-    }
+    this.dragIdToElementMap.set(pressId, {
+      mElement: element,
+      lastUpdate: performance.now(),
+    });
 
+    const elementRelative = getRelativePositionAndRotationRelativeToObject(
+      {
+        position: intersection.point,
+        rotation: {
+          x: 0,
+          y: 0,
+          z: 0,
+        },
+      },
+      element.getContainer(),
+    );
 
+    element.dispatchEvent(
+      new CustomEvent(dragStartEventName, {
+        bubbles: true,
+        detail: {
+          position: {
+            ...elementRelative.position,
+          },
+          dragId: this.getPressId(event),
+          type: event instanceof MouseEvent ? "click" : "touch",
+        },
+      }),
+    );
   }
 
   private handleDrag(event: MouseEvent | TouchEvent) {
@@ -351,11 +378,6 @@ export class MMLClickTrigger {
         detail: {
           position: {
             ...elementRelative.position,
-          },
-          positionOffset: {
-            x: intersection.point.x - elementRelative.position.x,
-            y: intersection.point.y - elementRelative.position.y,
-            z: intersection.point.z - elementRelative.position.z,
           },
           dragId: this.getPressId(event),
           type: event instanceof MouseEvent ? "click" : "touch",
