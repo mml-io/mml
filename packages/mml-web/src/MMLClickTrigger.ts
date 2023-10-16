@@ -39,7 +39,6 @@ export function getDragInterval(mElement: MElement): null | number {
   return parsed;
 }
 
-
 /**
  * The MMLClickTrigger class is responsible for handling click events on the MML scene and raycasts into the scene to
  * determine which object was clicked and then dispatches events to those elements.
