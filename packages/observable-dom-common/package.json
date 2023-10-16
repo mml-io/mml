@@ -18,6 +18,6 @@
     "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/networked-dom-protocol": "^0.8.0"
+    "@mml-io/networked-dom-protocol": "0.8.0"
   }
 }
