@@ -1,22 +1,12 @@
-<m-cube id="blue-panel" color="blue" width="20" height="20" depth="20" rx="-90" drag-interval="100"></m-cube>
-<m-cube color="black" width="20" height="20"  depth="20" y="8" z="-30">
-  <m-cube id="my-cube" color="white"></m-cube>
-</m-cube>
-<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="100" z="10">
-</m-light>
+<m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
+<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+<m-cube y="2" id="my-cube" color="red"></m-cube>
 
 <script>
-  const bluePanel = document.getElementById('blue-panel');
-  const myCube = document.getElementById('my-cube');
-
-  bluePanel.addEventListener('drag', (e) => {
-    myCube.setAttribute('x', e.detail.position.x);
-    myCube.setAttribute('y', e.detail.position.y);
-    myCube.setAttribute('z', e.detail.position.z);
-  });
-
-  myCube.addEventListener('drag', (e) => {
-    myCube.setAttribute('x', e.detail.position.x);
-    myCube.setAttribute('y', e.detail.position.y);
+  let toggle = false;
+  const myCube = document.getElementById("my-cube");
+  myCube.addEventListener("click", () => {
+    toggle = !toggle;
+    myCube.setAttribute("color", toggle ? "green" : "red");
   });
 </script>
