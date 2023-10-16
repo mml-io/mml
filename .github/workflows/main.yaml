@@ -144,7 +144,7 @@ jobs:
           # Publish the current commit as an "experimental" version
           version="0.0.0-experimental-$(git rev-parse --short HEAD)-$(date +'%Y%m%d')"
           echo "Publishing experimental version $version"
-          ./node_modules/.bin/lerna publish $version --no-private --dist-tag experimental --ignore-scripts --ignore-changes --no-push --yes
+          ./node_modules/.bin/lerna publish $version --no-private --dist-tag experimental --ignore-scripts --ignore-changes --no-push --exact --yes
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
