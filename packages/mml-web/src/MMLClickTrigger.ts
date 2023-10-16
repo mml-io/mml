@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { MElement } from "./elements/MElement";
+import { MElement } from "./elements/";
 import { IMMLScene } from "./MMLScene";
 import { EventHandlerCollection } from "./utils/events/EventHandlerCollection";
 import { getRelativePositionAndRotationRelativeToObject } from "./utils/position-utils";
@@ -20,11 +20,11 @@ export type TouchPosition = {
 };
 
 let touchTimestamp: number;
-const dragIntervalMinimumMilliseconds = 100;
+const dragIntervalMinimumMilliseconds = 30;
 
 const dragIntervalAttrName = "drag-interval";
 export const dragStartEventName = "dragstart";
-export const dragEventName = "drag";
+export const dragMoveEventName = "dragmove";
 export const dragEndEventName = "dragend";
 
 export function getDragInterval(mElement: MElement): null | number {
@@ -97,14 +97,16 @@ export class MMLClickTrigger {
 
     if (dragData) {
       let listeningInterval = getDragInterval(dragData.mElement);
+
       if (listeningInterval === null) {
         dragData.lastUpdate = currentTime;
-      } else {
-        listeningInterval = Math.max(listeningInterval, dragIntervalMinimumMilliseconds);
-        if (dragData.lastUpdate < currentTime - listeningInterval) {
-          dragData.lastUpdate = currentTime;
-          this.handleDrag(event);
-        }
+      }
+
+      listeningInterval = Math.max(listeningInterval as number, dragIntervalMinimumMilliseconds);
+
+      if (dragData.lastUpdate < currentTime - listeningInterval) {
+        dragData.lastUpdate = currentTime;
+        this.handleDrag(event);
       }
     }
   }
@@ -116,6 +118,7 @@ export class MMLClickTrigger {
 
     const duration = Date.now() - this.mouseDownTime;
     this.mouseDownTime = null;
+
     if (
       this.mouseMoveDelta < mouseMovePixelsThreshold &&
       duration < mouseMoveTimeThresholdMilliseconds
@@ -124,15 +127,11 @@ export class MMLClickTrigger {
     }
 
     const pressId = this.getPressId(event);
+    const dragData = this.dragIdToElementMap.get(pressId);
 
-    const { element } = this.getFirstIntersectionElement(event) || {};
-
-    if (!element) return;
-
-    if (this.dragIdToElementMap.get(pressId)) {
-      this.dragIdToElementMap.delete(pressId);
+    if (dragData) {
       this.pressIdToTouchPosition.delete(pressId);
-      element.dispatchEvent(
+      dragData.mElement.dispatchEvent(
         new CustomEvent(dragEndEventName, {
           bubbles: true,
           detail: {
@@ -141,6 +140,7 @@ export class MMLClickTrigger {
           },
         }),
       );
+      this.dragIdToElementMap.delete(pressId);
     }
   }
 
@@ -373,7 +373,7 @@ export class MMLClickTrigger {
     );
 
     element.dispatchEvent(
-      new CustomEvent(dragEventName, {
+      new CustomEvent(dragMoveEventName, {
         bubbles: true,
         detail: {
           position: {
