@@ -144,7 +144,6 @@ export class MMLScene implements IMMLScene {
       this.controls.enable();
     }
 
-    this.clickTrigger = MMLClickTrigger.init(this.element, this);
     this.promptManager = PromptManager.init(this.element);
     const { interactionManager, interactionListener } = InteractionManager.init(
       this.element,
