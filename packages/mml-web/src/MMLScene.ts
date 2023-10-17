@@ -127,6 +127,8 @@ export class MMLScene implements IMMLScene {
     });
     this.resizeObserver.observe(this.element);
 
+    this.clickTrigger = MMLClickTrigger.init(this.element, this);
+
     switch (mmlSceneOptions.controlsType) {
       case ControlsType.None:
         break;
@@ -135,14 +137,13 @@ export class MMLScene implements IMMLScene {
         break;
       case ControlsType.DragFly:
       default:
-        this.controls = new DragFlyCameraControls(this.camera, this.element);
+        this.controls = new DragFlyCameraControls(this.camera, this.element, this.clickTrigger);
         break;
     }
     if (this.controls) {
       this.controls.enable();
     }
 
-    this.clickTrigger = MMLClickTrigger.init(this.element, this);
     this.promptManager = PromptManager.init(this.element);
     const { interactionManager, interactionListener } = InteractionManager.init(
       this.element,
