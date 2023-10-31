@@ -353,6 +353,7 @@
       <xs:element ref="m-video"/>
       <xs:element ref="m-prompt"/>
       <xs:element ref="m-position-probe"/>
+      <xs:element ref="m-chat-probe"/>
       <xs:element ref="m-interaction"/>
       <xs:element ref="m-attr-anim"/>
       <xs:element ref="m-frame"/>
@@ -1205,13 +1206,6 @@
             <xs:annotation>
               <xs:documentation>
                 If the sender of a chat message is within this range (in meters) of the chat probe, the message is expected to be forwarded to the probe. Default value is 1 meter.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="enabled" type="xs:boolean">
-            <xs:annotation>
-              <xs:documentation>
-                Whether the chat probe is enabled (true) or disabled (false). Default value is true.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
