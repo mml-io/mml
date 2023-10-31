@@ -110,11 +110,11 @@ export class Interaction extends TransformableElement {
   connectedCallback(): void {
     super.connectedCallback();
     this.showDebug();
-    this.registerInteraction(this);
+    this.registerInteraction();
   }
 
   disconnectedCallback(): void {
-    this.unregisterInteraction(this);
+    this.unregisterInteraction();
     this.showDebug();
     super.disconnectedCallback();
   }
@@ -164,15 +164,15 @@ export class Interaction extends TransformableElement {
     }
   }
 
-  private registerInteraction(int: Interaction) {
+  private registerInteraction() {
     const scene = this.getScene();
     this.registeredScene = scene;
-    scene.addInteraction?.(int);
+    scene.addInteraction?.(this);
   }
 
-  private unregisterInteraction(int: Interaction) {
+  private unregisterInteraction() {
     if (this.registeredScene !== null) {
-      this.registeredScene.removeInteraction?.(int);
+      this.registeredScene.removeInteraction?.(this);
       this.registeredScene = null;
     }
   }

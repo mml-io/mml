@@ -1,6 +1,7 @@
 import { AttributeAnimation } from "./AttributeAnimation";
 import { Audio } from "./Audio";
 import { Character } from "./Character";
+import { ChatProbe } from "./ChatProbe";
 import { Cube } from "./Cube";
 import { Cylinder } from "./Cylinder";
 import { Frame } from "./Frame";
@@ -38,6 +39,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Video.tagName, Video);
   targetWindow.customElements.define(Audio.tagName, Audio);
   targetWindow.customElements.define(PositionProbe.tagName, PositionProbe);
+  targetWindow.customElements.define(ChatProbe.tagName, ChatProbe);
   targetWindow.customElements.define(Interaction.tagName, Interaction);
   targetWindow.customElements.define(AttributeAnimation.tagName, AttributeAnimation);
 }

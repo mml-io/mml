@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { Interaction, MElement } from "../../elements";
+import { ChatProbe } from "../../elements/ChatProbe";
 import { IMMLScene, PromptProps } from "../../MMLScene";
 
 export function createWrappedScene(scene: IMMLScene, container: THREE.Group): IMMLScene {
@@ -33,6 +34,21 @@ export function createWrappedScene(scene: IMMLScene, container: THREE.Group): IM
     removeInteraction(interaction: Interaction): void {
       if (scene.removeInteraction) {
         scene.removeInteraction(interaction);
+      }
+    },
+    addChatProbe(chatProbe: ChatProbe): void {
+      if (scene.addChatProbe) {
+        scene.addChatProbe(chatProbe);
+      }
+    },
+    updateChatProbe(chatProbe: ChatProbe): void {
+      if (scene.updateChatProbe) {
+        scene.updateChatProbe(chatProbe);
+      }
+    },
+    removeChatProbe(chatProbe: ChatProbe): void {
+      if (scene.removeChatProbe) {
+        scene.removeChatProbe(chatProbe);
       }
     },
     getAudioListener: () => {

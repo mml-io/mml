@@ -10,6 +10,7 @@ export * from "./Interaction";
 export * from "./Label";
 export * from "./Light";
 export * from "./MElement";
+export * from "./ChatProbe";
 export * from "./Plane";
 export * from "./Prompt";
 export * from "./register-custom-elements";
