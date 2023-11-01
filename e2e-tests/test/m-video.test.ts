@@ -8,8 +8,6 @@ describe("m-video", () => {
 
     await page.goto("http://localhost:7079/m-video-test.html/reset");
 
-    // TODO - VIDEOS ARE NOT LOADING IN TESTING VERSION OF CHROME - COULD BE CODEC ISSUE?
-
     // Wait for the m-video content to load
     await page.waitForFunction(
       () => {
