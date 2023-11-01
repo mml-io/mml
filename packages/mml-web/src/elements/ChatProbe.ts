@@ -90,6 +90,7 @@ export class ChatProbe extends TransformableElement {
   }
 
   public parentTransformed(): void {
+    this.registeredScene?.updateChatProbe?.(this);
     this.updateDebugVisualisation();
   }
 
