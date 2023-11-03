@@ -896,6 +896,8 @@
             <xs:annotation>
               <xs:documentation>
                 The source URI of the video file. Supported formats may vary depending on the rendering engine used.
+
+                Some engines support streaming video using WHEP (WebRTC video streaming). In this case, the URI should use the protocol "whep://" rather than "https://".
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
