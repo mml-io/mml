@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { Controls } from "./camera/Controls";
 import { DragFlyCameraControls } from "./camera/DragFlyCameraControls";
 import { PointerLockFlyCameraControls } from "./camera/PointerLockFlyCameraControls";
+import { ChatProbe } from "./elements/ChatProbe";
 import { Interaction } from "./elements/Interaction";
 import { MElement } from "./elements/MElement";
 import { InteractionManager } from "./interaction-ui";
@@ -18,6 +19,12 @@ export type InteractionListener = {
   addInteraction(interaction: Interaction): void;
   updateInteraction(interaction: Interaction): void;
   removeInteraction(interaction: Interaction): void;
+};
+
+export type ChatProbeListener = {
+  addChatProbe(chatProbe: ChatProbe): void;
+  updateChatProbe(chatProbe: ChatProbe): void;
+  removeChatProbe(chatProbe: ChatProbe): void;
 };
 
 export type PromptProps = {
@@ -45,6 +52,10 @@ export type IMMLScene = {
   addInteraction?: (interaction: Interaction) => void;
   updateInteraction?: (interaction: Interaction) => void;
   removeInteraction?: (interaction: Interaction) => void;
+
+  addChatProbe?: (chatProbe: ChatProbe) => void;
+  updateChatProbe?: (chatProbe: ChatProbe) => void;
+  removeChatProbe?: (chatProbe: ChatProbe) => void;
 
   getUserPositionAndRotation(): PositionAndRotation;
 
@@ -79,6 +90,8 @@ export class MMLScene implements IMMLScene {
   private colliders = new Set<THREE.Object3D>();
   private interactions = new Set<Interaction>();
   private interactionListeners = new Set<InteractionListener>();
+  private chatProbes = new Set<ChatProbe>();
+  private chatProbeListeners = new Set<ChatProbeListener>();
 
   private animationFrameCallback: () => void;
   private animationFrameRequest: number;
@@ -275,7 +288,6 @@ export class MMLScene implements IMMLScene {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public updateInteraction(interaction: Interaction): void {
     for (const listener of this.interactionListeners) {
       listener.updateInteraction(interaction);
@@ -307,6 +319,43 @@ export class MMLScene implements IMMLScene {
 
   public removeInteractionListener(listener: InteractionListener): void {
     this.interactionListeners.delete(listener);
+  }
+
+  public addChatProbe(chatProbe: ChatProbe): void {
+    this.chatProbes.add(chatProbe);
+    for (const listener of this.chatProbeListeners) {
+      listener.addChatProbe(chatProbe);
+    }
+  }
+
+  public updateChatProbe(chatProbe: ChatProbe): void {
+    for (const listener of this.chatProbeListeners) {
+      listener.updateChatProbe(chatProbe);
+    }
+  }
+
+  public removeChatProbe(chatProbe: ChatProbe): void {
+    this.chatProbes.delete(chatProbe);
+    for (const listener of this.chatProbeListeners) {
+      listener.removeChatProbe(chatProbe);
+    }
+  }
+
+  public getChatProbes(): Set<ChatProbe> {
+    return this.chatProbes;
+  }
+
+  public addChatProbeListener(listener: ChatProbeListener, addExistingChatProbes = true): void {
+    this.chatProbeListeners.add(listener);
+    if (addExistingChatProbes) {
+      for (const chatProbe of this.chatProbes) {
+        listener.addChatProbe(chatProbe);
+      }
+    }
+  }
+
+  public removeChatProbeListener(listener: ChatProbeListener): void {
+    this.chatProbeListeners.delete(listener);
   }
 
   public getBoundingBoxForElement(element: HTMLElement): {

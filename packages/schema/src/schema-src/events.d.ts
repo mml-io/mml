@@ -155,4 +155,10 @@ export interface MMLCollisionEndEvent extends RemoteEvent {
 
 export interface MMLChatEvent extends RemoteEvent {
   readonly type: "chat";
+  readonly detail: {
+    /**
+     * The contents of the chat message.
+     */
+    readonly message: string;
+  } & RemoteEvent["detail"];
 }
