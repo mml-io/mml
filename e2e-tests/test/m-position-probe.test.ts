@@ -1,10 +1,8 @@
-import * as puppeteer from "puppeteer";
-
 import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-position-probe", () => {
   test("receives user positions", async () => {
-    const page = (await globalThis.__BROWSER_GLOBAL__.newPage()) as puppeteer.Page;
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 
@@ -21,9 +19,9 @@ describe("m-position-probe", () => {
     await page.waitForSelector("m-cube[data-test-id='user-cube']");
 
     const { x: x1, z: z1 } = await page.evaluate(() => {
-      const userCube = document.querySelector("m-cube[data-test-id='user-cube']");
-      const x = parseFloat(userCube.getAttribute("x"));
-      const z = parseFloat(userCube.getAttribute("z"));
+      const userCube = document.querySelector("m-cube[data-test-id='user-cube']")!;
+      const x = parseFloat(userCube.getAttribute("x")!);
+      const z = parseFloat(userCube.getAttribute("z")!);
       return { x, z };
     });
     expect(x1).toBeLessThan(-3.7);
@@ -37,17 +35,17 @@ describe("m-position-probe", () => {
 
     await page.waitForFunction(
       () => {
-        const userCube = document.querySelector("m-cube[data-test-id='user-cube']");
+        const userCube = document.querySelector("m-cube[data-test-id='user-cube']")!;
         // Wait for the cube to move based on the position probe moving
-        return parseFloat(userCube.getAttribute("x")) > -2;
+        return parseFloat(userCube.getAttribute("x")!) > -2;
       },
       { timeout: 30000, polling: 100 },
     );
 
     const { x: x2, z: z2 } = await page.evaluate(() => {
-      const userCube = document.querySelector("m-cube[data-test-id='user-cube']");
-      const x = parseFloat(userCube.getAttribute("x"));
-      const z = parseFloat(userCube.getAttribute("z"));
+      const userCube = document.querySelector("m-cube[data-test-id='user-cube']")!;
+      const x = parseFloat(userCube.getAttribute("x")!);
+      const z = parseFloat(userCube.getAttribute("z")!);
       return { x, z };
     });
     expect(x2).toBeLessThan(-1.1);

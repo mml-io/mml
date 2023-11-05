@@ -1,10 +1,8 @@
-import * as puppeteer from "puppeteer";
-
 import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-interaction", () => {
   test("visible and clickable", async () => {
-    const page = (await globalThis.__BROWSER_GLOBAL__.newPage()) as puppeteer.Page;
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 

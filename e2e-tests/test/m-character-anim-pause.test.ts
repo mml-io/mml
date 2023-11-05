@@ -1,10 +1,8 @@
-import * as puppeteer from "puppeteer";
-
 import { takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-character", () => {
   test("animation pause", async () => {
-    const page = (await globalThis.__BROWSER_GLOBAL__.newPage()) as puppeteer.Page;
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 

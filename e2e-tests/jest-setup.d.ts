@@ -3,7 +3,10 @@ export {};
 declare global {
   namespace jest {
     interface Matchers<R> {
-      toMatchImageSnapshot(): R;
+      toMatchImageSnapshot(options?: {
+        failureThresholdType?: string;
+        failureThreshold?: number;
+      }): R;
     }
   }
 

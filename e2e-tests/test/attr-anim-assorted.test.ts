@@ -2,7 +2,7 @@ import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-attr-anim assorted", () => {
   test("assorted attributes are affected by animations", async () => {
-    const page = await globalThis.__BROWSER_GLOBAL__.newPage();
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 

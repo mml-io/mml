@@ -1,6 +1,6 @@
 describe("fetch", () => {
   test("fetch-ed content", async () => {
-    const page = await globalThis.__BROWSER_GLOBAL__.newPage();
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 
