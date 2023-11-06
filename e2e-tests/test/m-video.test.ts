@@ -2,7 +2,7 @@ import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-video", () => {
   test("videos paused at correct times", async () => {
-    const page = await globalThis.__BROWSER_GLOBAL__.newPage();
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 

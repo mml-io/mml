@@ -2,7 +2,7 @@ import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-attr-anim easing", () => {
   test("animations are eased using the specified functions", async () => {
-    const page = await globalThis.__BROWSER_GLOBAL__.newPage();
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 
@@ -82,7 +82,8 @@ describe("m-attr-anim easing", () => {
           return (document.querySelector(`#${id}`) as any).getContainer().position.x;
         }, id);
 
-        const expectedX = expectedXForElementAtTimes[time];
+        const expectedX =
+          expectedXForElementAtTimes[time as keyof typeof expectedXForElementAtTimes];
         if (expectedX === undefined) {
           throw new Error(`No expected X position for ${id} at time ${time}`);
         }

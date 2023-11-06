@@ -2,7 +2,7 @@ import { takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-image", () => {
   test("image visible", async () => {
-    const page = await globalThis.__BROWSER_GLOBAL__.newPage();
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 

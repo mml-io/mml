@@ -3,7 +3,7 @@ import * as path from "path";
 import * as url from "url";
 
 import * as chokidar from "chokidar";
-import express, { Request } from "express";
+import express, { static as expressStatic, Request } from "express";
 import enableWs from "express-ws";
 import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 
@@ -77,7 +77,7 @@ app.get("/", (req, res) => {
 `);
 });
 
-app.use("/assets", express.static("./src/assets"));
+app.use("/assets", expressStatic("./src/assets"));
 
 app.ws("/:pathName", (ws, req) => {
   const { pathName } = req.params;
@@ -105,7 +105,7 @@ app.get("/:documentPath/", (req, res) => {
 
 app.use(
   "/client/",
-  express.static(path.resolve(dirname, "../../node_modules/mml-web-client/build/")),
+  expressStatic(path.resolve(dirname, "../../node_modules/mml-web-client/build/")),
 );
 
 app.get("/:documentPath/reset", (req, res) => {

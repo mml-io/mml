@@ -1,10 +1,8 @@
-import * as puppeteer from "puppeteer";
-
 import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-prompt", () => {
   test("visible and clickable", async () => {
-    const page = (await globalThis.__BROWSER_GLOBAL__.newPage()) as puppeteer.Page;
+    const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 
@@ -41,10 +39,6 @@ describe("m-prompt", () => {
     await page.waitForSelector("#my-label-1[content='test-value-foo']");
 
     await takeAndCompareScreenshot(page, 0.02);
-
-
-
-
 
     await clickElement(page, "#my-cube-3");
 

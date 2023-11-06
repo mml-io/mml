@@ -4,8 +4,11 @@
   "main": "./src/index.js",
   "type": "module",
   "scripts": {
+    "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
     "iterate": "npm run build && npm run serve",
+    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix",
     "serve": "node --enable-source-maps ./build/index.js",
     "ci:e2e-tests": "npm run wait-for-ports && HEADLESS=true jest --runInBand",
     "e2e-tests": "npm run wait-for-ports && HEADLESS=false jest --runInBand",
