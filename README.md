@@ -1,4 +1,9 @@
-# MML: Metaverse Markup Language
+<p align="center">
+  <a href="https://mml.io">
+    <img src="./branding/src/svg/animation/mml-logotype-animation-black.svg" height="128">
+    <h1 align="center">MML: Metaverse Markup Language</h1>
+  </a>
+</p>
 
 [![main github actions](https://github.com/mml-io/mml/actions/workflows/main.yaml/badge.svg)](https://github.com/mml-io/mml/actions/workflows/main.yaml)
 [![npm version](https://img.shields.io/npm/v/mml-web.svg?style=flat)](https://www.npmjs.com/package/mml-web)
