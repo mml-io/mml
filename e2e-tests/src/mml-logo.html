@@ -1,133 +1,83 @@
-<m-group visible-to="0">
-  <m-group id="m-template">
-    <m-cube id="left-column" x="-3.75" width="2" height="9.5" depth="0.5"></m-cube>
-    <m-cube id="right-column" x="3.75" width="2" height="9.5" depth="0.5"></m-cube>
-    <m-cube id="left-m-arm" rz="45" width="2" depth="0.5"></m-cube>
-    <m-cube id="right-m-arm" rz="-45" width="2" depth="0.5"></m-cube>
-  </m-group>
-
-  <m-group id="l-template">
-    <m-cube x="-3.75" y="-0.5" width="2" height="7.5" depth="0.5">
-      <m-attr-anim attr="y" start="0.5" end="1" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-    </m-cube>
-    <m-cube y="-3.75" width="9.5" height="2" depth="0.5"></m-cube>
-  </m-group>
-</m-group>
-
 <m-light
   type="point"
   intensity="1"
-  x="8"
-  y="6"
-  z="1"
-></m-light>
-
-<m-light
-  type="point"
-  intensity="1"
-  y="10"
-  z="8"
-></m-light>
-
-<m-light
-  type="point"
-  intensity="1"
-  x="-8"
-  y="6"
-  z="1"
+  y="5"
+  z="10"
 ></m-light>
 
 <m-group y="5">
-  <m-plane color="black" z="-50" width="12.5" height="4.5">
+  <m-plane color="black" z="-50">
     <m-attr-anim attr="width" start="30" end="54" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
     <m-attr-anim attr="height" start="30" end="21.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
   </m-plane>
-  <m-group sx="0.25" sy="0.25" sz="0.25" id="logo">
-    <m-group id="primary-side" y="0.55">
-      <m-attr-anim attr="ry" start="-45" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-      <m-attr-anim attr="rx" start="35" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-
-      <m-group>
-        <!-- M Left -->
-        <m-attr-anim attr="x" start="0" end="-11" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-attr-anim attr="y" start="0" end="-0.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-attr-anim attr="z" start="7.75" end="2.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-group id="m-left">
-          <m-attr-anim attr="z" start="-2.5" end="-3" ping-pong="true" start-time="-7500" ping-pong-delay="1500" duration="5000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        </m-group>
+  <m-group id="logo" z="-20">
+    <m-group id="letters-holder">
+      <m-attr-anim attr="z" start="-5" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-attr-anim attr="x" start="4" end="-1.7" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-attr-anim attr="sx" start="0" end="1" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-attr-anim attr="sy" start="0" end="1" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-group id="left-m" x="-5">
+        <m-cube depth="0.25" color="white" x="-1.6" width="0.8" height="4"></m-cube>
+        <m-cube depth="0.25" color="white" x="1.6" width="0.8" height="4"></m-cube>
+        <m-cube depth="0.25" color="white" rz="45" x="-0.60" y="0.833" height="2.5" width="0.8"></m-cube>
+        <m-cube depth="0.25" color="white" rz="-45" x="0.60" y="0.833" height="2.5" width="0.8"></m-cube>
       </m-group>
 
-      <m-group>
-        <!-- M Top -->
-        <m-attr-anim attr="y" start="2.5" end="-0.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-attr-anim attr="z" start="-0.25" end="1.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-attr-anim attr="rx" start="90" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-attr-anim attr="rz" start="90" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-group id="m-top">
-          <m-attr-anim attr="z" start="-2.5" end="-2" ping-pong="true" start-time="-7500" ping-pong-delay="1500" duration="5000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        </m-group>
+      <m-group id="middle-m">
+        <m-cube depth="0.25" color="white" x="-1.6" width="0.8" height="4"></m-cube>
+        <m-cube depth="0.25" color="white" x="1.6" width="0.8" height="4"></m-cube>
+        <m-cube depth="0.25" color="white" rz="45" x="-0.60" y="0.833" height="2.5" width="0.8"></m-cube>
+        <m-cube depth="0.25" color="white" rz="-45" x="0.60" y="0.833" height="2.5" width="0.8"></m-cube>
       </m-group>
 
+      <m-group id="right-l" x="5">
+        <m-cube depth="0.25" color="white" x="-1.6" width="0.8" height="4"></m-cube>
+        <m-cube depth="0.25" color="white" y="-1.6" x="-0.4" height="0.8" width="3.2"></m-cube>
+      </m-group>
+    </m-group>
+
+    <m-group id="left-bracket-holder">
+      <m-attr-anim attr="x" start="0" end="-9.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-attr-anim attr="rx" start="35.25" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+
       <m-group>
-        <!-- L Right -->
-        <m-attr-anim attr="x" start="7.5" end="11" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-attr-anim attr="y" start="0" end="-0.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-attr-anim attr="z" start="-0.25" end="2.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-attr-anim attr="ry" start="90" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
-        <m-group id="l-right">
-          <m-attr-anim attr="z" start="-2.5" end="-3" ping-pong="true" start-time="-7500" ping-pong-delay="1500" duration="5000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+        <m-attr-anim attr="sx" start="1" end="0.75" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+        <m-attr-anim attr="ry" start="45" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+        <m-group id="left-bracket" width="5" height="5">
+          <m-attr-anim attr="rz" start="0" end="45" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+          <m-attr-anim attr="z" start="-2.5" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+          <m-cube depth="0.25" color="white" x="-2" height="5"></m-cube>
+          <m-cube depth="0.25" color="white" y="2" width="5"></m-cube>
+        </m-group>
+      </m-group>
+    </m-group>
+
+    <m-group id="slash-holder">
+      <m-attr-anim attr="rx" start="35.25" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-attr-anim attr="x" start="0" end="7" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-group>
+        <m-attr-anim attr="ry" start="45" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+        <m-attr-anim attr="rz" start="0" end="60" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+        <m-cube id="slash" width="5" height="0.5" depth="0.5" color="white">
+          <m-attr-anim attr="rx" start=0" end="45" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+        </m-cube>
+      </m-group>
+    </m-group>
+
+    <m-group id="right-bracket-holder">
+      <m-attr-anim attr="sx" start="1" end="0.75" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-attr-anim attr="x" start="0" end="9.5" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+      <m-attr-anim attr="rx" start="35.25" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+
+      <m-group>
+        <m-attr-anim attr="ry" start="45" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+        <m-group id="right-bracket" width="5" height="5">
+          <m-attr-anim attr="rz" start="0" end="45" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+          <m-attr-anim attr="z" start="2.5" end="0" ping-pong="true" ping-pong-delay="1000" duration="10000" loop="true" easing="easeInOutQuart"></m-attr-anim>
+          <m-cube depth="0.25" color="white" x="2" height="5"></m-cube>
+          <m-cube depth="0.25" color="white" y="-2" width="5"></m-cube>
         </m-group>
       </m-group>
     </m-group>
   </m-group>
 </m-group>
-
-<script>
-  const mTemplate = document.getElementById("m-template");
-  const leftMArm = document.getElementById("left-m-arm");
-  const rightMArm = document.getElementById("right-m-arm");
-  const x = parseFloat(leftMArm.getAttribute("width"));
-  const y = 9.5;
-  const z = 9.5;
-  const rt2 = Math.sqrt(2);
-
-  const lengthOfArm = (rt2 / 2) * z + (1 - rt2) * x;
-  const heightOffset = y / 2 - (lengthOfArm + x) / (2 * rt2);
-  const innerOffset = (lengthOfArm - x) / (2 * rt2);
-  leftMArm.setAttribute("height", lengthOfArm);
-  leftMArm.setAttribute("x", -innerOffset);
-  leftMArm.setAttribute("y", heightOffset);
-  rightMArm.setAttribute("height", lengthOfArm);
-  rightMArm.setAttribute("x", innerOffset);
-  rightMArm.setAttribute("y", heightOffset);
-
-  const lTemplate = document.getElementById("l-template");
-  const mLeft = document.getElementById("m-left");
-  const mTop = document.getElementById("m-top");
-  const lRight = document.getElementById("l-right");
-  mLeft.innerHTML += mTemplate.innerHTML;
-  mTop.innerHTML += mTemplate.innerHTML;
-  lRight.innerHTML += lTemplate.innerHTML;
-  let firstMColor, secondMColor, lRightColor;
-  const themes = [
-    {
-      // RGB muted
-      firstMColor: "#F5554C",
-      secondMColor: "#5FAB5F",
-      lRightColor: "#5F82AB",
-    },
-  ];
-  const theme = themes[0];
-  firstMColor = theme.firstMColor;
-  secondMColor = theme.secondMColor;
-  lRightColor = theme.lRightColor;
-  for (const child of mLeft.children) {
-    child.setAttribute("color", firstMColor);
-  }
-  for (const child of mTop.children) {
-    child.setAttribute("color", secondMColor);
-  }
-  for (const child of lRight.children) {
-    child.setAttribute("color", lRightColor);
-  }
-</script>

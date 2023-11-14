@@ -1,0 +1,338 @@
+<svg width="460" height="180" viewBox="0 0 460 180" xmlns="http://www.w3.org/2000/svg">
+<!--    <g id="start" transform="translate(140,0)">-->
+<!--      <path d="M90 0V18L26 54V126L10 135V45L90 0Z" fill="white"/>-->
+<!--      <path d="M130 58.5L138 63V72L54 119.5L46 115V106L130 58.5Z" fill="white"/>-->
+<!--      <path d="M170 45V63V135L90 180V162L154 126V54L170 45Z" fill="white"/>-->
+<!--    </g>-->
+
+<!--    <g id="end">-->
+<!--      <path d="M269 50V114H323V130H253V50H269Z" fill="white"/>-->
+<!--      <path d="M173 50L197 82.5L221 50H237V130H221V77L197 109L173 77V130H157V50H173Z" fill="white"/>-->
+<!--      <path d="M77 50L101 82.5L125 50H141V130H125V77L101 109L77 77V130H61V50H77Z" fill="white"/>-->
+<!--      <path d="M47.282 11L56.282 26.5885L18.8564 89.7654L54.8564 152.119L45.5 167.913L0.499996 89.9711L47.282 11Z" fill="white"/>-->
+<!--      <path d="M384.621 46.6399L393.799 46.537L398.299 54.3312L351.517 133.302L342.339 133.405L337.841 125.614L384.621 46.6399Z" fill="white"/>-->
+<!--      <path d="M414.851 11L423.851 26.5885L459.851 88.9423L413.069 167.913L404.069 152.325L441.495 89.1481L405.495 26.7942L414.851 11Z" fill="white"/>-->
+<!--    </g>-->
+
+  <clipPath id="letters-mask">
+    <rect x="0" y="0" width="350" height="350" fill="red" opacity="0.5" transform="rotate(-38.5) translate(-150,-223.3)" />
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+      values="
+        140,0;
+        140,0;
+        245.125,57.025;
+        245.125,57.025;
+        140,0;
+        140,0
+"
+      dur="6s"
+      additive="sum"
+      repeatCount="indefinite" />
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+      values="
+        0,0,0;
+        0,0,0;
+        -30,0,0;
+        -30,0,0;
+        0,0,0;
+        0,0,0
+"
+      dur="6s"
+      additive="sum"
+      repeatCount="indefinite" />
+  </clipPath>
+
+
+  <g clip-path="url(#letters-mask)">
+    <g transform-origin="center">
+      <path id="first-letter-m" d="M77 50L101 82.5L125 50H141V130H125V77L101 109L77 77V130H61V50H77Z" fill="white"/>
+      <path id="second-letter-m" d="M173 50L197 82.5L221 50H237V130H221V77L197 109L173 77V130H157V50H173Z" fill="white"/>
+      <path id="letter-l" d="M269 50V114H323V130H253V50H269Z" fill="white"/>
+
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+        values="
+          250,0;
+          250,0;
+        0,0;
+        0,0;
+        250;
+        250
+        ,0"
+        dur="6s"
+        additive="sum"
+        repeatCount="indefinite" />
+      <animateTransform
+        attributeName="transform"
+        type="scale"
+        calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+        values="
+          0.7,0.7;
+          0.7,0.7;
+        1,1;
+        1,1;
+        0.7,0.7;
+        0.7,0.7"
+        dur="6s"
+        additive="sum"
+        repeatCount="indefinite" />
+    </g>
+  </g>
+
+  <path id="left-bracket" d="M90 0V18L26 54V126L10 135V45L90 0Z" fill="white">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+      values="
+        140,0;
+        140,0;
+        -30.66,56;
+        -30.66,56;
+        140,0;
+        140,0
+"
+      dur="6s"
+      additive="sum"
+      repeatCount="indefinite" />
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+      values="
+        0,0,0;
+        0,0,0;
+        -30,0,0;
+        -30,0,0;
+        0,0,0;
+        0,0,0
+"
+      dur="6s"
+      additive="sum"
+      repeatCount="indefinite" />
+  </path>
+
+  <path id="slash" d="M126 60.75L134 65.25V74.25L54 119.25L46 114.75V105.754L126 60.75Z" fill="white">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+      values="
+        140,0;
+        140,0;
+        245.125,57.025;
+        245.125,57.025;
+        140,0;
+        140,0
+"
+      dur="6s"
+      additive="sum"
+      repeatCount="indefinite" />
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+      values="
+        0,0,0;
+        0,0,0;
+        -30,0,0;
+        -30,0,0;
+        0,0,0;
+        0,0,0
+"
+      dur="6s"
+      additive="sum"
+      repeatCount="indefinite" />
+  </path>
+
+  <path id="right-bracket" d="M170 45V63V135L90 180V162L154 126V54L170 45Z" fill="white">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+      values="
+        140,0;
+        140,0;
+        245.125,57.025;
+        245.125,57.025;
+        140,0;
+        140,0
+"
+      dur="6s"
+      additive="sum"
+      repeatCount="indefinite" />
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      calcMode="spline"
+      keyTimes="
+        0;
+        0.1;
+        0.4;
+        0.6;
+        0.9;
+        1
+      "
+      keySplines="
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0;
+        0.5 0 0.5 1;
+        0 0 0 0
+      "
+      values="
+        0,0,0;
+        0,0,0;
+        -30,0,0;
+        -30,0,0;
+        0,0,0;
+        0,0,0
+"
+      dur="6s"
+      additive="sum"
+      repeatCount="indefinite" />
+  </path>
+</svg>
