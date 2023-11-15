@@ -10,6 +10,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { LoadingInstanceManager } from "../utils/loading/LoadingInstanceManager";
 
 const defaultImageSrc = "";
 const defaultImageWidth = null;
@@ -70,6 +71,9 @@ export class Image extends TransformableElement {
 
   private collideableHelper = new CollideableHelper(this);
   private loadedImage: HTMLImageElement | null;
+  private srcLoadingInstanceManager = new LoadingInstanceManager(
+    `${(this.constructor as typeof Image).tagName}.src`,
+  );
 
   private static attributeHandler = new AttributeHandler<Image>({
     width: (instance, newValue) => {
@@ -149,6 +153,7 @@ export class Image extends TransformableElement {
     if (!this.props.src) {
       // if the src attribute is empty, reset the dimensions and return
       this.updateHeightAndWidth();
+      this.srcLoadingInstanceManager.abortIfLoading();
       return;
     }
     if (!this.material) {
@@ -163,15 +168,16 @@ export class Image extends TransformableElement {
       this.material.map = new THREE.CanvasTexture(this.loadedImage);
       this.material.needsUpdate = true;
       this.updateHeightAndWidth();
+      this.srcLoadingInstanceManager.abortIfLoading();
       return;
     }
 
-    const srcApplyPromise = loadImageAsPromise(
-      Image.imageLoader,
-      this.contentSrcToContentAddress(this.props.src),
-    );
+    const contentSrc = this.contentSrcToContentAddress(this.props.src);
+    const srcApplyPromise = loadImageAsPromise(Image.imageLoader, contentSrc, (loaded, total) => {
+      this.srcLoadingInstanceManager.setProgress(loaded / total);
+    });
+    this.srcLoadingInstanceManager.start(this.getLoadingProgressManager(), contentSrc);
     this.srcApplyPromise = srcApplyPromise;
-
     srcApplyPromise
       .then((image: HTMLImageElement) => {
         if (this.srcApplyPromise !== srcApplyPromise || !this.material) {
@@ -182,10 +188,12 @@ export class Image extends TransformableElement {
         this.material.map = new THREE.CanvasTexture(this.loadedImage);
         this.material.needsUpdate = true;
         this.updateHeightAndWidth();
+        this.srcLoadingInstanceManager.finish();
       })
       .catch((error) => {
         console.error("Error loading image:", newValue, error);
         this.updateHeightAndWidth();
+        this.srcLoadingInstanceManager.error(error);
       });
   }
 
@@ -229,6 +237,7 @@ export class Image extends TransformableElement {
       this.material = null;
     }
     this.loadedImage = null;
+    this.srcLoadingInstanceManager.dispose();
     super.disconnectedCallback();
   }
 
@@ -274,6 +283,7 @@ export class Image extends TransformableElement {
 export function loadImageAsPromise(
   imageLoader: THREE.ImageLoader,
   path: string,
+  onProgress?: (loaded: number, total: number) => void,
 ): Promise<HTMLImageElement> {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     imageLoader.load(
@@ -281,7 +291,11 @@ export function loadImageAsPromise(
       (image: HTMLImageElement) => {
         resolve(image);
       },
-      undefined,
+      (xhr: ProgressEvent) => {
+        if (onProgress) {
+          onProgress(xhr.loaded, xhr.total);
+        }
+      },
       (error: ErrorEvent) => {
         reject(error);
       },

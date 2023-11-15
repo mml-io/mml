@@ -1,8 +1,16 @@
 import { MMLScene } from "./MMLScene";
+import { LoadingProgressBar } from "./utils/loading/LoadingProgressBar";
 
 export class FullScreenMMLScene extends MMLScene {
+  private loadingProgressBar: LoadingProgressBar;
+
   constructor() {
     super();
+
+    const loadingProgressManager = this.getLoadingProgressManager();
+    this.loadingProgressBar = new LoadingProgressBar(loadingProgressManager);
+    this.element.append(this.loadingProgressBar.element);
+
     this.configureWindowStyling();
   }
 

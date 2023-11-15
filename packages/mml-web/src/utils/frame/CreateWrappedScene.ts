@@ -3,8 +3,13 @@ import * as THREE from "three";
 import { Interaction, MElement } from "../../elements";
 import { ChatProbe } from "../../elements/ChatProbe";
 import { IMMLScene, PromptProps } from "../../MMLScene";
+import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 
-export function createWrappedScene(scene: IMMLScene, container: THREE.Group): IMMLScene {
+export function createWrappedScene(
+  scene: IMMLScene,
+  container: THREE.Group,
+  loadingProgressManager: LoadingProgressManager | null,
+): IMMLScene {
   return {
     addCollider(collider: THREE.Object3D, element: MElement): void {
       if (scene.addCollider) {
@@ -71,6 +76,9 @@ export function createWrappedScene(scene: IMMLScene, container: THREE.Group): IM
     },
     getUserPositionAndRotation: () => {
       return scene.getUserPositionAndRotation();
+    },
+    getLoadingProgressManager: () => {
+      return loadingProgressManager;
     },
   };
 }

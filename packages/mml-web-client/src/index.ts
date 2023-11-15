@@ -98,6 +98,7 @@ function createStatusElement() {
         (status: NetworkedDOMWebsocketStatus) => {
           if (status === NetworkedDOMWebsocketStatus.Connected) {
             statusElement.style.display = "none";
+            fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
           } else {
             statusElement.style.display = "block";
             statusElement.textContent = NetworkedDOMWebsocketStatus[status];

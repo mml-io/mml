@@ -29,14 +29,22 @@ export type GLTFResult = {
   userData: any;
 };
 
-export function loadGltfAsPromise(gltfLoader: GLTFLoader, path: string): Promise<GLTFResult> {
+export function loadGltfAsPromise(
+  gltfLoader: GLTFLoader,
+  path: string,
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<GLTFResult> {
   return new Promise<GLTFResult>((resolve, reject) => {
     gltfLoader.load(
       path,
       (object: GLTFResult) => {
         resolve(object);
       },
-      undefined,
+      (xhr: ProgressEvent) => {
+        if (onProgress) {
+          onProgress(xhr.loaded, xhr.total);
+        }
+      },
       (error: ErrorEvent) => {
         reject(error);
       },

@@ -368,7 +368,6 @@ export class NetworkedDOMWebsocket {
   private handleSnapshot(message: SnapshotMessage) {
     // This websocket is successfully connected. Reset the backoff time.
     this.backoffTime = startingBackoffTimeMilliseconds;
-    this.setStatus(NetworkedDOMWebsocketStatus.Connected);
 
     if (this.currentRoot) {
       this.currentRoot.remove();
@@ -389,6 +388,8 @@ export class NetworkedDOMWebsocket {
     this.currentRoot = element;
     // appending to the tree causes MElements to be constructed
     this.parentElement.append(element);
+
+    this.setStatus(NetworkedDOMWebsocketStatus.Connected);
   }
 
   private handleAttributeChange(message: AttributeChangedDiff) {

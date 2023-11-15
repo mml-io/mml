@@ -5,6 +5,7 @@ import { consumeEventEventName } from "../common";
 import { getGlobalDocumentTimeManager, getGlobalMMLScene } from "../global";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene, PositionAndRotation } from "../MMLScene";
+import { LoadingProgressManager } from "../utils/loading/LoadingProgressManager";
 
 const MELEMENT_PROPERTY_NAME = "m-element-property";
 
@@ -117,6 +118,14 @@ export abstract class MElement extends HTMLElement {
     const documentTimeContextProvider = this.getDocumentTimeManager();
     if (documentTimeContextProvider) {
       return documentTimeContextProvider.getDocumentTime();
+    }
+    return null;
+  }
+
+  protected getLoadingProgressManager(): LoadingProgressManager | null {
+    const scene = this.getScene();
+    if (scene) {
+      return scene.getLoadingProgressManager?.() || null;
     }
     return null;
   }
