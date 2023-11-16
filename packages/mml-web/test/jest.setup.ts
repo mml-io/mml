@@ -1,6 +1,11 @@
+import { jest } from "@jest/globals";
+import jestFetchMock from "jest-fetch-mock";
 import ResizeObserverPolyfill from "resize-observer-polyfill";
 
 import { MockAudioContext } from "./mocks/MockAudioContext";
+
+jestFetchMock.enableMocks();
+(window as any).URL.createObjectURL = jest.fn();
 
 // Mock the pause method for HTMLMediaElement
 Object.defineProperty(window.HTMLMediaElement.prototype, "pause", {

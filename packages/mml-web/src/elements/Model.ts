@@ -41,8 +41,8 @@ export class Model extends TransformableElement {
   private currentAnimation: THREE.AnimationClip | null = null;
   private currentAnimationAction: THREE.AnimationAction | null = null;
   private collideableHelper = new CollideableHelper(this);
-  private latestAnimPromise: Promise<GLTFResult> | null = null;
-  private latestSrcModelPromise: Promise<GLTFResult> | null = null;
+  private latestAnimPromise: Promise<GLTF> | null = null;
+  private latestSrcModelPromise: Promise<GLTF> | null = null;
   private registeredParentAttachment: Model | null = null;
   private srcLoadingInstanceManager = new LoadingInstanceManager(
     `${(this.constructor as typeof Model).tagName}.src`,
@@ -316,7 +316,7 @@ export class Model extends TransformableElement {
     return this.currentAnimation;
   }
 
-  private async asyncLoadSourceAsset(
+  async asyncLoadSourceAsset(
     url: string,
     onProgress: (loaded: number, total: number) => void,
   ): Promise<GLTF> {

@@ -25,9 +25,15 @@ export class ModelLoader {
       }
       return url;
     },
-    itemStart: (url: string) => {},
-    itemEnd: (url: string) => {},
-    itemError: (url: string) => {},
+    itemStart: () => {
+      // no-op
+    },
+    itemEnd: () => {
+      // no-op
+    },
+    itemError: () => {
+      // no-op
+    },
   }).preload();
 
   private gltfLoader = new GLTFLoader().setDRACOLoader(this.dracoLoader);
