@@ -8,6 +8,7 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { GLTFLoader, GLTFResult, loadGltfAsPromise } from "../utils/gltf";
+import { LoadingInstanceManager } from "../utils/loading/LoadingInstanceManager";
 
 const defaultModelSrc = "";
 const defaultModelAnim = "";
@@ -42,6 +43,12 @@ export class Model extends TransformableElement {
   private latestAnimPromise: Promise<GLTFResult> | null = null;
   private latestSrcModelPromise: Promise<GLTFResult> | null = null;
   private registeredParentAttachment: Model | null = null;
+  private srcLoadingInstanceManager = new LoadingInstanceManager(
+    `${(this.constructor as typeof Model).tagName}.src`,
+  );
+  private animLoadingInstanceManager = new LoadingInstanceManager(
+    `${(this.constructor as typeof Model).tagName}.anim`,
+  );
 
   private static attributeHandler = new AttributeHandler<Model>({
     src: (instance, newValue) => {
@@ -128,6 +135,7 @@ export class Model extends TransformableElement {
     }
     if (!this.props.src) {
       this.latestSrcModelPromise = null;
+      this.srcLoadingInstanceManager.abortIfLoading();
       return;
     }
     if (!this.isConnected) {
@@ -135,39 +143,47 @@ export class Model extends TransformableElement {
       return;
     }
 
-    const srcModelPromise = this.asyncLoadSourceAsset(
-      this.contentSrcToContentAddress(this.props.src),
-    );
-    this.latestSrcModelPromise = srcModelPromise;
-    srcModelPromise.then((result) => {
-      if (this.latestSrcModelPromise !== srcModelPromise || !this.isConnected) {
-        // If we've loaded a different model since, or we're no longer connected, dispose of this one
-        Model.disposeOfGroup(result.scene);
-        return;
-      }
-      result.scene.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          child.castShadow = this.props.castShadows;
-          child.receiveShadow = true;
-        }
-      });
-      this.latestSrcModelPromise = null;
-      this.gltfScene = result.scene;
-      if (this.gltfScene) {
-        this.container.add(this.gltfScene);
-        this.collideableHelper.updateCollider(this.gltfScene);
-
-        const parent = this.parentElement;
-        if (parent instanceof Model) {
-          parent.registerAttachment(this.gltfScene);
-          this.registeredParentAttachment = parent;
-        }
-
-        if (this.currentAnimation) {
-          this.playAnimation(this.currentAnimation);
-        }
-      }
+    const contentSrc = this.contentSrcToContentAddress(this.props.src);
+    const srcModelPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
+      this.srcLoadingInstanceManager.setProgress(loaded / total);
     });
+    this.srcLoadingInstanceManager.start(this.getLoadingProgressManager(), contentSrc);
+    this.latestSrcModelPromise = srcModelPromise;
+    srcModelPromise
+      .then((result) => {
+        if (this.latestSrcModelPromise !== srcModelPromise || !this.isConnected) {
+          // If we've loaded a different model since, or we're no longer connected, dispose of this one
+          Model.disposeOfGroup(result.scene);
+          return;
+        }
+        result.scene.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            child.castShadow = this.props.castShadows;
+            child.receiveShadow = true;
+          }
+        });
+        this.latestSrcModelPromise = null;
+        this.gltfScene = result.scene;
+        if (this.gltfScene) {
+          this.container.add(this.gltfScene);
+          this.collideableHelper.updateCollider(this.gltfScene);
+
+          const parent = this.parentElement;
+          if (parent instanceof Model) {
+            parent.registerAttachment(this.gltfScene);
+            this.registeredParentAttachment = parent;
+          }
+
+          if (this.currentAnimation) {
+            this.playAnimation(this.currentAnimation);
+          }
+        }
+        this.srcLoadingInstanceManager.finish();
+      })
+      .catch((err) => {
+        console.error("Error loading m-model.src", err);
+        this.srcLoadingInstanceManager.error(err);
+      });
   }
 
   private setAnim(newValue: string | null) {
@@ -182,6 +198,7 @@ export class Model extends TransformableElement {
       this.latestAnimPromise = null;
       this.currentAnimationAction = null;
       this.currentAnimation = null;
+      this.animLoadingInstanceManager.abortIfLoading();
       if (this.gltfScene) {
         this.animationGroup.remove(this.gltfScene);
       }
@@ -198,15 +215,25 @@ export class Model extends TransformableElement {
       return;
     }
 
-    const animPromise = this.asyncLoadSourceAsset(this.contentSrcToContentAddress(this.props.anim));
-    this.latestAnimPromise = animPromise;
-    animPromise.then((result) => {
-      if (this.latestAnimPromise !== animPromise || !this.isConnected) {
-        return;
-      }
-      this.latestAnimPromise = null;
-      this.playAnimation(result.animations[0]);
+    const contentSrc = this.contentSrcToContentAddress(this.props.anim);
+    const animPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
+      this.animLoadingInstanceManager.setProgress(loaded / total);
     });
+    this.animLoadingInstanceManager.start(this.getLoadingProgressManager(), contentSrc);
+    this.latestAnimPromise = animPromise;
+    animPromise
+      .then((result) => {
+        if (this.latestAnimPromise !== animPromise || !this.isConnected) {
+          return;
+        }
+        this.latestAnimPromise = null;
+        this.playAnimation(result.animations[0]);
+        this.animLoadingInstanceManager.finish();
+      })
+      .catch((err) => {
+        console.error("Error loading m-model.anim", err);
+        this.animLoadingInstanceManager.error(err);
+      });
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -243,6 +270,8 @@ export class Model extends TransformableElement {
       Model.disposeOfGroup(this.gltfScene);
       this.gltfScene = null;
     }
+    this.srcLoadingInstanceManager.dispose();
+    this.animLoadingInstanceManager.dispose();
     super.disconnectedCallback();
   }
 
@@ -286,8 +315,8 @@ export class Model extends TransformableElement {
     return this.currentAnimation;
   }
 
-  async asyncLoadSourceAsset(url: string) {
-    return await loadGltfAsPromise(Model.gltfLoader, url);
+  async asyncLoadSourceAsset(url: string, onProgress: (loaded: number, total: number) => void) {
+    return await loadGltfAsPromise(Model.gltfLoader, url, onProgress);
   }
 
   private static disposeOfGroup(group: THREE.Object3D) {

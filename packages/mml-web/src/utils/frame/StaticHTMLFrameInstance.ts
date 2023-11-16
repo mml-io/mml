@@ -5,6 +5,7 @@ import { createWrappedScene } from "./CreateWrappedScene";
 import { MElement } from "../../elements/MElement";
 import { IMMLScene } from "../../MMLScene";
 import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
+import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 
 export class StaticHTMLFrameInstance {
   public readonly src: string;
@@ -12,6 +13,7 @@ export class StaticHTMLFrameInstance {
   private readonly remoteDocumentWrapper: RemoteDocumentWrapper;
   private readonly targetForWrapper: MElement;
   private readonly scene: IMMLScene;
+  private loadingProgressManager: LoadingProgressManager;
 
   static parser = new DOMParser();
 
@@ -24,7 +26,20 @@ export class StaticHTMLFrameInstance {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const windowTarget = targetElement.ownerDocument.defaultView!;
 
-    const wrappedScene: IMMLScene = createWrappedScene(this.scene, this.container);
+    this.loadingProgressManager = new LoadingProgressManager();
+    this.loadingProgressManager.addProgressCallback(() => {
+      scene.getLoadingProgressManager?.()?.updateDocumentProgress(this);
+    });
+
+    scene
+      .getLoadingProgressManager?.()
+      ?.addLoadingDocument(this, this.src, this.loadingProgressManager);
+
+    const wrappedScene: IMMLScene = createWrappedScene(
+      this.scene,
+      this.container,
+      this.loadingProgressManager,
+    );
 
     const address = this.targetForWrapper.contentSrcToContentAddress(this.src);
 
@@ -47,6 +62,7 @@ export class StaticHTMLFrameInstance {
       response = await fetch(address);
     } catch (err) {
       console.error("Failed to fetch static MML page", err);
+      this.loadingProgressManager.setInitialLoad(err);
       return;
     }
     const text = await response.text();
@@ -56,9 +72,11 @@ export class StaticHTMLFrameInstance {
     );
     DOMSanitizer.sanitise(remoteDocumentAsHTMLNode.body);
     this.remoteDocumentWrapper.remoteDocument.append(remoteDocumentAsHTMLNode.body);
+    this.loadingProgressManager.setInitialLoad(true);
   }
 
   public dispose() {
     this.targetForWrapper.removeChild(this.remoteDocumentWrapper.remoteDocument);
+    this.loadingProgressManager.removeLoadingDocument(this);
   }
 }

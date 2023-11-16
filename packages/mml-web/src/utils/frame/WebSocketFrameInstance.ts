@@ -5,6 +5,7 @@ import { createWrappedScene } from "./CreateWrappedScene";
 import { MElement } from "../../elements/MElement";
 import { IMMLScene } from "../../MMLScene";
 import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
+import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 import { getReconnectingStatus } from "../reconnecting-status";
 
 export class WebSocketFrameInstance {
@@ -15,6 +16,7 @@ export class WebSocketFrameInstance {
   private targetForWrapper: MElement;
   private scene: IMMLScene;
   private statusElement: THREE.Mesh | null = null;
+  private loadingProgressManager: LoadingProgressManager;
 
   constructor(targetElement: MElement, src: string, scene: IMMLScene) {
     this.targetForWrapper = targetElement;
@@ -33,7 +35,20 @@ export class WebSocketFrameInstance {
       overriddenHandler(element, event);
     };
 
-    const wrappedScene: IMMLScene = createWrappedScene(this.scene, this.container);
+    this.loadingProgressManager = new LoadingProgressManager();
+    this.loadingProgressManager.addProgressCallback(() => {
+      scene.getLoadingProgressManager?.()?.updateDocumentProgress(this);
+    });
+
+    scene
+      .getLoadingProgressManager?.()
+      ?.addLoadingDocument(this, this.src, this.loadingProgressManager);
+
+    const wrappedScene: IMMLScene = createWrappedScene(
+      this.scene,
+      this.container,
+      this.loadingProgressManager,
+    );
 
     const websocketAddress = this.srcToAddress(this.src);
 
@@ -65,6 +80,9 @@ export class WebSocketFrameInstance {
           mesh.position.set(0, height / 2, 0);
           this.statusElement = mesh;
           this.container.add(this.statusElement);
+          this.loadingProgressManager.setInitialLoad(new Error("Failed to connect"));
+        } else if (status === NetworkedDOMWebsocketStatus.Connected) {
+          this.loadingProgressManager.setInitialLoad(true);
         }
       },
     );
@@ -102,5 +120,6 @@ export class WebSocketFrameInstance {
   dispose() {
     this.domWebsocket.stop();
     this.targetForWrapper.removeChild(this.remoteDocumentWrapper.remoteDocument);
+    this.scene.getLoadingProgressManager?.()?.removeLoadingDocument(this);
   }
 }

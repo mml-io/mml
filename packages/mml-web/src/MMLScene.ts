@@ -9,6 +9,7 @@ import { MElement } from "./elements/MElement";
 import { InteractionManager } from "./interaction-ui";
 import { MMLClickTrigger } from "./MMLClickTrigger";
 import { PromptManager } from "./prompt-ui";
+import { LoadingProgressManager } from "./utils/loading/LoadingProgressManager";
 
 export type PositionAndRotation = {
   position: { x: number; y: number; z: number };
@@ -60,6 +61,8 @@ export type IMMLScene = {
   getUserPositionAndRotation(): PositionAndRotation;
 
   prompt: (promptProps: PromptProps, callback: (message: string | null) => void) => void;
+
+  getLoadingProgressManager?: () => LoadingProgressManager | null;
 };
 
 export enum ControlsType {
@@ -100,8 +103,9 @@ export class MMLScene implements IMMLScene {
   private promptManager: PromptManager;
   private interactionManager: InteractionManager;
   private resizeObserver: ResizeObserver;
+  private loadingProgressManager: LoadingProgressManager;
 
-  constructor(mmlSceneOptions: MMLSceneOptions = {}) {
+  constructor(private options: MMLSceneOptions = {}) {
     this.element = document.createElement("div");
     this.element.style.width = "100%";
     this.element.style.height = "100%";
@@ -110,6 +114,8 @@ export class MMLScene implements IMMLScene {
     this.rootContainer = new THREE.Group();
     this.threeScene = new THREE.Scene();
     this.threeScene.add(this.rootContainer);
+
+    this.loadingProgressManager = new LoadingProgressManager();
 
     this.camera = new THREE.PerspectiveCamera(
       75,
@@ -140,7 +146,7 @@ export class MMLScene implements IMMLScene {
     });
     this.resizeObserver.observe(this.element);
 
-    switch (mmlSceneOptions.controlsType) {
+    switch (options.controlsType) {
       case ControlsType.None:
         break;
       case ControlsType.PointerLockFly:
@@ -183,6 +189,7 @@ export class MMLScene implements IMMLScene {
     window.addEventListener("resize", this.resizeListener, false);
 
     this.element.appendChild(this.renderer.domElement);
+
     this.fitContainer();
   }
 
@@ -339,6 +346,10 @@ export class MMLScene implements IMMLScene {
     for (const listener of this.chatProbeListeners) {
       listener.removeChatProbe(chatProbe);
     }
+  }
+
+  public getLoadingProgressManager(): LoadingProgressManager {
+    return this.loadingProgressManager;
   }
 
   public getChatProbes(): Set<ChatProbe> {
