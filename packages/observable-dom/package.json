@@ -20,11 +20,9 @@
   },
   "dependencies": {
     "@mml-io/observable-dom-common": "^0.10.0",
+    "@types/jsdom": "^21.1.2",
+    "@types/node-fetch": "2.6.4",
     "jsdom": "22.1.0",
     "node-fetch": "2.6.12"
-  },
-  "devDependencies": {
-    "@types/jsdom": "^21.1.2",
-    "@types/node-fetch": "2.6.4"
   }
 }
