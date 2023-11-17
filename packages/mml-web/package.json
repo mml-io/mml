@@ -1,6 +1,6 @@
 {
   "name": "mml-web",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "publishConfig": {
     "access": "public"
   },
@@ -20,7 +20,7 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web": "^0.10.0"
+    "@mml-io/networked-dom-web": "^0.11.0"
   },
   "peerDependencies": {
     "three": "*"
@@ -28,9 +28,9 @@
   "devDependencies": {
     "@types/three": "0.152.1",
     "jest-canvas-mock": "2.5.2",
-    "jest-fetch-mock": "3.0.3",
     "jest-environment-jsdom": "29.6.2",
     "jest-expect-message": "1.1.3",
+    "jest-fetch-mock": "3.0.3",
     "resize-observer-polyfill": "1.5.1",
     "three": "0.153.0"
   },

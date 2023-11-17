@@ -15,7 +15,7 @@
     "chokidar": "3.5.3",
     "express": "4.18.2",
     "express-ws": "5.0.2",
-    "networked-dom-server": "^0.10.0",
+    "networked-dom-server": "^0.11.0",
     "ws": "8.13.0"
   },
   "devDependencies": {
@@ -23,5 +23,5 @@
     "@types/express": "4.17.17",
     "@types/express-ws": "3.0.1"
   },
-  "version": "0.10.0"
+  "version": "0.11.0"
 }
