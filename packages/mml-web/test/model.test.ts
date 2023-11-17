@@ -56,6 +56,7 @@ describe("m-model", () => {
       cameras: [],
       asset: {},
       userData: null,
+      parser: {} as any,
     });
 
     element.setAttribute("src", "some_asset_path");
@@ -89,6 +90,7 @@ describe("m-model", () => {
       cameras: [],
       asset: {},
       userData: null,
+      parser: {} as any,
     });
 
     // Setting the attribute should not cause the model to be loaded as the element is not connected
@@ -132,6 +134,7 @@ describe("m-model", () => {
       cameras: [],
       asset: {},
       userData: null,
+      parser: {} as any,
     });
 
     // Re-appending the element should cause the model to be re-loaded

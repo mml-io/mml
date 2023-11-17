@@ -8,6 +8,8 @@ const jestConfig: JestConfigWithTsJest = {
   coverageReporters: ["lcov", "text"],
   extensionsToTreatAsEsm: [".ts"],
   moduleNameMapper: {
+    "esbuild-embed-draco-decoder-wasm": "<rootDir>/test/stubs/StubDRACODecoderWASM.js",
+    "esbuild-embed-draco-wasm-wrapper-js": "<rootDir>/test/stubs/StubDRACOWASMWrapper.js",
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   setupFiles: ["jest-canvas-mock"],

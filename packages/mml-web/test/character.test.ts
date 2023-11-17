@@ -1,12 +1,12 @@
 import { jest } from "@jest/globals";
 import * as THREE from "three";
+import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Character } from "../src/elements/Character";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
-import { GLTFResult } from "../src/utils/gltf";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -59,12 +59,13 @@ describe("m-character", () => {
           cameras: [],
           asset: {},
           userData: null,
+          parser: {} as any,
         });
       });
 
     element.setAttribute("src", "some_asset_path");
     expect(mockGLTFLoad).toBeCalledTimes(1);
-    const loadModelPromise: Promise<GLTFResult> = (element as any).latestSrcModelPromise;
+    const loadModelPromise: Promise<GLTF> = (element as any).latestSrcModelPromise;
     expect(loadModelPromise).toBeTruthy();
     await loadModelPromise;
     expect(element.getCharacter()!.name).toBe(testNode.name);

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { TransformableElement } from "./TransformableElement";
 import {
@@ -7,8 +8,8 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
-import { GLTFLoader, GLTFResult, loadGltfAsPromise } from "../utils/gltf";
 import { LoadingInstanceManager } from "../utils/loading/LoadingInstanceManager";
+import { ModelLoader } from "../utils/ModelLoader";
 
 const defaultModelSrc = "";
 const defaultModelAnim = "";
@@ -31,7 +32,7 @@ export class Model extends TransformableElement {
     castShadows: defaultModelCastShadows,
   };
 
-  private static gltfLoader = new GLTFLoader();
+  private static modelLoader = new ModelLoader();
   protected gltfScene: THREE.Object3D | null = null;
   private animationGroup: THREE.AnimationObjectGroup = new THREE.AnimationObjectGroup();
   private animationMixer: THREE.AnimationMixer = new THREE.AnimationMixer(this.animationGroup);
@@ -40,8 +41,8 @@ export class Model extends TransformableElement {
   private currentAnimation: THREE.AnimationClip | null = null;
   private currentAnimationAction: THREE.AnimationAction | null = null;
   private collideableHelper = new CollideableHelper(this);
-  private latestAnimPromise: Promise<GLTFResult> | null = null;
-  private latestSrcModelPromise: Promise<GLTFResult> | null = null;
+  private latestAnimPromise: Promise<GLTF> | null = null;
+  private latestSrcModelPromise: Promise<GLTF> | null = null;
   private registeredParentAttachment: Model | null = null;
   private srcLoadingInstanceManager = new LoadingInstanceManager(
     `${(this.constructor as typeof Model).tagName}.src`,
@@ -315,8 +316,11 @@ export class Model extends TransformableElement {
     return this.currentAnimation;
   }
 
-  async asyncLoadSourceAsset(url: string, onProgress: (loaded: number, total: number) => void) {
-    return await loadGltfAsPromise(Model.gltfLoader, url, onProgress);
+  async asyncLoadSourceAsset(
+    url: string,
+    onProgress: (loaded: number, total: number) => void,
+  ): Promise<GLTF> {
+    return await Model.modelLoader.loadGltf(url, onProgress);
   }
 
   private static disposeOfGroup(group: THREE.Object3D) {
