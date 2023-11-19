@@ -7,9 +7,9 @@ import { ChatProbe } from "./elements/ChatProbe";
 import { Interaction } from "./elements/Interaction";
 import { MElement } from "./elements/MElement";
 import { InteractionManager } from "./interaction-ui";
+import { LoadingProgressManager } from "./loading/LoadingProgressManager";
 import { MMLClickTrigger } from "./MMLClickTrigger";
 import { PromptManager } from "./prompt-ui";
-import { LoadingProgressManager } from "./utils/loading/LoadingProgressManager";
 
 export type PositionAndRotation = {
   position: { x: number; y: number; z: number };

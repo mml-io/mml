@@ -3,9 +3,9 @@ import * as THREE from "three";
 import { RemoteDocument } from "./RemoteDocument";
 import { consumeEventEventName } from "../common";
 import { getGlobalDocumentTimeManager, getGlobalMMLScene } from "../global";
+import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene, PositionAndRotation } from "../MMLScene";
-import { LoadingProgressManager } from "../utils/loading/LoadingProgressManager";
 
 const MELEMENT_PROPERTY_NAME = "m-element-property";
 

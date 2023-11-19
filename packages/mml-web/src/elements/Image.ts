@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { LoadingInstanceManager } from "../loading/LoadingInstanceManager";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -10,7 +11,6 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
-import { LoadingInstanceManager } from "../utils/loading/LoadingInstanceManager";
 
 const defaultImageSrc = "";
 const defaultImageWidth = null;

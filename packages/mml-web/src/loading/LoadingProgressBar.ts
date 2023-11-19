@@ -34,7 +34,7 @@ export class LoadingProgressBar {
     this.progressDebugView = document.createElement("div");
     this.progressDebugView.style.position = "absolute";
     this.progressDebugView.style.backgroundColor = "rgba(128, 128, 128, 0.25)";
-    this.progressDebugView.style.top = "20";
+    this.progressDebugView.style.top = "20px";
     this.progressDebugView.style.left = "0";
     this.progressDebugView.style.border = "1px solid black";
     this.progressDebugView.style.maxHeight = "calc(100% - 20px)";

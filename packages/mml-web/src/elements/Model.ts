@@ -2,13 +2,13 @@ import * as THREE from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { TransformableElement } from "./TransformableElement";
+import { LoadingInstanceManager } from "../loading/LoadingInstanceManager";
 import {
   AttributeHandler,
   parseBoolAttribute,
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
-import { LoadingInstanceManager } from "../utils/loading/LoadingInstanceManager";
 import { ModelLoader } from "../utils/ModelLoader";
 
 const defaultModelSrc = "";
