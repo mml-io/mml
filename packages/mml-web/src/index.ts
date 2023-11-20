@@ -3,6 +3,7 @@ export * from "./global";
 export * from "./IframeWrapper";
 export * from "./websocket/RemoteDocumentWrapper";
 export * from "./elements";
+export * from "./loading";
 export * from "./MMLScene";
 export * from "./MMLClickTrigger";
 export * from "./MMLCollisionTrigger";

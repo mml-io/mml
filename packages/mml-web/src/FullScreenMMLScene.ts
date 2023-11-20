@@ -1,5 +1,5 @@
+import { LoadingProgressBar } from "./loading/LoadingProgressBar";
 import { MMLScene } from "./MMLScene";
-import { LoadingProgressBar } from "./utils/loading/LoadingProgressBar";
 
 export class FullScreenMMLScene extends MMLScene {
   private loadingProgressBar: LoadingProgressBar;

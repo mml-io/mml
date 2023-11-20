@@ -2,8 +2,8 @@ import * as THREE from "three";
 
 import { Interaction, MElement } from "../../elements";
 import { ChatProbe } from "../../elements/ChatProbe";
+import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
 import { IMMLScene, PromptProps } from "../../MMLScene";
-import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 
 export function createWrappedScene(
   scene: IMMLScene,

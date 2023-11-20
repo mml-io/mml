@@ -3,9 +3,9 @@ import * as THREE from "three";
 
 import { createWrappedScene } from "./CreateWrappedScene";
 import { MElement } from "../../elements/MElement";
+import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
 import { IMMLScene } from "../../MMLScene";
 import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
-import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 import { getReconnectingStatus } from "../reconnecting-status";
 
 export class WebSocketFrameInstance {
