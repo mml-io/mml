@@ -11,6 +11,10 @@ export class LoadingInstanceManager {
 
   public start(loadingProgressManager: LoadingProgressManager | null, url: string) {
     if (this.currentlyLoadingProgressManager !== null) {
+      if (this.currentlyLoadingProgressManager === noManagerSymbol && !loadingProgressManager) {
+        // Already loading with no progress manager, and no progress manager provided - do nothing
+        return;
+      }
       if (this.currentlyLoadingProgressManager !== loadingProgressManager) {
         throw new Error("Already loading with a different progress manager");
       }
