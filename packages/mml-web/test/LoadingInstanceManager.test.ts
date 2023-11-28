@@ -33,6 +33,14 @@ describe("LoadingInstanceManager", () => {
     loadingInstanceManager.finish();
   });
 
+  test("load with no progress manager", () => {
+    // Just needs to not error
+    const loadingInstanceManager = new LoadingInstanceManager("test");
+    loadingInstanceManager.start(null, "http://example.com/foo");
+    loadingInstanceManager.start(null, "http://example.com/bar");
+    loadingInstanceManager.finish();
+  });
+
   test("abort load", () => {
     const mockLoadingProgressManager = {
       addLoadingAsset: jest.fn(),
