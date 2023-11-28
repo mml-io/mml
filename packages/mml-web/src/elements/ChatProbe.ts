@@ -140,6 +140,7 @@ export class ChatProbe extends TransformableElement {
   private clearDebugVisualisation() {
     if (this.debugMesh) {
       this.debugMesh.removeFromParent();
+      this.debugMesh = null;
     }
   }
 

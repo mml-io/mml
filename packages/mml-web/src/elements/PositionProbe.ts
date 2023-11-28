@@ -211,6 +211,7 @@ export class PositionProbe extends TransformableElement {
   private clearDebugVisualisation() {
     if (this.debugMesh) {
       this.debugMesh.removeFromParent();
+      this.debugMesh = null;
     }
   }
 
