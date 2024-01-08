@@ -44,10 +44,9 @@ export class Image extends TransformableElement {
       (newValue: number) => {
         this.props.opacity = newValue;
         if (this.material) {
-          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
-          this.material.transparent = this.props.opacity !== 1;
-          this.material.needsUpdate = needsUpdate;
+          this.material.transparent = this.props.opacity !== 1 || this.loadedImageHasTransparency;
           this.material.opacity = newValue;
+          this.material.needsUpdate = true;
         }
       },
     ],
@@ -71,6 +70,8 @@ export class Image extends TransformableElement {
 
   private collideableHelper = new CollideableHelper(this);
   private loadedImage: HTMLImageElement | null;
+  private loadedImageHasTransparency = false;
+
   private srcLoadingInstanceManager = new LoadingInstanceManager(
     `${(this.constructor as typeof Image).tagName}.src`,
   );
@@ -165,6 +166,8 @@ export class Image extends TransformableElement {
       // if the src is a data url, load it directly rather than using the loader - this avoids a potential frame skip
       this.loadedImage = document.createElement("img");
       this.loadedImage.src = this.props.src;
+      this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
+      this.material.transparent = this.loadedImageHasTransparency;
       this.material.map = new THREE.CanvasTexture(this.loadedImage);
       this.material.needsUpdate = true;
       this.updateHeightAndWidth();
@@ -185,6 +188,8 @@ export class Image extends TransformableElement {
           return;
         }
         this.loadedImage = image;
+        this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
+        this.material.transparent = this.loadedImageHasTransparency;
         this.material.map = new THREE.CanvasTexture(this.loadedImage);
         this.material.needsUpdate = true;
         this.updateHeightAndWidth();
@@ -215,7 +220,7 @@ export class Image extends TransformableElement {
     super.connectedCallback();
     this.material = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      transparent: this.props.opacity === 1 ? false : true,
+      transparent: this.props.opacity !== 1 || this.loadedImageHasTransparency,
       opacity: this.props.opacity,
       side: THREE.DoubleSide,
     });
@@ -301,4 +306,21 @@ export function loadImageAsPromise(
       },
     );
   });
+}
+
+function hasTransparency(img: HTMLImageElement) {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+  for (let i = 3, n = imageData.length; i < n; i += 4) {
+    if (imageData[i] < 255) {
+      return true;
+    }
+  }
+  return false;
 }

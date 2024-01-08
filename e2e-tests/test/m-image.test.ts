@@ -11,7 +11,9 @@ describe("m-image", () => {
     // Wait for the m-image content to load
     await page.waitForFunction(
       () => {
-        return (document.querySelector("m-image") as any).getImageMesh().scale.y > 3;
+        return Array.from(document.querySelectorAll("m-image") as any).every(
+          (img: any) => img.getImageMesh().scale.y > 3,
+        );
       },
       { timeout: 30000, polling: 100 },
     );
