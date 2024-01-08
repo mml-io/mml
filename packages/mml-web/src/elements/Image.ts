@@ -44,10 +44,9 @@ export class Image extends TransformableElement {
       (newValue: number) => {
         this.props.opacity = newValue;
         if (this.material) {
-          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
-          this.material.transparent = this.props.opacity !== 1;
-          this.material.needsUpdate = needsUpdate;
+          this.material.transparent = this.props.opacity !== 1 || this.loadedImageHasTransparency;
           this.material.opacity = newValue;
+          this.material.needsUpdate = true;
         }
       },
     ],
@@ -71,6 +70,8 @@ export class Image extends TransformableElement {
 
   private collideableHelper = new CollideableHelper(this);
   private loadedImage: HTMLImageElement | null;
+  private loadedImageHasTransparency = false;
+
   private srcLoadingInstanceManager = new LoadingInstanceManager(
     `${(this.constructor as typeof Image).tagName}.src`,
   );
@@ -163,11 +164,9 @@ export class Image extends TransformableElement {
 
     if (this.props.src.startsWith("data:image/")) {
       // if the src is a data url, load it directly rather than using the loader - this avoids a potential frame skip
-      this.loadedImage = document.createElement("img");
-      this.loadedImage.src = this.props.src;
-      this.material.map = new THREE.CanvasTexture(this.loadedImage);
-      this.material.needsUpdate = true;
-      this.updateHeightAndWidth();
+      const image = document.createElement("img");
+      image.src = this.props.src;
+      this.applyImage(image);
       this.srcLoadingInstanceManager.abortIfLoading();
       return;
     }
@@ -184,10 +183,7 @@ export class Image extends TransformableElement {
           // If we've loaded a different image since, or we're no longer connected, ignore this image
           return;
         }
-        this.loadedImage = image;
-        this.material.map = new THREE.CanvasTexture(this.loadedImage);
-        this.material.needsUpdate = true;
-        this.updateHeightAndWidth();
+        this.applyImage(image);
         this.srcLoadingInstanceManager.finish();
       })
       .catch((error) => {
@@ -195,6 +191,22 @@ export class Image extends TransformableElement {
         this.updateHeightAndWidth();
         this.srcLoadingInstanceManager.error(error);
       });
+  }
+
+  private applyImage(image: HTMLImageElement) {
+    this.loadedImage = image;
+    this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
+    if (!this.material) {
+      return;
+    }
+    if (this.loadedImageHasTransparency) {
+      this.material.alphaMap = new THREE.CanvasTexture(this.loadedImage);
+      this.material.alphaTest = 0.01;
+    }
+    this.material.transparent = this.loadedImageHasTransparency;
+    this.material.map = new THREE.CanvasTexture(this.loadedImage);
+    this.material.needsUpdate = true;
+    this.updateHeightAndWidth();
   }
 
   public parentTransformed(): void {
@@ -215,7 +227,7 @@ export class Image extends TransformableElement {
     super.connectedCallback();
     this.material = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      transparent: this.props.opacity === 1 ? false : true,
+      transparent: this.props.opacity !== 1 || this.loadedImageHasTransparency,
       opacity: this.props.opacity,
       side: THREE.DoubleSide,
     });
@@ -301,4 +313,21 @@ export function loadImageAsPromise(
       },
     );
   });
+}
+
+function hasTransparency(image: HTMLImageElement) {
+  const canvas = document.createElement("canvas");
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(image, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+  for (let i = 3, n = imageData.length; i < n; i += 4) {
+    if (imageData[i] < 255) {
+      return true;
+    }
+  }
+  return false;
 }
