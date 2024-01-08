@@ -164,13 +164,9 @@ export class Image extends TransformableElement {
 
     if (this.props.src.startsWith("data:image/")) {
       // if the src is a data url, load it directly rather than using the loader - this avoids a potential frame skip
-      this.loadedImage = document.createElement("img");
-      this.loadedImage.src = this.props.src;
-      this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
-      this.material.transparent = this.loadedImageHasTransparency;
-      this.material.map = new THREE.CanvasTexture(this.loadedImage);
-      this.material.needsUpdate = true;
-      this.updateHeightAndWidth();
+      const image = document.createElement("img");
+      image.src = this.props.src;
+      this.applyImage(image);
       this.srcLoadingInstanceManager.abortIfLoading();
       return;
     }
@@ -187,12 +183,7 @@ export class Image extends TransformableElement {
           // If we've loaded a different image since, or we're no longer connected, ignore this image
           return;
         }
-        this.loadedImage = image;
-        this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
-        this.material.transparent = this.loadedImageHasTransparency;
-        this.material.map = new THREE.CanvasTexture(this.loadedImage);
-        this.material.needsUpdate = true;
-        this.updateHeightAndWidth();
+        this.applyImage(image);
         this.srcLoadingInstanceManager.finish();
       })
       .catch((error) => {
@@ -200,6 +191,22 @@ export class Image extends TransformableElement {
         this.updateHeightAndWidth();
         this.srcLoadingInstanceManager.error(error);
       });
+  }
+
+  private applyImage(image: HTMLImageElement) {
+    this.loadedImage = image;
+    this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
+    if (!this.material) {
+      return;
+    }
+    if (this.loadedImageHasTransparency) {
+      this.material.alphaMap = new THREE.CanvasTexture(this.loadedImage);
+      this.material.alphaTest = 0.01;
+    }
+    this.material.transparent = this.loadedImageHasTransparency;
+    this.material.map = new THREE.CanvasTexture(this.loadedImage);
+    this.material.needsUpdate = true;
+    this.updateHeightAndWidth();
   }
 
   public parentTransformed(): void {
@@ -308,12 +315,12 @@ export function loadImageAsPromise(
   });
 }
 
-function hasTransparency(img: HTMLImageElement) {
+function hasTransparency(image: HTMLImageElement) {
   const canvas = document.createElement("canvas");
-  canvas.width = img.width;
-  canvas.height = img.height;
+  canvas.width = image.width;
+  canvas.height = image.height;
   const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, 0);
+  ctx.drawImage(image, 0, 0);
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
