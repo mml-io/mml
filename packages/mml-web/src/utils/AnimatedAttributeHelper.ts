@@ -52,6 +52,10 @@ function updateIfChangedValue<T extends AnimationType>(
   state: AnimationStateRecord<T>,
   newValue: AnimationTypeToValueType<T> | null,
 ) {
+  if (newValue === null) {
+    // There is no value from the source (likely there are no animations and no attribute value), so use the default.
+    newValue = state.config.defaultValue;
+  }
   if (state.config.latestValue !== newValue) {
     state.config.latestValue = newValue;
     state.config.handler(newValue);
