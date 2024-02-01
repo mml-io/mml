@@ -140,16 +140,21 @@ export class Image extends TransformableElement {
     super.removeSideEffectChild(child);
   }
 
+  private clearImage() {
+    this.loadedImage = null;
+    this.srcApplyPromise = null;
+    if (this.material && this.material.map) {
+      this.material.map.dispose();
+      this.material.map = null;
+    }
+  }
+
   private setSrc(newValue: string | null) {
     this.props.src = (newValue || "").trim();
-    if (this.loadedImage !== null) {
+    const isDataUri = this.props.src.startsWith("data:image/");
+    if (this.loadedImage !== null && !isDataUri) {
       // if the image has already been loaded, remove the image data from the THREE material
-      this.loadedImage = null;
-      this.srcApplyPromise = null;
-      if (this.material && this.material.map) {
-        this.material.map.dispose();
-        this.material.map = null;
-      }
+      this.clearImage();
     }
     if (!this.props.src) {
       // if the src attribute is empty, reset the dimensions and return
@@ -162,7 +167,7 @@ export class Image extends TransformableElement {
       return;
     }
 
-    if (this.props.src.startsWith("data:image/")) {
+    if (isDataUri) {
       // if the src is a data url, load it directly rather than using the loader - this avoids a potential frame skip
       const image = document.createElement("img");
       image.src = this.props.src;
@@ -195,6 +200,17 @@ export class Image extends TransformableElement {
 
   private applyImage(image: HTMLImageElement) {
     this.loadedImage = image;
+    if (!image.complete) {
+      // Wait for the image to be fully loaded (most likely a data uri that has not yet been decoded)
+      image.addEventListener("load", () => {
+        if (this.loadedImage !== image) {
+          // if the image has changed since we started loading, ignore this image
+          return;
+        }
+        this.applyImage(image);
+      });
+      return;
+    }
     this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
     if (!this.material) {
       return;
@@ -202,8 +218,11 @@ export class Image extends TransformableElement {
     if (this.loadedImageHasTransparency) {
       this.material.alphaMap = new THREE.CanvasTexture(this.loadedImage);
       this.material.alphaTest = 0.01;
+    } else {
+      this.material.alphaMap = null;
+      this.material.alphaTest = 0;
     }
-    this.material.transparent = this.loadedImageHasTransparency;
+    this.material.transparent = this.props.opacity !== 1 || this.loadedImageHasTransparency;
     this.material.map = new THREE.CanvasTexture(this.loadedImage);
     this.material.needsUpdate = true;
     this.updateHeightAndWidth();
@@ -316,6 +335,9 @@ export function loadImageAsPromise(
 }
 
 function hasTransparency(image: HTMLImageElement) {
+  if (image.width === 0 || image.height === 0) {
+    return false;
+  }
   const canvas = document.createElement("canvas");
   canvas.width = image.width;
   canvas.height = image.height;
