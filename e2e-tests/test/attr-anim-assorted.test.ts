@@ -10,6 +10,20 @@ describe("m-attr-anim assorted", () => {
 
     await page.waitForSelector("m-attr-anim[attr='color']");
 
+    /*
+    The test image used in this particular test document is 768x432 (1.78 aspect ratio)
+    We'll be confident the image has loaded once the Mesh was already expanded to
+    such aspect ratio, which will happen once the image is loaded.
+    */
+    await page.waitForFunction(
+      () => {
+        return Array.from(document.querySelectorAll("m-image") as any).every(
+          (img: any) => img.getImageMesh().scale.x / img.getImageMesh().scale.y - 1.78 < 0.01,
+        );
+      },
+      { timeout: 30000, polling: 100 },
+    );
+
     await setDocumentTime(page, 0);
 
     await takeAndCompareScreenshot(page);
