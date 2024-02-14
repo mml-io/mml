@@ -28,7 +28,6 @@ describe("m-element-socket", () => {
     let [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
       cube.setAttribute("socket", "hand_l");
-      console.log(cube.getContainer());
       const worldPos = cube.getContainer().position.clone();
       const xPos = cube.getContainer().getWorldPosition(worldPos).x;
       const yPos = cube.getContainer().getWorldPosition(worldPos).y;
@@ -44,7 +43,6 @@ describe("m-element-socket", () => {
     [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
       cube.setAttribute("socket", "hand_r");
-      console.log(cube.getContainer());
       const worldPos = cube.getContainer().position.clone();
       const xPos = cube.getContainer().getWorldPosition(worldPos).x;
       const yPos = cube.getContainer().getWorldPosition(worldPos).y;
@@ -60,7 +58,6 @@ describe("m-element-socket", () => {
     [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
       cube.setAttribute("socket", "");
-      console.log(cube.getContainer());
       const worldPos = cube.getContainer().position.clone();
       const xPos = cube.getContainer().getWorldPosition(worldPos).x;
       const yPos = cube.getContainer().getWorldPosition(worldPos).y;
