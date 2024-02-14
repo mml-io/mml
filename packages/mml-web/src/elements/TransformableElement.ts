@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
+import { Model } from "./Model";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -16,6 +17,22 @@ function minimumNonZero(value: number): number {
 }
 
 export abstract class TransformableElement extends MElement {
+  private socketName: string | null = null;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    if (this.socketName) {
+      this.registerWithParentModel(this.socketName);
+    }
+  }
+
+  disconnectedCallback(): void {
+    if (this.socketName) {
+      this.unregisterFromParentModel(this.socketName);
+    }
+    super.disconnectedCallback();
+  }
+
   private animatedAttributeHelper = new AnimatedAttributeHelper(this, {
     x: [
       AnimationType.Number,
@@ -90,6 +107,7 @@ export abstract class TransformableElement extends MElement {
       },
     ],
   });
+
   private static TransformableElementAttributeHandler = new AttributeHandler<TransformableElement>({
     x: (instance, newValue) => {
       instance.animatedAttributeHelper.elementSetAttribute("x", parseFloatAttribute(newValue, 0));
@@ -120,6 +138,9 @@ export abstract class TransformableElement extends MElement {
     },
     visible: (instance, newValue) => {
       instance.container.visible = parseBoolAttribute(newValue, true);
+    },
+    socket: (instance, newValue) => {
+      instance.handleSocketChange(newValue as string);
     },
   });
 
@@ -156,6 +177,32 @@ export abstract class TransformableElement extends MElement {
 
   getBounds(): THREE.Box3 {
     return new THREE.Box3().setFromObject(this.container);
+  }
+
+  private handleSocketChange(socketName: string): void {
+    if (this.isConnected && this.socketName !== socketName) {
+      if (this.socketName) {
+        this.unregisterFromParentModel(this.socketName);
+      }
+      this.socketName = socketName;
+      this.registerWithParentModel(socketName);
+    } else {
+      this.socketName = socketName;
+    }
+  }
+
+  private registerWithParentModel(socketName: string): void {
+    if (this.parentElement?.tagName.toLocaleLowerCase() === "m-character") {
+      const parentModel = this.parentElement as Model;
+      parentModel.registerSocketChild(this, socketName);
+    }
+  }
+
+  private unregisterFromParentModel(socketName: string): void {
+    if (this.parentElement?.tagName.toLocaleLowerCase() === "m-character") {
+      const parentModel = this.parentElement as Model;
+      parentModel.unregisterSocketChild(this, socketName);
+    }
   }
 
   private transformableAttributeChangedValue() {
