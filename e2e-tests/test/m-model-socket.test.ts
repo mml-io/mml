@@ -1,0 +1,77 @@
+import { takeAndCompareScreenshot } from "./testing-utils";
+
+describe("m-element-socket", () => {
+  test("socketed element position", async () => {
+    const page = await __BROWSER_GLOBAL__.newPage();
+
+    await page.setViewport({ width: 1024, height: 1024 });
+
+    await page.goto("http://localhost:7079/m-model-socket-test.html/reset");
+
+    await page.waitForSelector("m-character");
+
+    // Wait until the character is loaded
+    await page.waitForFunction(
+      () => {
+        const character = document.querySelector("m-character");
+        return (
+          (character as any).getCharacter() !== null &&
+          (character as any).getCurrentAnimation() !== null
+        );
+      },
+      { timeout: 30000, polling: 100 },
+    );
+
+    await takeAndCompareScreenshot(page);
+
+    // socketed m-cube position should match the left hand bone position
+    let [xPos, yPos, zPos] = await page.evaluate(() => {
+      const cube = document.getElementById("socketed-cube") as any;
+      cube.setAttribute("socket", "hand_l");
+      console.log(cube.getContainer());
+      const worldPos = cube.getContainer().position.clone();
+      const xPos = cube.getContainer().getWorldPosition(worldPos).x;
+      const yPos = cube.getContainer().getWorldPosition(worldPos).y;
+      const zPos = cube.getContainer().getWorldPosition(worldPos).z;
+      return [xPos, yPos, zPos];
+    });
+    await takeAndCompareScreenshot(page);
+    expect(Math.abs(xPos - 0.814)).toBeLessThan(0.01);
+    expect(Math.abs(yPos - 4.503)).toBeLessThan(0.01);
+    expect(Math.abs(zPos - 0.307)).toBeLessThan(0.01);
+
+    // socketed m-cube position should match the right hand bone position
+    [xPos, yPos, zPos] = await page.evaluate(() => {
+      const cube = document.getElementById("socketed-cube") as any;
+      cube.setAttribute("socket", "hand_r");
+      console.log(cube.getContainer());
+      const worldPos = cube.getContainer().position.clone();
+      const xPos = cube.getContainer().getWorldPosition(worldPos).x;
+      const yPos = cube.getContainer().getWorldPosition(worldPos).y;
+      const zPos = cube.getContainer().getWorldPosition(worldPos).z;
+      return [xPos, yPos, zPos];
+    });
+    await takeAndCompareScreenshot(page);
+    expect(Math.abs(xPos - -1.836)).toBeLessThan(0.01);
+    expect(Math.abs(yPos - 4.193)).toBeLessThan(0.01);
+    expect(Math.abs(zPos - -0.331)).toBeLessThan(0.01);
+
+    // socketed m-cube position should match its parent origin (0, 0, 0)
+    [xPos, yPos, zPos] = await page.evaluate(() => {
+      const cube = document.getElementById("socketed-cube") as any;
+      cube.setAttribute("socket", "");
+      console.log(cube.getContainer());
+      const worldPos = cube.getContainer().position.clone();
+      const xPos = cube.getContainer().getWorldPosition(worldPos).x;
+      const yPos = cube.getContainer().getWorldPosition(worldPos).y;
+      const zPos = cube.getContainer().getWorldPosition(worldPos).z;
+      return [xPos, yPos, zPos];
+    });
+    await takeAndCompareScreenshot(page);
+    expect(xPos).toBeLessThan(0.01);
+    expect(yPos).toBeLessThan(0.01);
+    expect(zPos).toBeLessThan(0.01);
+
+    await page.close();
+  }, 60000);
+});
