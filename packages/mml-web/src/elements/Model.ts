@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { LoadingInstanceManager } from "../loading/LoadingInstanceManager";
 import {
@@ -51,6 +52,8 @@ export class Model extends TransformableElement {
     `${(this.constructor as typeof Model).tagName}.anim`,
   );
 
+  private socketChildrenByBone = new Map<string, Set<MElement>>();
+
   private static attributeHandler = new AttributeHandler<Model>({
     src: (instance, newValue) => {
       instance.setSrc(newValue);
@@ -96,6 +99,56 @@ export class Model extends TransformableElement {
     }
   }
 
+  private findBoneByName(boneName: string): THREE.Bone | undefined {
+    let targetBone;
+    this.gltfScene?.traverse((object) => {
+      if (object instanceof THREE.Bone && object.name === boneName) {
+        targetBone = object;
+      }
+    });
+    return targetBone;
+  }
+
+  public registerSocketChild(child: TransformableElement, socketName: string): void {
+    let children = this.socketChildrenByBone.get(socketName);
+    if (socketName.trim()) {
+      if (!children) {
+        children = new Set<MElement>();
+        this.socketChildrenByBone.set(socketName, children);
+      }
+      children.add(child);
+    }
+
+    if (this.gltfScene) {
+      const bone = this.findBoneByName(socketName);
+      if (bone) {
+        bone.add(child.getContainer());
+      } else {
+        this.getContainer().add(child.getContainer());
+      }
+    }
+  }
+
+  public unregisterSocketChild(child: TransformableElement, socketName: string): void {
+    const socketChildren = this.socketChildrenByBone.get(socketName);
+    if (socketChildren) {
+      socketChildren.delete(child);
+      child.getContainer().parent?.remove(child.getContainer());
+      this.getContainer().add(child.getContainer());
+      if (socketChildren.size === 0) {
+        this.socketChildrenByBone.delete(socketName);
+      }
+    }
+  }
+
+  private onModelLoadComplete(): void {
+    this.socketChildrenByBone.forEach((children, boneName) => {
+      children.forEach((child) => {
+        this.registerSocketChild(child as TransformableElement, boneName);
+      });
+    });
+  }
+
   public registerAttachment(attachment: THREE.Object3D) {
     this.animationGroup.add(attachment);
     this.updateAnimation(this.getDocumentTime() || 0);
@@ -133,10 +186,16 @@ export class Model extends TransformableElement {
       Model.disposeOfGroup(this.gltfScene);
       this.gltfScene = null;
       this.registeredParentAttachment = null;
+      this.onModelLoadComplete();
     }
     if (!this.props.src) {
       this.latestSrcModelPromise = null;
       this.srcLoadingInstanceManager.abortIfLoading();
+      this.socketChildrenByBone.forEach((children) => {
+        children.forEach((child) => {
+          this.getContainer().add(child.getContainer());
+        });
+      });
       return;
     }
     if (!this.isConnected) {
@@ -179,6 +238,7 @@ export class Model extends TransformableElement {
             this.playAnimation(this.currentAnimation);
           }
         }
+        this.onModelLoadComplete();
         this.srcLoadingInstanceManager.finish();
       })
       .catch((err) => {
