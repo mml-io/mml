@@ -21,13 +21,13 @@ export abstract class TransformableElement extends MElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    if (this.socketName) {
+    if (this.socketName !== null) {
       this.registerWithParentModel(this.socketName);
     }
   }
 
   disconnectedCallback(): void {
-    if (this.socketName) {
+    if (this.socketName !== null) {
       this.unregisterFromParentModel(this.socketName);
     }
     super.disconnectedCallback();
@@ -140,7 +140,7 @@ export abstract class TransformableElement extends MElement {
       instance.container.visible = parseBoolAttribute(newValue, true);
     },
     socket: (instance, newValue) => {
-      instance.handleSocketChange(newValue as string);
+      instance.handleSocketChange(newValue);
     },
   });
 
@@ -179,27 +179,29 @@ export abstract class TransformableElement extends MElement {
     return new THREE.Box3().setFromObject(this.container);
   }
 
-  private handleSocketChange(socketName: string): void {
+  private handleSocketChange(socketName: string | null): void {
     if (this.isConnected && this.socketName !== socketName) {
-      if (this.socketName) {
+      if (this.socketName !== null) {
         this.unregisterFromParentModel(this.socketName);
       }
       this.socketName = socketName;
-      this.registerWithParentModel(socketName);
+      if (socketName !== null) {
+        this.registerWithParentModel(socketName);
+      }
     } else {
       this.socketName = socketName;
     }
   }
 
   private registerWithParentModel(socketName: string): void {
-    if (this.parentElement?.tagName.toLocaleLowerCase() === "m-character") {
+    if ((this.parentElement as Model | undefined)?.isModel) {
       const parentModel = this.parentElement as Model;
       parentModel.registerSocketChild(this, socketName);
     }
   }
 
   private unregisterFromParentModel(socketName: string): void {
-    if (this.parentElement?.tagName.toLocaleLowerCase() === "m-character") {
+    if ((this.parentElement as Model | undefined)?.isModel) {
       const parentModel = this.parentElement as Model;
       parentModel.unregisterSocketChild(this, socketName);
     }
