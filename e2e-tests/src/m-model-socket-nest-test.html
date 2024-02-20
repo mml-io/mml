@@ -32,7 +32,7 @@
     character.setAttribute("anim-start-time", -2100);
     character.setAttribute("anim-pause-time", 0);
     const subCharacter = await createSocketedModel("hand_r", character, "sub-character", "rx", "-90");
-    const subSubCharacter = createSocketedModel(
+    const subSubCharacter = await createSocketedModel(
       "hand_l",
       subCharacter,
       "sub-sub-character",
