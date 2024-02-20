@@ -1,0 +1,44 @@
+<m-plane color="#00AACC" width="15" height="15" rx="-90"></m-plane>
+<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+<m-group id="reference-objects"></m-group>
+
+<m-character sx="5" sy="5" sz="5" anim-enabled="true" anim-loop="true" anim-start-time="-2000" anim-pause-time="0" id="my-character" anim="/assets/idle.glb" src="/assets/Body.glb">
+  <m-model type="Head" src="/assets/Head.glb"></m-model>
+</m-character>
+
+<script>
+  const character = document.getElementById("my-character");
+
+  const referenceObjectsGroup = document.getElementById("reference-objects");
+
+  const createReferenceObject = (type, x, y) => {
+    const model = document.createElement(type);
+    model.setAttribute("x", x);
+    model.setAttribute("y", y);
+    referenceObjectsGroup.appendChild(model);
+  };
+
+  const createSocketedModel = async (socket, targetElement, id, rotation, angle) => {
+    const newChar = document.createElement("m-model");
+    newChar.setAttribute("id", id);
+    newChar.setAttribute("src", "/assets/Body.glb");
+    newChar.setAttribute("socket", socket);
+    newChar.setAttribute(rotation, angle);
+    targetElement.appendChild(newChar);
+    return newChar;
+  };
+
+  character.addEventListener("click", async () => {
+    character.setAttribute("anim-start-time", -2100);
+    character.setAttribute("anim-pause-time", 0);
+    const subCharacter = await createSocketedModel("hand_r", character, "sub-character", "rx", "-90");
+    const subSubCharacter = createSocketedModel(
+      "hand_l",
+      subCharacter,
+      "sub-sub-character",
+      "rx",
+      "90",
+    );
+    createReferenceObject("m-cube", 7, 7);
+  });
+  </script>
