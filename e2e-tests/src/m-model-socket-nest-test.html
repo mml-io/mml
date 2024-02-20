@@ -8,37 +8,28 @@
 
 <script>
   const character = document.getElementById("my-character");
+  let clickedNTimes = 0;
 
-  const referenceObjectsGroup = document.getElementById("reference-objects");
-
-  const createReferenceObject = (type, x, y) => {
-    const model = document.createElement(type);
-    model.setAttribute("x", x);
-    model.setAttribute("y", y);
-    referenceObjectsGroup.appendChild(model);
-  };
-
-  const createSocketedModel = async (socket, targetElement, id, rotation, angle) => {
-    const newChar = document.createElement("m-model");
-    newChar.setAttribute("id", id);
-    newChar.setAttribute("src", "/assets/Body.glb");
-    newChar.setAttribute("socket", socket);
-    newChar.setAttribute(rotation, angle);
-    targetElement.appendChild(newChar);
-    return newChar;
-  };
-
-  character.addEventListener("click", async () => {
+  character.addEventListener("click", () => {
     character.setAttribute("anim-start-time", -2100);
     character.setAttribute("anim-pause-time", 0);
-    const subCharacter = await createSocketedModel("hand_r", character, "sub-character", "rx", "-90");
-    const subSubCharacter = await createSocketedModel(
-      "hand_l",
-      subCharacter,
-      "sub-sub-character",
-      "rx",
-      "90",
-    );
-    createReferenceObject("m-cube", 7, 7);
+
+    if (clickedNTimes === 0) {
+      const subCharacter = document.createElement("m-model");
+      subCharacter.setAttribute("id", "sub-character");
+      subCharacter.setAttribute("src", "/assets/Body.glb");
+      subCharacter.setAttribute("socket", "hand_r");
+      subCharacter.setAttribute("rx", "-90");
+      character.append(subCharacter);
+    } else if (clickedNTimes === 1) {
+      const parent = document.getElementById("sub-character");
+      const subSubCharacter = document.createElement("m-model");
+      subSubCharacter.setAttribute("id", "sub-sub-character");
+      subSubCharacter.setAttribute("src", "/assets/Body.glb");
+      subSubCharacter.setAttribute("socket", "hand_l");
+      subSubCharacter.setAttribute("rx", "90");
+      parent.append(subSubCharacter);
+    }
+    clickedNTimes++;
   });
   </script>

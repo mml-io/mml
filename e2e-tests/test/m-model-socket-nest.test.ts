@@ -27,16 +27,24 @@ describe("m-element-socket", () => {
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "m-character");
-
-    // Wait until reference cube is added
+    // Wait until sub-character is loaded
     await page.waitForFunction(
       () => {
-        const group = document.getElementById("reference-objects");
-        if (group) {
-          const cube = group.querySelector("m-cube");
-          const cubeMesh = (cube as any).getCube();
-          return cubeMesh !== null;
-        }
+        const firstModel = document.getElementById("sub-character");
+        const firstModelMesh = (firstModel as any).getModel();
+        return firstModelMesh !== null;
+      },
+      { timeout: 150000, polling: 100 },
+    );
+    await takeAndCompareScreenshot(page);
+
+    await clickElement(page, "m-character");
+    // Wait until sub-sub-character is loaded
+    await page.waitForFunction(
+      () => {
+        const secondModel = document.getElementById("sub-sub-character");
+        const secondModelMesh = (secondModel as any).getModel();
+        return secondModelMesh !== null;
       },
       { timeout: 150000, polling: 100 },
     );
