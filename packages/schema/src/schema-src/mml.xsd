@@ -173,7 +173,7 @@
     <xs:attribute name="socket" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The string correspondent to a bone name of the element's parent skeletal mesh that this element will be attached to. If not specified, the element will be attached to its parent's origin.
+          The name of a bone in the parent element's skeletal mesh to which this element will be attached. If not specified, the element will attach to the origin of its parent.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
