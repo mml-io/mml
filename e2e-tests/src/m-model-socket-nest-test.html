@@ -1,0 +1,35 @@
+<m-plane color="#00AACC" width="15" height="15" rx="-90"></m-plane>
+<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+<m-group id="reference-objects"></m-group>
+
+<m-character sx="5" sy="5" sz="5" anim-enabled="true" anim-loop="true" anim-start-time="-2000" anim-pause-time="0" id="my-character" anim="/assets/idle.glb" src="/assets/Body.glb">
+  <m-model type="Head" src="/assets/Head.glb"></m-model>
+</m-character>
+
+<script>
+  const character = document.getElementById("my-character");
+  let clickedNTimes = 0;
+
+  character.addEventListener("click", () => {
+    character.setAttribute("anim-start-time", -2100);
+    character.setAttribute("anim-pause-time", 0);
+
+    if (clickedNTimes === 0) {
+      const subCharacter = document.createElement("m-model");
+      subCharacter.setAttribute("id", "sub-character");
+      subCharacter.setAttribute("src", "/assets/Body.glb");
+      subCharacter.setAttribute("socket", "hand_r");
+      subCharacter.setAttribute("rx", "-90");
+      character.append(subCharacter);
+    } else if (clickedNTimes === 1) {
+      const parent = document.getElementById("sub-character");
+      const subSubCharacter = document.createElement("m-model");
+      subSubCharacter.setAttribute("id", "sub-sub-character");
+      subSubCharacter.setAttribute("src", "/assets/Body.glb");
+      subSubCharacter.setAttribute("socket", "hand_l");
+      subSubCharacter.setAttribute("rx", "90");
+      parent.append(subSubCharacter);
+    }
+    clickedNTimes++;
+  });
+  </script>

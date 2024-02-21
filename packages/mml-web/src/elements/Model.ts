@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { LoadingInstanceManager } from "../loading/LoadingInstanceManager";
 import {
@@ -32,13 +33,18 @@ export class Model extends TransformableElement {
     castShadows: defaultModelCastShadows,
   };
 
+  public isModel = true;
   private static modelLoader = new ModelLoader();
   protected gltfScene: THREE.Object3D | null = null;
+  protected gtlfSceneBones = new Map<string, THREE.Bone>();
   private animationGroup: THREE.AnimationObjectGroup = new THREE.AnimationObjectGroup();
   private animationMixer: THREE.AnimationMixer = new THREE.AnimationMixer(this.animationGroup);
   private documentTimeTickListener: null | { remove: () => void } = null;
 
-  private currentAnimation: THREE.AnimationClip | null = null;
+  private attachments = new Set<Model>();
+  private socketChildrenByBone = new Map<string, Set<MElement>>();
+
+  private currentAnimationClip: THREE.AnimationClip | null = null;
   private currentAnimationAction: THREE.AnimationAction | null = null;
   private collideableHelper = new CollideableHelper(this);
   private latestAnimPromise: Promise<GLTF> | null = null;
@@ -82,27 +88,81 @@ export class Model extends TransformableElement {
     },
   });
 
-  private playAnimation(anim: THREE.AnimationClip) {
-    this.currentAnimation = anim;
-    if (this.gltfScene) {
-      this.animationGroup.remove(this.gltfScene);
+  public disableSockets() {
+    // Remove the socketed children from parent (so that the model doesn't contain any other bones / animatable properties)
+    this.socketChildrenByBone.forEach((children) => {
+      children.forEach((child) => {
+        child.getContainer().removeFromParent();
+      });
+    });
+  }
+
+  public restoreSockets() {
+    // Add the socketed children back to the parent
+    this.socketChildrenByBone.forEach((children, boneName) => {
+      const bone = this.gtlfSceneBones.get(boneName);
+      children.forEach((child) => {
+        if (bone) {
+          bone.add(child.getContainer());
+        } else {
+          this.getContainer().add(child.getContainer());
+        }
+      });
+    });
+  }
+
+  public registerSocketChild(child: TransformableElement, socketName: string): void {
+    let children = this.socketChildrenByBone.get(socketName);
+    if (!children) {
+      children = new Set<MElement>();
+      this.socketChildrenByBone.set(socketName, children);
     }
-    this.animationMixer.stopAllAction();
-    const action = this.animationMixer.clipAction(this.currentAnimation);
-    action.play();
-    this.currentAnimationAction = action;
+    children.add(child);
+
     if (this.gltfScene) {
-      this.animationGroup.add(this.gltfScene);
+      const bone = this.gtlfSceneBones.get(socketName);
+      if (bone) {
+        bone.add(child.getContainer());
+      } else {
+        this.getContainer().add(child.getContainer());
+      }
     }
   }
 
-  public registerAttachment(attachment: THREE.Object3D) {
-    this.animationGroup.add(attachment);
-    this.updateAnimation(this.getDocumentTime() || 0);
+  public unregisterSocketChild(child: TransformableElement, socketName: string): void {
+    const socketChildren = this.socketChildrenByBone.get(socketName);
+    if (socketChildren) {
+      socketChildren.delete(child);
+      this.getContainer().add(child.getContainer());
+      if (socketChildren.size === 0) {
+        this.socketChildrenByBone.delete(socketName);
+      }
+    }
   }
 
-  public unregisterAttachment(attachment: THREE.Object3D) {
-    this.animationGroup.remove(attachment);
+  private onModelLoadComplete(): void {
+    this.socketChildrenByBone.forEach((children, boneName) => {
+      children.forEach((child) => {
+        this.registerSocketChild(child as TransformableElement, boneName);
+      });
+    });
+  }
+
+  public registerAttachment(attachment: Model) {
+    console.trace("registerAttachment");
+    this.attachments.add(attachment);
+    // Temporarily remove the sockets from the attachment so that they don't get animated
+    attachment.disableSockets();
+    this.animationGroup.add(attachment.gltfScene);
+    // Restore the sockets after adding the attachment to the animation group
+    attachment.restoreSockets();
+    this.updateAnimation(this.getDocumentTime() || 0, true);
+  }
+
+  public unregisterAttachment(attachment: Model) {
+    console.trace("unregisterAttachment");
+    this.attachments.delete(attachment);
+    this.animationGroup.remove(attachment.gltfScene);
   }
 
   static get observedAttributes(): Array<string> {
@@ -132,11 +192,21 @@ export class Model extends TransformableElement {
       this.gltfScene.removeFromParent();
       Model.disposeOfGroup(this.gltfScene);
       this.gltfScene = null;
-      this.registeredParentAttachment = null;
+      this.gtlfSceneBones.clear();
+      if (this.registeredParentAttachment) {
+        this.registeredParentAttachment.unregisterAttachment(this);
+        this.registeredParentAttachment = null;
+      }
+      this.onModelLoadComplete();
     }
     if (!this.props.src) {
       this.latestSrcModelPromise = null;
       this.srcLoadingInstanceManager.abortIfLoading();
+      this.socketChildrenByBone.forEach((children) => {
+        children.forEach((child) => {
+          this.getContainer().add(child.getContainer());
+        });
+      });
       return;
     }
     if (!this.isConnected) {
@@ -165,20 +235,29 @@ export class Model extends TransformableElement {
         });
         this.latestSrcModelPromise = null;
         this.gltfScene = result.scene;
+        this.gtlfSceneBones = new Map<string, THREE.Bone>();
+        this.gltfScene.traverse((object) => {
+          if (object instanceof THREE.Bone) {
+            this.gtlfSceneBones.set(object.name, object);
+          }
+        });
         if (this.gltfScene) {
           this.container.add(this.gltfScene);
           this.collideableHelper.updateCollider(this.gltfScene);
 
           const parent = this.parentElement;
           if (parent instanceof Model) {
-            parent.registerAttachment(this.gltfScene);
-            this.registeredParentAttachment = parent;
+            if (!this.latestAnimPromise && !this.currentAnimationClip) {
+              parent.registerAttachment(this);
+              this.registeredParentAttachment = parent;
+            }
           }
 
-          if (this.currentAnimation) {
-            this.playAnimation(this.currentAnimation);
+          if (this.currentAnimationClip) {
+            this.playAnimation(this.currentAnimationClip);
           }
         }
+        this.onModelLoadComplete();
         this.srcLoadingInstanceManager.finish();
       })
       .catch((err) => {
@@ -187,28 +266,61 @@ export class Model extends TransformableElement {
       });
   }
 
+  private resetAnimationMixer() {
+    // Replace the animation group to release the old animations
+    this.animationMixer.stopAllAction();
+    this.animationGroup = new THREE.AnimationObjectGroup();
+    this.animationMixer = new THREE.AnimationMixer(this.animationGroup);
+  }
+
+  private playAnimation(anim: THREE.AnimationClip) {
+    this.currentAnimationClip = anim;
+    this.resetAnimationMixer();
+    if (this.gltfScene) {
+      this.disableSockets();
+      this.animationGroup.add(this.gltfScene);
+    }
+    for (const animationAttachment of this.attachments) {
+      animationAttachment.disableSockets();
+      this.animationGroup.add(animationAttachment.gltfScene);
+    }
+    const action = this.animationMixer.clipAction(this.currentAnimationClip);
+    action.play();
+    if (this.gltfScene) {
+      this.restoreSockets();
+    }
+    for (const animationAttachment of this.attachments) {
+      animationAttachment.restoreSockets();
+    }
+    this.currentAnimationAction = action;
+  }
+
   private setAnim(newValue: string | null) {
+    console.trace("setAnim", newValue, this.registeredParentAttachment !== null);
     this.props.anim = (newValue || "").trim();
+
+    this.resetAnimationMixer();
+    this.currentAnimationAction = null;
+    this.currentAnimationClip = null;
+
     if (!this.props.anim) {
-      if (this.currentAnimationAction) {
-        if (this.gltfScene) {
-          this.animationMixer.uncacheRoot(this.gltfScene);
-        }
-        this.animationMixer.stopAllAction();
-      }
       this.latestAnimPromise = null;
-      this.currentAnimationAction = null;
-      this.currentAnimation = null;
       this.animLoadingInstanceManager.abortIfLoading();
+
+      // If the animation is removed then the model can be added to the parent attachment if the model is loaded
       if (this.gltfScene) {
-        this.animationGroup.remove(this.gltfScene);
+        const parent = this.parentElement;
+        if (parent instanceof Model) {
+          parent.registerAttachment(this);
+          this.registeredParentAttachment = parent;
+        }
       }
       return;
     }
 
-    if (this.currentAnimationAction !== null) {
-      this.animationMixer.stopAllAction();
-      this.currentAnimationAction = null;
+    if (this.registeredParentAttachment) {
+      this.registeredParentAttachment.unregisterAttachment(this);
+      this.registeredParentAttachment = null;
     }
 
     if (!this.isConnected) {
@@ -263,27 +375,40 @@ export class Model extends TransformableElement {
     }
     this.collideableHelper.removeColliders();
     if (this.gltfScene && this.registeredParentAttachment) {
-      this.registeredParentAttachment.unregisterAttachment(this.gltfScene);
+      this.registeredParentAttachment.unregisterAttachment(this);
       this.registeredParentAttachment = null;
     }
     if (this.gltfScene) {
       this.gltfScene.removeFromParent();
       Model.disposeOfGroup(this.gltfScene);
       this.gltfScene = null;
+      this.gtlfSceneBones.clear();
     }
     this.srcLoadingInstanceManager.dispose();
     this.animLoadingInstanceManager.dispose();
     super.disconnectedCallback();
   }
 
-  private updateAnimation(docTimeMs: number) {
-    if (this.currentAnimation) {
-      if (!this.props.animEnabled) {
-        this.animationMixer.stopAllAction();
+  private triggerSocketedChildrenTransformed() {
+    // Socketed children need to be updated when the animation is updated as their position may have updated
+    this.socketChildrenByBone.forEach((children) => {
+      children.forEach((child) => {
+        if (child instanceof TransformableElement) {
+          child.parentTransformed();
+        }
+      });
+    });
+  }
+
+  private updateAnimation(docTimeMs: number, force: boolean = false) {
+    if (this.currentAnimationClip) {
+      if (!this.props.animEnabled && this.currentAnimationAction) {
+        this.resetAnimationMixer();
         this.currentAnimationAction = null;
+        this.triggerSocketedChildrenTransformed();
       } else {
         if (!this.currentAnimationAction) {
-          this.currentAnimationAction = this.animationMixer.clipAction(this.currentAnimation);
+          this.currentAnimationAction = this.animationMixer.clipAction(this.currentAnimationClip);
           this.currentAnimationAction.play();
         }
         let animationTimeMs = docTimeMs - this.props.animStartTime;
@@ -295,15 +420,19 @@ export class Model extends TransformableElement {
           }
         }
 
-        if (this.currentAnimation !== null) {
+        if (this.currentAnimationClip !== null) {
           if (!this.props.animLoop) {
-            if (animationTimeMs > this.currentAnimation.duration * 1000) {
-              animationTimeMs = this.currentAnimation.duration * 1000;
+            if (animationTimeMs > this.currentAnimationClip.duration * 1000) {
+              animationTimeMs = this.currentAnimationClip.duration * 1000;
             }
           }
         }
 
+        if (force) {
+          this.animationMixer.setTime((animationTimeMs + 1) / 1000);
+        }
         this.animationMixer.setTime(animationTimeMs / 1000);
+        this.triggerSocketedChildrenTransformed();
       }
     }
   }
@@ -313,7 +442,7 @@ export class Model extends TransformableElement {
   }
 
   public getCurrentAnimation(): THREE.AnimationClip | null {
-    return this.currentAnimation;
+    return this.currentAnimationClip;
   }
 
   async asyncLoadSourceAsset(

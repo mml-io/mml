@@ -21,7 +21,7 @@
     "typedoc": "^0.24.8"
   },
   "devDependencies": {
-    "@types/libxmljs": "^0.18.8",
+    "@types/libxmljs": "^0.18.12",
     "xml-js": "1.6.11"
   }
 }

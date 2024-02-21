@@ -170,6 +170,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="socket" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          The name of a bone in the parent element's skeletal mesh to which this element will be attached. If not specified, the element will attach to the origin of its parent.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:attributeGroup>
 
   <xs:attributeGroup name="shadows">
