@@ -7,6 +7,7 @@ export * from "./loading";
 export * from "./MMLScene";
 export * from "./MMLClickTrigger";
 export * from "./MMLCollisionTrigger";
+export * from "./MMLDocumentTimeManager"; 
 export * from "./utils/position-utils";
 export * from "./FullScreenMMLScene";
 export { NetworkedDOMWebsocket } from "@mml-io/networked-dom-web";
