@@ -235,16 +235,15 @@ export class Video extends TransformableElement {
       this.container.add(audio);
     }
 
-    const tag = this.loadedVideoState.video;
     if (!this.props.enabled) {
-      tag.pause();
-      this.mesh.material = disabledVideoMaterial;
+      this.clearSource();
       return;
     }
 
     if (!this.props.src) {
       this.clearSource();
     } else {
+      const tag = this.loadedVideoState.video;
       // Muted allows autoplay immediately without the user needing to interact with the document
       // Video will be unmuted when the audiocontext is available
       tag.muted = true;
