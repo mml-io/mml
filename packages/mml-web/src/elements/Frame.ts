@@ -1,7 +1,12 @@
+import * as THREE from "three";
+
 import { TransformableElement } from "./TransformableElement";
-import { AttributeHandler } from "../utils/attribute-handling";
+import { AttributeHandler, parseFloatAttribute } from "../utils/attribute-handling";
 import { StaticHTMLFrameInstance } from "../utils/frame/StaticHTMLFrameInstance";
 import { WebSocketFrameInstance } from "../utils/frame/WebSocketFrameInstance";
+import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
+
+const defaultHysteresis = 0;
 
 export class Frame extends TransformableElement {
   static tagName = "m-frame";
@@ -16,10 +21,61 @@ export class Frame extends TransformableElement {
         instance.createFrameContentsInstance(instance.src);
       }
     },
+    "load-range": (instance, newValue) => {
+      instance.loadRange = parseFloatAttribute(newValue, null);
+      instance.syncLoadState();
+    },
+    hysteresis: (instance, newValue) => {
+      instance.hysteresis = parseFloatAttribute(newValue, defaultHysteresis);
+      instance.syncLoadState();
+    },
   });
 
   private frameContentsInstance: WebSocketFrameInstance | StaticHTMLFrameInstance | null = null;
   private src: string | null = null;
+  private loadRange: number | null = null;
+  private hysteresis: number = defaultHysteresis;
+  private isActivelyLoaded = true; // Defaults to true because the frame should be trying to be loaded unless there is a range specified
+  private timer: NodeJS.Timeout | null = null;
+
+  private shouldBeLoaded() {
+    if (!this.isConnected) {
+      return false;
+    }
+    if (this.loadRange === null) {
+      return true;
+    }
+
+    const userPositionAndRotation = this.getUserPositionAndRotation();
+    const elementRelative = getRelativePositionAndRotationRelativeToObject(
+      userPositionAndRotation,
+      this.getContainer(),
+    );
+
+    // Check if the position is within range
+    const distance = new THREE.Vector3().copy(elementRelative.position as THREE.Vector3).length();
+    if (distance <= this.loadRange) {
+      return true;
+    }
+    if (distance > this.loadRange + this.hysteresis) {
+      return false;
+    }
+    // If the distance is within the hysteresis range, keep the current state
+    return this.isActivelyLoaded;
+  }
+
+  private syncLoadState() {
+    const shouldBeLoaded = this.shouldBeLoaded();
+    if (shouldBeLoaded && !this.isActivelyLoaded) {
+      this.isActivelyLoaded = true;
+      if (this.src) {
+        this.createFrameContentsInstance(this.src);
+      }
+    } else if (!shouldBeLoaded && this.isActivelyLoaded) {
+      this.isActivelyLoaded = false;
+      this.disposeInstance();
+    }
+  }
 
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes, ...Frame.attributeHandler.getAttributes()];
@@ -39,10 +95,29 @@ export class Frame extends TransformableElement {
 
   connectedCallback() {
     super.connectedCallback();
-
+    this.startEmitting();
     if (this.src) {
       this.createFrameContentsInstance(this.src);
     }
+  }
+
+  disconnectedCallback() {
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
+
+    this.disposeInstance();
+    super.disconnectedCallback();
+  }
+
+  private startEmitting() {
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
+
+    this.timer = setInterval(() => {
+      this.syncLoadState();
+    }, 1000);
   }
 
   private createFrameContentsInstance(src: string) {
@@ -70,11 +145,6 @@ export class Frame extends TransformableElement {
       this.frameContentsInstance.dispose();
       this.frameContentsInstance = null;
     }
-  }
-
-  disconnectedCallback() {
-    this.disposeInstance();
-    super.disconnectedCallback();
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
