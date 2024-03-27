@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
@@ -125,6 +126,17 @@ export class Cube extends TransformableElement {
       instance.mesh.castShadow = instance.props.castShadows;
     },
   });
+
+  protected getContentBounds(): OBB | null {
+    const obb = new OBB(
+      undefined,
+      new THREE.Vector3(this.props.width / 2, this.props.height / 2, this.props.depth / 2),
+    );
+    // TODO - is this correct?
+    // obb.applyMatrix4(this.container.matrix);
+    console.log("Cube.getContentBounds", obb);
+    return obb;
+  }
 
   static get observedAttributes(): Array<string> {
     return [

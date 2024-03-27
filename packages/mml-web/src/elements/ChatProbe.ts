@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
@@ -67,6 +68,10 @@ export class ChatProbe extends TransformableElement {
 
   constructor() {
     super();
+  }
+
+  protected getContentBounds(): OBB | null {
+    return new OBB(this.container.position);
   }
 
   public addSideEffectChild(child: MElement): void {

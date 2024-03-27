@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
@@ -16,8 +17,45 @@ function minimumNonZero(value: number): number {
   return value === 0 ? 0.000001 : value;
 }
 
+const xAxis = new THREE.Vector3();
+const yAxis = new THREE.Vector3();
+const zAxis = new THREE.Vector3();
+
+function OBBcontainsOBB(containingOBB: OBB, childOBB: OBB) {
+  console.log("OBBcontainsOBB. containing: ", containingOBB, "child:", childOBB);
+
+  // const isIntersecting = childOBB.intersectsOBB(containingOBB);
+  // console.log("isIntersecting", isIntersecting);
+  // return !isIntersecting;
+  // we check if all eight points of obb2 are inside obb1
+  // first, we calculate the eight points of obb2
+  const points: Array<THREE.Vector3> = [];
+  const sizeHalf = childOBB.halfSize;
+  // Make a matrix4 from the childOBB's Matrix3 (rotation)
+  // childOBB.rotation.extractBasis(xAxis, yAxis, zAxis);
+
+  // const matrix = new THREE.Matrix4();
+  // matrix.makeBasis(xAxis, yAxis, zAxis);
+  // matrix.setPosition(childOBB.center);
+
+  // Populate the points array with the 8 corners of the childOBB
+  for (let x = -1; x <= 1; x += 2) {
+    for (let y = -1; y <= 1; y += 2) {
+      for (let z = -1; z <= 1; z += 2) {
+        points.push(new THREE.Vector3(x * sizeHalf.x, y * sizeHalf.y, z * sizeHalf.z));
+      }
+    }
+  }
+  console.log("points", points);
+
+  // then we check if all of these points are inside obb1
+  return points.every((point) => containingOBB.containsPoint(point));
+}
+
 export abstract class TransformableElement extends MElement {
   private socketName: string | null = null;
+
+  private TEMPDEBUGCONTAINER = new THREE.Group();
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -155,6 +193,40 @@ export abstract class TransformableElement extends MElement {
 
   constructor() {
     super();
+    this.container.add(this.TEMPDEBUGCONTAINER);
+  }
+
+  protected abstract getContentBounds(): OBB | null;
+
+  private originalParentBounds = new Map<unknown, OBB>();
+
+  public override addOrUpdateParentBound(ref: unknown, orientedBox: OBB): void {
+    console.log("addOrUpdateParentBound", this);
+    this.originalParentBounds.set(ref, orientedBox.clone());
+    const clonedOBB = orientedBox.clone();
+    this.container.updateMatrix();
+    const inverted = this.container.matrix.clone().invert();
+
+    super.addOrUpdateParentBound(ref, clonedOBB);
+
+    console.log(
+      this.tagName,
+      "cloned.rotation.before",
+      JSON.stringify(clonedOBB.rotation.elements),
+    );
+    console.log(this.tagName, "inverted.elements", JSON.stringify(inverted.elements));
+    clonedOBB.applyMatrix4(inverted);
+    console.log(this.tagName, "cloned.rotation.after", JSON.stringify(clonedOBB.rotation.elements));
+
+    this.TEMPDEBUGREDRAWBOUNDS();
+
+    this.applyBounds();
+  }
+
+  public override removeParentBound(ref: unknown): void {
+    this.originalParentBounds.delete(ref);
+    super.removeParentBound(ref);
+    this.applyBounds();
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -173,10 +245,6 @@ export abstract class TransformableElement extends MElement {
         this.animatedAttributeHelper.removeAnimation(child, attr);
       }
     }
-  }
-
-  getBounds(): THREE.Box3 {
-    return new THREE.Box3().setFromObject(this.container);
   }
 
   private handleSocketChange(socketName: string | null): void {
@@ -207,6 +275,22 @@ export abstract class TransformableElement extends MElement {
     }
   }
 
+  private applyBounds() {
+    const thisElementBounds = this.getContentBounds();
+    if (thisElementBounds) {
+      for (const [ref, orientedBox] of this.getAppliedBounds()) {
+        console.log(this.tagName, "thisElementBounds on apply", thisElementBounds);
+        // If the parent bound does not completely contain the element bounds then console.log
+        if (!OBBcontainsOBB(orientedBox, thisElementBounds)) {
+          console.error("Parent bound does not completely contain element bounds", this);
+          this.container.visible = false;
+        } else {
+          this.container.visible = true;
+        }
+      }
+    }
+  }
+
   private transformableAttributeChangedValue() {
     this.parentTransformed();
     traverseChildren(this, (child) => {
@@ -214,11 +298,64 @@ export abstract class TransformableElement extends MElement {
         child.parentTransformed();
       }
     });
+
+    this.container.updateMatrix();
+    const inverted = this.container.matrix.clone().invert();
+
+    this.originalParentBounds.forEach((orientedBox, ref) => {
+      const cloned = orientedBox.clone();
+      console.log("Modifying original parent bounds");
+      console.log(this.tagName, "cloned.rotation.before", JSON.stringify(cloned.rotation.elements));
+      console.log(this.tagName, "inverted.elements", JSON.stringify(inverted.elements));
+      cloned.applyMatrix4(inverted);
+      console.log(this.tagName, "cloned.rotation.after", JSON.stringify(cloned.rotation.elements));
+      super.addOrUpdateParentBound(ref, cloned);
+    });
+
+    this.TEMPDEBUGREDRAWBOUNDS();
+
+    this.applyBounds();
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     TransformableElement.TransformableElementAttributeHandler.handle(this, name, newValue);
     this.debugHelper.handle(name, newValue);
+  }
+
+  private TEMPDEBUGREDRAWBOUNDS() {
+    if (this.tagName === "M-FRAME") {
+      return;
+    }
+    this.TEMPDEBUGCONTAINER.clear();
+
+    const inverted = this.container.matrix.clone().invert();
+    for (const [ref, orientedBox] of this.originalParentBounds) {
+      console.log("TEMPDEBUGREDRAWzBOUNDS", orientedBox);
+      const scale = new THREE.Vector3();
+      const position = new THREE.Vector3();
+      const quaternion = new THREE.Quaternion();
+      inverted.decompose(position, quaternion, scale);
+
+      const geometry = new THREE.BoxGeometry(
+        orientedBox.halfSize.x * 2,
+        orientedBox.halfSize.y * 2,
+        orientedBox.halfSize.z * 2,
+        2,2,2,
+      );
+      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+      const cube = new THREE.Mesh(geometry, material);
+      // cube.position.copy(orientedBox.center);
+      // const matrix = new THREE.Matrix4();
+      // matrix.setFromMatrix3(orientedBox.rotation);
+      // cube.applyMatrix4(matrix);
+
+      cube.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(), new THREE.Quaternion(), scale));
+      cube.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(), quaternion, new THREE.Vector3(1,1,1)));
+      cube.applyMatrix4(new THREE.Matrix4().compose(position, new THREE.Quaternion(), new THREE.Vector3(1,1,1)));
+      // cube.applyMatrix4(inverted);
+
+      this.TEMPDEBUGCONTAINER.add(cube);
+    }
   }
 }
 

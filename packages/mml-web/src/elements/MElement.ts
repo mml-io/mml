@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { RemoteDocument } from "./RemoteDocument";
 import { consumeEventEventName } from "../common";
@@ -8,8 +9,6 @@ import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene, PositionAndRotation } from "../MMLScene";
 
 const MELEMENT_PROPERTY_NAME = "m-element-property";
-
-const EmptyBounds = new THREE.Box3().makeEmpty();
 
 export abstract class MElement extends HTMLElement {
   // This allows switching which document this HTMLElement subclass extends so that it can be placed into iframes
@@ -23,6 +22,7 @@ export abstract class MElement extends HTMLElement {
 
   protected container: THREE.Group;
   private currentParentContainer: THREE.Object3D | null = null;
+  private appliedBounds = new Map<unknown, OBB>();
 
   constructor() {
     super();
@@ -33,6 +33,24 @@ export abstract class MElement extends HTMLElement {
 
   static getMElementFromObject(object: THREE.Object3D): MElement | null {
     return (object as any)[MELEMENT_PROPERTY_NAME] || null;
+  }
+
+  protected getAppliedBounds(): Map<unknown, OBB> {
+    return this.appliedBounds;
+  }
+
+  public addOrUpdateParentBound(ref: unknown, orientedBox: OBB): void {
+    this.appliedBounds.set(ref, orientedBox);
+    traverseMElementChildren(this, (child) => {
+      console.log("addOrUpdateParentBound.child", child);
+      child.addOrUpdateParentBound(ref, orientedBox);
+    });
+  }
+
+  public removeParentBound(ref: unknown): void {
+    traverseMElementChildren(this, (child) => {
+      child.removeParentBound(ref);
+    });
   }
 
   public abstract isClickable(): boolean;
@@ -188,10 +206,6 @@ export abstract class MElement extends HTMLElement {
     return this.container;
   }
 
-  getBounds(): THREE.Box3 {
-    return EmptyBounds;
-  }
-
   getCamera(): THREE.Camera {
     const remoteDocument = this.getScene();
     return remoteDocument.getCamera();
@@ -232,19 +246,33 @@ export abstract class MElement extends HTMLElement {
     }
   }
 
+  protected getMElementParent(): MElement | null {
+    let parentNode = this.parentNode;
+    while (parentNode != null) {
+      if (parentNode instanceof MElement) {
+        return parentNode;
+      }
+      parentNode = parentNode.parentNode;
+    }
+    return null;
+  }
+
   connectedCallback() {
     if (this.currentParentContainer !== null) {
       throw new Error("Already connected to a parent");
     }
 
-    let parentNode = this.parentNode;
-    while (parentNode != null) {
-      if (parentNode instanceof MElement) {
-        this.currentParentContainer = parentNode.container;
-        this.currentParentContainer.add(this.container);
-        return;
-      }
-      parentNode = parentNode.parentNode;
+    const mElementParent = this.getMElementParent();
+    console.log("connectedCallback", this, mElementParent);
+    if (mElementParent) {
+      const parentBounds = mElementParent.getAppliedBounds();
+      console.log("parentBounds", parentBounds);
+      parentBounds.forEach((orientedBox, ref) => {
+        this.addOrUpdateParentBound(ref, orientedBox);
+      });
+      this.currentParentContainer = mElementParent.container;
+      this.currentParentContainer.add(this.container);
+      return;
     }
 
     // If none of the ancestors are MElements then this element may be directly connected to the body (without a wrapper).
@@ -262,4 +290,14 @@ export abstract class MElement extends HTMLElement {
     this.currentParentContainer.remove(this.container);
     this.currentParentContainer = null;
   }
+}
+
+function traverseMElementChildren(element: ChildNode, callback: (element: MElement) => void) {
+  element.childNodes.forEach((child) => {
+    if (child instanceof MElement) {
+      callback(child);
+    } else {
+      traverseMElementChildren(child, callback);
+    }
+  });
 }

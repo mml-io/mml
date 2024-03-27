@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { Model } from "./Model";
 
@@ -11,6 +12,11 @@ export class Character extends Model {
 
   constructor() {
     super();
+  }
+
+  protected getContentBounds(): OBB | null {
+    // TODO - implement bounds for models
+    return null;
   }
 
   public getCharacter(): THREE.Object3D | null {

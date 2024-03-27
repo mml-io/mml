@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { MElement } from "./MElement";
 import {
@@ -117,6 +118,10 @@ export class AttributeAnimation extends MElement {
   }
   constructor() {
     super();
+  }
+
+  protected getContentBounds(): OBB | null {
+    return null;
   }
 
   public getAnimatedAttributeName(): string | null {

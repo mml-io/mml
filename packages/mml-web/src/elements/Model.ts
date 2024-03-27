@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
@@ -175,6 +176,11 @@ export class Model extends TransformableElement {
 
   constructor() {
     super();
+  }
+
+  protected getContentBounds(): OBB | null {
+    // TODO - implement bounds for models
+    return null;
   }
 
   public parentTransformed(): void {

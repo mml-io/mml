@@ -1,3 +1,5 @@
+import { OBB } from "three/examples/jsm/math/OBB.js";
+
 import { TransformableElement } from "./TransformableElement";
 import { AttributeHandler } from "../utils/attribute-handling";
 
@@ -32,6 +34,10 @@ export class Prompt extends TransformableElement {
     this.addEventListener("click", () => {
       this.trigger();
     });
+  }
+
+  protected getContentBounds(): OBB | null {
+    return null;
   }
 
   public parentTransformed(): void {

@@ -1,3 +1,5 @@
+import { OBB } from "three/examples/jsm/math/OBB.js";
+
 import { TransformableElement } from "./TransformableElement";
 
 export class Group extends TransformableElement {
@@ -8,6 +10,10 @@ export class Group extends TransformableElement {
 
   constructor() {
     super();
+  }
+
+  protected getContentBounds(): OBB | null {
+    return null;
   }
 
   public parentTransformed(): void {

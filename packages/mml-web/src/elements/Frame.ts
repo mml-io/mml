@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { TransformableElement } from "./TransformableElement";
 import { AttributeHandler, parseFloatAttribute } from "../utils/attribute-handling";
@@ -51,33 +52,49 @@ export class Frame extends TransformableElement {
     },
     "min-x": (instance, newValue) => {
       instance.props.minX = parseFloatAttribute(newValue, null);
-      instance.updateDebugVisualisation();
+      instance.boundsUpdated();
     },
     "max-x": (instance, newValue) => {
       instance.props.maxX = parseFloatAttribute(newValue, null);
-      instance.updateDebugVisualisation();
+      instance.boundsUpdated();
     },
     "min-y": (instance, newValue) => {
       instance.props.minY = parseFloatAttribute(newValue, null);
-      instance.updateDebugVisualisation();
+      instance.boundsUpdated();
     },
     "max-y": (instance, newValue) => {
       instance.props.maxY = parseFloatAttribute(newValue, null);
-      instance.updateDebugVisualisation();
+      instance.boundsUpdated();
     },
     "min-z": (instance, newValue) => {
       instance.props.minZ = parseFloatAttribute(newValue, null);
-      instance.updateDebugVisualisation();
+      instance.boundsUpdated();
     },
     "max-z": (instance, newValue) => {
       instance.props.maxZ = parseFloatAttribute(newValue, null);
-      instance.updateDebugVisualisation();
+      instance.boundsUpdated();
     },
   });
 
   private frameContentsInstance: WebSocketFrameInstance | StaticHTMLFrameInstance | null = null;
-  private isActivelyLoaded = true; // Defaults to true because the frame should be trying to be loaded unless there is a range specified
+  private isActivelyLoaded = false;
   private timer: NodeJS.Timeout | null = null;
+
+  private boundsUpdated() {
+    this.updateDebugVisualisation();
+    const boxBounds = this.getDefinedBoxBounds();
+    if (boxBounds) {
+      const [minX, maxX, minY, maxY, minZ, maxZ] = boxBounds;
+      const obb = new OBB(
+        new THREE.Vector3((maxX + minX) / 2, (maxY + minY) / 2, (maxZ + minZ) / 2),
+        new THREE.Vector3((maxX - minX) / 2, (maxY - minY) / 2, (maxZ - minZ) / 2),
+        new THREE.Matrix3(),
+      );
+      this.addOrUpdateParentBound(this, obb);
+    } else {
+      this.removeParentBound(this);
+    }
+  }
 
   private props = {
     src: null as string | null,
@@ -140,7 +157,7 @@ export class Frame extends TransformableElement {
 
     const boxBounds = this.getDefinedBoxBounds();
     if (boxBounds) {
-      // This frame has defined box bounds, check if the user is within the bounds
+      // This frame has defined box bounds, check if the user position is within the bounds
       const [minX, maxX, minY, maxY, minZ, maxZ] = boxBounds;
       if (
         elementRelative.position.x >= minX - this.props.loadRange &&
@@ -196,6 +213,10 @@ export class Frame extends TransformableElement {
 
   constructor() {
     super();
+  }
+
+  protected getContentBounds(): OBB | null {
+    return null;
   }
 
   public parentTransformed(): void {

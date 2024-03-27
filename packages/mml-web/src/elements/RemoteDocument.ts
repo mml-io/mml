@@ -1,3 +1,5 @@
+import { OBB } from "three/examples/jsm/math/OBB.js";
+
 import { MElement } from "./MElement";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene } from "../MMLScene";
@@ -13,6 +15,10 @@ export class RemoteDocument extends MElement {
   constructor() {
     super();
     this.documentTimeManager = new MMLDocumentTimeManager();
+  }
+
+  protected getContentBounds(): OBB | null {
+    return null;
   }
 
   public parentTransformed(): void {
@@ -32,6 +38,7 @@ export class RemoteDocument extends MElement {
     this.animationFrameCallback = window.requestAnimationFrame(() => {
       this.tick();
     });
+    super.connectedCallback();
   }
 
   dispatchEvent(event: CustomEvent): boolean {
@@ -43,11 +50,11 @@ export class RemoteDocument extends MElement {
   }
 
   disconnectedCallback() {
-    // no-op to avoid calling super class
     if (this.animationFrameCallback) {
       window.cancelAnimationFrame(this.animationFrameCallback);
       this.animationFrameCallback = null;
     }
+    super.disconnectedCallback();
   }
 
   init(mmlScene: IMMLScene, documentAddress: string) {
