@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
@@ -11,6 +10,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { StaticFileVideoSource } from "../utils/video/StaticFileVideoSource";
 import { VideoSource } from "../utils/video/VideoSource";
 import { WHEPVideoSource } from "../utils/video/WHEPVideoSource";
@@ -150,11 +150,11 @@ export class Video extends TransformableElement {
     this.container.add(this.mesh);
   }
 
-  protected getContentBounds(): OBB | null {
-    const obb = new OBB(undefined, new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0));
-    // TODO - is this correct?
-    // obb.applyMatrix4(this.container.matrix);
-    return obb;
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0),
+      this.container,
+    );
   }
 
   public addSideEffectChild(child: MElement): void {

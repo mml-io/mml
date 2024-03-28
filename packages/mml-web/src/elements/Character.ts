@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OBB } from "three/examples/jsm/math/OBB.js";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 import { Model } from "./Model";
 
@@ -14,7 +14,7 @@ export class Character extends Model {
     super();
   }
 
-  protected getContentBounds(): OBB | null {
+  protected getContentBounds(): OrientedBoundingBox | null {
     // TODO - implement bounds for models
     return null;
   }

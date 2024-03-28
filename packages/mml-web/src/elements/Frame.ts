@@ -1,10 +1,10 @@
 import * as THREE from "three";
-import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { TransformableElement } from "./TransformableElement";
 import { AttributeHandler, parseFloatAttribute } from "../utils/attribute-handling";
 import { StaticHTMLFrameInstance } from "../utils/frame/StaticHTMLFrameInstance";
 import { WebSocketFrameInstance } from "../utils/frame/WebSocketFrameInstance";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
 
 const defaultUnloadThreshold = 1;
@@ -85,10 +85,9 @@ export class Frame extends TransformableElement {
     const boxBounds = this.getDefinedBoxBounds();
     if (boxBounds) {
       const [minX, maxX, minY, maxY, minZ, maxZ] = boxBounds;
-      const obb = new OBB(
-        new THREE.Vector3((maxX + minX) / 2, (maxY + minY) / 2, (maxZ + minZ) / 2),
-        new THREE.Vector3((maxX - minX) / 2, (maxY - minY) / 2, (maxZ - minZ) / 2),
-        new THREE.Matrix3(),
+      const obb = OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+        new THREE.Vector3(maxX - minX, maxY - minY, maxZ - minZ),
+        this.container,
       );
       this.addOrUpdateParentBound(this, obb);
     } else {
@@ -215,7 +214,7 @@ export class Frame extends TransformableElement {
     super();
   }
 
-  protected getContentBounds(): OBB | null {
+  protected getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 

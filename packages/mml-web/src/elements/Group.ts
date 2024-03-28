@@ -1,4 +1,4 @@
-import { OBB } from "three/examples/jsm/math/OBB.js";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 import { TransformableElement } from "./TransformableElement";
 
@@ -12,7 +12,7 @@ export class Group extends TransformableElement {
     super();
   }
 
-  protected getContentBounds(): OBB | null {
+  protected getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 

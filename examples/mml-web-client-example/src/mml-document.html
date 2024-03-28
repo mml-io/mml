@@ -1,6 +1,53 @@
-<m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
+<m-plane opacity="0.25" color="blue" width="20" height="20" rx="-90"></m-plane>
 <m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
-<m-cube y="2" id="my-cube" color="red"></m-cube>
+
+<!--<m-frame-->
+<!--    x="-25"-->
+<!--    debug="true"-->
+<!--    min-x="-2"-->
+<!--    max-x="2"-->
+<!--    min-y="1"-->
+<!--    max-y="5"-->
+<!--    min-z="-2"-->
+<!--    max-z="2"-->
+<!--    load-range="3"-->
+<!--    unload-threshold="2"-->
+<!--    src="https://public.mml.io/rgb-cubes.html">-->
+<!--  <m-attr-anim attr="rz" start="0" end="360" ping-pong="true" duration="10000"></m-attr-anim>-->
+<!--  <m-attr-anim attr="sx" start="0.25" end="2" ping-pong="true" duration="10000"></m-attr-anim>-->
+<!--  <m-attr-anim attr="sy" start="0.25" end="2" ping-pong="true" duration="10000"></m-attr-anim>-->
+<!--  <m-attr-anim attr="sz" start="0.25" end="2" ping-pong="true" duration="10000"></m-attr-anim>-->
+<!--</m-frame>-->
+
+<m-frame
+    x="0"
+    debug="true"
+    min-x="-1"
+    max-x="1"
+    min-y="-4"
+    max-y="4"
+    min-z="-1"
+    max-z="1">
+<!--  <m-cube y="1">-->
+<!--&lt;!&ndash;    <m-attr-anim attr="y" start="0" end="5" ping-pong="true" duration="10000"></m-attr-anim>&ndash;&gt;-->
+<!--  </m-cube>-->
+
+
+<!--  <m-group x="0" rz="30">-->
+    <m-cylinder sy="2" rz="45" x="5">
+        <m-cube width="0.25" rz="-20" height="0.25" depth="2"></m-cube>
+<!--      <m-attr-anim attr="rz" start="0" end="360" duration="10000"></m-attr-anim>-->
+    </m-cylinder>
+<!--  </m-group>-->
+</m-frame>
+<!--src="https://public.mml.io/rgb-cubes.html">-->
+
+<!--<m-frame-->
+<!--    x="25"-->
+<!--    debug="true"-->
+<!--    load-range="6"-->
+<!--    unload-threshold="5"-->
+<!--    src="https://public.mml.io/rgb-cubes.html"></m-frame>-->
 
 <script>
   let toggle = false;

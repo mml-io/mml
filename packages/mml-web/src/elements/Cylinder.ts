@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OBB } from "three/examples/jsm/math/OBB.js";
 
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
@@ -12,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultCylinderColor = new THREE.Color(0xffffff);
 const defaultCylinderRadius = 0.5;
@@ -136,14 +136,11 @@ export class Cylinder extends TransformableElement {
     this.container.add(this.mesh);
   }
 
-  protected getContentBounds(): OBB | null {
-    const obb = new OBB(
-      undefined,
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
       new THREE.Vector3(this.props.radius, this.props.height / 2, this.props.radius),
+      this.container,
     );
-    // TODO - is this correct?
-    // obb.applyMatrix4(this.container.matrix);
-    return obb;
   }
 
   public addSideEffectChild(child: MElement): void {

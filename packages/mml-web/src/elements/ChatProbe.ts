@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OBB } from "three/examples/jsm/math/OBB.js";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
@@ -70,8 +70,8 @@ export class ChatProbe extends TransformableElement {
     super();
   }
 
-  protected getContentBounds(): OBB | null {
-    return new OBB(this.container.position);
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromMatrixWorldProvider(this.container);
   }
 
   public addSideEffectChild(child: MElement): void {

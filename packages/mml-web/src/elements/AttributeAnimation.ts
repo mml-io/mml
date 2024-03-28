@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OBB } from "three/examples/jsm/math/OBB.js";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 import { MElement } from "./MElement";
 import {
@@ -120,7 +120,7 @@ export class AttributeAnimation extends MElement {
     super();
   }
 
-  protected getContentBounds(): OBB | null {
+  protected getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 

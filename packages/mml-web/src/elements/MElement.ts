@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OBB } from "three/examples/jsm/math/OBB.js";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 import { RemoteDocument } from "./RemoteDocument";
 import { consumeEventEventName } from "../common";
@@ -22,7 +22,7 @@ export abstract class MElement extends HTMLElement {
 
   protected container: THREE.Group;
   private currentParentContainer: THREE.Object3D | null = null;
-  private appliedBounds = new Map<unknown, OBB>();
+  private appliedBounds = new Map<unknown, OrientedBoundingBox>();
 
   constructor() {
     super();
@@ -35,11 +35,11 @@ export abstract class MElement extends HTMLElement {
     return (object as any)[MELEMENT_PROPERTY_NAME] || null;
   }
 
-  protected getAppliedBounds(): Map<unknown, OBB> {
+  protected getAppliedBounds(): Map<unknown, OrientedBoundingBox> {
     return this.appliedBounds;
   }
 
-  public addOrUpdateParentBound(ref: unknown, orientedBox: OBB): void {
+  public addOrUpdateParentBound(ref: unknown, orientedBox: OrientedBoundingBox): void {
     this.appliedBounds.set(ref, orientedBox);
     traverseMElementChildren(this, (child) => {
       console.log("addOrUpdateParentBound.child", child);

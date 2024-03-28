@@ -1,4 +1,4 @@
-import { OBB } from "three/examples/jsm/math/OBB.js";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 import { MElement } from "./MElement";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
@@ -17,7 +17,7 @@ export class RemoteDocument extends MElement {
     this.documentTimeManager = new MMLDocumentTimeManager();
   }
 
-  protected getContentBounds(): OBB | null {
+  protected getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 
