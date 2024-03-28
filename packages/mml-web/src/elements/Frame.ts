@@ -85,9 +85,10 @@ export class Frame extends TransformableElement {
     const boxBounds = this.getDefinedBoxBounds();
     if (boxBounds) {
       const [minX, maxX, minY, maxY, minZ, maxZ] = boxBounds;
-      const obb = OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      const obb = OrientedBoundingBox.fromSizeMatrixWorldProviderAndCenter(
         new THREE.Vector3(maxX - minX, maxY - minY, maxZ - minZ),
         this.container,
+        new THREE.Vector3((maxX + minX) / 2, (maxY + minY) / 2, (maxZ + minZ) / 2),
       );
       this.addOrUpdateParentBound(this, obb);
     } else {
@@ -219,7 +220,7 @@ export class Frame extends TransformableElement {
   }
 
   public parentTransformed(): void {
-    // no-op
+    this.boundsUpdated();
   }
 
   public isClickable(): boolean {

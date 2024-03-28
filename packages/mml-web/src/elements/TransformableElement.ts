@@ -17,36 +17,24 @@ function minimumNonZero(value: number): number {
   return value === 0 ? 0.000001 : value;
 }
 
-const xAxis = new THREE.Vector3();
-const yAxis = new THREE.Vector3();
-const zAxis = new THREE.Vector3();
-
 function OBBcontainsOBB(containingOBB: OrientedBoundingBox, childOBB: OrientedBoundingBox) {
-  console.log("OBBcontainsOBB. containing: ", containingOBB, "child:", childOBB);
-
-  // const isIntersecting = childOBB.intersectsOBB(containingOBB);
-  // console.log("isIntersecting", isIntersecting);
-  // return !isIntersecting;
-  // we check if all eight points of obb2 are inside obb1
-  // first, we calculate the eight points of obb2
   const points: Array<THREE.Vector3> = [];
   const size = childOBB.size;
-  // Make a matrix4 from the childOBB's Matrix3 (rotation)
-  // childOBB.rotation.extractBasis(xAxis, yAxis, zAxis);
 
-  // const matrix = new THREE.Matrix4();
-  // matrix.makeBasis(xAxis, yAxis, zAxis);
-  // matrix.setPosition(childOBB.center);
+  containingOBB.matrixWorldProvider.updateMatrixWorld(true);
+  childOBB.matrixWorldProvider.updateMatrixWorld(true);
 
-  // Populate the points array with the 8 corners of the childOBB
   for (let x = -1; x <= 1; x += 2) {
     for (let y = -1; y <= 1; y += 2) {
       for (let z = -1; z <= 1; z += 2) {
-        points.push(new THREE.Vector3(x * (size.x / 2), y * (size.y / 2), z * (size.z / 2)));
+        points.push(
+          new THREE.Vector3(x * (size.x / 2), y * (size.y / 2), z * (size.z / 2)).applyMatrix4(
+            childOBB.matrixWorldProvider.matrixWorld,
+          ),
+        );
       }
     }
   }
-  console.log("points", points);
 
   // then we check if all of these points are inside obb1
   return points.every((point) => containingOBB.containsPoint(point));
@@ -55,13 +43,13 @@ function OBBcontainsOBB(containingOBB: OrientedBoundingBox, childOBB: OrientedBo
 export abstract class TransformableElement extends MElement {
   private socketName: string | null = null;
 
-  private TEMPDEBUGCONTAINER = new THREE.Group();
-
   connectedCallback(): void {
+    console.log("TransformableElement.connectedCallback", this.tagName);
     super.connectedCallback();
     if (this.socketName !== null) {
       this.registerWithParentModel(this.socketName);
     }
+    console.log("TransformableElement.connectedCallback.done", this.tagName);
   }
 
   disconnectedCallback(): void {
@@ -77,7 +65,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.position.x = newValue;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     y: [
@@ -85,7 +73,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.position.y = newValue;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     z: [
@@ -93,7 +81,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.position.z = newValue;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     rx: [
@@ -101,7 +89,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.rotation.x = newValue * THREE.MathUtils.DEG2RAD;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     ry: [
@@ -109,7 +97,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.rotation.y = newValue * THREE.MathUtils.DEG2RAD;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     rz: [
@@ -117,7 +105,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.rotation.z = newValue * THREE.MathUtils.DEG2RAD;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     sx: [
@@ -125,7 +113,7 @@ export abstract class TransformableElement extends MElement {
       1,
       (newValue: number) => {
         this.container.scale.x = minimumNonZero(newValue);
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     sy: [
@@ -133,7 +121,7 @@ export abstract class TransformableElement extends MElement {
       1,
       (newValue: number) => {
         this.container.scale.y = minimumNonZero(newValue);
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     sz: [
@@ -141,7 +129,7 @@ export abstract class TransformableElement extends MElement {
       1,
       (newValue: number) => {
         this.container.scale.z = minimumNonZero(newValue);
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
   });
@@ -191,44 +179,12 @@ export abstract class TransformableElement extends MElement {
 
   private debugHelper = new DebugHelper(this);
 
-  constructor() {
-    super();
-    this.container.add(this.TEMPDEBUGCONTAINER);
-  }
-
   protected abstract getContentBounds(): OrientedBoundingBox | null;
 
   private originalParentBounds = new Map<unknown, OrientedBoundingBox>();
 
   public override addOrUpdateParentBound(ref: unknown, orientedBox: OrientedBoundingBox): void {
-    console.log("addOrUpdateParentBound", this);
-    this.originalParentBounds.set(ref, orientedBox.clone());
-    const clonedOBB = orientedBox.clone();
-    this.container.updateMatrix();
-    const inverted = this.container.matrix.clone().invert();
-
-    const scale = new THREE.Vector3();
-    const position = new THREE.Vector3();
-    const quaternion = new THREE.Quaternion();
-    inverted.decompose(position, quaternion, scale);
-
-    // const copiedRotation = clonedOBB.rotation.clone();
-    // clonedOBB.rotation.identity();
-
-    clonedOBB.applyMatrix4(
-      new THREE.Matrix4().compose(new THREE.Vector3(), new THREE.Quaternion(), scale),
-    );
-    clonedOBB.applyMatrix4(
-      new THREE.Matrix4().compose(new THREE.Vector3(), quaternion, new THREE.Vector3(1, 1, 1)),
-    );
-    clonedOBB.applyMatrix4(
-      new THREE.Matrix4().compose(position, new THREE.Quaternion(), new THREE.Vector3(1, 1, 1)),
-    );
-
-    this.TEMPDEBUGREDRAWBOUNDS();
-
-    super.addOrUpdateParentBound(ref, clonedOBB);
-
+    super.addOrUpdateParentBound(ref, orientedBox);
     this.applyBounds();
   }
 
@@ -289,121 +245,29 @@ export abstract class TransformableElement extends MElement {
     if (appliedBounds.size > 0) {
       const thisElementBounds = this.getContentBounds();
       if (thisElementBounds) {
+        let isVisible = true;
         for (const [ref, orientedBox] of this.getAppliedBounds()) {
-          console.log(this.tagName, "thisElementBounds on apply", thisElementBounds);
           // If the parent bound does not completely contain the element bounds then console.log
           if (!OBBcontainsOBB(orientedBox, thisElementBounds)) {
-            console.error("Parent bound does not completely contain element bounds", this);
-            // this.container.visible = false;
-          } else {
-            // this.container.visible = true;
+            isVisible = false;
+            this.container.visible = false;
+            break;
           }
+        }
+        if (isVisible) {
+          this.container.visible = true;
         }
       }
     }
   }
 
-  private transformableAttributeChangedValue() {
-    this.parentTransformed();
-    traverseChildren(this, (child) => {
-      if (child instanceof MElement) {
-        child.parentTransformed();
-      }
-    });
-
-    this.container.updateMatrix();
-    const inverted = this.container.matrix.clone().invert();
-
-    this.originalParentBounds.forEach((orientedBox, ref) => {
-      const cloned = orientedBox.clone();
-      console.log("Modifying original parent bounds");
-      cloned.applyMatrix4(inverted);
-      super.addOrUpdateParentBound(ref, cloned);
-    });
-
-    this.TEMPDEBUGREDRAWBOUNDS();
-
+  protected override didUpdateTransformation() {
     this.applyBounds();
+    super.didUpdateTransformation();
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     TransformableElement.TransformableElementAttributeHandler.handle(this, name, newValue);
     this.debugHelper.handle(name, newValue);
   }
-
-  private TEMPDEBUGREDRAWBOUNDS() {
-    if (this.tagName === "M-FRAME") {
-      return;
-    }
-    if (this.tagName === "M-GROUP") {
-      return;
-    }
-    this.TEMPDEBUGCONTAINER.clear();
-
-    const inverted = this.container.matrix.clone().invert();
-    for (const [ref, orientedBox] of this.originalParentBounds) {
-      console.log("TEMPDEBUGREDRAWBOUNDS", orientedBox);
-      const scale = new THREE.Vector3();
-      const position = new THREE.Vector3();
-      const quaternion = new THREE.Quaternion();
-      inverted.decompose(position, quaternion, scale);
-
-      const geometry = new THREE.BoxGeometry(
-        orientedBox.size.x,
-        orientedBox.size.y,
-        orientedBox.size.z,
-        2,
-        2,
-        2,
-      );
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-      const cube = new THREE.Mesh(geometry, material);
-      cube.applyMatrix4(orientedBox.matrix);
-
-      // cube.applyMatrix4(inverted);
-
-      cube.applyMatrix4(
-        new THREE.Matrix4().compose(new THREE.Vector3(), quaternion, new THREE.Vector3(1, 1, 1)),
-      );
-      cube.applyMatrix4(
-        new THREE.Matrix4().compose(new THREE.Vector3(), new THREE.Quaternion(), scale),
-      );
-      cube.applyMatrix4(
-        new THREE.Matrix4().compose(position, new THREE.Quaternion(), new THREE.Vector3(1, 1, 1)),
-      );
-
-      // cube.applyMatrix4(
-      //   new THREE.Matrix4().compose(
-      //     new THREE.Vector3(0, 0, 0),
-      //     new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -Math.PI / 4)),
-      //     new THREE.Vector3(1, 1, 1),
-      //   ),
-      // );
-
-      // cube.applyMatrix4(
-      //   new THREE.Matrix4().compose(
-      //     new THREE.Vector3(0, 0, 0),
-      //     new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -Math.PI / 4)),
-      //     new THREE.Vector3(1, 1, 1),
-      //   ),
-      // );
-
-      // cube.applyMatrix4(
-      //   new THREE.Matrix4().compose(
-      //     new THREE.Vector3(0, 0, 0),
-      //     new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -Math.PI / 4)),
-      //     new THREE.Vector3(1, 1, 1),
-      //   ),
-      // );
-
-      this.TEMPDEBUGCONTAINER.add(cube);
-    }
-  }
-}
-
-function traverseChildren(element: ChildNode, callback: (element: ChildNode) => void) {
-  element.childNodes.forEach((child) => {
-    callback(child);
-    traverseChildren(child, callback);
-  });
 }

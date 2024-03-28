@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 import { RemoteDocument } from "./RemoteDocument";
 import { consumeEventEventName } from "../common";
@@ -7,6 +6,7 @@ import { getGlobalDocumentTimeManager, getGlobalMMLScene } from "../global";
 import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene, PositionAndRotation } from "../MMLScene";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const MELEMENT_PROPERTY_NAME = "m-element-property";
 
@@ -41,14 +41,13 @@ export abstract class MElement extends HTMLElement {
 
   public addOrUpdateParentBound(ref: unknown, orientedBox: OrientedBoundingBox): void {
     this.appliedBounds.set(ref, orientedBox);
-    traverseMElementChildren(this, (child) => {
-      console.log("addOrUpdateParentBound.child", child);
+    traverseImmediateMElementChildren(this, (child) => {
       child.addOrUpdateParentBound(ref, orientedBox);
     });
   }
 
   public removeParentBound(ref: unknown): void {
-    traverseMElementChildren(this, (child) => {
+    traverseImmediateMElementChildren(this, (child) => {
       child.removeParentBound(ref);
     });
   }
@@ -56,6 +55,15 @@ export abstract class MElement extends HTMLElement {
   public abstract isClickable(): boolean;
 
   public abstract parentTransformed(): void;
+
+  protected didUpdateTransformation(): void {
+    this.parentTransformed();
+    traverseAllChildren(this, (child) => {
+      if (child instanceof MElement) {
+        child.parentTransformed();
+      }
+    });
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public addSideEffectChild(child: MElement): void {
@@ -265,13 +273,13 @@ export abstract class MElement extends HTMLElement {
     const mElementParent = this.getMElementParent();
     console.log("connectedCallback", this, mElementParent);
     if (mElementParent) {
+      this.currentParentContainer = mElementParent.container;
+      this.currentParentContainer.add(this.container);
+
       const parentBounds = mElementParent.getAppliedBounds();
-      console.log("parentBounds", parentBounds);
       parentBounds.forEach((orientedBox, ref) => {
         this.addOrUpdateParentBound(ref, orientedBox);
       });
-      this.currentParentContainer = mElementParent.container;
-      this.currentParentContainer.add(this.container);
       return;
     }
 
@@ -292,12 +300,22 @@ export abstract class MElement extends HTMLElement {
   }
 }
 
-function traverseMElementChildren(element: ChildNode, callback: (element: MElement) => void) {
+function traverseAllChildren(element: ChildNode, callback: (element: ChildNode) => void) {
+  element.childNodes.forEach((child) => {
+    callback(child);
+    traverseAllChildren(child, callback);
+  });
+}
+
+function traverseImmediateMElementChildren(
+  element: ChildNode,
+  callback: (element: MElement) => void,
+) {
   element.childNodes.forEach((child) => {
     if (child instanceof MElement) {
       callback(child);
     } else {
-      traverseMElementChildren(child, callback);
+      traverseImmediateMElementChildren(child, callback);
     }
   });
 }

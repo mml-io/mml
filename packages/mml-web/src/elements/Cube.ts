@@ -129,7 +129,7 @@ export class Cube extends TransformableElement {
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.width / 2, this.props.height / 2, this.props.depth / 2),
+      new THREE.Vector3(this.props.width, this.props.height, this.props.depth),
       this.container,
     );
   }

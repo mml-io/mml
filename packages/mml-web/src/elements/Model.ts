@@ -1,6 +1,6 @@
 import * as THREE from "three";
+import { BoxGeometry, BoxHelper } from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
@@ -12,6 +12,7 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { ModelLoader } from "../utils/ModelLoader";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultModelSrc = "";
 const defaultModelAnim = "";
@@ -179,7 +180,14 @@ export class Model extends TransformableElement {
   }
 
   protected getContentBounds(): OrientedBoundingBox | null {
-    // TODO - implement bounds for models
+    if (this.gltfScene) {
+      // Calculate bounding box for the model
+      const boundingBox = new THREE.Box3();
+      return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+        boundingBox.getSize(new THREE.Vector3(0, 0, 0)),
+        this.container,
+      );
+    }
     return null;
   }
 
@@ -248,8 +256,45 @@ export class Model extends TransformableElement {
           }
         });
         if (this.gltfScene) {
+          // const boundingBox = new THREE.Box3();
+          // // Expand the bounding box to fit the model - respecting the transformations of the children
+          // this.gltfScene.traverse((object) => {
+          //   if ((object as THREE.Mesh).isMesh) {
+          //     const mesh = object as THREE.Mesh;
+          //     mesh.geometry.computeBoundingBox();
+          //     boundingBox.expandByObject(mesh);
+          //   }
+          // });
+          // console.log(
+          //   "boundingBox.getSize(new THREE.Vector3(0, 0, 0))",
+          //   boundingBox.getSize(new THREE.Vector3(0, 0, 0)),
+          // );
+
           this.container.add(this.gltfScene);
+
+          const helper = new BoxHelper(this.gltfScene, 0xff0000);
+          helper.update();
+          this.getScene().getRootContainer().add(helper);
+
+          setTimeout(() => {
+            const skeletonHelper = new THREE.SkeletonHelper(this.gltfScene);
+            this.getScene().getRootContainer().add(skeletonHelper);
+
+            const skeletonBoxHelper = new BoxHelper(skeletonHelper, 0xff0000);
+            skeletonBoxHelper.update();
+            this.getScene().getRootContainer().add(skeletonBoxHelper);
+          },5000);
+
           this.collideableHelper.updateCollider(this.gltfScene);
+
+          // // Create a debug bounding box
+          // const debugBox = new THREE.Mesh(
+          //   new BoxGeometry(1, 1, 1),
+          //   new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+          // );
+          // console.log("debugBox", debugBox);
+          // debugBox.scale.copy(boundingBox.getSize(new THREE.Vector3(0, 0, 0)));
+          // this.container.add(debugBox);
 
           const parent = this.parentElement;
           if (parent instanceof Model) {

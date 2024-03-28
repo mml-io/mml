@@ -138,7 +138,7 @@ export class Cylinder extends TransformableElement {
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.radius, this.props.height / 2, this.props.radius),
+      new THREE.Vector3(this.props.radius * 2, this.props.height, this.props.radius * 2),
       this.container,
     );
   }
