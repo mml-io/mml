@@ -1,6 +1,7 @@
 import { MElement } from "./MElement";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene } from "../MMLScene";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 export class RemoteDocument extends MElement {
   static tagName = "m-remote-document";
@@ -13,6 +14,18 @@ export class RemoteDocument extends MElement {
   constructor() {
     super();
     this.documentTimeManager = new MMLDocumentTimeManager();
+  }
+
+  protected enable() {
+    // no-op
+  }
+
+  protected disable() {
+    // no-op
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return null;
   }
 
   public parentTransformed(): void {
@@ -32,6 +45,7 @@ export class RemoteDocument extends MElement {
     this.animationFrameCallback = window.requestAnimationFrame(() => {
       this.tick();
     });
+    super.connectedCallback();
   }
 
   dispatchEvent(event: CustomEvent): boolean {
@@ -43,11 +57,11 @@ export class RemoteDocument extends MElement {
   }
 
   disconnectedCallback() {
-    // no-op to avoid calling super class
     if (this.animationFrameCallback) {
       window.cancelAnimationFrame(this.animationFrameCallback);
       this.animationFrameCallback = null;
     }
+    super.disconnectedCallback();
   }
 
   init(mmlScene: IMMLScene, documentAddress: string) {

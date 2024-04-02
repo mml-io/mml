@@ -11,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultImageSrc = "";
 const defaultImageWidth = null;
@@ -104,6 +105,14 @@ export class Image extends TransformableElement {
     },
   });
 
+  protected enable() {
+    this.collideableHelper.enable();
+  }
+
+  protected disable() {
+    this.collideableHelper.disable();
+  }
+
   static get observedAttributes(): Array<string> {
     return [
       ...TransformableElement.observedAttributes,
@@ -118,6 +127,13 @@ export class Image extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0),
+      this.container,
+    );
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -254,6 +270,7 @@ export class Image extends TransformableElement {
     if (this.props.src) {
       this.setSrc(this.props.src);
     }
+    this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 
@@ -307,6 +324,7 @@ export class Image extends TransformableElement {
       mesh.scale.x = this.props.width !== null ? this.props.width : 1;
       mesh.scale.y = this.props.height !== null ? this.props.height : 1;
     }
+    this.applyBounds();
     this.collideableHelper.updateCollider(mesh);
   }
 }

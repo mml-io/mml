@@ -1,5 +1,6 @@
 import { TransformableElement } from "./TransformableElement";
 import { AttributeHandler } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 export class Prompt extends TransformableElement {
   static tagName = "m-prompt";
@@ -22,6 +23,14 @@ export class Prompt extends TransformableElement {
     },
   });
 
+  protected enable() {
+    // no-op
+  }
+
+  protected disable() {
+    // no-op
+  }
+
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes, ...Prompt.attributeHandler.getAttributes()];
   }
@@ -32,6 +41,10 @@ export class Prompt extends TransformableElement {
     this.addEventListener("click", () => {
       this.trigger();
     });
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return null;
   }
 
   public parentTransformed(): void {

@@ -10,6 +10,7 @@ import {
   parseBoolAttribute,
   parseFloatAttribute,
 } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultInteractionRange = 5;
 const defaultInteractionInFocus = true;
@@ -27,7 +28,8 @@ export class Interaction extends TransformableElement {
       defaultInteractionRange,
       (newValue: number) => {
         this.props.range = newValue;
-        this.showDebug();
+        this.updateDebugVisualisation();
+        this.applyBounds();
       },
     ],
   });
@@ -78,6 +80,21 @@ export class Interaction extends TransformableElement {
     super();
   }
 
+  protected enable() {
+    // TODO
+  }
+
+  protected disable() {
+    // TODO
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      this.container,
+    );
+  }
+
   public addSideEffectChild(child: MElement): void {
     if (child instanceof AttributeAnimation) {
       const attr = child.getAnimatedAttributeName();
@@ -100,7 +117,7 @@ export class Interaction extends TransformableElement {
 
   public parentTransformed(): void {
     this.registeredScene?.updateInteraction?.(this);
-    this.showDebug();
+    this.updateDebugVisualisation();
   }
 
   public isClickable(): boolean {
@@ -109,20 +126,20 @@ export class Interaction extends TransformableElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    this.showDebug();
+    this.updateDebugVisualisation();
     this.registerInteraction();
   }
 
   disconnectedCallback(): void {
     this.unregisterInteraction();
-    this.showDebug();
+    this.updateDebugVisualisation();
     super.disconnectedCallback();
   }
 
   public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     if (Interaction.attributeHandler.handle(this, name, newValue)) {
-      this.showDebug();
+      this.updateDebugVisualisation();
       if (this.registeredScene !== null) {
         this.registeredScene.updateInteraction?.(this);
       }
@@ -133,7 +150,7 @@ export class Interaction extends TransformableElement {
     this.dispatchEvent(new CustomEvent("interact", { detail: {} }));
   }
 
-  private showDebug() {
+  private updateDebugVisualisation() {
     if (!this.props.debug && this.debugMesh) {
       this.debugMesh.removeFromParent();
       this.debugMesh = null;

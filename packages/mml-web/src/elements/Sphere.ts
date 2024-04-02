@@ -11,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultSphereColor = new THREE.Color(0xffffff);
 const defaultSphereRadius = 0.5;
@@ -41,6 +42,7 @@ export class Sphere extends TransformableElement {
         this.props.radius = newValue;
         const scale = this.props.radius * 2;
         this.mesh.scale.set(scale, scale, scale);
+        this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
     ],
@@ -121,6 +123,21 @@ export class Sphere extends TransformableElement {
     this.container.add(this.mesh);
   }
 
+  protected enable() {
+    this.collideableHelper.enable();
+  }
+
+  protected disable() {
+    this.collideableHelper.disable();
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.props.radius * 2, this.props.radius * 2, this.props.radius * 2),
+      this.container,
+    );
+  }
+
   public addSideEffectChild(child: MElement): void {
     if (child instanceof AttributeAnimation) {
       const attr = child.getAnimatedAttributeName();
@@ -170,6 +187,7 @@ export class Sphere extends TransformableElement {
       opacity: this.props.opacity,
     });
     this.mesh.material = this.material;
+    this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 

@@ -10,6 +10,7 @@ import {
   parseBoolAttribute,
   parseFloatAttribute,
 } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const debugAudioSphereSize = 0.25;
 const debugAudioGeometry = new THREE.SphereGeometry(debugAudioSphereSize, 4, 2);
@@ -31,6 +32,7 @@ const defaultAudioPauseTime = null;
 const defaultAudioSrc = null;
 const defaultAudioInnerConeAngle: number = 360;
 const defaultAudioOuterConeAngle = 0;
+const defaultAudioDebug = false;
 
 function clampAudioConeAngle(angle: number) {
   return Math.max(Math.min(angle, 360), 0);
@@ -160,13 +162,25 @@ export class Audio extends TransformableElement {
       );
     },
     debug: (instance, newValue) => {
-      instance.props.debug = parseBoolAttribute(newValue, false);
+      instance.props.debug = parseBoolAttribute(newValue, defaultAudioDebug);
       instance.updateDebugVisualisation();
     },
   });
 
   constructor() {
     super();
+  }
+
+  protected enable() {
+    this.syncAudioTime();
+  }
+
+  protected disable() {
+    this.syncAudioTime();
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromMatrixWorldProvider(this.container);
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -219,7 +233,7 @@ export class Audio extends TransformableElement {
         return;
       }
 
-      if (!this.props.enabled) {
+      if (!this.props.enabled || this.isDisabled()) {
         this.loadedAudioState.paused = true;
         audioTag.pause();
         return;
@@ -321,12 +335,10 @@ export class Audio extends TransformableElement {
         const audioListener = this.getAudioListener();
         const audioContext = audioListener.context;
         if (audioContext.state === "running") {
-          audioTag.muted = false;
+          audioTag.play().catch((e) => {
+            console.error("failed to play", e);
+          });
         }
-
-        audioTag.play().catch((e) => {
-          console.error("failed to play", e);
-        });
       }
     }
   }
@@ -380,14 +392,14 @@ export class Audio extends TransformableElement {
     if (!this.props.src) {
       if (!tag.paused) {
         this.loadedAudioState.paused = true;
-        // TODO - this should remove the frame - not just pause it
         tag.pause();
         tag.src = "";
+        tag.remove();
+        this.positionalAudio.disconnect();
+        this.positionalAudio.removeFromParent();
+        this.loadedAudioState = null;
       }
     } else {
-      // Muted allows autoplay immediately without the user needing to interact with the document
-      // Audio will be unmuted when the audiocontext is available
-      tag.muted = true;
       tag.autoplay = true;
       tag.crossOrigin = "anonymous";
       tag.loop = this.props.loop;

@@ -10,19 +10,47 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { DebugHelper } from "../utils/DebugHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 // Workaround for zero-scale values breaking audio playback in THREE PositionalAudio
 function minimumNonZero(value: number): number {
   return value === 0 ? 0.000001 : value;
 }
 
+const defaultVisible = true;
+
 export abstract class TransformableElement extends MElement {
   private socketName: string | null = null;
+
+  private desiredVisible = defaultVisible;
+  private appliedBounds = new Map<unknown, OrientedBoundingBox>();
+  protected directlyDisabledByBounds = false;
+  protected disabledByParent = false;
+
+  private getTransformableElementParent(): TransformableElement | null {
+    let parentNode = this.parentNode;
+    while (parentNode != null) {
+      if (parentNode instanceof TransformableElement) {
+        return parentNode;
+      }
+      parentNode = parentNode.parentNode;
+    }
+    return null;
+  }
 
   connectedCallback(): void {
     super.connectedCallback();
     if (this.socketName !== null) {
       this.registerWithParentModel(this.socketName);
+    }
+
+    const mElementParent = this.getTransformableElementParent();
+    if (mElementParent) {
+      const parentBounds = mElementParent.getAppliedBounds();
+      parentBounds.forEach((orientedBox, ref) => {
+        this.addOrUpdateParentBound(ref, orientedBox);
+      });
+      return;
     }
   }
 
@@ -39,7 +67,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.position.x = newValue;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     y: [
@@ -47,7 +75,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.position.y = newValue;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     z: [
@@ -55,7 +83,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.position.z = newValue;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     rx: [
@@ -63,7 +91,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.rotation.x = newValue * THREE.MathUtils.DEG2RAD;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     ry: [
@@ -71,7 +99,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.rotation.y = newValue * THREE.MathUtils.DEG2RAD;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     rz: [
@@ -79,7 +107,7 @@ export abstract class TransformableElement extends MElement {
       0,
       (newValue: number) => {
         this.container.rotation.z = newValue * THREE.MathUtils.DEG2RAD;
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     sx: [
@@ -87,7 +115,7 @@ export abstract class TransformableElement extends MElement {
       1,
       (newValue: number) => {
         this.container.scale.x = minimumNonZero(newValue);
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     sy: [
@@ -95,7 +123,7 @@ export abstract class TransformableElement extends MElement {
       1,
       (newValue: number) => {
         this.container.scale.y = minimumNonZero(newValue);
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
     sz: [
@@ -103,7 +131,7 @@ export abstract class TransformableElement extends MElement {
       1,
       (newValue: number) => {
         this.container.scale.z = minimumNonZero(newValue);
-        this.transformableAttributeChangedValue();
+        this.didUpdateTransformation();
       },
     ],
   });
@@ -137,7 +165,8 @@ export abstract class TransformableElement extends MElement {
       instance.animatedAttributeHelper.elementSetAttribute("sz", parseFloatAttribute(newValue, 1));
     },
     visible: (instance, newValue) => {
-      instance.container.visible = parseBoolAttribute(newValue, true);
+      instance.desiredVisible = parseBoolAttribute(newValue, defaultVisible);
+      instance.updateVisibility();
     },
     socket: (instance, newValue) => {
       instance.handleSocketChange(newValue);
@@ -153,9 +182,7 @@ export abstract class TransformableElement extends MElement {
 
   private debugHelper = new DebugHelper(this);
 
-  constructor() {
-    super();
-  }
+  protected abstract getContentBounds(): OrientedBoundingBox | null;
 
   public addSideEffectChild(child: MElement): void {
     if (child instanceof AttributeAnimation) {
@@ -173,10 +200,6 @@ export abstract class TransformableElement extends MElement {
         this.animatedAttributeHelper.removeAnimation(child, attr);
       }
     }
-  }
-
-  getBounds(): THREE.Box3 {
-    return new THREE.Box3().setFromObject(this.container);
   }
 
   private handleSocketChange(socketName: string | null): void {
@@ -207,24 +230,145 @@ export abstract class TransformableElement extends MElement {
     }
   }
 
-  private transformableAttributeChangedValue() {
-    this.parentTransformed();
-    traverseChildren(this, (child) => {
-      if (child instanceof MElement) {
-        child.parentTransformed();
+  protected applyBounds() {
+    const appliedBounds = this.getAppliedBounds();
+    if (appliedBounds.size > 0) {
+      const thisElementBounds = this.getContentBounds();
+      if (thisElementBounds) {
+        for (const [, orientedBox] of appliedBounds) {
+          // If the parent bound does not completely contain the element bounds then console.log
+          if (!orientedBox.completelyContainsBoundingBox(thisElementBounds)) {
+            if (!this.directlyDisabledByBounds) {
+              this.disabledByBounds();
+            }
+            return;
+          }
+        }
       }
+    }
+    this.reenableByBounds();
+  }
+
+  private didUpdateTransformation() {
+    this.applyBounds();
+    this.parentTransformed();
+    traverseImmediateTransformableElementChildren(this, (child) => {
+      child.didUpdateTransformation();
     });
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     TransformableElement.TransformableElementAttributeHandler.handle(this, name, newValue);
     this.debugHelper.handle(name, newValue);
   }
+
+  protected getAppliedBounds(): Map<unknown, OrientedBoundingBox> {
+    return this.appliedBounds;
+  }
+
+  public addOrUpdateParentBound(ref: unknown, orientedBox: OrientedBoundingBox): void {
+    this.appliedBounds.set(ref, orientedBox);
+    traverseImmediateTransformableElementChildren(this, (child) => {
+      child.addOrUpdateParentBound(ref, orientedBox);
+    });
+    this.applyBounds();
+  }
+
+  public removeParentBound(ref: unknown): void {
+    this.appliedBounds.delete(ref);
+    traverseImmediateTransformableElementChildren(this, (child) => {
+      child.removeParentBound(ref);
+    });
+    this.applyBounds();
+  }
+
+  protected disabledByBounds() {
+    if (this.directlyDisabledByBounds) {
+      return;
+    }
+    this.directlyDisabledByBounds = true;
+    this.updateVisibility();
+    if (this.disabledByParent) {
+      return;
+    }
+    this.disable();
+
+    traverseImmediateTransformableElementChildren(this, (child) => {
+      child.disabledByParentBounds();
+    });
+  }
+
+  protected isDisabled() {
+    return this.directlyDisabledByBounds || this.disabledByParent;
+  }
+
+  protected disabledByParentBounds() {
+    if (this.disabledByParent) {
+      return;
+    }
+    this.disabledByParent = true;
+    this.updateVisibility();
+    if (this.directlyDisabledByBounds) {
+      return;
+    }
+    this.disable();
+
+    traverseImmediateTransformableElementChildren(this, (child) => {
+      child.disabledByParentBounds();
+    });
+  }
+
+  protected abstract disable(): void;
+
+  protected reenableByBounds() {
+    if (!this.directlyDisabledByBounds) {
+      return;
+    }
+
+    this.directlyDisabledByBounds = false;
+
+    if (!this.disabledByParent) {
+      this.updateVisibility();
+      this.enable();
+
+      traverseImmediateTransformableElementChildren(this, (child) => {
+        child.reenableByParentBounds();
+      });
+    }
+  }
+
+  protected reenableByParentBounds() {
+    if (!this.disabledByParent) {
+      return;
+    }
+    this.disabledByParent = false;
+
+    if (!this.directlyDisabledByBounds) {
+      this.updateVisibility();
+      this.enable();
+
+      traverseImmediateTransformableElementChildren(this, (child) => {
+        child.reenableByParentBounds();
+      });
+    }
+  }
+
+  protected abstract enable(): void;
+
+  private updateVisibility() {
+    this.container.visible = this.desiredVisible && !this.isDisabled();
+  }
 }
 
-function traverseChildren(element: ChildNode, callback: (element: ChildNode) => void) {
+function traverseImmediateTransformableElementChildren(
+  element: ChildNode,
+  callback: (element: TransformableElement) => void,
+) {
   element.childNodes.forEach((child) => {
-    callback(child);
-    traverseChildren(child, callback);
+    if (child instanceof TransformableElement) {
+      callback(child);
+    } else {
+      traverseImmediateTransformableElementChildren(child, callback);
+    }
   });
 }
