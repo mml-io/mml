@@ -11,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultCylinderColor = new THREE.Color(0xffffff);
 const defaultCylinderRadius = 0.5;
@@ -38,6 +39,7 @@ export class Cylinder extends TransformableElement {
       (newValue: number) => {
         this.props.radius = newValue;
         this.mesh.scale.set(this.props.radius * 2, this.props.height, this.props.radius * 2);
+        this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
     ],
@@ -47,6 +49,7 @@ export class Cylinder extends TransformableElement {
       (newValue: number) => {
         this.props.height = newValue;
         this.mesh.scale.y = this.props.height;
+        this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
     ],
@@ -115,6 +118,14 @@ export class Cylinder extends TransformableElement {
     },
   });
 
+  protected enable() {
+    this.collideableHelper.enable();
+  }
+
+  protected disable() {
+    this.collideableHelper.disable();
+  }
+
   static get observedAttributes(): Array<string> {
     return [
       ...TransformableElement.observedAttributes,
@@ -133,6 +144,13 @@ export class Cylinder extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.props.radius * 2, this.props.height, this.props.radius * 2),
+      this.container,
+    );
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -169,6 +187,7 @@ export class Cylinder extends TransformableElement {
       opacity: this.props.opacity,
     });
     this.mesh.material = this.material;
+    this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 

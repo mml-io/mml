@@ -12,6 +12,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { THREECanvasTextTexture } from "../utils/CanvasText";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 enum labelAlignment {
   left = "left",
@@ -153,6 +154,14 @@ export class Label extends TransformableElement {
     },
   });
 
+  protected enable() {
+    // no-op
+  }
+
+  protected disable() {
+    // no-op
+  }
+
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes, ...Label.attributeHandler.getAttributes()];
   }
@@ -166,6 +175,13 @@ export class Label extends TransformableElement {
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
     this.container.add(this.mesh);
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0),
+      this.container,
+    );
   }
 
   public addSideEffectChild(child: MElement): void {

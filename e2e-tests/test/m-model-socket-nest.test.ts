@@ -26,7 +26,8 @@ describe("m-element-socket", () => {
 
     await takeAndCompareScreenshot(page);
 
-    await clickElement(page, "m-character");
+    await clickElement(page, "m-cube");
+
     // Wait until sub-character is loaded
     await page.waitForFunction(
       () => {
@@ -34,11 +35,12 @@ describe("m-element-socket", () => {
         const firstModelMesh = (firstModel as any).getModel();
         return firstModelMesh !== null;
       },
-      { timeout: 150000, polling: 100 },
+      { timeout: 15000, polling: 100 },
     );
     await takeAndCompareScreenshot(page);
 
-    await clickElement(page, "m-character");
+    await clickElement(page, "m-cube");
+
     // Wait until sub-sub-character is loaded
     await page.waitForFunction(
       () => {
@@ -46,7 +48,7 @@ describe("m-element-socket", () => {
         const secondModelMesh = (secondModel as any).getModel();
         return secondModelMesh !== null;
       },
-      { timeout: 150000, polling: 100 },
+      { timeout: 15000, polling: 100 },
     );
     await takeAndCompareScreenshot(page);
 

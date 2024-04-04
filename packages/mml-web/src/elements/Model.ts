@@ -11,6 +11,7 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { ModelLoader } from "../utils/ModelLoader";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultModelSrc = "";
 const defaultModelAnim = "";
@@ -19,6 +20,7 @@ const defaultModelAnimEnabled = true;
 const defaultModelAnimStartTime = 0;
 const defaultModelAnimPauseTime = null;
 const defaultModelCastShadows = true;
+const defaultModelDebug = false;
 
 export class Model extends TransformableElement {
   static tagName = "m-model";
@@ -31,18 +33,33 @@ export class Model extends TransformableElement {
     animLoop: defaultModelAnimLoop,
     animEnabled: defaultModelAnimEnabled,
     castShadows: defaultModelCastShadows,
+    debug: defaultModelDebug,
   };
+
+  private static DebugBoundingBoxGeometry = new THREE.BoxGeometry(1, 1, 1, 1, 1, 1);
+  private static DebugBoundingBoxMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff0000,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.3,
+  });
 
   public isModel = true;
   private static modelLoader = new ModelLoader();
-  protected gltfScene: THREE.Object3D | null = null;
-  protected gtlfSceneBones = new Map<string, THREE.Bone>();
+
+  protected loadedState: {
+    gltfScene: THREE.Object3D;
+    gtlfSceneBones: Map<string, THREE.Bone>;
+    boundingBox: OrientedBoundingBox;
+  } | null = null;
   private animationGroup: THREE.AnimationObjectGroup = new THREE.AnimationObjectGroup();
   private animationMixer: THREE.AnimationMixer = new THREE.AnimationMixer(this.animationGroup);
   private documentTimeTickListener: null | { remove: () => void } = null;
 
   private attachments = new Set<Model>();
   private socketChildrenByBone = new Map<string, Set<MElement>>();
+
+  private debugBoundingBox: THREE.Mesh | null = null;
 
   private currentAnimationClip: THREE.AnimationClip | null = null;
   private currentAnimationAction: THREE.AnimationAction | null = null;
@@ -64,10 +81,14 @@ export class Model extends TransformableElement {
     anim: (instance, newValue) => {
       instance.setAnim(newValue);
     },
+    debug: (instance, newValue) => {
+      instance.props.debug = parseBoolAttribute(newValue, defaultModelDebug);
+      instance.updateDebugVisualisation();
+    },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultModelCastShadows);
-      if (instance.gltfScene) {
-        instance.gltfScene.traverse((node) => {
+      if (instance.loadedState) {
+        instance.loadedState.gltfScene.traverse((node) => {
           if ((node as THREE.Mesh).isMesh) {
             node.castShadow = instance.props.castShadows;
           }
@@ -88,6 +109,14 @@ export class Model extends TransformableElement {
     },
   });
 
+  protected enable() {
+    this.collideableHelper.enable();
+  }
+
+  protected disable() {
+    this.collideableHelper.disable();
+  }
+
   public disableSockets() {
     // Remove the socketed children from parent (so that the model doesn't contain any other bones / animatable properties)
     this.socketChildrenByBone.forEach((children) => {
@@ -99,16 +128,18 @@ export class Model extends TransformableElement {
 
   public restoreSockets() {
     // Add the socketed children back to the parent
-    this.socketChildrenByBone.forEach((children, boneName) => {
-      const bone = this.gtlfSceneBones.get(boneName);
-      children.forEach((child) => {
-        if (bone) {
-          bone.add(child.getContainer());
-        } else {
-          this.getContainer().add(child.getContainer());
-        }
+    if (this.loadedState) {
+      this.socketChildrenByBone.forEach((children, boneName) => {
+        const bone = this.loadedState!.gtlfSceneBones.get(boneName);
+        children.forEach((child) => {
+          if (bone) {
+            bone.add(child.getContainer());
+          } else {
+            this.getContainer().add(child.getContainer());
+          }
+        });
       });
-    });
+    }
   }
 
   public registerSocketChild(child: TransformableElement, socketName: string): void {
@@ -119,8 +150,8 @@ export class Model extends TransformableElement {
     }
     children.add(child);
 
-    if (this.gltfScene) {
-      const bone = this.gtlfSceneBones.get(socketName);
+    if (this.loadedState) {
+      const bone = this.loadedState.gtlfSceneBones.get(socketName);
       if (bone) {
         bone.add(child.getContainer());
       } else {
@@ -149,20 +180,18 @@ export class Model extends TransformableElement {
   }
 
   public registerAttachment(attachment: Model) {
-    console.trace("registerAttachment");
     this.attachments.add(attachment);
     // Temporarily remove the sockets from the attachment so that they don't get animated
     attachment.disableSockets();
-    this.animationGroup.add(attachment.gltfScene);
+    this.animationGroup.add(attachment.loadedState!.gltfScene);
     // Restore the sockets after adding the attachment to the animation group
     attachment.restoreSockets();
     this.updateAnimation(this.getDocumentTime() || 0, true);
   }
 
   public unregisterAttachment(attachment: Model) {
-    console.trace("unregisterAttachment");
     this.attachments.delete(attachment);
-    this.animationGroup.remove(attachment.gltfScene);
+    this.animationGroup.remove(attachment.loadedState!.gltfScene);
   }
 
   static get observedAttributes(): Array<string> {
@@ -177,6 +206,13 @@ export class Model extends TransformableElement {
     super();
   }
 
+  protected getContentBounds(): OrientedBoundingBox | null {
+    if (this.loadedState) {
+      return this.loadedState.boundingBox;
+    }
+    return null;
+  }
+
   public parentTransformed(): void {
     this.collideableHelper.parentTransformed();
   }
@@ -187,17 +223,17 @@ export class Model extends TransformableElement {
 
   private setSrc(newValue: string | null) {
     this.props.src = (newValue || "").trim();
-    if (this.gltfScene !== null) {
+    if (this.loadedState !== null) {
       this.collideableHelper.removeColliders();
-      this.gltfScene.removeFromParent();
-      Model.disposeOfGroup(this.gltfScene);
-      this.gltfScene = null;
-      this.gtlfSceneBones.clear();
+      this.loadedState.gltfScene.removeFromParent();
+      Model.disposeOfGroup(this.loadedState.gltfScene);
+      this.loadedState = null;
       if (this.registeredParentAttachment) {
         this.registeredParentAttachment.unregisterAttachment(this);
         this.registeredParentAttachment = null;
       }
-      this.onModelLoadComplete();
+      this.applyBounds();
+      this.updateDebugVisualisation();
     }
     if (!this.props.src) {
       this.latestSrcModelPromise = null;
@@ -207,6 +243,8 @@ export class Model extends TransformableElement {
           this.getContainer().add(child.getContainer());
         });
       });
+      this.applyBounds();
+      this.updateDebugVisualisation();
       return;
     }
     if (!this.isConnected) {
@@ -234,31 +272,46 @@ export class Model extends TransformableElement {
           }
         });
         this.latestSrcModelPromise = null;
-        this.gltfScene = result.scene;
-        this.gtlfSceneBones = new Map<string, THREE.Bone>();
-        this.gltfScene.traverse((object) => {
+        const gltfScene = result.scene;
+        const gtlfSceneBones = new Map<string, THREE.Bone>();
+        gltfScene.traverse((object) => {
           if (object instanceof THREE.Bone) {
-            this.gtlfSceneBones.set(object.name, object);
+            gtlfSceneBones.set(object.name, object);
           }
         });
-        if (this.gltfScene) {
-          this.container.add(this.gltfScene);
-          this.collideableHelper.updateCollider(this.gltfScene);
+        const boundingBox = new THREE.Box3();
+        gltfScene.updateWorldMatrix(true, true);
+        boundingBox.expandByObject(gltfScene);
 
-          const parent = this.parentElement;
-          if (parent instanceof Model) {
-            if (!this.latestAnimPromise && !this.currentAnimationClip) {
-              parent.registerAttachment(this);
-              this.registeredParentAttachment = parent;
-            }
-          }
+        const orientedBoundingBox = OrientedBoundingBox.fromSizeMatrixWorldProviderAndCenter(
+          boundingBox.getSize(new THREE.Vector3(0, 0, 0)),
+          this.container,
+          boundingBox.getCenter(new THREE.Vector3(0, 0, 0)),
+        );
+        this.loadedState = {
+          gltfScene,
+          gtlfSceneBones,
+          boundingBox: orientedBoundingBox,
+        };
+        this.container.add(gltfScene);
+        this.applyBounds();
+        this.collideableHelper.updateCollider(gltfScene);
 
-          if (this.currentAnimationClip) {
-            this.playAnimation(this.currentAnimationClip);
+        const parent = this.parentElement;
+        if (parent instanceof Model) {
+          if (!this.latestAnimPromise && !this.currentAnimationClip) {
+            parent.registerAttachment(this);
+            this.registeredParentAttachment = parent;
           }
+        }
+
+        if (this.currentAnimationClip) {
+          this.playAnimation(this.currentAnimationClip);
         }
         this.onModelLoadComplete();
         this.srcLoadingInstanceManager.finish();
+
+        this.updateDebugVisualisation();
       })
       .catch((err) => {
         console.error("Error loading m-model.src", err);
@@ -276,17 +329,17 @@ export class Model extends TransformableElement {
   private playAnimation(anim: THREE.AnimationClip) {
     this.currentAnimationClip = anim;
     this.resetAnimationMixer();
-    if (this.gltfScene) {
+    if (this.loadedState) {
       this.disableSockets();
-      this.animationGroup.add(this.gltfScene);
+      this.animationGroup.add(this.loadedState.gltfScene);
     }
     for (const animationAttachment of this.attachments) {
       animationAttachment.disableSockets();
-      this.animationGroup.add(animationAttachment.gltfScene);
+      this.animationGroup.add(animationAttachment.loadedState!.gltfScene);
     }
     const action = this.animationMixer.clipAction(this.currentAnimationClip);
     action.play();
-    if (this.gltfScene) {
+    if (this.loadedState) {
       this.restoreSockets();
     }
     for (const animationAttachment of this.attachments) {
@@ -296,7 +349,6 @@ export class Model extends TransformableElement {
   }
 
   private setAnim(newValue: string | null) {
-    console.trace("setAnim", newValue, this.registeredParentAttachment !== null);
     this.props.anim = (newValue || "").trim();
 
     this.resetAnimationMixer();
@@ -308,7 +360,7 @@ export class Model extends TransformableElement {
       this.animLoadingInstanceManager.abortIfLoading();
 
       // If the animation is removed then the model can be added to the parent attachment if the model is loaded
-      if (this.gltfScene) {
+      if (this.loadedState) {
         const parent = this.parentElement;
         if (parent instanceof Model) {
           parent.registerAttachment(this);
@@ -360,11 +412,12 @@ export class Model extends TransformableElement {
     this.documentTimeTickListener = this.addDocumentTimeTickListener((documentTime) => {
       this.updateAnimation(documentTime);
     });
-    if (this.gltfScene) {
-      throw new Error("gltfScene should be null upon connection");
+    if (this.loadedState) {
+      throw new Error("loadedState should be null upon connection");
     }
     this.setSrc(this.props.src);
     this.setAnim(this.props.anim);
+    this.updateDebugVisualisation();
   }
 
   disconnectedCallback() {
@@ -374,18 +427,18 @@ export class Model extends TransformableElement {
       this.documentTimeTickListener = null;
     }
     this.collideableHelper.removeColliders();
-    if (this.gltfScene && this.registeredParentAttachment) {
+    if (this.loadedState && this.registeredParentAttachment) {
       this.registeredParentAttachment.unregisterAttachment(this);
       this.registeredParentAttachment = null;
     }
-    if (this.gltfScene) {
-      this.gltfScene.removeFromParent();
-      Model.disposeOfGroup(this.gltfScene);
-      this.gltfScene = null;
-      this.gtlfSceneBones.clear();
+    if (this.loadedState) {
+      this.loadedState.gltfScene.removeFromParent();
+      Model.disposeOfGroup(this.loadedState.gltfScene);
+      this.loadedState = null;
     }
     this.srcLoadingInstanceManager.dispose();
     this.animLoadingInstanceManager.dispose();
+    this.clearDebugVisualisation();
     super.disconnectedCallback();
   }
 
@@ -437,8 +490,43 @@ export class Model extends TransformableElement {
     }
   }
 
+  private updateDebugVisualisation() {
+    if (!this.props.debug) {
+      this.clearDebugVisualisation();
+    } else {
+      if (!this.isConnected) {
+        return;
+      }
+      if (!this.debugBoundingBox) {
+        this.debugBoundingBox = new THREE.Mesh(
+          Model.DebugBoundingBoxGeometry,
+          Model.DebugBoundingBoxMaterial,
+        );
+        this.container.add(this.debugBoundingBox);
+      }
+      if (this.loadedState) {
+        const boundingBox = this.loadedState.boundingBox;
+        if (boundingBox.centerOffset) {
+          this.debugBoundingBox.position.copy(boundingBox.centerOffset);
+        } else {
+          this.debugBoundingBox.position.set(0, 0, 0);
+        }
+        this.debugBoundingBox.scale.copy(boundingBox.size);
+      } else {
+        this.debugBoundingBox.scale.set(0, 0, 0);
+      }
+    }
+  }
+
+  private clearDebugVisualisation() {
+    if (this.debugBoundingBox) {
+      this.debugBoundingBox.removeFromParent();
+      this.debugBoundingBox = null;
+    }
+  }
+
   public getModel(): THREE.Object3D<THREE.Event> | null {
-    return this.gltfScene;
+    return this.loadedState?.gltfScene || null;
   }
 
   public getCurrentAnimation(): THREE.AnimationClip | null {

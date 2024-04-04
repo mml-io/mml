@@ -12,6 +12,7 @@ import {
   parseColorAttribute,
   parseFloatAttribute,
 } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultAttribute: string | null = null;
 const defaultStart = 0;
@@ -117,6 +118,18 @@ export class AttributeAnimation extends MElement {
   }
   constructor() {
     super();
+  }
+
+  protected enable() {
+    // no-op
+  }
+
+  protected disable() {
+    // no-op
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return null;
   }
 
   public getAnimatedAttributeName(): string | null {

@@ -10,6 +10,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { StaticFileVideoSource } from "../utils/video/StaticFileVideoSource";
 import { VideoSource } from "../utils/video/VideoSource";
 import { WHEPVideoSource } from "../utils/video/WHEPVideoSource";
@@ -134,6 +135,16 @@ export class Video extends TransformableElement {
     },
   });
 
+  protected enable() {
+    this.collideableHelper.enable();
+    this.syncVideoTime();
+  }
+
+  protected disable() {
+    this.collideableHelper.disable();
+    this.syncVideoTime();
+  }
+
   constructor() {
     super();
 
@@ -147,6 +158,13 @@ export class Video extends TransformableElement {
     this.mesh.castShadow = true;
     this.mesh.receiveShadow = false;
     this.container.add(this.mesh);
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0),
+      this.container,
+    );
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -194,6 +212,10 @@ export class Video extends TransformableElement {
       const audioContext = audioListener.context;
       if (audioContext.state === "running") {
         videoTag.muted = false;
+      }
+
+      if (this.isDisabled()) {
+        videoTag.muted = true;
       }
 
       if (this.videoSource) {
@@ -305,6 +327,7 @@ export class Video extends TransformableElement {
     });
 
     this.updateVideo();
+    this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 
@@ -351,6 +374,7 @@ export class Video extends TransformableElement {
       this.mesh.scale.x = this.props.width !== null ? this.props.width : 1;
       this.mesh.scale.y = this.props.height !== null ? this.props.height : 1;
     }
+    this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 }

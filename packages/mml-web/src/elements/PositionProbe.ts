@@ -9,6 +9,7 @@ import {
   parseBoolAttribute,
   parseFloatAttribute,
 } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
 
 const defaultPositionProbeRange = 10;
@@ -29,6 +30,7 @@ export class PositionProbe extends TransformableElement {
       (newValue: number) => {
         this.props.range = newValue;
         this.updateDebugVisualisation();
+        this.applyBounds();
       },
     ],
   });
@@ -83,6 +85,21 @@ export class PositionProbe extends TransformableElement {
     super();
   }
 
+  protected enable() {
+    // no-op
+  }
+
+  protected disable() {
+    // no-op
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      this.container,
+    );
+  }
+
   public addSideEffectChild(child: MElement): void {
     if (child instanceof AttributeAnimation) {
       const attr = child.getAnimatedAttributeName();
@@ -127,7 +144,14 @@ export class PositionProbe extends TransformableElement {
     // Check if the position is within range
     const distance = new THREE.Vector3().copy(elementRelative.position as THREE.Vector3).length();
 
-    if (distance <= this.props.range) {
+    let withinBounds = true;
+    this.getAppliedBounds().forEach((bounds) => {
+      if (!bounds.containsPoint(userPositionAndRotation.position as THREE.Vector3)) {
+        withinBounds = false;
+      }
+    });
+
+    if (withinBounds && distance <= this.props.range) {
       const elementRelativePositionAndRotation = {
         position: elementRelative.position,
         rotation: {

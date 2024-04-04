@@ -1,0 +1,45 @@
+<m-plane id="my-plane" color="gray" width="15" height="15" rx="-90" y="0.1"></m-plane>
+<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+
+<m-frame
+    id="my-frame"
+    min-x="-4"
+    max-x="4"
+    min-y="-4"
+    max-y="4"
+    min-z="-4"
+    max-z="4"
+    load-range="3"
+    unload-range="2"
+    y="5"
+    debug="true"
+>
+  <!-- All animations are timed to have the elements exit the bounds at 1500 and return at 3501 -->
+  <m-group>
+    <m-attr-anim attr="y" start="2" end="3" duration="5000" ping-pong="true" ping-pong-delay="1850"></m-attr-anim>
+    <m-cube sy="2" rz="30" x="-2" color="pink"></m-cube>
+    <m-cylinder sy="2" rz="30" x="0" color="pink"></m-cylinder>
+    <m-sphere sy="2" rz="30" x="2" color="pink"></m-sphere>
+  </m-group>
+
+  <m-model ry="30" y="-3" sx="2" debug="true" src="/assets/duck.glb">
+    <m-attr-anim attr="x" start="-2" end="4" duration="5000" ping-pong="true" ping-pong-delay="1092"></m-attr-anim>
+  </m-model>
+
+  <m-character rz="30" z="2" y="-3" x="2" sy="2" debug="true" src="/assets/Body.glb">
+    <m-attr-anim attr="y" start="-2" end="-4" duration="5000" ping-pong="true" ping-pong-delay="1788"></m-attr-anim>
+    <m-model debug="true" src="/assets/Head.glb"></m-model>
+  </m-character>
+
+  <m-video ry="30" y="-3.5" sx="2" debug="true" src="/assets/timestamp-video.ogg">
+    <m-attr-anim attr="x" start="-2" end="-3.5" duration="5000" ping-pong="true" ping-pong-delay="1525"></m-attr-anim>
+  </m-video>
+
+  <m-image ry="30" y="-0.5" sx="2" debug="true" src="/assets/test-image.png">
+    <m-attr-anim attr="x" start="-2" end="-3.5" duration="5000" ping-pong="true" ping-pong-delay="1525"></m-attr-anim>
+  </m-image>
+
+  <m-light type="point" ry="30" y="0.5" sx="2" debug="true">
+    <m-attr-anim attr="x" start="-2" end="-5" duration="5000" ping-pong="true" ping-pong-delay="1001"></m-attr-anim>
+  </m-light>
+</m-frame>

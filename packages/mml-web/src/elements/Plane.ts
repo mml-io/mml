@@ -11,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultPlaneColor = new THREE.Color(0xffffff);
 const defaultPlaneWidth = 1;
@@ -38,6 +39,7 @@ export class Plane extends TransformableElement {
       (newValue: number) => {
         this.props.width = newValue;
         this.mesh.scale.x = this.props.width;
+        this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
     ],
@@ -47,6 +49,7 @@ export class Plane extends TransformableElement {
       (newValue: number) => {
         this.props.height = newValue;
         this.mesh.scale.y = this.props.height;
+        this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
     ],
@@ -128,6 +131,21 @@ export class Plane extends TransformableElement {
     this.container.add(this.mesh);
   }
 
+  protected enable() {
+    this.collideableHelper.enable();
+  }
+
+  protected disable() {
+    this.collideableHelper.disable();
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.props.width, this.props.height, 0),
+      this.container,
+    );
+  }
+
   public addSideEffectChild(child: MElement): void {
     if (child instanceof AttributeAnimation) {
       const attr = child.getAnimatedAttributeName();
@@ -177,6 +195,7 @@ export class Plane extends TransformableElement {
       opacity: this.props.opacity,
     });
     this.mesh.material = this.material;
+    this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 

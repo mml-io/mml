@@ -760,6 +760,62 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="min-x" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The minimum X coordinate of the frame's contents in meters. If not specified, the content is not constrained.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="max-x" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The maximum X coordinate of the frame's contents in meters. If not specified, the content is not constrained.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="min-y" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The minimum Y coordinate of the frame's contents in meters. If not specified, the content is not constrained.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="max-y" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The maximum Y coordinate of the frame's contents in meters. If not specified, the content is not constrained.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="min-z" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The minimum Z coordinate of the frame's contents in meters. If not specified, the content is not constrained.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="max-z" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The maximum Z coordinate of the frame's contents in meters. If not specified, the content is not constrained.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="load-range" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The distance in meters from the observer at which the frame will be loaded. If bounds are specified for the frame then the range is a box expanded by this value from the bounds. If no value is specified, the frame will be loaded regardless of distance.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="unload-range" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The distance beyond the load-range that the frame stay loaded for if currently loaded. This prevents rapid changes between loading and unloading. Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>
@@ -961,7 +1017,7 @@
       </xs:complexContent>
     </xs:complexType>
   </xs:element>
-  
+
   <xs:element name="m-label">
     <xs:annotation>
       <xs:documentation>

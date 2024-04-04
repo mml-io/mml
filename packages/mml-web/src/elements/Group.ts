@@ -1,4 +1,5 @@
 import { TransformableElement } from "./TransformableElement";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 export class Group extends TransformableElement {
   static tagName = "m-group";
@@ -6,8 +7,20 @@ export class Group extends TransformableElement {
     return [...TransformableElement.observedAttributes];
   }
 
+  protected enable() {
+    // no-op
+  }
+
+  protected disable() {
+    // no-op
+  }
+
   constructor() {
     super();
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return null;
   }
 
   public parentTransformed(): void {

@@ -9,8 +9,6 @@ import { IMMLScene, PositionAndRotation } from "../MMLScene";
 
 const MELEMENT_PROPERTY_NAME = "m-element-property";
 
-const EmptyBounds = new THREE.Box3().makeEmpty();
-
 export abstract class MElement extends HTMLElement {
   // This allows switching which document this HTMLElement subclass extends so that it can be placed into iframes
   static overwriteSuperclass(newSuperclass: typeof HTMLElement) {
@@ -188,10 +186,6 @@ export abstract class MElement extends HTMLElement {
     return this.container;
   }
 
-  getBounds(): THREE.Box3 {
-    return EmptyBounds;
-  }
-
   getCamera(): THREE.Camera {
     const remoteDocument = this.getScene();
     return remoteDocument.getCamera();
@@ -232,19 +226,27 @@ export abstract class MElement extends HTMLElement {
     }
   }
 
+  private getMElementParent(): MElement | null {
+    let parentNode = this.parentNode;
+    while (parentNode != null) {
+      if (parentNode instanceof MElement) {
+        return parentNode;
+      }
+      parentNode = parentNode.parentNode;
+    }
+    return null;
+  }
+
   connectedCallback() {
     if (this.currentParentContainer !== null) {
       throw new Error("Already connected to a parent");
     }
 
-    let parentNode = this.parentNode;
-    while (parentNode != null) {
-      if (parentNode instanceof MElement) {
-        this.currentParentContainer = parentNode.container;
-        this.currentParentContainer.add(this.container);
-        return;
-      }
-      parentNode = parentNode.parentNode;
+    const mElementParent = this.getMElementParent();
+    if (mElementParent) {
+      this.currentParentContainer = mElementParent.container;
+      this.currentParentContainer.add(this.container);
+      return;
     }
 
     // If none of the ancestors are MElements then this element may be directly connected to the body (without a wrapper).

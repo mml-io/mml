@@ -11,6 +11,7 @@ import {
   parseEnumAttribute,
   parseFloatAttribute,
 } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 declare type LightHelper = THREE.PointLightHelper | THREE.SpotLightHelper;
 
@@ -125,6 +126,18 @@ export class Light extends TransformableElement {
   constructor() {
     super();
     this.createLight();
+  }
+
+  protected enable() {
+    // no-op
+  }
+
+  protected disable() {
+    // no-op
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromMatrixWorldProvider(this.container);
   }
 
   public getLight(): THREE.Light {

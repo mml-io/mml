@@ -11,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultCubeColor = new THREE.Color(0xffffff);
 const defaultCubeWidth = 1;
@@ -39,6 +40,7 @@ export class Cube extends TransformableElement {
       (newValue: number) => {
         this.props.width = newValue;
         this.mesh.scale.x = this.props.width;
+        this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
     ],
@@ -48,6 +50,7 @@ export class Cube extends TransformableElement {
       (newValue: number) => {
         this.props.height = newValue;
         this.mesh.scale.y = this.props.height;
+        this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
     ],
@@ -57,6 +60,7 @@ export class Cube extends TransformableElement {
       (newValue: number) => {
         this.props.depth = newValue;
         this.mesh.scale.z = this.props.depth;
+        this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
     ],
@@ -126,6 +130,21 @@ export class Cube extends TransformableElement {
     },
   });
 
+  protected enable() {
+    this.collideableHelper.enable();
+  }
+
+  protected disable() {
+    this.collideableHelper.disable();
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.props.width, this.props.height, this.props.depth),
+      this.container,
+    );
+  }
+
   static get observedAttributes(): Array<string> {
     return [
       ...TransformableElement.observedAttributes,
@@ -191,6 +210,7 @@ export class Cube extends TransformableElement {
       opacity: this.props.opacity,
     });
     this.mesh.material = this.material;
+    this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 

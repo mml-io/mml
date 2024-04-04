@@ -1,0 +1,33 @@
+<m-plane id="my-plane" color="teal" width="15" height="15" rx="-90" y="0.1"></m-plane>
+<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+
+<m-frame
+    id="my-frame"
+    load-range="5"
+    unload-range="3"
+    y="1"
+    src="/assets/static-mml.html"
+></m-frame>
+
+<m-label width="1.5" content="into range" id="set-into-range-label" color="red" x="-2" z="5" y="6.5"></m-label>
+<m-label width="1.5" content="into unload range" id="set-into-unload-range-label" color="green" x="0" z="5" y="6.5"></m-label>
+<m-label width="1.5" content="outside range" id="set-into-outside-range-label" color="blue" x="2" z="5" y="6.5"></m-label>
+
+<script>
+  const myFrame = document.getElementById("my-frame");
+
+  const setIntoRangeLabel = document.getElementById("set-into-range-label");
+  setIntoRangeLabel.addEventListener("click", () => {
+    myFrame.setAttribute("z", "5");
+  });
+
+  const setIntoUnloadRangeLabel = document.getElementById("set-into-unload-range-label");
+  setIntoUnloadRangeLabel.addEventListener("click", () => {
+    myFrame.setAttribute("z", "2");
+  });
+
+  const setIntoOutsideRangeLabel = document.getElementById("set-into-outside-range-label");
+  setIntoOutsideRangeLabel.addEventListener("click", () => {
+    myFrame.setAttribute("z", "0");
+  });
+</script>

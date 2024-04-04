@@ -10,6 +10,7 @@ import {
   parseBoolAttribute,
   parseFloatAttribute,
 } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
 
 const defaultChatProbeRange = 10;
@@ -27,6 +28,7 @@ export class ChatProbe extends TransformableElement {
       (newValue: number) => {
         this.props.range = newValue;
         this.updateDebugVisualisation();
+        this.applyBounds();
       },
     ],
   });
@@ -67,6 +69,21 @@ export class ChatProbe extends TransformableElement {
 
   constructor() {
     super();
+  }
+
+  protected enable() {
+    // no-op (the probe only sends events if the position is within range)
+  }
+
+  protected disable() {
+    // no-op (the probe only sends events if the position is within range)
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      this.container,
+    );
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -114,7 +131,14 @@ export class ChatProbe extends TransformableElement {
     // Check if the position is within range
     const distance = new THREE.Vector3().copy(elementRelative.position as THREE.Vector3).length();
 
-    if (distance <= this.props.range) {
+    let withinBounds = true;
+    this.getAppliedBounds().forEach((bounds) => {
+      if (!bounds.containsPoint(userPositionAndRotation.position as THREE.Vector3)) {
+        withinBounds = false;
+      }
+    });
+
+    if (withinBounds && distance <= this.props.range) {
       this.dispatchEvent(
         new CustomEvent(chatProbeChatEventName, {
           detail: {

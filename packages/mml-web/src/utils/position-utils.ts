@@ -30,9 +30,6 @@ export function getRelativePositionAndRotationRelativeToObject(
 
   tempRotationEuler.setFromQuaternion(tempRotationQuaternion);
 
-  // Correct for the container's local scale
-  tempPositionVector.multiply(container.scale);
-
   return {
     position: {
       x: tempPositionVector.x,
