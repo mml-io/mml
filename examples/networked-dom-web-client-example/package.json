@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "chokidar": "3.5.3",
-    "express": "4.18.2",
+    "express": "4.19.2",
     "express-ws": "5.0.2",
     "networked-dom-server": "^0.13.0",
     "ws": "8.13.0"
