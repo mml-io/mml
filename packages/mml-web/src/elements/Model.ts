@@ -525,7 +525,7 @@ export class Model extends TransformableElement {
     }
   }
 
-  public getModel(): THREE.Object3D<THREE.Event> | null {
+  public getModel(): THREE.Object3D | null {
     return this.loadedState?.gltfScene || null;
   }
 

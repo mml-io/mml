@@ -537,7 +537,7 @@
           <xs:attribute name="intensity" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                The intensity of the light, ranging from 0 (no light) to 1 (full intensity). Default value is 1.
+                The intensity of the light in candela (cd). Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
