@@ -51,12 +51,7 @@ describe("m-model", () => {
     // mock the loader to return a specific THREE node
     const mockGLTFLoad = jest.spyOn(Model.prototype, "asyncLoadSourceAsset").mockResolvedValue({
       animations: [],
-      scene: testNode,
-      scenes: [],
-      cameras: [],
-      asset: {},
-      userData: {},
-      parser: {} as any,
+      group: testNode,
     });
 
     element.setAttribute("src", "some_asset_path");
@@ -85,12 +80,7 @@ describe("m-model", () => {
 
     asyncLoadSpy.mockResolvedValue({
       animations: [],
-      scene: firstGroup,
-      scenes: [],
-      cameras: [],
-      asset: {},
-      userData: {},
-      parser: {} as any,
+      group: firstGroup,
     });
 
     // Setting the attribute should not cause the model to be loaded as the element is not connected
@@ -129,12 +119,7 @@ describe("m-model", () => {
 
     asyncLoadSpy.mockResolvedValueOnce({
       animations: [],
-      scene: secondGroup,
-      scenes: [],
-      cameras: [],
-      asset: {},
-      userData: {},
-      parser: {} as any,
+      group: secondGroup,
     });
 
     // Re-appending the element should cause the model to be re-loaded

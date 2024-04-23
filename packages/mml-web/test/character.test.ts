@@ -53,13 +53,8 @@ describe("m-character", () => {
       .spyOn(Character.prototype, "asyncLoadSourceAsset")
       .mockImplementation(() => {
         return Promise.resolve({
+          group: testNode,
           animations: [],
-          scene: testNode,
-          scenes: [],
-          cameras: [],
-          asset: {},
-          userData: {},
-          parser: {} as any,
         });
       });
 
