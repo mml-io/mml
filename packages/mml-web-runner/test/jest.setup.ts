@@ -1,8 +1,14 @@
+import { TextDecoder, TextEncoder } from "util";
+
 import { jest } from "@jest/globals";
 import jestFetchMock from "jest-fetch-mock";
 import ResizeObserverPolyfill from "resize-observer-polyfill";
 
 jestFetchMock.enableMocks();
+
+(window as any).TextEncoder = TextEncoder;
+(window as any).TextDecoder = TextDecoder;
+
 (window as any).URL.createObjectURL = jest.fn();
 
 // Mock the pause method for HTMLMediaElement

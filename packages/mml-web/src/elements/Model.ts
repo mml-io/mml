@@ -1,5 +1,5 @@
+import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
 import * as THREE from "three";
-import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
@@ -10,7 +10,6 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
-import { ModelLoader } from "../utils/ModelLoader";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultModelSrc = "";
@@ -48,8 +47,8 @@ export class Model extends TransformableElement {
   private static modelLoader = new ModelLoader();
 
   protected loadedState: {
-    gltfScene: THREE.Object3D;
-    gtlfSceneBones: Map<string, THREE.Bone>;
+    group: THREE.Object3D;
+    bones: Map<string, THREE.Bone>;
     boundingBox: OrientedBoundingBox;
   } | null = null;
   private animationGroup: THREE.AnimationObjectGroup = new THREE.AnimationObjectGroup();
@@ -64,8 +63,8 @@ export class Model extends TransformableElement {
   private currentAnimationClip: THREE.AnimationClip | null = null;
   private currentAnimationAction: THREE.AnimationAction | null = null;
   private collideableHelper = new CollideableHelper(this);
-  private latestAnimPromise: Promise<GLTF> | null = null;
-  private latestSrcModelPromise: Promise<GLTF> | null = null;
+  private latestAnimPromise: Promise<ModelLoadResult> | null = null;
+  private latestSrcModelPromise: Promise<ModelLoadResult> | null = null;
   private registeredParentAttachment: Model | null = null;
   private srcLoadingInstanceManager = new LoadingInstanceManager(
     `${(this.constructor as typeof Model).tagName}.src`,
@@ -88,7 +87,7 @@ export class Model extends TransformableElement {
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultModelCastShadows);
       if (instance.loadedState) {
-        instance.loadedState.gltfScene.traverse((node) => {
+        instance.loadedState.group.traverse((node) => {
           if ((node as THREE.Mesh).isMesh) {
             node.castShadow = instance.props.castShadows;
           }
@@ -130,7 +129,7 @@ export class Model extends TransformableElement {
     // Add the socketed children back to the parent
     if (this.loadedState) {
       this.socketChildrenByBone.forEach((children, boneName) => {
-        const bone = this.loadedState!.gtlfSceneBones.get(boneName);
+        const bone = this.loadedState!.bones.get(boneName);
         children.forEach((child) => {
           if (bone) {
             bone.add(child.getContainer());
@@ -151,7 +150,7 @@ export class Model extends TransformableElement {
     children.add(child);
 
     if (this.loadedState) {
-      const bone = this.loadedState.gtlfSceneBones.get(socketName);
+      const bone = this.loadedState.bones.get(socketName);
       if (bone) {
         bone.add(child.getContainer());
       } else {
@@ -183,7 +182,7 @@ export class Model extends TransformableElement {
     this.attachments.add(attachment);
     // Temporarily remove the sockets from the attachment so that they don't get animated
     attachment.disableSockets();
-    this.animationGroup.add(attachment.loadedState!.gltfScene);
+    this.animationGroup.add(attachment.loadedState!.group);
     // Restore the sockets after adding the attachment to the animation group
     attachment.restoreSockets();
     this.updateAnimation(this.getDocumentTime() || 0, true);
@@ -191,7 +190,7 @@ export class Model extends TransformableElement {
 
   public unregisterAttachment(attachment: Model) {
     this.attachments.delete(attachment);
-    this.animationGroup.remove(attachment.loadedState!.gltfScene);
+    this.animationGroup.remove(attachment.loadedState!.group);
   }
 
   static get observedAttributes(): Array<string> {
@@ -225,8 +224,8 @@ export class Model extends TransformableElement {
     this.props.src = (newValue || "").trim();
     if (this.loadedState !== null) {
       this.collideableHelper.removeColliders();
-      this.loadedState.gltfScene.removeFromParent();
-      Model.disposeOfGroup(this.loadedState.gltfScene);
+      this.loadedState.group.removeFromParent();
+      Model.disposeOfGroup(this.loadedState.group);
       this.loadedState = null;
       if (this.registeredParentAttachment) {
         this.registeredParentAttachment.unregisterAttachment(this);
@@ -262,26 +261,26 @@ export class Model extends TransformableElement {
       .then((result) => {
         if (this.latestSrcModelPromise !== srcModelPromise || !this.isConnected) {
           // If we've loaded a different model since, or we're no longer connected, dispose of this one
-          Model.disposeOfGroup(result.scene);
+          Model.disposeOfGroup(result.group);
           return;
         }
-        result.scene.traverse((child) => {
+        result.group.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             child.castShadow = this.props.castShadows;
             child.receiveShadow = true;
           }
         });
         this.latestSrcModelPromise = null;
-        const gltfScene = result.scene;
-        const gtlfSceneBones = new Map<string, THREE.Bone>();
-        gltfScene.traverse((object) => {
+        const group = result.group;
+        const bones = new Map<string, THREE.Bone>();
+        group.traverse((object) => {
           if (object instanceof THREE.Bone) {
-            gtlfSceneBones.set(object.name, object);
+            bones.set(object.name, object);
           }
         });
         const boundingBox = new THREE.Box3();
-        gltfScene.updateWorldMatrix(true, true);
-        boundingBox.expandByObject(gltfScene);
+        group.updateWorldMatrix(true, true);
+        boundingBox.expandByObject(group);
 
         const orientedBoundingBox = OrientedBoundingBox.fromSizeMatrixWorldProviderAndCenter(
           boundingBox.getSize(new THREE.Vector3(0, 0, 0)),
@@ -289,13 +288,13 @@ export class Model extends TransformableElement {
           boundingBox.getCenter(new THREE.Vector3(0, 0, 0)),
         );
         this.loadedState = {
-          gltfScene,
-          gtlfSceneBones,
+          group,
+          bones,
           boundingBox: orientedBoundingBox,
         };
-        this.container.add(gltfScene);
+        this.container.add(group);
         this.applyBounds();
-        this.collideableHelper.updateCollider(gltfScene);
+        this.collideableHelper.updateCollider(group);
 
         const parent = this.parentElement;
         if (parent instanceof Model) {
@@ -331,11 +330,11 @@ export class Model extends TransformableElement {
     this.resetAnimationMixer();
     if (this.loadedState) {
       this.disableSockets();
-      this.animationGroup.add(this.loadedState.gltfScene);
+      this.animationGroup.add(this.loadedState.group);
     }
     for (const animationAttachment of this.attachments) {
       animationAttachment.disableSockets();
-      this.animationGroup.add(animationAttachment.loadedState!.gltfScene);
+      this.animationGroup.add(animationAttachment.loadedState!.group);
     }
     const action = this.animationMixer.clipAction(this.currentAnimationClip);
     action.play();
@@ -432,8 +431,8 @@ export class Model extends TransformableElement {
       this.registeredParentAttachment = null;
     }
     if (this.loadedState) {
-      this.loadedState.gltfScene.removeFromParent();
-      Model.disposeOfGroup(this.loadedState.gltfScene);
+      this.loadedState.group.removeFromParent();
+      Model.disposeOfGroup(this.loadedState.group);
       this.loadedState = null;
     }
     this.srcLoadingInstanceManager.dispose();
@@ -526,7 +525,7 @@ export class Model extends TransformableElement {
   }
 
   public getModel(): THREE.Object3D | null {
-    return this.loadedState?.gltfScene || null;
+    return this.loadedState?.group || null;
   }
 
   public getCurrentAnimation(): THREE.AnimationClip | null {
@@ -536,8 +535,8 @@ export class Model extends TransformableElement {
   async asyncLoadSourceAsset(
     url: string,
     onProgress: (loaded: number, total: number) => void,
-  ): Promise<GLTF> {
-    return await Model.modelLoader.loadGltf(url, onProgress);
+  ): Promise<ModelLoadResult> {
+    return await Model.modelLoader.load(url, onProgress);
   }
 
   private static disposeOfGroup(group: THREE.Object3D) {

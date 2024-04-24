@@ -14,7 +14,7 @@ export class Character extends Model {
   }
 
   public getCharacter(): THREE.Object3D | null {
-    return this.loadedState?.gltfScene || null;
+    return this.loadedState?.group || null;
   }
 
   public parentTransformed(): void {
