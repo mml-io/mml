@@ -7,7 +7,7 @@
     "jsx": "react",
     "lib": ["es2020"],
     "allowJs": true,
-    "types": ["node", "jest", "./jest-setup.d.ts"],
+    "types": ["node", "jest", "./jest-setup"],
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",

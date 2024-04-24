@@ -1,3 +1,5 @@
+import * as THREE from "three";
+
 import { MElement } from "./elements";
 
 export type CollisionData = {

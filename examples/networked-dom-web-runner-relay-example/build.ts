@@ -2,8 +2,9 @@ import * as path from "path";
 import * as process from "process";
 
 import * as esbuild from "esbuild";
-const cssModulesPlugin = require("esbuild-css-modules-plugin");
 import { copy } from "esbuild-plugin-copy";
+
+const cssModulesPlugin = require("esbuild-css-modules-plugin");
 
 const buildMode = "--build";
 const serveMode = "--serve";
@@ -24,6 +25,7 @@ const buildOptions: esbuild.BuildOptions = {
   bundle: true,
   external: ["node:crypto"],
   write: true,
+  metafile: true,
   publicPath: "/",
   sourcemap: true,
   outdir: "./build/",

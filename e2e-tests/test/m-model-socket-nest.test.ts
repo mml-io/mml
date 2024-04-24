@@ -32,11 +32,11 @@ describe("m-element-socket", () => {
     await page.waitForFunction(
       () => {
         const firstModel = document.getElementById("sub-character");
-        const firstModelMesh = (firstModel as any).getModel();
-        return firstModelMesh !== null;
+        return firstModel && (firstModel as any).getModel() !== null;
       },
       { timeout: 15000, polling: 100 },
     );
+
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "m-cube");
@@ -45,8 +45,7 @@ describe("m-element-socket", () => {
     await page.waitForFunction(
       () => {
         const secondModel = document.getElementById("sub-sub-character");
-        const secondModelMesh = (secondModel as any).getModel();
-        return secondModelMesh !== null;
+        return secondModel && (secondModel as any).getModel() !== null;
       },
       { timeout: 15000, polling: 100 },
     );

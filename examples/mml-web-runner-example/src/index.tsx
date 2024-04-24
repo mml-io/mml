@@ -8,7 +8,7 @@ import {
 
 const startingContent = `
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
-<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
 <m-cube y="2" id="my-cube" color="red"></m-cube>
 <m-cube x="2" y="2" color="orange" visible-to="1"></m-cube>
 

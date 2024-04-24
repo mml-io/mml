@@ -26,7 +26,7 @@
   "devDependencies": {
     "@mml-io/networked-dom-web-runner-iframe": "file:../networked-dom-web-runner-iframe",
     "jest-canvas-mock": "2.5.2",
-    "jest-environment-jsdom": "29.6.2",
+    "jest-environment-jsdom": "29.7.0",
     "jest-expect-message": "1.1.3"
   }
 }

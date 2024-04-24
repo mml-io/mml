@@ -24,7 +24,7 @@
     "@mml-io/observable-dom-common": "^0.13.0"
   },
   "devDependencies": {
-    "jest-environment-jsdom": "29.6.2",
+    "jest-environment-jsdom": "29.7.0",
     "jest-expect-message": "1.1.3"
   }
 }

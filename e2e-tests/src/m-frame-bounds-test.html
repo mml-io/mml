@@ -1,5 +1,5 @@
 <m-plane id="my-plane" color="gray" width="15" height="15" rx="-90" y="0.1"></m-plane>
-<m-light type="spotlight" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
 
 <m-frame
     id="my-frame"
@@ -31,7 +31,7 @@
     <m-model debug="true" src="/assets/Head.glb"></m-model>
   </m-character>
 
-  <m-video ry="30" y="-3.5" sx="2" debug="true" src="/assets/timestamp-video.ogg">
+  <m-video ry="30" y="-3.5" sx="2" debug="true" src="/assets/timestamp-video.mp4">
     <m-attr-anim attr="x" start="-2" end="-3.5" duration="5000" ping-pong="true" ping-pong-delay="1525"></m-attr-anim>
   </m-video>
 
@@ -39,7 +39,7 @@
     <m-attr-anim attr="x" start="-2" end="-3.5" duration="5000" ping-pong="true" ping-pong-delay="1525"></m-attr-anim>
   </m-image>
 
-  <m-light type="point" ry="30" y="0.5" sx="2" debug="true">
+  <m-light type="point" intensity="900" ry="30" y="0.5" sx="2" debug="true">
     <m-attr-anim attr="x" start="-2" end="-5" duration="5000" ping-pong="true" ping-pong-delay="1001"></m-attr-anim>
   </m-light>
 </m-frame>

@@ -58,7 +58,7 @@ describe("m-character", () => {
           scenes: [],
           cameras: [],
           asset: {},
-          userData: null,
+          userData: {},
           parser: {} as any,
         });
       });

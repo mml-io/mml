@@ -5,3 +5,4 @@ build/
 ./lerna-debug.log
 .vscode/
 coverage/
+.nx/

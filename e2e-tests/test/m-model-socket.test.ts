@@ -25,14 +25,15 @@ describe("m-element-socket", () => {
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "m-cube");
+
+    await page.waitForSelector("m-cube[socket='hand_l']");
+
     // socketed m-cube position should match the left hand bone position
     let [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
       const worldPos = cube.getContainer().position.clone();
-      const xPos = cube.getContainer().getWorldPosition(worldPos).x;
-      const yPos = cube.getContainer().getWorldPosition(worldPos).y;
-      const zPos = cube.getContainer().getWorldPosition(worldPos).z;
-      return [xPos, yPos, zPos];
+      const { x, y, z } = cube.getContainer().getWorldPosition(worldPos);
+      return [x, y, z];
     });
     await takeAndCompareScreenshot(page);
     expect(Math.abs(xPos - 0.814)).toBeLessThan(0.01);
@@ -40,14 +41,15 @@ describe("m-element-socket", () => {
     expect(Math.abs(zPos - 0.307)).toBeLessThan(0.01);
 
     await clickElement(page, "m-cube");
+
+    await page.waitForSelector("m-cube[socket='hand_r']");
+
     // socketed m-cube position should match the right hand bone position
     [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
       const worldPos = cube.getContainer().position.clone();
-      const xPos = cube.getContainer().getWorldPosition(worldPos).x;
-      const yPos = cube.getContainer().getWorldPosition(worldPos).y;
-      const zPos = cube.getContainer().getWorldPosition(worldPos).z;
-      return [xPos, yPos, zPos];
+      const { x, y, z } = cube.getContainer().getWorldPosition(worldPos);
+      return [x, y, z];
     });
     await takeAndCompareScreenshot(page);
     expect(Math.abs(xPos - -1.836)).toBeLessThan(0.01);
@@ -55,14 +57,15 @@ describe("m-element-socket", () => {
     expect(Math.abs(zPos - -0.331)).toBeLessThan(0.01);
 
     await clickElement(page, "m-cube");
+
+    await page.waitForSelector("m-cube[socket='']");
+
     // socketed m-cube position should match its parent origin (0, 0, 0)
     [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
       const worldPos = cube.getContainer().position.clone();
-      const xPos = cube.getContainer().getWorldPosition(worldPos).x;
-      const yPos = cube.getContainer().getWorldPosition(worldPos).y;
-      const zPos = cube.getContainer().getWorldPosition(worldPos).z;
-      return [xPos, yPos, zPos];
+      const { x, y, z } = cube.getContainer().getWorldPosition(worldPos);
+      return [x, y, z];
     });
     await takeAndCompareScreenshot(page);
     expect(xPos).toBeLessThan(0.01);
@@ -70,14 +73,15 @@ describe("m-element-socket", () => {
     expect(zPos).toBeLessThan(0.01);
 
     await clickElement(page, "m-cube");
+
+    await page.waitForSelector("m-cube[socket='head']");
+
     // socketed m-cube position should match the head bone position
     [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
       const worldPos = cube.getContainer().position.clone();
-      const xPos = cube.getContainer().getWorldPosition(worldPos).x;
-      const yPos = cube.getContainer().getWorldPosition(worldPos).y;
-      const zPos = cube.getContainer().getWorldPosition(worldPos).z;
-      return [xPos, yPos, zPos];
+      const { x, y, z } = cube.getContainer().getWorldPosition(worldPos);
+      return [x, y, z];
     });
     expect(xPos).toBeLessThan(0.01);
     expect(Math.abs(yPos - 7.978)).toBeLessThan(0.01);

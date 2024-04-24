@@ -55,7 +55,7 @@ describe("m-model", () => {
       scenes: [],
       cameras: [],
       asset: {},
-      userData: null,
+      userData: {},
       parser: {} as any,
     });
 
@@ -89,7 +89,7 @@ describe("m-model", () => {
       scenes: [],
       cameras: [],
       asset: {},
-      userData: null,
+      userData: {},
       parser: {} as any,
     });
 
@@ -133,7 +133,7 @@ describe("m-model", () => {
       scenes: [],
       cameras: [],
       asset: {},
-      userData: null,
+      userData: {},
       parser: {} as any,
     });
 

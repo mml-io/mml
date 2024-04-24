@@ -17,6 +17,6 @@
     "@mml-io/networked-dom-document": "^0.13.0",
     "@mml-io/observable-dom": "^0.13.0",
     "@mml-io/observable-dom-common": "^0.13.0",
-    "assert": "2.0.0"
+    "assert": "2.1.0"
   }
 }
