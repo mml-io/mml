@@ -20,7 +20,8 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web": "^0.14.0"
+    "@mml-io/networked-dom-web": "^0.14.0",
+    "@mml-io/model-loader": "^0.14.0"
   },
   "peerDependencies": {
     "three": "*"
