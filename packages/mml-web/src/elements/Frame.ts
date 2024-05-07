@@ -36,9 +36,7 @@ export class Frame extends TransformableElement {
       if (instance.frameContentsInstance) {
         instance.disposeInstance();
       }
-      if (instance.props.src && instance.isConnected) {
-        instance.createFrameContentsInstance(instance.props.src);
-      }
+      instance.syncLoadState();
     },
     "load-range": (instance, newValue) => {
       instance.props.loadRange = parseFloatAttribute(newValue, null);
