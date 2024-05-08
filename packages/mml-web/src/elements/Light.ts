@@ -27,6 +27,7 @@ const defaultLightAngle = 45;
 const defaultLightEnabled = true;
 const defaultLightDebug = false;
 const defaultLightDistance = 0;
+const defaultLightCastShadow = true;
 const defaultLightType = lightTypes.spotlight;
 
 export class Light extends TransformableElement {
@@ -62,6 +63,7 @@ export class Light extends TransformableElement {
     enabled: defaultLightEnabled,
     angleDeg: defaultLightAngle,
     distance: defaultLightDistance,
+    castShadow: defaultLightCastShadow,
     debug: defaultLightDebug,
     type: defaultLightType as lightTypes,
   };
@@ -101,6 +103,10 @@ export class Light extends TransformableElement {
       } else if (instance.light instanceof THREE.PointLight) {
         (instance.light as THREE.PointLight).distance = instance.props.distance;
       }
+    },
+    "cast-shadow": (instance, newValue) => {
+      instance.props.castShadow = parseBoolAttribute(newValue, defaultLightCastShadow);
+      instance.light.castShadow = instance.props.castShadow;
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, defaultLightDebug);
@@ -212,7 +218,7 @@ export class Light extends TransformableElement {
     }
 
     if (this.light.shadow) {
-      this.light.castShadow = true;
+      this.light.castShadow = this.props.castShadow;
       this.light.shadow.mapSize.width = 512;
       this.light.shadow.mapSize.height = 512;
       if (this.light.shadow.camera instanceof THREE.PerspectiveCamera) {
