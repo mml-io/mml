@@ -1,7 +1,15 @@
 import vm from "vm";
 
 import { LogMessage, RemoteEvent } from "@mml-io/observable-dom-common";
-import { AbortablePromise, DOMWindow, JSDOM, ResourceLoader, VirtualConsole } from "jsdom";
+import {
+  AbortablePromise,
+  DOMWindow,
+  FetchOptions,
+  JSDOM,
+  ResourceLoader,
+  ResourceLoaderConstructorOptions,
+  VirtualConsole,
+} from "jsdom";
 import * as nodeFetch from "node-fetch";
 import nodeFetchFn from "node-fetch";
 
@@ -25,6 +33,34 @@ class RejectionResourceLoader extends ResourceLoader {
     return null;
   }
 }
+
+export type ResourceURL = string | RegExp;
+
+// This allows JSDOM to load resources if their URLs are specified in the urls array.
+class AllowListResourceLoader extends ResourceLoader {
+  private urls: ResourceURL[];
+
+  constructor(urls: ResourceURL[], opts?: ResourceLoaderConstructorOptions) {
+    super(opts);
+    this.urls = urls;
+  }
+  public fetch(url: string, opts?: FetchOptions): AbortablePromise<Buffer> | null {
+    const allow = this.urls.some((allowedURL) => {
+      return typeof allowedURL === "string" ? allowedURL === url : allowedURL.test(url);
+    });
+
+    if (allow) {
+      return super.fetch(url, opts ?? {});
+    }
+
+    console.error("AllowListResourceLoader.fetch: resource not allowed", url);
+    return null;
+  }
+}
+
+export type JSDOMRunnerOptions = {
+  allowResourceLoading: boolean | ResourceURL[];
+};
 
 /**
  * The JSDOMRunner class is used to run HTML Documents using JSDOM and emit DOMRunnerMessages for document events such
@@ -50,13 +86,20 @@ export class JSDOMRunner implements DOMRunnerInterface {
     htmlContents: string,
     params: object,
     callback: (domRunnerMessage: DOMRunnerMessage) => void,
+    { allowResourceLoading }: JSDOMRunnerOptions = { allowResourceLoading: false },
   ) {
     this.htmlPath = htmlPath;
     this.callback = callback;
 
+    const resources = Array.isArray(allowResourceLoading)
+      ? new AllowListResourceLoader(allowResourceLoading)
+      : allowResourceLoading
+        ? "usable"
+        : new RejectionResourceLoader();
+
     this.jsdom = new JSDOM(htmlContents, {
       runScripts: "dangerously",
-      resources: new RejectionResourceLoader(),
+      resources,
       url: this.htmlPath,
       virtualConsole: this.createVirtualConsole(),
       beforeParse: (window) => {
