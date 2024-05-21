@@ -292,7 +292,7 @@ export class AnimatedAttributeHelper {
 
       if (stale !== null) {
         updateIfChangedValue(state, stale.value);
-        break;
+        continue;
       }
 
       if (state.lerpsInOrder.length > 0) {
