@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { IMMLScene } from "../MMLScene";
@@ -87,22 +87,14 @@ export class ChatProbe extends TransformableElement {
   }
 
   public addSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.chatProbeAnimatedAttributeHelper.addAnimation(child, attr);
-      }
-    }
+    this.chatProbeAnimatedAttributeHelper.addSideEffectChild(child);
+
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.chatProbeAnimatedAttributeHelper.removeAnimation(child, attr);
-      }
-    }
+    this.chatProbeAnimatedAttributeHelper.removeSideEffectChild(child);
+
     super.removeSideEffectChild(child);
   }
 

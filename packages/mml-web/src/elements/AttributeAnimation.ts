@@ -109,7 +109,7 @@ export class AttributeAnimation extends MElement {
       instance.props.pauseTime = parseFloatAttribute(newValue, defaultPauseTime);
     },
     duration: (instance, newValue) => {
-      instance.props.animDuration = parseFloatAttribute(newValue, defaultAnimDuration);
+      instance.props.animDuration = Math.max(0, parseFloatAttribute(newValue, defaultAnimDuration));
     },
   });
 

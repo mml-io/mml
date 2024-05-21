@@ -25,6 +25,13 @@ export class MMLDocumentTimeManager {
     return (document.timeline.currentTime as number)! - this.relativeDocumentStartTime;
   }
 
+  public getWindowTime(): number {
+    if (this.overridenDocumentTime !== null) {
+      return this.overridenDocumentTime;
+    }
+    return document.timeline.currentTime as number;
+  }
+
   public addDocumentTimeListenerCallback(cb: (time: number) => void) {
     this.documentTimeListeners.add(cb);
   }

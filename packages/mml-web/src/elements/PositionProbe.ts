@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -101,22 +101,14 @@ export class PositionProbe extends TransformableElement {
   }
 
   public addSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.positionProbeAnimatedAttributeHelper.addAnimation(child, attr);
-      }
-    }
+    this.positionProbeAnimatedAttributeHelper.addSideEffectChild(child);
+
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.positionProbeAnimatedAttributeHelper.removeAnimation(child, attr);
-      }
-    }
+    this.positionProbeAnimatedAttributeHelper.removeSideEffectChild(child);
+
     super.removeSideEffectChild(child);
   }
 

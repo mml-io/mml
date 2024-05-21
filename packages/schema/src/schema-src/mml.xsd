@@ -363,6 +363,7 @@
       <xs:element ref="m-chat-probe"/>
       <xs:element ref="m-interaction"/>
       <xs:element ref="m-attr-anim"/>
+      <xs:element ref="m-attr-lerp"/>
       <xs:element ref="m-frame"/>
       <xs:element ref="m-cylinder"/>
       <xs:element ref="m-group"/>
@@ -1407,6 +1408,76 @@
                 If `ping-pong` is `true` then the `ping-pong-delay` attribute specifies the time in milliseconds that the animation should pause at the `start` and `end` values. This time is part of the overall `duration` (it does not extend the time taken), and as the `ping-pong-delay` is the time held at both `start` and `end`, the total time where the value is held is double the value of `ping-pong-delay`. Default value is 0.
               </xs:documentation>
             </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-attr-lerp">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-attr-lerp` element is used to describe time-transitioned changes to element attributes.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="attr" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The attribute(s) of the parent element that this lerp will animate. Multiple attributes can be specified by separating them with a comma. A value of "all" applies this lerp to all attributes.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="duration" type="xs:integer">
+            <xs:annotation>
+              <xs:documentation>
+                The duration of the lerp in milliseconds. This is the time taken to go from the previous value of the attribute to the latest value. Default value is 1000 (1 second).
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="easing">
+            <xs:annotation>
+              <xs:documentation>
+                The name of the easing function to apply to the lerp ratio to achieve effects such as smooth animations. If the attribute is not specified or is empty the lerp will be linear.
+              </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="easeInQuad"/>
+                <xs:enumeration value="easeOutQuad"/>
+                <xs:enumeration value="easeInOutQuad"/>
+                <xs:enumeration value="easeInCubic"/>
+                <xs:enumeration value="easeOutCubic"/>
+                <xs:enumeration value="easeInOutCubic"/>
+                <xs:enumeration value="easeInQuart"/>
+                <xs:enumeration value="easeOutQuart"/>
+                <xs:enumeration value="easeInOutQuart"/>
+                <xs:enumeration value="easeInQuint"/>
+                <xs:enumeration value="easeOutQuint"/>
+                <xs:enumeration value="easeInOutQuint"/>
+                <xs:enumeration value="easeInSine"/>
+                <xs:enumeration value="easeOutSine"/>
+                <xs:enumeration value="easeInOutSine"/>
+                <xs:enumeration value="easeInExpo"/>
+                <xs:enumeration value="easeOutExpo"/>
+                <xs:enumeration value="easeInOutExpo"/>
+                <xs:enumeration value="easeInCirc"/>
+                <xs:enumeration value="easeOutCirc"/>
+                <xs:enumeration value="easeInOutCirc"/>
+                <xs:enumeration value="easeInElastic"/>
+                <xs:enumeration value="easeOutElastic"/>
+                <xs:enumeration value="easeInOutElastic"/>
+                <xs:enumeration value="easeInBack"/>
+                <xs:enumeration value="easeOutBack"/>
+                <xs:enumeration value="easeInOutBack"/>
+                <xs:enumeration value="easeInBounce"/>
+                <xs:enumeration value="easeOutBounce"/>
+                <xs:enumeration value="easeInOutBounce"/>
+              </xs:restriction>
+            </xs:simpleType>
           </xs:attribute>
         </xs:extension>
       </xs:complexContent>

@@ -1,0 +1,76 @@
+<m-plane color="yellow" width="15" height="15" rx="-90"></m-plane>
+<m-light type="point" intensity="900" x="10" y="10" z="10"></m-light>
+
+<m-label width="5" y="1" rx="-45" z="3" content="This test tests snapshots of the state at intervals of document time. The document time is overridden in e2e tests"></m-label>
+
+<m-group id="timeline" y="0.25">
+  <m-cube width="15" height="0.25" depth="0.1" color="black"></m-cube>
+  <m-cube width="1" x="-5.6" y="0.25" height="0.25" depth="0.1" z="0.1" color="green"></m-cube>
+  <m-cube width="1" height="0.25" depth="0.1" z="0.1" color="red">
+    <m-attr-anim attr="x" start="-7" end="7" loop="true" duration="10000"></m-attr-anim>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="2">
+  <m-label content="independent attributes" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Two independent attributes -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube x="-4.25" depth="0.1" height="0.5" color="white" id="two-independent-attributes" onclick="this.setAttribute('x','4.25'); this.setAttribute('height','0.1');">
+    <m-attr-lerp attr="x" duration="4000"></m-attr-lerp>
+    <m-attr-lerp attr="height" duration="2000"></m-attr-lerp>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="3.75">
+  <m-label content="combined attributes - shadowed" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Combined attributes with an unused later sibling that is overridden -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube x="-4.25" depth="0.1" height="0.5" color="white" id="combined-attributes-shadowed" onclick="this.setAttribute('x','4.25'); this.setAttribute('height','0.1');">
+    <m-attr-lerp attr="x,height" duration="4000"></m-attr-lerp>
+    <m-attr-lerp attr="x" duration="2000"></m-attr-lerp>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="5.5">
+  <m-label content="combined attributes - overridden" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Combined attributes, but with an earlier sibling that overrides the duration -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube x="-4.25" depth="0.1" height="0.5" color="white" id="combined-attributes-overridden" onclick="this.setAttribute('x','4.25'); this.setAttribute('height','0.1');">
+    <m-attr-lerp attr="x" duration="2000"></m-attr-lerp>
+    <m-attr-lerp attr="x,height" duration="4000"></m-attr-lerp>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="7.25">
+  <m-label content="all attributes" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Explicitly specifying "all" attributes -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube x="-4.25" depth="0.1" height="0.5" color="white" id="all-attributes" onclick="this.setAttribute('x','4.25'); this.setAttribute('height','0.1');">
+    <m-attr-lerp attr="all" duration="2000"></m-attr-lerp>
+  </m-cube>
+</m-group>
+
+<m-group x="0" y="9">
+  <m-label content="all attributes (default)" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Default behaviour of not specifying "attr" is to have all attributes lerped -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube x="-4.25" depth="0.1" height="0.5" color="white" id="all-attributes-default" onclick="this.setAttribute('x','4.25'); this.setAttribute('height','0.1');">
+    <m-attr-lerp duration="2000"></m-attr-lerp>
+  </m-cube>
+</m-group>
+
+
+<m-group x="0" y="10.75">
+  <m-label content="no attributes" width="5" y="0.75" alignment="center" height="0.5"></m-label>
+  <!-- Explicitly setting "attr" to empty (no lerping) -->
+  <m-cube width="5" x="-2.5" height="1" z="-0.1" depth="0.1" color="red"></m-cube>
+  <m-cube width="5" x="2.5" height="1" z="-0.1" depth="0.1" color="green"></m-cube>
+  <m-cube x="-4.25" depth="0.1" height="0.5" color="white" id="no-attributes" onclick="this.setAttribute('x','4.25'); this.setAttribute('height','0.1');">
+    <m-attr-lerp attr="" duration="2000"></m-attr-lerp>
+  </m-cube>
+</m-group>
