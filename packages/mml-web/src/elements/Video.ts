@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -168,22 +168,14 @@ export class Video extends TransformableElement {
   }
 
   public addSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.videoAnimatedAttributeHelper.addAnimation(child, attr);
-      }
-    }
+    this.videoAnimatedAttributeHelper.addSideEffectChild(child);
+
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.videoAnimatedAttributeHelper.removeAnimation(child, attr);
-      }
-    }
+    this.videoAnimatedAttributeHelper.removeSideEffectChild(child);
+
     super.removeSideEffectChild(child);
   }
 

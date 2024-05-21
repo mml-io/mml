@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { PositionalAudioHelper } from "three/addons/helpers/PositionalAudioHelper.js";
 
-import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -184,22 +184,12 @@ export class Audio extends TransformableElement {
   }
 
   public addSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.audioAnimatedAttributeHelper.addAnimation(child, attr);
-      }
-    }
+    this.audioAnimatedAttributeHelper.addSideEffectChild(child);
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.audioAnimatedAttributeHelper.removeAnimation(child, attr);
-      }
-    }
+    this.audioAnimatedAttributeHelper.removeSideEffectChild(child);
     super.removeSideEffectChild(child);
   }
 

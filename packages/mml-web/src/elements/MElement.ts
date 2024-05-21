@@ -112,12 +112,20 @@ export abstract class MElement extends HTMLElement {
     return window.location;
   }
 
-  protected getDocumentTime(): number | null {
+  public getDocumentTime(): number | null {
     const documentTimeContextProvider = this.getDocumentTimeManager();
     if (documentTimeContextProvider) {
       return documentTimeContextProvider.getDocumentTime();
     }
     return null;
+  }
+
+  public getWindowTime(): number {
+    const documentTimeContextProvider = this.getDocumentTimeManager();
+    if (documentTimeContextProvider) {
+      return documentTimeContextProvider.getWindowTime();
+    }
+    return document.timeline.currentTime!;
   }
 
   protected getLoadingProgressManager(): LoadingProgressManager | null {

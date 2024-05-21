@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { IMMLScene } from "../MMLScene";
@@ -96,22 +96,14 @@ export class Interaction extends TransformableElement {
   }
 
   public addSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.interactionAnimatedAttributeHelper.addAnimation(child, attr);
-      }
-    }
+    this.interactionAnimatedAttributeHelper.addSideEffectChild(child);
+
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    if (child instanceof AttributeAnimation) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.interactionAnimatedAttributeHelper.removeAnimation(child, attr);
-      }
-    }
+    this.interactionAnimatedAttributeHelper.removeSideEffectChild(child);
+
     super.removeSideEffectChild(child);
   }
 
