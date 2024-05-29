@@ -19,7 +19,7 @@
     "express": "4.19.2",
     "express-ws": "5.0.2",
     "jest-image-snapshot": "^6.4.0",
-    "networked-dom-server": "^0.14.0",
+    "networked-dom-server": "^0.15.0",
     "puppeteer": "^22.6.5",
     "wait-on": "^7.2.0",
     "ws": "8.16.0"
@@ -30,5 +30,5 @@
     "@types/express-ws": "3.0.4",
     "@types/puppeteer": "^7.0.4"
   },
-  "version": "0.14.0"
+  "version": "0.15.0"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-document",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "publishConfig": {
     "access": "public"
   },
@@ -19,8 +19,8 @@
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
-    "@mml-io/networked-dom-protocol": "^0.14.0",
-    "@mml-io/observable-dom-common": "^0.14.0",
+    "@mml-io/networked-dom-protocol": "^0.15.0",
+    "@mml-io/observable-dom-common": "^0.15.0",
     "rfc6902": "5.1.1"
   }
 }

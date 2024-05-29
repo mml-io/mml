@@ -1,6 +1,6 @@
 {
   "name": "mml-web-runner-example",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "private": true,
   "scripts": {
     "type-check": "tsc --noEmit",
@@ -11,7 +11,7 @@
     "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "mml-web": "^0.14.0",
-    "mml-web-runner": "^0.14.0"
+    "mml-web": "^0.15.0",
+    "mml-web-runner": "^0.15.0"
   }
 }
