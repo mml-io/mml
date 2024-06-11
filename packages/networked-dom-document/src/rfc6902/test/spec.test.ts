@@ -1,4 +1,4 @@
-import * as yaml from "js-yaml";
+import { load as yamlLoad } from "js-yaml";
 
 import SpecYAML from "./spec.yaml";
 import { Operation } from "../diff";
@@ -15,7 +15,7 @@ interface Spec {
   diffable: boolean;
 }
 
-const spec_data = yaml.load(SpecYAML) as Spec[];
+const spec_data = yamlLoad(SpecYAML) as Spec[];
 
 describe("spec", () => {
   test("JSON Pointer - rfc-examples", () => {
