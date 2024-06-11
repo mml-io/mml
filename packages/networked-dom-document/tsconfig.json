@@ -12,6 +12,7 @@
       "jest"
     ],
     "strictNullChecks": true,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "downlevelIteration": true,
