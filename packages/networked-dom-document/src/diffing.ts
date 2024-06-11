@@ -9,9 +9,9 @@ import {
   TextNodeDescription,
 } from "@mml-io/networked-dom-protocol";
 import { StaticVirtualDOMElement } from "@mml-io/observable-dom-common";
-import * as rfc6902 from "rfc6902";
 
 import { NodeMapping, StaticVirtualDOMMutationRecord, VirtualDOMDiffStruct } from "./common";
+import * as rfc6902 from "./rfc6902";
 
 export const visibleToAttrName = "visible-to";
 export const hiddenFromAttrName = "hidden-from";

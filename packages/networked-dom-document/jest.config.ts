@@ -18,6 +18,8 @@ const jestConfig: JestConfigWithTsJest = {
         useESM: true,
       },
     ],
+    // Support loading yaml files as text
+    ".yaml$": "<rootDir>/test/textTransformer.cjs",
   },
 };
 
