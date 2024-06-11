@@ -335,17 +335,14 @@ export class Audio extends TransformableElement {
       }
     }
 
-    const loopDurationShorterThanDuration =
-      loopDurationSeconds && loopDurationSeconds < audioDuration;
-    let playbackLength = audioDuration;
-    if (loopDurationShorterThanDuration) {
-      playbackLength = loopDurationSeconds!;
-    }
+    const loopDurationLongerThanAudioDuration =
+      loopDurationSeconds && loopDurationSeconds > audioDuration;
+    const playbackLength = loopDurationSeconds ? loopDurationSeconds : audioDuration;
 
     if (currentSource) {
       if (
         loopDurationSeconds !== null &&
-        !loopDurationShorterThanDuration &&
+        loopDurationLongerThanAudioDuration &&
         (!loadedAudio.paddedBuffer || loadedAudio.paddedBuffer.totalDuration < loopDurationSeconds)
       ) {
         /*
@@ -421,7 +418,7 @@ export class Audio extends TransformableElement {
       const currentSourceNode = this.positionalAudio.context.createBufferSource();
 
       let buffer = audioBuffer;
-      if (loopDurationSeconds && !loopDurationShorterThanDuration) {
+      if (loopDurationSeconds && loopDurationLongerThanAudioDuration) {
         // The loop duration requires longer audio than the original audio - pad it with silence
         if (
           loadedAudio.paddedBuffer &&
