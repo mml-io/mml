@@ -21,9 +21,5 @@
   "dependencies": {
     "@mml-io/networked-dom-protocol": "^0.15.0",
     "@mml-io/observable-dom-common": "^0.15.0"
-  },
-  "devDependencies": {
-    "js-yaml": "4.0.0",
-    "@types/js-yaml": "4.0.0"
   }
 }

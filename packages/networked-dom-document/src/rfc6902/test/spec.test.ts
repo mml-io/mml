@@ -1,6 +1,4 @@
-import { load as yamlLoad } from "js-yaml";
-
-import SpecYAML from "./spec.yaml";
+import specJSON from "./spec.json";
 import { Operation } from "../diff";
 import { applyPatch, createPatch } from "../index";
 import { Pointer } from "../pointer";
@@ -15,7 +13,7 @@ interface Spec {
   diffable: boolean;
 }
 
-const spec_data = yamlLoad(SpecYAML) as Spec[];
+const specData: Spec[] = specJSON as Spec[];
 
 describe("spec", () => {
   test("JSON Pointer - rfc-examples", () => {
@@ -95,17 +93,17 @@ describe("spec", () => {
   });
 
   test("Specification format", () => {
-    expect(spec_data.length).toEqual(19); // should have 19 items
+    expect(specData.length).toEqual(19); // should have 19 items
     // use sorted values and sort() to emulate set equality
     const props = ["diffable", "input", "name", "output", "patch", "results"];
-    spec_data.forEach((spec) => {
+    specData.forEach((spec) => {
       expect(Object.keys(spec).sort()).toEqual(props); // should have items with specific properties
     });
   });
 
   // take the input, apply the patch, and check the actual result against the
   // expected output
-  spec_data.forEach((spec) => {
+  specData.forEach((spec) => {
     test(`patch ${spec.name}`, () => {
       // patch operations are applied to object in-place
       const actual = clone(spec.input);
@@ -119,7 +117,7 @@ describe("spec", () => {
     });
   });
 
-  spec_data
+  specData
     .filter((spec) => spec.diffable)
     .forEach((spec) => {
       test(`diff ${spec.name}`, () => {
