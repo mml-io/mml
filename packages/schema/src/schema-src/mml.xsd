@@ -855,6 +855,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="loop-duration" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The duration in seconds of the audio loop if `loop` is true. Can be shorter or longer than the audio file duration. Durations longer than the audio file will add silence. If not specified, the entire audio file will loop.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="enabled" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
