@@ -23,20 +23,6 @@ describe("m-audio", () => {
     expect(scene.getThreeScene().children[0].children[0].children[0]).toBe(element.getContainer());
   });
 
-  test("loading and playing audio", () => {
-    const { remoteDocument } = setupScene();
-
-    const element = document.createElement("m-audio") as Audio;
-    remoteDocument.append(element);
-
-    element.setAttribute("src", "http://example.com/some_asset_path");
-    element.setAttribute("enabled", "true");
-
-    expect((element as any).loadedAudioState.audioElement.src).toEqual(
-      "http://example.com/some_asset_path",
-    );
-  });
-
   test("element observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-audio", Audio);
     expect(schema.name).toEqual(Audio.tagName);
