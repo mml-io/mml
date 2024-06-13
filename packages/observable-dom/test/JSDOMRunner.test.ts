@@ -1,3 +1,4 @@
+import { DOMToJSON } from "./DOMToJSON";
 import { DOMRunnerMessage, JSDOMRunnerFactory } from "../src";
 
 export function waitUntil(checkFn: () => boolean, message?: string) {
@@ -56,33 +57,42 @@ describe("JSDOMRunner", () => {
         allMessages.push(domRunnerMessage);
         if (domRunnerMessage.loaded) {
           try {
-            expect(domRunner.getDocument().childNodes).toHaveLength(1);
-            expect(domRunner.getDocument().childNodes[0].nodeName).toEqual("HTML");
-            expect(domRunner.getDocument().childNodes[0].childNodes).toHaveLength(2);
-            expect(domRunner.getDocument().childNodes[0].childNodes[0].nodeName).toEqual("HEAD");
-            expect(domRunner.getDocument().childNodes[0].childNodes[1].nodeName).toEqual("BODY");
-            expect(domRunner.getDocument().childNodes[0].childNodes[1].childNodes).toHaveLength(7);
             expect(
-              domRunner.getDocument().childNodes[0].childNodes[1].childNodes[0].nodeName,
-            ).toEqual("M-CUBE");
-            expect(
-              domRunner.getDocument().childNodes[0].childNodes[1].childNodes[1].nodeName,
-            ).toEqual("#text");
-            expect(
-              domRunner.getDocument().childNodes[0].childNodes[1].childNodes[2].nodeName,
-            ).toEqual("M-SPHERE");
-            expect(
-              domRunner.getDocument().childNodes[0].childNodes[1].childNodes[3].nodeName,
-            ).toEqual("#text");
-            expect(
-              domRunner.getDocument().childNodes[0].childNodes[1].childNodes[4].nodeName,
-            ).toEqual("M-GROUP");
-            expect(
-              domRunner.getDocument().childNodes[0].childNodes[1].childNodes[5].nodeName,
-            ).toEqual("#text");
-            expect(
-              domRunner.getDocument().childNodes[0].childNodes[1].childNodes[6].nodeName,
-            ).toEqual("SCRIPT");
+              DOMToJSON(domRunner.getDocument(), {
+                includeScriptContents: false,
+                ignoreWhitespaceTextNodes: true,
+              }),
+            ).toEqual({
+              childNodes: [
+                {
+                  childNodes: [
+                    {
+                      node: "HEAD",
+                    },
+                    {
+                      childNodes: [
+                        {
+                          node: "M-CUBE onclick=\"this.setAttribute('color', 'red');\"",
+                        },
+                        {
+                          node: 'M-SPHERE id="my-sphere"',
+                        },
+                        {
+                          node: 'M-GROUP id="my-group"',
+                        },
+                        {
+                          childNodes: [],
+                          node: "SCRIPT",
+                        },
+                      ],
+                      node: "BODY",
+                    },
+                  ],
+                  node: "HTML",
+                },
+              ],
+              node: "#document",
+            });
           } catch (e) {
             initialLoadError = e;
           }
@@ -96,23 +106,154 @@ describe("JSDOMRunner", () => {
       throw initialLoadError;
     }
 
-    expect(allMessages[0]).toEqual({
+    const [initialLoad, firstMessage, secondMessage] = allMessages;
+
+    expect(initialLoad).toEqual({
       loaded: true,
     });
 
-    expect(allMessages[1].mutationList).toHaveLength(2);
-    expect(allMessages[1].mutationList![0].type).toEqual("childList");
-    expect(allMessages[1].mutationList![0].addedNodes).toHaveLength(1);
-    expect(allMessages[1].mutationList![0].addedNodes[0].nodeName).toEqual("M-IMAGE");
+    expect(firstMessage.mutationList).toHaveLength(2);
+    const [firstMessageMutation1, firstMessageMutation2] = firstMessage.mutationList!;
+    expect(firstMessageMutation1.type).toEqual("childList");
+    expect(firstMessageMutation1.addedNodes).toHaveLength(1);
+    expect(firstMessageMutation1.addedNodes[0].nodeName).toEqual("M-IMAGE");
 
-    expect(allMessages[1].mutationList![1].type).toEqual("attributes");
-    expect(allMessages[1].mutationList![1].attributeName).toEqual("data-foo");
-    expect(allMessages[1].mutationList![1].oldValue).toEqual(null);
-    expect(allMessages[1].mutationList![1].target.nodeName).toEqual("M-SPHERE");
+    expect(firstMessageMutation2.type).toEqual("attributes");
+    expect(firstMessageMutation2.attributeName).toEqual("data-foo");
+    expect(firstMessageMutation2.oldValue).toEqual(null);
+    expect(firstMessageMutation2.target.nodeName).toEqual("M-SPHERE");
 
-    expect(allMessages[2].mutationList).toHaveLength(1);
-    expect(allMessages[2].mutationList![0].type).toEqual("attributes");
-    expect(allMessages[2].mutationList![0].attributeName).toEqual("data-foo");
-    expect(allMessages[2].mutationList![0].target.nodeName).toEqual("M-SPHERE");
+    expect(secondMessage.mutationList).toHaveLength(1);
+    const [secondMessageMutation1] = secondMessage.mutationList!;
+    expect(secondMessageMutation1.type).toEqual("attributes");
+    expect(secondMessageMutation1.attributeName).toEqual("data-foo");
+    expect(secondMessageMutation1.target.nodeName).toEqual("M-SPHERE");
+  }, 10000);
+
+  test("element removal with child removal and re-add", async () => {
+    const allMessages: Array<DOMRunnerMessage> = [];
+
+    let initialLoadError: Error | null = null;
+    const domRunner = JSDOMRunnerFactory(
+      "http://example.com/index.html",
+      `
+<m-cube color="red" id="c1">
+  <m-cube color="green" id="c2">
+  </m-cube>
+</m-cube>
+
+<script>
+  const c1 = document.getElementById("c1");
+  const c2 = document.getElementById("c2");
+
+  setTimeout(() => {
+    c2.remove();
+    document.body.appendChild(c1);
+    c1.appendChild(c2);
+  }, 1);
+</script>
+`,
+      {},
+      (domRunnerMessage: DOMRunnerMessage) => {
+        allMessages.push(domRunnerMessage);
+        if (domRunnerMessage.loaded) {
+          try {
+            expect(
+              DOMToJSON(domRunner.getDocument(), {
+                includeScriptContents: false,
+                ignoreWhitespaceTextNodes: true,
+              }),
+            ).toEqual({
+              node: "#document",
+              childNodes: [
+                {
+                  node: "HTML",
+                  childNodes: [
+                    {
+                      node: "HEAD",
+                    },
+                    {
+                      node: "BODY",
+                      childNodes: [
+                        {
+                          node: 'M-CUBE color="red" id="c1"',
+                          childNodes: [
+                            {
+                              node: 'M-CUBE color="green" id="c2"',
+                            },
+                          ],
+                        },
+                        {
+                          node: "SCRIPT",
+                          childNodes: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            });
+          } catch (e) {
+            initialLoadError = e;
+          }
+        }
+      },
+    );
+
+    await waitUntil(() => allMessages.length === 2, "Waiting for all messages");
+
+    if (initialLoadError) {
+      throw initialLoadError;
+    }
+
+    const [initialLoad, firstMessage] = allMessages;
+    expect(initialLoad).toEqual({
+      loaded: true,
+    });
+
+    expect(firstMessage.mutationList).toHaveLength(4);
+    const [
+      firstMessageMutation1,
+      firstMessageMutation2,
+      firstMessageMutation3,
+      firstMessageMutation4,
+    ] = firstMessage.mutationList!;
+    expect(firstMessageMutation1.type).toEqual("childList");
+    expect(firstMessageMutation1.addedNodes).toHaveLength(0);
+    expect(firstMessageMutation1.removedNodes).toHaveLength(1);
+    expect(firstMessageMutation1.removedNodes[0].nodeName).toEqual("M-CUBE");
+    expect((firstMessageMutation1.removedNodes[0] as any).attributes.id.value).toEqual("c2");
+
+    expect(firstMessageMutation2.type).toEqual("childList");
+    expect(firstMessageMutation2.removedNodes).toHaveLength(1);
+    expect(firstMessageMutation2.removedNodes[0].nodeName).toEqual("M-CUBE");
+    expect((firstMessageMutation2.removedNodes[0] as any).attributes.id.value).toEqual("c1");
+    expect(firstMessageMutation2.removedNodes[0].childNodes[0]).toHaveLength(3);
+    expect(firstMessageMutation2.removedNodes[0].childNodes[0].nodeName).toEqual("#text");
+    expect(firstMessageMutation2.removedNodes[0].childNodes[1].nodeName).toEqual("#text");
+    expect(firstMessageMutation2.removedNodes[0].childNodes[2].nodeName).toEqual("M-CUBE");
+    expect(
+      (firstMessageMutation2.removedNodes[0].childNodes[2] as any).attributes.id.value,
+    ).toEqual("c2");
+    expect(firstMessageMutation2.addedNodes).toHaveLength(0);
+
+    expect(firstMessageMutation3.type).toEqual("childList");
+    expect(firstMessageMutation3.removedNodes).toHaveLength(0);
+    expect(firstMessageMutation3.addedNodes).toHaveLength(1);
+    expect(firstMessageMutation3.addedNodes[0].nodeName).toEqual("M-CUBE");
+    expect((firstMessageMutation3.addedNodes[0] as any).attributes.id.value).toEqual("c1");
+    expect(firstMessageMutation3.addedNodes[0].childNodes[0]).toHaveLength(3);
+    expect(firstMessageMutation3.addedNodes[0].childNodes[0].nodeName).toEqual("#text");
+    expect(firstMessageMutation3.addedNodes[0].childNodes[1].nodeName).toEqual("#text");
+    expect(firstMessageMutation3.addedNodes[0].childNodes[2].nodeName).toEqual("M-CUBE");
+    expect((firstMessageMutation3.addedNodes[0].childNodes[2] as any).attributes.id.value).toEqual(
+      "c2",
+    );
+
+    expect(firstMessageMutation4.type).toEqual("childList");
+    expect(firstMessageMutation4.removedNodes).toHaveLength(0);
+    expect(firstMessageMutation4.addedNodes).toHaveLength(1);
+    expect(firstMessageMutation4.addedNodes[0].nodeName).toEqual("M-CUBE");
+    expect((firstMessageMutation4.addedNodes[0] as any).attributes.id.value).toEqual("c2");
   }, 10000);
 });

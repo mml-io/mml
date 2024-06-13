@@ -13,7 +13,7 @@ const jestConfig: JestConfigWithTsJest = {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   setupFiles: ["jest-canvas-mock"],
-  setupFilesAfterEnv: ["jest-expect-message", "./test/jest.setup.ts"],
+  setupFilesAfterEnv: ["jest-expect-message", "../../test-utils/jest-browser-polyfills.ts"],
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",

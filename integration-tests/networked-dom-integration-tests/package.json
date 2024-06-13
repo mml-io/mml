@@ -1,0 +1,17 @@
+{
+  "name": "networked-dom-integration-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "devDependencies": {
+    "@mml-io/networked-dom-document": "^0.15.0",
+    "@mml-io/networked-dom-web": "^0.15.0",
+    "@mml-io/networked-dom-web-runner": "^0.15.0"
+  },
+  "version": "0.15.0"
+}
