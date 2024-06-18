@@ -1,8 +1,8 @@
 import { StaticVirtualDOMElement } from "@mml-io/observable-dom-common";
-import { applyPatch } from "rfc6902";
 
 import { VirtualDOMDiffStruct } from "../src/common";
 import { calculateStaticVirtualDOMDiff } from "../src/diffing";
+import { applyPatch } from "../src/rfc6902";
 
 function checkTreeForDuplicateNodes(state: StaticVirtualDOMElement) {
   const nodeSet = new Set<number>();

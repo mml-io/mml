@@ -1,5 +1,6 @@
 import { StaticVirtualDOMElement } from "@mml-io/observable-dom-common";
-import * as rfc6902 from "rfc6902";
+
+import * as rfc6902 from "./rfc6902";
 
 export type NodeMapping = {
   clientFacingNodeId: number;
