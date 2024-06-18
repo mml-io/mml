@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
+import { MaterialLoadedEvent } from "./Material";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -202,8 +203,34 @@ export class Cube extends TransformableElement {
       opacity: this.props.opacity,
     });
     this.mesh.material = this.material;
+    this.addEventListener("materialLoaded", this.setMaterial.bind(this));
+    this.addEventListener("materialDisconnected", this.disconnectMaterial.bind(this));
+
     this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
+  }
+
+  private setMaterial(event: MaterialLoadedEvent) {
+    if (this.material) {
+      this.material.dispose();
+    }
+    const material = event.detail.material;
+    this.mesh.material = material;
+    this.material = material;
+  }
+
+  private disconnectMaterial() {
+    if (this.material) {
+      this.material = this.material.clone();
+      this.mesh.material = this.material;
+    } else {
+      this.material = new THREE.MeshStandardMaterial({
+        color: this.props.color,
+        transparent: this.props.opacity === 1 ? false : true,
+        opacity: this.props.opacity,
+      });
+      this.mesh.material = this.material;
+    }
   }
 
   public disconnectedCallback(): void {
