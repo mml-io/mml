@@ -308,7 +308,7 @@ export class NetworkedDOM {
         const asServerMessages: Array<ServerMessage> = diffs;
         const firstDiff = diffs[0];
         firstDiff.documentTime = this.getDocumentTime();
-        const serializedDiffs = JSON.stringify(asServerMessages, null, 4);
+        const serializedDiffs = JSON.stringify(asServerMessages);
         const webSocketContext = this.connectionIdToWebSocketContext.get(connectionId);
         if (!webSocketContext) {
           throw new Error(`webSocketContext not found in addExistingWebsockets`);
@@ -519,7 +519,7 @@ export class NetworkedDOM {
     diffsByConnectionId.forEach((diffs, connectionId) => {
       if (diffs.length > 0) {
         const asServerMessages: Array<ServerMessage> = diffs;
-        const serializedDiffs = JSON.stringify(asServerMessages, null, 4);
+        const serializedDiffs = JSON.stringify(asServerMessages);
         const webSocketContext = this.connectionIdToWebSocketContext.get(connectionId);
         if (!webSocketContext) {
           throw new Error(`webSocketContext not found in processModificationList`);

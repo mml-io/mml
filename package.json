@@ -23,7 +23,8 @@
   "workspaces": [
     "packages/**/*",
     "examples/**/*",
-    "e2e-tests"
+    "e2e-tests",
+    "integration-tests/**/*"
   ],
   "devDependencies": {
     "@babel/preset-typescript": "7.24.1",
