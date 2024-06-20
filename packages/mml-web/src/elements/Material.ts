@@ -14,7 +14,12 @@ import {
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
-export type MaterialLoadedEvent = CustomEvent<{ material: Material }>;
+export type MaterialLoadedEvent = CustomEvent<{ materialId: string }>;
+export interface ElementWithMesh extends TransformableElement {
+  mesh: THREE.Mesh;
+  material: THREE.Material;
+  getDefaultMaterial: () => THREE.Material;
+}
 
 const defaultMaterialColor = new THREE.Color(0xffffff);
 const defaultMaterialOpacity = 1;
@@ -77,6 +82,7 @@ export class Material extends MElement {
   });
 
   private props = {
+    id: `${this.parentElement?.nodeName}/`,
     color: defaultMaterialColor,
     opacity: defaultMaterialOpacity,
     roughness: defaultMaterialRoughness,
@@ -425,11 +431,13 @@ export class Material extends MElement {
     ];
   }
 
-  private textureLoader: THREE.TextureLoader;
+  private generateMaterialId = (): string => {
+    return `material-${Date.now()}`;
+  };
+  public materialId: string = this.generateMaterialId();
 
   constructor() {
     super();
-    this.textureLoader = new THREE.TextureLoader();
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -481,6 +489,10 @@ export class Material extends MElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
+
+    // Set unique id so that MElements can reference their materials without needing to pass references around, which involves considerable overhead when parsing to JSON
+    this.setAttribute("data-material-id", this.materialId);
+
     this.material = new THREE.MeshStandardMaterial({
       color: this.props.color,
       transparent: this.props.opacity === 1 && !this.props.alphaMap ? false : true,
@@ -505,9 +517,12 @@ export class Material extends MElement {
     });
 
     this.loadTextures().then(() => {
-      if (this.parentElement) {
+      if (this.parentElement && (this.parentElement as ElementWithMesh).mesh) {
+        this.setParentMaterial(this.parentElement as ElementWithMesh);
         this.parentElement.dispatchEvent(
-          new CustomEvent("materialLoaded", { detail: { material: this.material } }),
+          new CustomEvent("materialLoaded", {
+            detail: { materialId: this.materialId },
+          }) satisfies MaterialLoadedEvent,
         );
       }
     });
@@ -515,7 +530,8 @@ export class Material extends MElement {
 
   public disconnectedCallback(): void {
     const parent = this.parentElement;
-    if (parent) {
+    if (parent && (parent as ElementWithMesh).mesh && (parent as ElementWithMesh).material) {
+      this.disconnectParentMaterial(parent as ElementWithMesh);
       parent.dispatchEvent(new CustomEvent("materialDisconnected"));
     }
     if (this.material) {
@@ -523,5 +539,33 @@ export class Material extends MElement {
       this.material = null;
     }
     super.disconnectedCallback();
+  }
+
+  public static getMaterialElementById(id: string, parentElement?: HTMLElement): Material | null {
+    const container = parentElement ?? document.body;
+    return container.querySelector(`[data-material-id="${id}"]`) as Material;
+  }
+
+  public setParentMaterial(parentElement: ElementWithMesh) {
+    if (parentElement.material) {
+      parentElement.material.dispose();
+    }
+
+    if (!this.material) {
+      return;
+    }
+
+    parentElement.mesh.material = this.material;
+    parentElement.material = this.material;
+  }
+
+  public disconnectParentMaterial(parentElement: ElementWithMesh) {
+    if (parentElement.material) {
+      parentElement.material = parentElement.material.clone();
+      parentElement.mesh.material = parentElement.material;
+    } else {
+      parentElement.material = parentElement.getDefaultMaterial();
+      parentElement.mesh.material = parentElement.material;
+    }
   }
 }

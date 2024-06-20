@@ -173,11 +173,7 @@ export class Cylinder extends TransformableElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.material = new THREE.MeshStandardMaterial({
-      color: this.props.color,
-      transparent: this.props.opacity === 1 ? false : true,
-      opacity: this.props.opacity,
-    });
+    this.material = this.getDefaultMaterial();
     this.mesh.material = this.material;
     this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
@@ -206,5 +202,13 @@ export class Cylinder extends TransformableElement {
     THREE.Material | Array<THREE.Material>
   > | null {
     return this.mesh;
+  }
+
+  public getDefaultMaterial() {
+    return new THREE.MeshStandardMaterial({
+      color: this.props.color,
+      transparent: this.props.opacity === 1 ? false : true,
+      opacity: this.props.opacity,
+    });
   }
 }

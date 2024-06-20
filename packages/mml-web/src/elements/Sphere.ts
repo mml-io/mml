@@ -173,11 +173,7 @@ export class Sphere extends TransformableElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.material = new THREE.MeshStandardMaterial({
-      color: this.props.color,
-      transparent: this.props.opacity === 1 ? false : true,
-      opacity: this.props.opacity,
-    });
+    this.material = this.getDefaultMaterial();
     this.mesh.material = this.material;
     this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
@@ -191,5 +187,13 @@ export class Sphere extends TransformableElement {
       this.material = null;
     }
     super.disconnectedCallback();
+  }
+
+  public getDefaultMaterial() {
+    return new THREE.MeshStandardMaterial({
+      color: this.props.color,
+      transparent: this.props.opacity === 1 ? false : true,
+      opacity: this.props.opacity,
+    });
   }
 }
