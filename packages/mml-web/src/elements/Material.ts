@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
+import { MaterialManager } from "./MaterialManager";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -13,7 +14,7 @@ import {
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
-export type MaterialLoadedEvent = CustomEvent<{ material: THREE.MeshStandardMaterial }>;
+export type MaterialLoadedEvent = CustomEvent<{ material: Material }>;
 
 const defaultMaterialColor = new THREE.Color(0xffffff);
 const defaultMaterialOpacity = 1;
@@ -109,6 +110,7 @@ export class Material extends MElement {
   };
 
   private material: THREE.MeshStandardMaterial | null = null;
+  private materialManager: MaterialManager = MaterialManager.getInstance();
 
   private static attributeHandler = new AttributeHandler<Material>({
     color: (instance, newValue) => {
@@ -140,7 +142,7 @@ export class Material extends MElement {
     map: (instance, newValue) => {
       instance.props.map = newValue ?? defaultMaterialMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.map).then((texture) => {
+        instance.materialManager.loadTexture(instance.props.map, instance).then((texture) => {
           instance.material!.map = texture;
           instance.material!.needsUpdate = true;
         });
@@ -149,7 +151,7 @@ export class Material extends MElement {
     "light-map": (instance, newValue) => {
       instance.props.lightMap = newValue ?? defaultMaterialLightMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.lightMap).then((texture) => {
+        instance.materialManager.loadTexture(instance.props.lightMap, instance).then((texture) => {
           instance.material!.lightMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -168,7 +170,7 @@ export class Material extends MElement {
     "ao-map": (instance, newValue) => {
       instance.props.aoMap = newValue ?? defaultMaterialAoMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.aoMap).then((texture) => {
+        instance.materialManager.loadTexture(instance.props.aoMap, instance).then((texture) => {
           instance.material!.aoMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -201,16 +203,18 @@ export class Material extends MElement {
     "emissive-map": (instance, newValue) => {
       instance.props.emissiveMap = newValue ?? defaultMaterialEmissiveMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.emissiveMap).then((texture) => {
-          instance.material!.emissiveMap = texture;
-          instance.material!.needsUpdate = true;
-        });
+        instance.materialManager
+          .loadTexture(instance.props.emissiveMap, instance)
+          .then((texture) => {
+            instance.material!.emissiveMap = texture;
+            instance.material!.needsUpdate = true;
+          });
       }
     },
     "bump-map": (instance, newValue) => {
       instance.props.bumpMap = newValue ?? defaultMaterialBumpMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.bumpMap).then((texture) => {
+        instance.materialManager.loadTexture(instance.props.bumpMap, instance).then((texture) => {
           instance.material!.bumpMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -226,7 +230,7 @@ export class Material extends MElement {
     "normal-map": (instance, newValue) => {
       instance.props.normalMap = newValue ?? defaultMaterialNormalMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.normalMap).then((texture) => {
+        instance.materialManager.loadTexture(instance.props.normalMap, instance).then((texture) => {
           instance.material!.normalMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -269,10 +273,12 @@ export class Material extends MElement {
     "displacement-map": (instance, newValue) => {
       instance.props.displacementMap = newValue ?? defaultMaterialDisplacementMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.displacementMap).then((texture) => {
-          instance.material!.displacementMap = texture;
-          instance.material!.needsUpdate = true;
-        });
+        instance.materialManager
+          .loadTexture(instance.props.displacementMap, instance)
+          .then((texture) => {
+            instance.material!.displacementMap = texture;
+            instance.material!.needsUpdate = true;
+          });
       }
     },
     "displacement-scale": (instance, newValue) => {
@@ -298,27 +304,29 @@ export class Material extends MElement {
     "roughness-map": (instance, newValue) => {
       instance.props.roughnessMap = newValue ?? defaultMaterialRoughnessMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.roughnessMap).then((texture) => {
-          instance.material!.roughnessMap = texture;
-          instance.material!.needsUpdate = true;
-        });
+        instance.materialManager
+          .loadTexture(instance.props.roughnessMap, instance)
+          .then((texture) => {
+            instance.material!.roughnessMap = texture;
+            instance.material!.needsUpdate = true;
+          });
       }
     },
     "metalness-map": (instance, newValue) => {
       instance.props.metalnessMap = newValue ?? defaultMaterialMetalnessMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.metalnessMap).then((texture) => {
-          instance.material!.metalnessMap = texture;
-          instance.material!.needsUpdate = true;
-        });
+        instance.materialManager
+          .loadTexture(instance.props.metalnessMap, instance)
+          .then((texture) => {
+            instance.material!.metalnessMap = texture;
+            instance.material!.needsUpdate = true;
+          });
       }
     },
     "alpha-map": (instance, newValue) => {
       instance.props.alphaMap = newValue ?? defaultMaterialAlphaMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.alphaMap).then((texture) => {
-          console.log("loaded alpha map")
-          console.log(texture);
+        instance.materialManager.loadTexture(instance.props.alphaMap, instance).then((texture) => {
           instance.material!.alphaMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -327,7 +335,7 @@ export class Material extends MElement {
     "env-map": (instance, newValue) => {
       instance.props.envMap = newValue ?? defaultMaterialEnvMap;
       if (instance.material) {
-        instance.loadTexture(instance.props.envMap).then((texture) => {
+        instance.materialManager.loadTexture(instance.props.envMap, instance).then((texture) => {
           instance.material!.envMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -394,7 +402,6 @@ export class Material extends MElement {
       if (instance.material) {
         instance.material.flatShading = instance.props.flatShading;
         instance.material.needsUpdate = true;
-
       }
     },
   });
@@ -445,100 +452,22 @@ export class Material extends MElement {
     return true;
   }
 
-  private async loadTexture(src: string): Promise<THREE.Texture | null> {
-    if (!src) {
-      return null;
-    }
-
-    return this.textureLoader.loadAsync(src).then((texture) => {
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(1, 1);
-      return texture;
-    });
-  }
-
-  private loadTextures(): void {
+  private async loadTextures(): Promise<void> {
     if (!this.material) {
       return;
     }
-
-    if (this.props.map) {
-      this.loadTexture(this.props.map).then((texture) => {
-        this.material!.map = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.lightMap) {
-      this.loadTexture(this.props.lightMap).then((texture) => {
-        this.material!.lightMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.aoMap) {
-      this.loadTexture(this.props.aoMap).then((texture) => {
-        this.material!.aoMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.emissiveMap) {
-      this.loadTexture(this.props.emissiveMap).then((texture) => {
-        this.material!.emissiveMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.bumpMap) {
-      this.loadTexture(this.props.bumpMap).then((texture) => {
-        this.material!.bumpMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.normalMap) {
-      this.loadTexture(this.props.normalMap).then((texture) => {
-        this.material!.normalMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.displacementMap) {
-      this.loadTexture(this.props.displacementMap).then((texture) => {
-        this.material!.displacementMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.roughnessMap) {
-      this.loadTexture(this.props.roughnessMap).then((texture) => {
-        this.material!.roughnessMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.metalnessMap) {
-      this.loadTexture(this.props.metalnessMap).then((texture) => {
-        this.material!.metalnessMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.alphaMap) {
-      this.loadTexture(this.props.alphaMap).then((texture) => {
-        this.material!.alphaMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
-
-    if (this.props.envMap) {
-      this.loadTexture(this.props.envMap).then((texture) => {
-        this.material!.envMap = texture;
-        this.material!.needsUpdate = true;
-      });
-    }
+    await Promise.all(
+      this.materialManager.mapKeys.map(async (key: keyof typeof this.props) => {
+        const value = this.props[key];
+        if (value) {
+          const texture = await this.materialManager.loadTexture(this.props[key].toString(), this);
+          if (texture && this.material && key in this.material) {
+            (this.material[key] as unknown as THREE.Texture) = texture;
+          }
+        }
+      }),
+    );
+    this.material.needsUpdate = true;
   }
 
   public getMaterial(): THREE.MeshStandardMaterial | null {
@@ -546,46 +475,27 @@ export class Material extends MElement {
   }
 
   public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log(`Material attribute changed: ${name} ${oldValue} ${newValue}`);
     super.attributeChangedCallback(name, oldValue, newValue);
     Material.attributeHandler.handle(this, name, newValue);
   }
 
   public connectedCallback(): void {
     super.connectedCallback();
-
     this.material = new THREE.MeshStandardMaterial({
       color: this.props.color,
-      transparent: true,//this.props.opacity === 1 ? false : true,
+      transparent: this.props.opacity === 1 && !this.props.alphaMap ? false : true,
       opacity: this.props.opacity,
       roughness: this.props.roughness,
       metalness: this.props.metalness,
-      map: this.props.map ? this.textureLoader.load(this.props.map) : null,
-      lightMap: this.props.lightMap ? this.textureLoader.load(this.props.lightMap) : null,
       lightMapIntensity: this.props.lightMapIntensity,
-      aoMap: this.props.aoMap ? this.textureLoader.load(this.props.aoMap) : null,
       aoMapIntensity: this.props.aoMapIntensity,
       emissive: this.props.emissive,
       emissiveIntensity: this.props.emissiveIntensity,
-      emissiveMap: this.props.emissiveMap ? this.textureLoader.load(this.props.emissiveMap) : null,
-      bumpMap: this.props.bumpMap ? this.textureLoader.load(this.props.bumpMap) : null,
       bumpScale: this.props.bumpScale,
-      normalMap: this.props.normalMap ? this.textureLoader.load(this.props.normalMap) : null,
       normalMapType: this.props.normalMapType,
       normalScale: this.props.normalScale,
-      displacementMap: this.props.displacementMap
-        ? this.textureLoader.load(this.props.displacementMap)
-        : null,
       displacementScale: this.props.displacementScale,
       displacementBias: this.props.displacementBias,
-      roughnessMap: this.props.roughnessMap
-        ? this.textureLoader.load(this.props.roughnessMap)
-        : null,
-      metalnessMap: this.props.metalnessMap
-        ? this.textureLoader.load(this.props.metalnessMap)
-        : null,
-      alphaMap: this.props.alphaMap ? this.textureLoader.load(this.props.alphaMap) : null,
-      envMap: this.props.envMap ? this.textureLoader.load(this.props.envMap) : null,
       envMapRotation: this.props.envMapRotation,
       envMapIntensity: this.props.envMapIntensity,
       wireframe: this.props.wireframe,
@@ -594,14 +504,20 @@ export class Material extends MElement {
       flatShading: this.props.flatShading,
     });
 
-    if (this.parentElement) {
-      this.parentElement.dispatchEvent(
-        new CustomEvent("materialLoaded", { detail: { material: this.material } }),
-      );
-    }
+    this.loadTextures().then(() => {
+      if (this.parentElement) {
+        this.parentElement.dispatchEvent(
+          new CustomEvent("materialLoaded", { detail: { material: this.material } }),
+        );
+      }
+    });
   }
 
   public disconnectedCallback(): void {
+    const parent = this.parentElement;
+    if (parent) {
+      parent.dispatchEvent(new CustomEvent("materialDisconnected"));
+    }
     if (this.material) {
       this.material.dispose();
       this.material = null;

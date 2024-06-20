@@ -214,7 +214,10 @@ export class Cube extends TransformableElement {
     if (this.material) {
       this.material.dispose();
     }
-    const material = event.detail.material;
+    const material = event.detail.material.getMaterial();
+    if (!material) {
+      return;
+    }
     this.mesh.material = material;
     this.material = material;
   }

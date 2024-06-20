@@ -1,119 +1,141 @@
-<m-light
-  type="spotlight"
-  intensity="900"
-  intensity="900"
-  ry="45"
-  rx="65"
-  rz="-45"
-  x="10"
-  y="10"
-  z="10"
-></m-light>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="17.5" y="15" z="10"></m-light>
 
-<m-cube y="2" id="acoustic-foam" ry="45">
-  <m-material
-    map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Color.jpg"
+<m-group id="cubes"></m-group>
 
-    normal-map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_NormalGL.jpg"
+<m-group id="ui" y="10">
+  <m-label
+    id="addCube"
+    x="-6"
+    y="0"
+    z="0"
+    content="Create cube"
+    width="2"
+    alignment="center"
+  ></m-label>
+  <m-label
+    id="removeCube"
+    x="-3"
+    y="0"
+    z="0"
+    content="Remove cube"
+    width="2"
+    alignment="center"
+  ></m-label>
+</m-group>
 
-    displacement-map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_NormalGL.jpg"
-    displacement-scale=".0"
+<script>
+  const addCubeButton = document.getElementById("addCube");
+  const removeCubeButton = document.getElementById("removeCube");
+  const cubes = document.getElementById("cubes");
+  const canvasWidth = 14;
+  const cubeSize = 2;
+  const gap = 0.5;
 
-    roughness-map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Roughness.jpg"
+  const materials = {
+    bricks: {
+      map: "http://localhost:7079/assets/bricks/Bricks_512_Color.png",
+      "ao-map": "http://localhost:7079/assets/bricks/Bricks_512_AmbientOcclusion.png",
+      "normal-map": "http://localhost:7079/assets/bricks/Bricks_512_NormalGL.png",
+      "displacement-map": "http://localhost:7079/assets/bricks/Bricks_512_Displacement.png",
+      "displacement-scale": ".0",
+      "roughness-map": "http://localhost:7079/assets/bricks/Bricks_512_Roughness.png",
+    },
+    // bricks4k: {
+    //   map: "http://localhost:7079/assets/bricks/Bricks042_4K_Color.jpg",
+    //   "ao-map": "http://localhost:7079/assets/bricks/Bricks042_4K_AmbientOcclusion.jpg",
+    //   "normal-map": "http://localhost:7079/assets/bricks/Bricks042_4K_NormalGL.jpg",
+    //   "displacement-map": "http://localhost:7079/assets/bricks/Bricks042_4K_Displacement.jpg",
+    //   "displacement-scale": ".0",
+    //   "roughness-map": "http://localhost:7079/assets/bricks/Bricks042_4K_Roughness.jpg",
+    // },
+    // fence: {
+    //   map: "http://localhost:7079/assets/fence/Fence007A_4K_Color.jpg",
+    //   "normal-map": "http://localhost:7079/assets/fence/Fence007A_4K_NormalGL.jpg",
+    //   "displacement-map": "http://localhost:7079/assets/fence/Fence007A_4K_Displacement.jpg",
+    //   "displacement-scale": ".0",
+    //   "roughness-map": "http://localhost:7079/assets/fence/Fence007A_4K_Roughness.jpg",
+    //   "metalness-map": "http://localhost:7079/assets/fence/Fence007A_4K_Metalness.jpg",
+    //   metalness: 1,
+    //   "alpha-map": "http://localhost:7079/assets/fence/Fence007A_4K_Opacity.jpg",
+    // },
+    // metal: {
+    //   map: "http://localhost:7079/assets/metal/Metal007_4K_Color.jpg",
+    //   "normal-map": "http://localhost:7079/assets/metal/Metal007_4K_NormalGL.jpg",
+    //   "displacement-map": "http://localhost:7079/assets/metal/Metal007_4K_Displacement.jpg",
+    //   "displacement-scale": ".0",
+    //   "roughness-map": "http://localhost:7079/assets/metal/Metal007_4K_Roughness.jpg",
+    //   "metalness-map": "http://localhost:7079/assets/metal/Metal007_4K_Metalness.jpg",
+    // },
+    // rocks: {
+    //   map: "http://localhost:7079/assets/rocks/aerial_rocks_01_diff_4k.jpg",
+    //   "ao-map": "http://localhost:7079/assets/rocks/aerial_rocks_01_ao_4k.jpg",
+    //   "normal-map": "http://localhost:7079/assets/rocks/aerial_rocks_01_nor_gl_4k.jpg",
+    //   "displacement-map": "http://localhost:7079/assets/rocks/aerial_rocks_01_disp_4k.jpg",
+    //   "displacement-scale": ".0",
+    //   "roughness-map": "http://localhost:7079/assets/rocks/aerial_rocks_01_rough_4k.jpg",
+    //   metalness: 0,
+    // },
 
-    metalness-map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Metalness.jpg"
-  ></m-material>
-</m-cube>
+    // "acoustic-foam": {
+    //   map: "http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Color.jpg",
+    //   "normal-map": "http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_NormalGL.jpg",
+    //   "displacement-map":
+    //     "http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_NormalGL.jpg",
+    //   "displacement-scale": ".0",
+    //   "roughness-map":
+    //     "http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Roughness.jpg",
+    //   "metalness-map":
+    //     "http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Metalness.jpg",
+    // },
+  };
 
-<m-cube y="2" x="2" id="aluminium-foil" ry="45">
-  <m-material
-    map="http://localhost:7079/assets/aluminium-foil/4K-aluminium_foil_1_base_color.png"
+  function createCube() {
+    const cube = document.createElement("m-cube");
+    const material = document.createElement("m-material");
 
-    ao-map="http://localhost:7079/assets/aluminium-foil/4K-aluminium_foil_1_ao.png"
-    ao-map-intensity="1"
+    const limitPerRow = Math.floor(canvasWidth / (cubeSize + gap));
+    const newCubeCount = cubes.children.length + 1;
+    const cubeIndex = newCubeCount - 1;
+    const curY = Math.floor(cubeIndex / limitPerRow) * (cubeSize + gap);
+    const curX = (cubeIndex % limitPerRow) * (cubeSize + gap) - canvasWidth / 2 + cubeSize;
 
-    normal-map="http://localhost:7079/assets/aluminium-foil/4K-aluminium_foil_1_metallic.png"
+    cube.setAttribute("width", cubeSize.toString());
+    cube.setAttribute("height", cubeSize.toString());
+    cube.setAttribute("depth", cubeSize.toString());
 
-    displacement-map="http://localhost:7079/assets/aluminium-foil/4K-aluminium_foil_1_normal.png"
-    displacement-scale=".0"
+    cube.setAttribute("x", curX);
+    cube.setAttribute("y", curY);
+    cube.appendChild(material);
 
-    roughness-map="http://localhost:7079/assets/aluminium-foil/4K-aluminium_foil_1_roughness.png"
+    const nextTexture = Object.keys(materials)[cubeIndex % Object.keys(materials).length];
+    Object.entries(materials[nextTexture]).forEach(([key, value]) => {
+      material.setAttribute(key, value);
+    });
 
-    metalness-map="http://localhost:7079/assets/aluminium-foil/4K-aluminium_foil_1_metallic.png"
-    metalness="1"
-  ></m-material>
-</m-cube>
+    cube.addEventListener("click", (event) => removeCube(event.target));
+    cubes.appendChild(cube);
+    return cube;
+  }
 
-<m-cube y="2" x="4" id="bricks" ry="45">
-  <m-material
-    metalness="0"
-    map="http://localhost:7079/assets/bricks/Bricks042_4K_Color.jpg"
+  function removeCube(element) {
+    const toRemove = element ? element : cubes.lastElementChild;
+    if (toRemove) {
+      cubes.removeChild(toRemove);
+    }
+  }
+  addCubeButton.addEventListener("click", (event) => createCube());
+  removeCubeButton.addEventListener("click", (event) => removeCube());
 
-    ao-map="http://localhost:7079/assets/bricks/Bricks042_4K_AmbientOcclusion.jpg"
-    ao-map-intensity="1"
-
-    normal-map="http://localhost:7079/assets/bricks/Bricks042_4K_NormalGL.jpg"
-
-    displacement-map="http://localhost:7079/assets/bricks/Bricks042_4K_Displacement.jpg"
-    displacement-scale=".0"
-
-    roughness-map="http://localhost:7079/assets/bricks/Bricks042_4K_Roughness.jpg"
-
-    metalness="0"
-  ></m-material>
-</m-cube>
-
-<m-cube y="2" x="6" id="fence" ry="45">
-  <m-material
-    metalness="0"
-    map="http://localhost:7079/assets/fence/Fence007A_4K_Color.jpg"
-
-    normal-map="http://localhost:7079/assets/fence/Fence007A_4K_NormalGL.jpg"
-
-    displacement-map="http://localhost:7079/assets/fence/Fence007A_4K_Displacement.jpg"
-    displacement-scale=".0"
-
-    roughness-map="http://localhost:7079/assets/fence/Fence007A_4K_Roughness.jpg"
-
-    metalness-map="http://localhost:7079/assets/fence/Fence007A_4K_Metalness.jpg"
-    metalness="1"
-
-    alpha-map="http://localhost:7079/assets/fence/Fence007A_4K_Opacity.jpg"
-  ></m-material>
-</m-cube>
-
-
-<m-cube y="2" x="8" id="metal" ry="45">
-  <m-material
-    metalness="0"
-    map="http://localhost:7079/assets/metal/Metal007_4K_Color.jpg"
-
-    normal-map="http://localhost:7079/assets/metal/Metal007_4K_NormalGL.jpg"
-
-    displacement-map="http://localhost:7079/assets/metal/Metal007_4K_Displacement.jpg"
-    displacement-scale=".0"
-
-    roughness-map="http://localhost:7079/assets/metal/Metal007_4K_Roughness.jpg"
-
-    metalness-map="http://localhost:7079/assets/metal/Metal007_4K_Metalness.jpg"
-    metalness="1"
-  ></m-material>
-</m-cube>
-
-
-<m-cube y="2" x="10" id="rocks" ry="45">
-  <m-material
-    metalness="0"
-    map="http://localhost:7079/assets/rocks/aerial_rocks_01_diff_4k.jpg"
-
-    ao-map="http://localhost:7079/assets/rocks/aerial_rocks_01_ao_4k.jpg"
-    normal-map="http://localhost:7079/assets/rocks/aerial_rocks_01_nor_gl_4k.jpg"
-
-    displacement-map="http://localhost:7079/assets/rocks/aerial_rocks_01_disp_4k.jpg"
-    displacement-scale=".0"
-
-    roughness-map="http://localhost:7079/assets/rocks/aerial_rocks_01_rough_4k.jpg"
-
-    metalness="0"
-  ></m-material>
-</m-cube>
+  const animAttrs = ["x", "y", "z", "sx", "sy", "sz"];
+  function createAnimElement(container) {
+    const animElement = document.createElement("m-attr-anim");
+    animElement.setAttribute("attr", animAttrs[Math.floor(Math.random() * animAttrs.length)]);
+    animElement.setAttribute("start", "1");
+    animElement.setAttribute("end", "2");
+    animElement.setAttribute("start-time", "1000");
+    animElement.setAttribute("duration", "500");
+    animElement.setAttribute("ping-pong", "true");
+    animElement.setAttribute("easing", "easeInOutCubic");
+    container.appendChild(animElement);
+  }
+</script>
