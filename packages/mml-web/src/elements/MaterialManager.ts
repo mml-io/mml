@@ -3,12 +3,11 @@ import * as THREE from "three";
 import { Material } from "./Material";
 
 interface MaterialTextureCacheItem {
-  userMaterials: Map<string, Material>;
+  userMaterials: Map<Material, Material>;
   texture: THREE.Texture;
 }
 
 export class MaterialManager {
-  private debug = true;
   public mapKeys: (keyof THREE.MeshStandardMaterial)[] = [
     "map",
     "lightMap",
@@ -51,15 +50,18 @@ export class MaterialManager {
     }, "");
   }
 
-  public async loadTexture(src: string, materialElement: Material): Promise<THREE.Texture> {
+  public async loadTexture(src: string, materialElement: Material): Promise<THREE.Texture | null> {
+    if (!src) {
+      return null;
+    }
     if (this.textureCache.has(src)) {
       const cacheItem = this.textureCache.get(src)!;
-      cacheItem.userMaterials.set(this.getMaterialKey(materialElement), materialElement);
+      cacheItem.userMaterials.set(materialElement, materialElement);
       return cacheItem.texture;
     }
     const texture = await this.textureLoader.loadAsync(src);
     this.textureCache.set(src, {
-      userMaterials: new Map([[this.getMaterialKey(materialElement), materialElement]]),
+      userMaterials: new Map([[materialElement, materialElement]]),
       texture,
     });
     texture.wrapS = THREE.RepeatWrapping;
@@ -71,7 +73,7 @@ export class MaterialManager {
   public unloadTexture(src: string, materialElement: Material) {
     if (this.textureCache.has(src)) {
       const cacheItem = this.textureCache.get(src)!;
-      cacheItem.userMaterials.delete(this.getMaterialKey(materialElement));
+      cacheItem.userMaterials.delete(materialElement);
       if (cacheItem.userMaterials.size === 0) {
         cacheItem.texture.dispose();
         this.textureCache.delete(src);

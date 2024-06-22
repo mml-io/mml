@@ -14,7 +14,7 @@ import {
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
-export type MaterialLoadedEvent = CustomEvent<{ materialId: string }>;
+export type MaterialLoadedEvent = CustomEvent;
 export interface ElementWithMesh extends TransformableElement {
   mesh: THREE.Mesh;
   material: THREE.Material;
@@ -51,6 +51,7 @@ const defaultMaterialWireframe = false;
 const defaultMaterialWireframeLinewidth = 1;
 const defaultMaterialFog = true;
 const defaultMaterialFlatShading = false;
+const defaultMaterialSide: THREE.Side = THREE.DoubleSide;
 
 export class Material extends MElement {
   static tagName = "m-material";
@@ -113,10 +114,12 @@ export class Material extends MElement {
     wireframeLinewidth: defaultMaterialWireframeLinewidth,
     fog: defaultMaterialFog,
     flatShading: defaultMaterialFlatShading,
+    side: defaultMaterialSide,
   };
 
   private material: THREE.MeshStandardMaterial | null = null;
   private materialManager: MaterialManager = MaterialManager.getInstance();
+  private parentMeshElement: ElementWithMesh | null = null;
 
   private static attributeHandler = new AttributeHandler<Material>({
     color: (instance, newValue) => {
@@ -334,6 +337,7 @@ export class Material extends MElement {
       if (instance.material) {
         instance.materialManager.loadTexture(instance.props.alphaMap, instance).then((texture) => {
           instance.material!.alphaMap = texture;
+          instance.material!.transparent = !!texture;
           instance.material!.needsUpdate = true;
         });
       }
@@ -410,6 +414,25 @@ export class Material extends MElement {
         instance.material.needsUpdate = true;
       }
     },
+    side: (instance, newValue) => {
+      instance.props.side = parseAttribute(newValue, defaultMaterialSide, (value) => {
+        switch (value) {
+          case "FrontSide":
+            return THREE.FrontSide;
+          case "BackSide":
+            return THREE.BackSide;
+          case "DoubleSide":
+            return THREE.DoubleSide;
+          default:
+            console.warn(`Invalid side value: ${value}`);
+            return defaultMaterialSide;
+        }
+      });
+      if (instance.material) {
+        instance.material.side = instance.props.side;
+        instance.material.needsUpdate = true;
+      }
+    },
   });
 
   protected enable() {
@@ -430,11 +453,6 @@ export class Material extends MElement {
       ...Material.attributeHandler.getAttributes(),
     ];
   }
-
-  private generateMaterialId = (): string => {
-    return `material-${Date.now()}`;
-  };
-  public materialId: string = this.generateMaterialId();
 
   constructor() {
     super();
@@ -490,9 +508,6 @@ export class Material extends MElement {
   public connectedCallback(): void {
     super.connectedCallback();
 
-    // Set unique id so that MElements can reference their materials without needing to pass references around, which involves considerable overhead when parsing to JSON
-    this.setAttribute("data-material-id", this.materialId);
-
     this.material = new THREE.MeshStandardMaterial({
       color: this.props.color,
       transparent: this.props.opacity === 1 && !this.props.alphaMap ? false : true,
@@ -514,14 +529,16 @@ export class Material extends MElement {
       wireframeLinewidth: this.props.wireframeLinewidth,
       fog: this.props.fog,
       flatShading: this.props.flatShading,
+      side: this.props.side,
     });
 
     this.loadTextures().then(() => {
       if (this.parentElement && (this.parentElement as ElementWithMesh).mesh) {
-        this.setParentMaterial(this.parentElement as ElementWithMesh);
+        this.parentMeshElement = this.parentElement as ElementWithMesh;
+        this.setParentMaterial(this.parentMeshElement);
         this.parentElement.dispatchEvent(
           new CustomEvent("materialLoaded", {
-            detail: { materialId: this.materialId },
+            detail: {},
           }) satisfies MaterialLoadedEvent,
         );
       }
@@ -529,21 +546,24 @@ export class Material extends MElement {
   }
 
   public disconnectedCallback(): void {
-    const parent = this.parentElement;
-    if (parent && (parent as ElementWithMesh).mesh && (parent as ElementWithMesh).material) {
+    const parent = this.parentMeshElement;
+    if (parent && parent.mesh && parent.material) {
       this.disconnectParentMaterial(parent as ElementWithMesh);
       parent.dispatchEvent(new CustomEvent("materialDisconnected"));
     }
+
+    this.materialManager.mapKeys.map((key: keyof typeof this.props) => {
+      const value = this.props[key];
+      if (value) {
+        this.materialManager.unloadTexture(value.toString(), this);
+      }
+    });
+
     if (this.material) {
       this.material.dispose();
       this.material = null;
     }
     super.disconnectedCallback();
-  }
-
-  public static getMaterialElementById(id: string, parentElement?: HTMLElement): Material | null {
-    const container = parentElement ?? document.body;
-    return container.querySelector(`[data-material-id="${id}"]`) as Material;
   }
 
   public setParentMaterial(parentElement: ElementWithMesh) {
@@ -560,12 +580,7 @@ export class Material extends MElement {
   }
 
   public disconnectParentMaterial(parentElement: ElementWithMesh) {
-    if (parentElement.material) {
-      parentElement.material = parentElement.material.clone();
-      parentElement.mesh.material = parentElement.material;
-    } else {
-      parentElement.material = parentElement.getDefaultMaterial();
-      parentElement.mesh.material = parentElement.material;
-    }
+    parentElement.material = parentElement.getDefaultMaterial();
+    parentElement.mesh.material = parentElement.material;
   }
 }
