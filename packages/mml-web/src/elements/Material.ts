@@ -23,7 +23,7 @@ export interface ElementWithMesh extends TransformableElement {
 
 const defaultMaterialColor = new THREE.Color(0xffffff);
 const defaultMaterialOpacity = 1;
-const defaultMaterialRoughness = 1;
+const defaultMaterialRoughness = 0;
 const defaultMaterialMetalness = 0;
 const defaultMaterialMap = "";
 const defaultMaterialLightMap = "";
@@ -135,14 +135,14 @@ export class Material extends MElement {
       );
     },
     roughness: (instance, newValue) => {
-      instance.props.roughness = parseFloatAttribute(newValue, 1);
+      instance.props.roughness = parseFloatAttribute(newValue, defaultMaterialRoughness);
       if (instance.material) {
         instance.material.roughness = instance.props.roughness;
         instance.material.needsUpdate = true;
       }
     },
     metalness: (instance, newValue) => {
-      instance.props.metalness = parseFloatAttribute(newValue, 0);
+      instance.props.metalness = parseFloatAttribute(newValue, defaultMaterialMetalness);
       if (instance.material) {
         instance.material.metalness = instance.props.metalness;
         instance.material.needsUpdate = true;
@@ -448,10 +448,7 @@ export class Material extends MElement {
   }
 
   static get observedAttributes(): Array<string> {
-    return [
-      ...TransformableElement.observedAttributes,
-      ...Material.attributeHandler.getAttributes(),
-    ];
+    return [...MElement.observedAttributes, ...Material.attributeHandler.getAttributes()];
   }
 
   constructor() {
@@ -486,7 +483,7 @@ export class Material extends MElement {
       this.materialManager.mapKeys.map(async (key: keyof typeof this.props) => {
         const value = this.props[key];
         if (value) {
-          const texture = await this.materialManager.loadTexture(this.props[key].toString(), this);
+          const texture = await this.materialManager.loadTexture(value.toString(), this);
           if (texture && this.material && key in this.material) {
             (this.material[key] as unknown as THREE.Texture) = texture;
           }
@@ -552,10 +549,10 @@ export class Material extends MElement {
       parent.dispatchEvent(new CustomEvent("materialDisconnected"));
     }
 
-    this.materialManager.mapKeys.map((key: keyof typeof this.props) => {
-      const value = this.props[key];
-      if (value) {
-        this.materialManager.unloadTexture(value.toString(), this);
+    this.materialManager.mapKeys.map((key) => {
+      const srcValue = (this.props as Record<string, any>)[key];
+      if (srcValue && typeof srcValue === "string") {
+        this.materialManager.unloadTexture(srcValue, this);
       }
     });
 

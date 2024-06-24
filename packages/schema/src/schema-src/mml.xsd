@@ -367,6 +367,7 @@
       <xs:element ref="m-frame"/>
       <xs:element ref="m-cylinder"/>
       <xs:element ref="m-group"/>
+      <xs:element ref="m-material" />
       <xs:element ref="script"/>
     </xs:choice>
   </xs:complexType>
@@ -948,6 +949,263 @@
             <xs:annotation>
               <xs:documentation>
                 The opacity of the image, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+    <xs:element name="m-material">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-material` element is used to create a new material that will be applied to the parent element.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="colorable"/>
+
+          <xs:attribute name="opacity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The opacity of the material, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="roughness" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The roughness of the material, ranging from 0 (completely smooth) to 1 (completely rough). Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="metalness" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The metalness of the material, ranging from 0 (completely non-metallic) to 1 (completely metallic). Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the texture map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="light-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the light map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="light-map-intensity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The intensity of the light map. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="ao-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the ambient occlusion map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="ao-map-intensity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The intensity of the ambient occlusion map. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="emissive" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The emissive color of the material.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+
+          <xs:attribute name="emissive-intensity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The intensity of the emissive color. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="emissive-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the emissive map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="bump-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the bump map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="bump-scale" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The scale of the bump map. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="normal-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the normal map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="normal-map-type" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The type of the normal map. Default value is "TangentSpaceNormalMap".
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+
+          <xs:attribute name="normal-scale" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The scale of the normal map.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="displacement-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the displacement map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="displacement-scale" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The scale of the displacement map. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="displacement-bias" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The bias of the displacement map. Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="roughness-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the roughness map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="metalness-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the metalness map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="alpha-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the alpha map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="env-map" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the environment map file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="env-map-rotation" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The rotation of the environment map.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="env-map-intensity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The intensity of the environment map. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="wireframe" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the material should be rendered in wireframe mode. Default value is false.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="wireframe-line-width" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The width of the wireframe lines. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="fog" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the material should be affected by fog. Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+
+          <xs:attribute name="flat-shading" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the material should be rendered with flat shading. Default value is false.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="side" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The side of the material that should be rendered. Default value is "DoubleSide".
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

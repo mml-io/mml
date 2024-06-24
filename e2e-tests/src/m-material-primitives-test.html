@@ -1,0 +1,79 @@
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="17.5" y="15" z="10"></m-light>
+
+<m-group id="primitives" data-loaded-materials="0">
+  <m-cube y="2" x="0" id="acoustic-foam" ry="45" width="2" height="2" depth="2">
+    <m-material
+      metalness="0"
+      map="http://localhost:7079/assets/bricks/Bricks042_4K_Color.jpg"
+      ao-map="http://localhost:7079/assets/bricks/Bricks042_4K_AmbientOcclusion.jpg"
+      ao-map-intensity="1"
+      normal-map="http://localhost:7079/assets/bricks/Bricks042_4K_NormalGL.jpg"
+      displacement-map="http://localhost:7079/assets/bricks/Bricks042_4K_Displacement.jpg"
+      displacement-scale=".0"
+      roughness-map="http://localhost:7079/assets/bricks/Bricks042_4K_Roughness.jpg"
+      metalness="0"
+    ></m-material>
+  </m-cube>
+
+  <m-cylinder y="2" x="-4" ry="45" radius="1" height="2">
+    <m-material
+      map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Color.jpg"
+      normal-map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_NormalGL.jpg"
+      displacement-map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_NormalGL.jpg"
+      displacement-scale=".0"
+      roughness-map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Roughness.jpg"
+      metalness-map="http://localhost:7079/assets/acoustic-foam/AcousticFoam003_4K_Metalness.jpg"
+    ></m-material>
+  </m-cylinder>
+
+  <m-plane width="20" height="20" rx="-90">
+    <m-material
+      metalness="0"
+      map="http://localhost:7079/assets/rocks/aerial_rocks_01_diff_4k.jpg"
+      ao-map="http://localhost:7079/assets/rocks/aerial_rocks_01_ao_4k.jpg"
+      normal-map="http://localhost:7079/assets/rocks/aerial_rocks_01_nor_gl_4k.jpg"
+      displacement-map="http://localhost:7079/assets/rocks/aerial_rocks_01_disp_4k.jpg"
+      displacement-scale=".0"
+      roughness-map="http://localhost:7079/assets/rocks/aerial_rocks_01_rough_4k.jpg"
+      metalness="0"
+    ></m-material>
+  </m-plane>
+
+  <m-plane width="5" height="5" y="2.5" z="-5">
+    <m-material
+      metalness="0"
+      map="http://localhost:7079/assets/fence/Fence007A_4K_Color.jpg"
+      normal-map="http://localhost:7079/assets/fence/Fence007A_4K_NormalGL.jpg"
+      displacement-map="http://localhost:7079/assets/fence/Fence007A_4K_Displacement.jpg"
+      displacement-scale=".0"
+      roughness-map="http://localhost:7079/assets/fence/Fence007A_4K_Roughness.jpg"
+      metalness-map="http://localhost:7079/assets/fence/Fence007A_4K_Metalness.jpg"
+      metalness="1"
+      alpha-map="http://localhost:7079/assets/fence/Fence007A_4K_Opacity.jpg"
+      side="FrontSide"
+    ></m-material>
+  </m-plane>
+
+  <m-sphere radius="1" y="2" x="4">
+    <m-material
+      map="http://localhost:7079/assets/metal/Metal007_4K_Color.jpg"
+      normal-map="http://localhost:7079/assets/metal/Metal007_4K_NormalGL.jpg"
+      displacement-map="http://localhost:7079/assets/metal/Metal007_4K_Displacement.jpg"
+      displacement-scale=".0"
+      roughness-map="http://localhost:7079/assets/metal/Metal007_4K_Roughness.jpg"
+      metalness-map="http://localhost:7079/assets/metal/Metal007_4K_Metalness.jpg"
+      metalness="1"
+    ></m-material>
+  </m-sphere>
+</m-group>
+
+<script>
+  let materialsLoaded = 0;
+  const elements = [...document.querySelectorAll("#primitives > *")];
+  elements.forEach((element) => {
+    element.addEventListener("materialLoaded", () => {
+      materialsLoaded++;
+      document.querySelector("m-group").setAttribute("data-loaded-materials", materialsLoaded);
+    });
+  });
+</script>
