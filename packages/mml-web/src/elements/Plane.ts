@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
+import { Material } from "./Material";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -28,7 +29,7 @@ export class Plane extends TransformableElement {
       defaultPlaneColor,
       (newValue: THREE.Color) => {
         this.props.color = newValue;
-        if (this.material) {
+        if (this.material && !this.registeredChildMaterial) {
           this.material.color = this.props.color;
         }
       },
@@ -58,7 +59,7 @@ export class Plane extends TransformableElement {
       defaultPlaneOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material) {
+        if (this.material && !this.registeredChildMaterial) {
           const needsUpdate = this.material.transparent === (this.props.opacity === 1);
           this.material.transparent = this.props.opacity !== 1;
           this.material.needsUpdate = needsUpdate;
@@ -80,6 +81,7 @@ export class Plane extends TransformableElement {
   private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial | null = null;
   private collideableHelper = new CollideableHelper(this);
+  private registeredChildMaterial: Material | null = null;
 
   private static attributeHandler = new AttributeHandler<Plane>({
     width: (instance, newValue) => {
@@ -148,13 +150,17 @@ export class Plane extends TransformableElement {
 
   public addSideEffectChild(child: MElement): void {
     this.planeAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof Material) {
+      this.setChildMaterial(child);
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
     this.planeAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child === this.registeredChildMaterial) {
+      this.disconnectChildMaterial();
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -203,5 +209,26 @@ export class Plane extends TransformableElement {
       transparent: this.props.opacity === 1 ? false : true,
       opacity: this.props.opacity,
     });
+  }
+
+  private setChildMaterial(materialElement: Material) {
+    const newMaterial = materialElement?.getMaterial();
+    if (newMaterial) {
+      if (this.material) {
+        this.material.dispose();
+      }
+      this.material = newMaterial;
+      this.mesh.material = this.material;
+      this.registeredChildMaterial = materialElement;
+    }
+  }
+
+  private disconnectChildMaterial() {
+    const childMaterialElement = this.registeredChildMaterial;
+    if (childMaterialElement) {
+      this.material = this.getDefaultMaterial();
+      this.mesh.material = this.material;
+      this.registeredChildMaterial = null;
+    }
   }
 }

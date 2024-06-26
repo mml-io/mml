@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
+import { Material } from "./Material";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -29,7 +30,7 @@ export class Cube extends TransformableElement {
       defaultCubeColor,
       (newValue: THREE.Color) => {
         this.props.color = newValue;
-        if (this.material) {
+        if (this.material && !this.registeredChildMaterial) {
           this.material.color = this.props.color;
         }
       },
@@ -69,7 +70,7 @@ export class Cube extends TransformableElement {
       defaultCubeOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material) {
+        if (this.material && !this.registeredChildMaterial) {
           const needsUpdate = this.material.transparent === (this.props.opacity === 1);
           this.material.transparent = this.props.opacity !== 1;
           this.material.needsUpdate = needsUpdate;
@@ -92,6 +93,7 @@ export class Cube extends TransformableElement {
   private mesh: THREE.Mesh<THREE.BoxGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial | null = null;
   private collideableHelper = new CollideableHelper(this);
+  private registeredChildMaterial: Material | null = null;
 
   private static attributeHandler = new AttributeHandler<Cube>({
     width: (instance, newValue) => {
@@ -166,13 +168,17 @@ export class Cube extends TransformableElement {
 
   public addSideEffectChild(child: MElement): void {
     this.cubeAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof Material) {
+      this.setChildMaterial(child);
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
     this.cubeAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child === this.registeredChildMaterial) {
+      this.disconnectChildMaterial();
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -219,5 +225,26 @@ export class Cube extends TransformableElement {
       transparent: this.props.opacity === 1 ? false : true,
       opacity: this.props.opacity,
     });
+  }
+
+  private setChildMaterial(materialElement: Material) {
+    const newMaterial = materialElement?.getMaterial();
+    if (newMaterial) {
+      if (this.material) {
+        this.material.dispose();
+      }
+      this.material = newMaterial;
+      this.mesh.material = this.material;
+      this.registeredChildMaterial = materialElement;
+    }
+  }
+
+  private disconnectChildMaterial() {
+    const childMaterialElement = this.registeredChildMaterial;
+    if (childMaterialElement) {
+      this.material = this.getDefaultMaterial();
+      this.mesh.material = this.material;
+      this.registeredChildMaterial = null;
+    }
   }
 }

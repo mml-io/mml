@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
+import { Material } from "./Material";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -30,7 +31,7 @@ export class Sphere extends TransformableElement {
       defaultSphereColor,
       (newValue: THREE.Color) => {
         this.props.color = newValue;
-        if (this.material) {
+        if (this.material && !this.registeredChildMaterial) {
           this.material.color = this.props.color;
         }
       },
@@ -51,7 +52,7 @@ export class Sphere extends TransformableElement {
       defaultSphereOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material) {
+        if (this.material && !this.registeredChildMaterial) {
           const needsUpdate = this.material.transparent === (this.props.opacity === 1);
           this.material.transparent = this.props.opacity !== 1;
           this.material.needsUpdate = needsUpdate;
@@ -76,6 +77,7 @@ export class Sphere extends TransformableElement {
 
   private mesh: THREE.Mesh<THREE.SphereGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial | null = null;
+  private registeredChildMaterial: Material | null = null;
 
   private collideableHelper = new CollideableHelper(this);
 
@@ -140,13 +142,17 @@ export class Sphere extends TransformableElement {
 
   public addSideEffectChild(child: MElement): void {
     this.sphereAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof Material) {
+      this.setChildMaterial(child);
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
     this.sphereAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child === this.registeredChildMaterial) {
+      this.disconnectChildMaterial();
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -195,5 +201,26 @@ export class Sphere extends TransformableElement {
       transparent: this.props.opacity === 1 ? false : true,
       opacity: this.props.opacity,
     });
+  }
+
+  private setChildMaterial(materialElement: Material) {
+    const newMaterial = materialElement?.getMaterial();
+    if (newMaterial) {
+      if (this.material) {
+        this.material.dispose();
+      }
+      this.material = newMaterial;
+      this.mesh.material = this.material;
+      this.registeredChildMaterial = materialElement;
+    }
+  }
+
+  private disconnectChildMaterial() {
+    const childMaterialElement = this.registeredChildMaterial;
+    if (childMaterialElement) {
+      this.material = this.getDefaultMaterial();
+      this.mesh.material = this.material;
+      this.registeredChildMaterial = null;
+    }
   }
 }

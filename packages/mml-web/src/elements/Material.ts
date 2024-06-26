@@ -38,9 +38,6 @@ const defaultMaterialBumpScale = 1;
 const defaultMaterialNormalMap = "";
 const defaultMaterialNormalMapType: THREE.NormalMapTypes = THREE.TangentSpaceNormalMap;
 const defaultMaterialNormalScale = new THREE.Vector2(1, 1);
-const defaultMaterialDisplacementMap = "";
-const defaultMaterialDisplacementScale = 1;
-const defaultMaterialDisplacementBias = 0;
 const defaultMaterialRoughnessMap = "";
 const defaultMaterialMetalnessMap = "";
 const defaultMaterialAlphaMap = "";
@@ -48,7 +45,6 @@ const defaultMaterialEnvMap = "";
 const defaultMaterialEnvMapRotation = new THREE.Euler(0, 0, 0);
 const defaultMaterialEnvMapIntensity = 1;
 const defaultMaterialWireframe = false;
-const defaultMaterialWireframeLinewidth = 1;
 const defaultMaterialFog = true;
 const defaultMaterialFlatShading = false;
 const defaultMaterialSide: THREE.Side = THREE.DoubleSide;
@@ -101,9 +97,6 @@ export class Material extends MElement {
     normalMap: defaultMaterialNormalMap,
     normalMapType: defaultMaterialNormalMapType,
     normalScale: defaultMaterialNormalScale,
-    displacementMap: defaultMaterialDisplacementMap,
-    displacementScale: defaultMaterialDisplacementScale,
-    displacementBias: defaultMaterialDisplacementBias,
     roughnessMap: defaultMaterialRoughnessMap,
     metalnessMap: defaultMaterialMetalnessMap,
     alphaMap: defaultMaterialAlphaMap,
@@ -111,7 +104,6 @@ export class Material extends MElement {
     envMapRotation: defaultMaterialEnvMapRotation,
     envMapIntensity: defaultMaterialEnvMapIntensity,
     wireframe: defaultMaterialWireframe,
-    wireframeLinewidth: defaultMaterialWireframeLinewidth,
     fog: defaultMaterialFog,
     flatShading: defaultMaterialFlatShading,
     side: defaultMaterialSide,
@@ -119,7 +111,7 @@ export class Material extends MElement {
 
   private material: THREE.MeshStandardMaterial | null = null;
   private materialManager: MaterialManager = MaterialManager.getInstance();
-  private parentMeshElement: ElementWithMesh | null = null;
+  private registeredParentAttachment: MElement | null = null;
 
   private static attributeHandler = new AttributeHandler<Material>({
     color: (instance, newValue) => {
@@ -279,37 +271,6 @@ export class Material extends MElement {
         instance.material.needsUpdate = true;
       }
     },
-    "displacement-map": (instance, newValue) => {
-      instance.props.displacementMap = newValue ?? defaultMaterialDisplacementMap;
-      if (instance.material) {
-        instance.materialManager
-          .loadTexture(instance.props.displacementMap, instance)
-          .then((texture) => {
-            instance.material!.displacementMap = texture;
-            instance.material!.needsUpdate = true;
-          });
-      }
-    },
-    "displacement-scale": (instance, newValue) => {
-      instance.props.displacementScale = parseFloatAttribute(
-        newValue,
-        defaultMaterialDisplacementScale,
-      );
-      if (instance.material) {
-        instance.material.displacementScale = instance.props.displacementScale;
-        instance.material.needsUpdate = true;
-      }
-    },
-    "displacement-bias": (instance, newValue) => {
-      instance.props.displacementBias = parseFloatAttribute(
-        newValue,
-        defaultMaterialDisplacementBias,
-      );
-      if (instance.material) {
-        instance.material.displacementBias = instance.props.displacementBias;
-        instance.material.needsUpdate = true;
-      }
-    },
     "roughness-map": (instance, newValue) => {
       instance.props.roughnessMap = newValue ?? defaultMaterialRoughnessMap;
       if (instance.material) {
@@ -387,16 +348,6 @@ export class Material extends MElement {
       instance.props.wireframe = parseBoolAttribute(newValue, defaultMaterialWireframe);
       if (instance.material) {
         instance.material.wireframe = instance.props.wireframe;
-        instance.material.needsUpdate = true;
-      }
-    },
-    "wireframe-line-width": (instance, newValue) => {
-      instance.props.wireframeLinewidth = parseFloatAttribute(
-        newValue,
-        defaultMaterialWireframeLinewidth,
-      );
-      if (instance.material) {
-        instance.material.wireframeLinewidth = instance.props.wireframeLinewidth;
         instance.material.needsUpdate = true;
       }
     },
@@ -483,7 +434,9 @@ export class Material extends MElement {
       this.materialManager.mapKeys.map(async (key: keyof typeof this.props) => {
         const value = this.props[key];
         if (value) {
-          const texture = await this.materialManager.loadTexture(value.toString(), this);
+          const texture = await this.materialManager
+            .loadTexture(value.toString(), this)
+            .catch(() => null);
           if (texture && this.material && key in this.material) {
             (this.material[key] as unknown as THREE.Texture) = texture;
           }
@@ -518,22 +471,19 @@ export class Material extends MElement {
       bumpScale: this.props.bumpScale,
       normalMapType: this.props.normalMapType,
       normalScale: this.props.normalScale,
-      displacementScale: this.props.displacementScale,
-      displacementBias: this.props.displacementBias,
       envMapRotation: this.props.envMapRotation,
       envMapIntensity: this.props.envMapIntensity,
       wireframe: this.props.wireframe,
-      wireframeLinewidth: this.props.wireframeLinewidth,
       fog: this.props.fog,
       flatShading: this.props.flatShading,
       side: this.props.side,
     });
 
     this.loadTextures().then(() => {
-      if (this.parentElement && (this.parentElement as ElementWithMesh).mesh) {
-        this.parentMeshElement = this.parentElement as ElementWithMesh;
-        this.setParentMaterial(this.parentMeshElement);
-        this.parentElement.dispatchEvent(
+      if (this.parentElement && this.parentElement instanceof MElement) {
+        this.registeredParentAttachment = this.parentElement;
+        this.registeredParentAttachment.addSideEffectChild(this);
+        this.registeredParentAttachment.dispatchEvent(
           new CustomEvent("materialLoaded", {
             detail: {},
           }) satisfies MaterialLoadedEvent,
@@ -543,9 +493,9 @@ export class Material extends MElement {
   }
 
   public disconnectedCallback(): void {
-    const parent = this.parentMeshElement;
-    if (parent && parent.mesh && parent.material) {
-      this.disconnectParentMaterial(parent as ElementWithMesh);
+    const parent = this.registeredParentAttachment;
+    if (parent) {
+      parent.removeSideEffectChild(this);
       parent.dispatchEvent(new CustomEvent("materialDisconnected"));
     }
 
@@ -561,23 +511,5 @@ export class Material extends MElement {
       this.material = null;
     }
     super.disconnectedCallback();
-  }
-
-  public setParentMaterial(parentElement: ElementWithMesh) {
-    if (parentElement.material) {
-      parentElement.material.dispose();
-    }
-
-    if (!this.material) {
-      return;
-    }
-
-    parentElement.mesh.material = this.material;
-    parentElement.material = this.material;
-  }
-
-  public disconnectParentMaterial(parentElement: ElementWithMesh) {
-    parentElement.material = parentElement.getDefaultMaterial();
-    parentElement.mesh.material = parentElement.material;
   }
 }

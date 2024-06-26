@@ -1099,30 +1099,6 @@
             </xs:annotation>
           </xs:attribute>
 
-          <xs:attribute name="displacement-map" type="URI">
-            <xs:annotation>
-              <xs:documentation>
-                The source URI of the displacement map file. Supported formats may vary depending on the rendering engine used.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-
-          <xs:attribute name="displacement-scale" type="xs:float">
-            <xs:annotation>
-              <xs:documentation>
-                The scale of the displacement map. Default value is 1.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-
-          <xs:attribute name="displacement-bias" type="xs:float">
-            <xs:annotation>
-              <xs:documentation>
-                The bias of the displacement map. Default value is 0.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-
           <xs:attribute name="roughness-map" type="URI">
             <xs:annotation>
               <xs:documentation>

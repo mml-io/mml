@@ -4,7 +4,7 @@ import { Material } from "./Material";
 
 interface MaterialTextureCacheItem {
   userMaterials: Map<Material, Material>;
-  texture: THREE.Texture;
+  texture: THREE.Texture | Promise<THREE.Texture | null>;
 }
 
 export class MaterialManager {
@@ -15,7 +15,6 @@ export class MaterialManager {
     "emissiveMap",
     "bumpMap",
     "normalMap",
-    "displacementMap",
     "roughnessMap",
     "metalnessMap",
     "alphaMap",
@@ -40,16 +39,6 @@ export class MaterialManager {
     return this.textureCache.get(src);
   }
 
-  public getMaterialKey(material: Material) {
-    return this.mapKeys.reduce((acc, key) => {
-      const textureSrc = material.getAttribute(key);
-      if (textureSrc) {
-        return acc + `${key}=${textureSrc},`;
-      }
-      return acc;
-    }, "");
-  }
-
   public async loadTexture(src: string, materialElement: Material): Promise<THREE.Texture | null> {
     if (!src) {
       return null;
@@ -59,11 +48,18 @@ export class MaterialManager {
       cacheItem.userMaterials.set(materialElement, materialElement);
       return cacheItem.texture;
     }
-    const texture = await this.textureLoader.loadAsync(src);
+
+    const texturePromise = this.textureLoader.loadAsync(src).catch(() => null);
     this.textureCache.set(src, {
       userMaterials: new Map([[materialElement, materialElement]]),
-      texture,
+      texture: texturePromise,
     });
+    const texture = await texturePromise;
+    if (!texture) {
+      this.textureCache.delete(src);
+      return null;
+    }
+
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(1, 1);
@@ -75,7 +71,9 @@ export class MaterialManager {
       const cacheItem = this.textureCache.get(src)!;
       cacheItem.userMaterials.delete(materialElement);
       if (cacheItem.userMaterials.size === 0) {
-        cacheItem.texture.dispose();
+        if (cacheItem.texture instanceof THREE.Texture) {
+          cacheItem.texture.dispose();
+        }
         this.textureCache.delete(src);
       }
     }
