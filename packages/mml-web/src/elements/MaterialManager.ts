@@ -1,10 +1,16 @@
 import * as THREE from "three";
 
 import { Material } from "./Material";
+import { MElement } from "./MElement";
 
 interface MaterialTextureCacheItem {
   userMaterials: Map<Material, Material>;
   texture: THREE.Texture | Promise<THREE.Texture | null>;
+}
+
+interface SharedMaterialItem {
+  material: Material | null;
+  userElements: Map<MElement, MElement>;
 }
 
 export class MaterialManager {
@@ -23,6 +29,7 @@ export class MaterialManager {
   private static instance: MaterialManager;
   private textureCache: Map<string, MaterialTextureCacheItem> = new Map();
   private textureLoader: THREE.TextureLoader;
+  private sharedMaterials: Map<string, SharedMaterialItem> = new Map();
 
   private constructor() {
     this.textureLoader = new THREE.TextureLoader();
@@ -76,6 +83,60 @@ export class MaterialManager {
         }
         this.textureCache.delete(src);
       }
+    }
+  }
+
+  registerSharedMaterial(id: string, material: Material) {
+    if (!id) return;
+    let sharedMaterial = this.sharedMaterials.get(id);
+
+    // If the shared material already exists, update the material and update all the user elements that registered before it became available
+    if (sharedMaterial) {
+      sharedMaterial.material = material;
+      sharedMaterial.userElements.forEach((element) => {
+        element.addSideEffectChild(material);
+      });
+    } else {
+      sharedMaterial = {
+        material,
+        userElements: new Map(),
+      };
+    }
+    this.sharedMaterials.set(id, sharedMaterial);
+  }
+
+  registerMaterialUser(id: string, element: MElement) {
+    let sharedMaterial = this.sharedMaterials.get(id);
+
+    // If a user element tries to register before a material is available, create an empty shared material entry
+    if (!sharedMaterial) {
+      sharedMaterial = {
+        material: null,
+        userElements: new Map([[element, element]]),
+      };
+      this.sharedMaterials.set(id, sharedMaterial);
+    }
+    sharedMaterial.userElements.set(element, element);
+    if (sharedMaterial.material?.getMaterial()) {
+      element.addSideEffectChild(sharedMaterial.material);
+    }
+  }
+
+  unregisterSharedMaterial(id: string) {
+    if (!id) return;
+    const sharedMaterial = this.sharedMaterials.get(id);
+    if (sharedMaterial) {
+      sharedMaterial.userElements.forEach((element) => {
+        sharedMaterial.material && element.removeSideEffectChild(sharedMaterial.material);
+      });
+      sharedMaterial.material = null;
+    }
+  }
+
+  unregisterMaterialUser(id: string, element: MElement) {
+    const sharedMaterial = this.sharedMaterials.get(id);
+    if (sharedMaterial) {
+      sharedMaterial.userElements.delete(element);
     }
   }
 }

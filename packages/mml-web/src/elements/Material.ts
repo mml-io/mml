@@ -21,6 +21,7 @@ export interface ElementWithMesh extends TransformableElement {
   getDefaultMaterial: () => THREE.Material;
 }
 
+const defaultMaterialId = "";
 const defaultMaterialColor = new THREE.Color(0xffffff);
 const defaultMaterialOpacity = 1;
 const defaultMaterialRoughness = 0;
@@ -79,7 +80,7 @@ export class Material extends MElement {
   });
 
   private props = {
-    id: `${this.parentElement?.nodeName}/`,
+    id: defaultMaterialId,
     color: defaultMaterialColor,
     opacity: defaultMaterialOpacity,
     roughness: defaultMaterialRoughness,
@@ -112,8 +113,22 @@ export class Material extends MElement {
   private material: THREE.MeshStandardMaterial | null = null;
   private materialManager: MaterialManager = MaterialManager.getInstance();
   private registeredParentAttachment: MElement | null = null;
+  private isSharedMaterial = false;
 
   private static attributeHandler = new AttributeHandler<Material>({
+    id: (instance, newValue) => {
+      const oldValue = instance.props.id;
+      instance.props.id = newValue ?? defaultMaterialId;
+      if (!instance.material) return;
+      if (oldValue && instance.isSharedMaterial) {
+        instance.materialManager.unregisterSharedMaterial(oldValue);
+        instance.isSharedMaterial = false;
+      }
+      if (instance.props.id && instance.props.id !== oldValue) {
+        instance.materialManager.registerSharedMaterial(instance.props.id, instance);
+        instance.isSharedMaterial = true;
+      }
+    },
     color: (instance, newValue) => {
       instance.materialAnimatedAttributeHelper.elementSetAttribute(
         "color",
@@ -480,6 +495,7 @@ export class Material extends MElement {
     });
 
     this.loadTextures().then(() => {
+      // Check if the element is attached to another element
       if (this.parentElement && this.parentElement instanceof MElement) {
         this.registeredParentAttachment = this.parentElement;
         this.registeredParentAttachment.addSideEffectChild(this);
@@ -489,6 +505,12 @@ export class Material extends MElement {
           }) satisfies MaterialLoadedEvent,
         );
       }
+
+      // Register shared material
+      if (this.props.id) {
+        this.materialManager.registerSharedMaterial(this.props.id, this);
+        this.isSharedMaterial = true;
+      }
     });
   }
 
@@ -497,6 +519,9 @@ export class Material extends MElement {
     if (parent) {
       parent.removeSideEffectChild(this);
       parent.dispatchEvent(new CustomEvent("materialDisconnected"));
+    }
+    if (this.isSharedMaterial) {
+      this.materialManager.unregisterSharedMaterial(this.props.id);
     }
 
     this.materialManager.mapKeys.map((key) => {
