@@ -114,6 +114,7 @@ export class Material extends MElement {
   private materialManager: MaterialManager = MaterialManager.getInstance();
   private registeredParentAttachment: MElement | null = null;
   private isSharedMaterial = false;
+  public isLoaded = false;
 
   private static attributeHandler = new AttributeHandler<Material>({
     id: (instance, newValue) => {
@@ -494,19 +495,19 @@ export class Material extends MElement {
       side: this.props.side,
     });
 
-    this.loadTextures().then(() => {
-      // Check if the element is attached to another element
-      if (this.parentElement && this.parentElement instanceof MElement) {
-        this.registeredParentAttachment = this.parentElement;
-        this.registeredParentAttachment.addSideEffectChild(this);
-        this.registeredParentAttachment.dispatchEvent(
-          new CustomEvent("materialLoaded", {
-            detail: {},
-          }) satisfies MaterialLoadedEvent,
-        );
-      }
+    // Check if the element is attached to another element
+    if (this.parentElement && this.parentElement instanceof MElement) {
+      this.registeredParentAttachment = this.parentElement;
+      this.registeredParentAttachment.addSideEffectChild(this);
+    }
 
-      // Register shared material
+    this.loadTextures().then(() => {
+      this.registeredParentAttachment?.dispatchEvent(
+        new CustomEvent("materialLoaded", {
+          detail: {},
+        }) satisfies MaterialLoadedEvent,
+      );
+      this.isLoaded = true;
       if (this.props.id) {
         this.materialManager.registerSharedMaterial(this.props.id, this);
         this.isSharedMaterial = true;

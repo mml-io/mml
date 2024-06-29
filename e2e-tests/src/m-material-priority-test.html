@@ -1,0 +1,208 @@
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="17.5" y="15" z="10"></m-light>
+
+<m-group id="ui" y="10">
+  <m-label
+    id="Test1"
+    x="-6"
+    y="0"
+    z="0"
+    content="Run Test 1 (Red, Green, Blue)"
+    width="2"
+    alignment="center"
+    onclick="Test1()"
+  ></m-label>
+  <m-label
+    id="Test2"
+    x="-3"
+    y="0"
+    z="0"
+    content="Run Test 2 (Red, Red, Blue)"
+    width="2"
+    alignment="center"
+    onclick="Test2()"
+  ></m-label>
+  <m-label
+    id="Test3"
+    x="0"
+    y="0"
+    z="0"
+    content="Run Test 3 (Blue, Red, Red)"
+    width="2"
+    alignment="center"
+    onclick="Test3()"
+  ></m-label>
+  <m-label
+    id="Test4"
+    x="3"
+    y="0"
+    z="0"
+    content="Run Test 4 (Blue, Green, Red)"
+    width="2"
+    alignment="center"
+    onclick="Test4()"
+  ></m-label>
+  <m-label id="stepLabel" x="0" y="1.5" content="-1" alignment="center"> </m-label>
+</m-group>
+
+<m-group id="container" data-test-step="-1"> </m-group>
+
+<script>
+  const stepLabel = document.getElementById("stepLabel");
+  const container = document.getElementById("container");
+
+  function createMaterial(color, opacity, map) {
+    const material = document.createElement("m-material");
+    material.setAttribute("color", color);
+    material.setAttribute("opacity", opacity);
+    material.setAttribute("map", map);
+    material.setAttribute("id", "my-material-" + color);
+    return material;
+  }
+
+  function createCube(x, y, z) {
+    const cube = document.createElement("m-cube");
+    cube.setAttribute("x", x);
+    cube.setAttribute("y", y);
+    cube.setAttribute("z", z);
+    cube.setAttribute("color", "blue");
+    return cube;
+  }
+
+  /**
+   * Test 1: Specify both material id and child material. Remove child material first then
+   * remove material id.
+   * Order should be red -> green -> blue
+   **/
+  async function Test1() {
+    const cube = createCube(0, 0, 0);
+    const childMaterial = createMaterial("red", 1.0, "http://localhost:7079/assets/test-image.jpg");
+    cube.setAttribute("material-id", "shared-material");
+    cube.appendChild(childMaterial);
+    createSharedMaterial();
+
+    container.appendChild(cube);
+    updateDataStep(0);
+
+    setTimeout(() => {
+      cube.removeChild(childMaterial);
+      updateDataStep(1);
+    }, 1000);
+
+    setTimeout(() => {
+      cube.setAttribute("material-id", "");
+      updateDataStep(2);
+    }, 2000);
+
+    setTimeout(() => {
+      cleanup();
+    }, 2500);
+  }
+
+  /**
+   * Test 2: Specify both material id and child material. Remove material id first then
+   * remove child material.
+   * Order should be red -> red -> blue
+   **/
+  async function Test2() {
+    const cube = createCube(0, 0, 0);
+    const childMaterial = createMaterial("red", 1.0, "http://localhost:7079/assets/test-image.jpg");
+    cube.setAttribute("material-id", "shared-material");
+    cube.appendChild(childMaterial);
+    createSharedMaterial();
+
+    container.appendChild(cube); // should be red
+    updateDataStep(0);
+
+    setTimeout(() => {
+      cube.setAttribute("material-id", ""); // should be red
+      updateDataStep(1);
+    }, 1000);
+
+    setTimeout(() => {
+      cube.removeChild(childMaterial); // should be blue
+      updateDataStep(2);
+    }, 2000);
+
+    setTimeout(() => {
+      cleanup();
+    }, 2500);
+  }
+
+  /**
+   * Test 3: Add child material then add material id
+   * Order should be blue -> red -> red
+   **/
+  async function Test3() {
+    const cube = createCube(0, 0, 0);
+    const childMaterial = createMaterial("red", 1.0, "http://localhost:7079/assets/test-image.jpg");
+    createSharedMaterial();
+
+    container.appendChild(cube);
+    updateDataStep(0);
+
+    setTimeout(() => {
+      cube.appendChild(childMaterial);
+      updateDataStep(1);
+    }, 1000);
+
+    setTimeout(() => {
+      cube.setAttribute("material-id", "shared-material");
+      updateDataStep(2);
+    }, 2000);
+
+    setTimeout(() => {
+      cleanup();
+    }, 2500);
+  }
+
+  /**
+   * Test 4: Add material id then add child material
+   * Order should be blue -> green -> red
+   */
+  async function Test4() {
+    cleanup();
+    const cube = createCube(0, 0, 0);
+    const childMaterial = createMaterial("red", 1.0, "http://localhost:7079/assets/test-image.jpg");
+    createSharedMaterial();
+
+    container.appendChild(cube);
+    updateDataStep(0);
+
+    setTimeout(() => {
+      cube.setAttribute("material-id", "shared-material");
+      updateDataStep(1);
+    }, 1000);
+
+    setTimeout(() => {
+      cube.appendChild(childMaterial);
+      updateDataStep(2);
+    }, 2000);
+
+    setTimeout(() => {
+      cleanup();
+    }, 2500);
+  }
+
+  function createSharedMaterial() {
+    const sharedMaterial = createMaterial(
+      "green",
+      1.0,
+      "http://localhost:7079/assets/test-image.jpg",
+    );
+    sharedMaterial.setAttribute("id", "shared-material");
+    container.appendChild(sharedMaterial);
+    return sharedMaterial;
+  }
+
+  function cleanup() {
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    updateDataStep(-1);
+  }
+
+  function updateDataStep(step) {
+    container.setAttribute("data-test-step", step);
+    stepLabel.setAttribute("content", step);
+  }
+</script>

@@ -89,7 +89,6 @@ export class MaterialManager {
   registerSharedMaterial(id: string, material: Material) {
     if (!id) return;
     let sharedMaterial = this.sharedMaterials.get(id);
-
     // If the shared material already exists, update the material and update all the user elements that registered before it became available
     if (sharedMaterial) {
       sharedMaterial.material = material;
@@ -107,7 +106,6 @@ export class MaterialManager {
 
   registerMaterialUser(id: string, element: MElement) {
     let sharedMaterial = this.sharedMaterials.get(id);
-
     // If a user element tries to register before a material is available, create an empty shared material entry
     if (!sharedMaterial) {
       sharedMaterial = {

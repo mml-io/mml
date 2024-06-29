@@ -8,6 +8,13 @@ const labelCoords = {
   cube3: { x: 510, y: 880 },
 };
 
+const sharedMaterialTestCoords = {
+  test1: { x: 115, y: 180 },
+  test2: { x: 315, y: 180 },
+  test3: { x: 505, y: 180 },
+  test4: { x: 710, y: 180 },
+};
+
 describe("m-material", () => {
   test("materials load and unload", async () => {
     const page = await __BROWSER_GLOBAL__.newPage();
@@ -84,6 +91,106 @@ describe("m-material", () => {
     await page.click("canvas", { offset: labelCoords.cube3 });
     await takeAndCompareScreenshot(page);
 
+    await page.close();
+  }, 60000);
+
+  test("Removing child with material-id set should fallback to shared material", async () => {
+    const coords = {
+      test1: { x: 115, y: 180 },
+      test2: { x: 315, y: 180 },
+    };
+    const page = await __BROWSER_GLOBAL__.newPage();
+
+    await page.setViewport({ width: 1024, height: 1024 });
+
+    await page.goto("http://localhost:7079/m-material-priority-test.html/reset");
+
+    await page.waitForSelector("#container");
+
+    await page.click("canvas", { offset: coords.test1 });
+
+    await page.waitForSelector("m-group[data-test-step='0']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='1']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='2']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='-1']");
+    await page.close();
+  }, 60000);
+
+  test("Removing material-id should not affect child", async () => {
+    const page = await __BROWSER_GLOBAL__.newPage();
+
+    await page.setViewport({ width: 1024, height: 1024 });
+
+    await page.goto("http://localhost:7079/m-material-priority-test.html/reset");
+
+    await page.waitForSelector("#container");
+
+    await page.click("canvas", { offset: sharedMaterialTestCoords.test2 });
+
+    await page.waitForSelector("m-group[data-test-step='0']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='1']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='2']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='-1']");
+    await page.close();
+  }, 60000);
+
+  test("Adding material-id should not affect child", async () => {
+    const page = await __BROWSER_GLOBAL__.newPage();
+
+    await page.setViewport({ width: 1024, height: 1024 });
+
+    await page.goto("http://localhost:7079/m-material-priority-test.html/reset");
+
+    await page.waitForSelector("#container");
+
+    await page.click("canvas", { offset: sharedMaterialTestCoords.test3 });
+
+    await page.waitForSelector("m-group[data-test-step='0']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='1']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='2']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='-1']");
+    await page.close();
+  }, 60000);
+
+  test("Child material should replace shared material", async () => {
+    const page = await __BROWSER_GLOBAL__.newPage();
+
+    await page.setViewport({ width: 1024, height: 1024 });
+
+    await page.goto("http://localhost:7079/m-material-priority-test.html/reset");
+
+    await page.waitForSelector("#container");
+
+    await page.click("canvas", { offset: sharedMaterialTestCoords.test4 });
+
+    await page.waitForSelector("m-group[data-test-step='0']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='1']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='2']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='-1']");
     await page.close();
   }, 60000);
 });

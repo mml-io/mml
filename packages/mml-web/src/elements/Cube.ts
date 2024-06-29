@@ -134,24 +134,21 @@ export class Cube extends TransformableElement {
       instance.mesh.castShadow = instance.props.castShadows;
     },
     "material-id": (instance, newValue) => {
+      const oldId = instance.props.materialId;
       instance.props.materialId = newValue ?? defaultMaterialId;
+      // Ignore changes in material id if the element has a direct child material
+      if (
+        instance.registeredChildMaterial &&
+        instance.registeredChildMaterial.parentElement === instance
+      ) {
+        return;
+      }
 
-      // Check if child material is the registered material, if so do nothing
-      const childMaterial = instance.querySelector("m-material") as Material;
       const materialManager = MaterialManager.getInstance();
+      materialManager.unregisterMaterialUser(oldId, instance);
+      instance.disconnectChildMaterial();
       if (instance.props.materialId) {
-        if (instance.registeredChildMaterial) {
-          // remove previously attached element
-          instance.disconnectChildMaterial();
-        }
         materialManager.registerMaterialUser(instance.props.materialId, instance);
-      } else {
-        materialManager.unregisterMaterialUser(instance.props.materialId, instance);
-        if (childMaterial) {
-          instance.setChildMaterial(childMaterial);
-        } else {
-          instance.disconnectChildMaterial();
-        }
       }
     },
   });
@@ -192,8 +189,18 @@ export class Cube extends TransformableElement {
 
   public addSideEffectChild(child: MElement): void {
     this.cubeAnimatedAttributeHelper.addSideEffectChild(child);
-    if (child instanceof Material) {
-      this.setChildMaterial(child);
+    if (
+      child instanceof Material &&
+      (!this.registeredChildMaterial || child.parentElement === this)
+    ) {
+      this.registeredChildMaterial = child;
+      if (child.isLoaded) {
+        this.setChildMaterial(child);
+      } else {
+        this.addEventListener("materialLoaded", () => {
+          this.setChildMaterial(child);
+        });
+      }
     }
     super.addSideEffectChild(child);
   }
@@ -229,7 +236,8 @@ export class Cube extends TransformableElement {
     this.material = this.getDefaultMaterial();
     this.mesh.material = this.material;
 
-    if (this.props.materialId) {
+    const childMaterial = this.querySelector("m-material");
+    if (this.props.materialId && !childMaterial) {
       const materialManager = MaterialManager.getInstance();
       materialManager.registerMaterialUser(this.props.materialId, this);
     }
@@ -241,10 +249,17 @@ export class Cube extends TransformableElement {
   public disconnectedCallback(): void {
     this.collideableHelper.removeColliders();
     const materialManager = MaterialManager.getInstance();
-    if (this.registeredChildMaterial) {
+
+    // Disconnect shared material
+    if (
+      this.registeredChildMaterial &&
+      this.props.materialId &&
+      this.props.materialId === this.registeredChildMaterial.id
+    ) {
       this.disconnectChildMaterial();
       materialManager.unregisterMaterialUser(this.props.materialId, this);
     }
+
     if (this.material && !this.registeredChildMaterial) {
       this.material.dispose();
       this.mesh.material = [];
@@ -274,8 +289,28 @@ export class Cube extends TransformableElement {
   }
 
   private disconnectChildMaterial() {
-    const childMaterialElement = this.registeredChildMaterial;
-    if (childMaterialElement) {
+    const registeredMaterialElement = this.registeredChildMaterial;
+    const childMaterial = this.querySelector("m-material") as Material;
+    const sharedMaterialId = this.props.materialId;
+    const sharedMaterial = document.getElementById(sharedMaterialId) as Material;
+    if (
+      registeredMaterialElement &&
+      childMaterial instanceof Material &&
+      registeredMaterialElement !== childMaterial
+    ) {
+      // Fallback to child
+      this.registeredChildMaterial = null;
+      this.addSideEffectChild(childMaterial);
+    } else if (
+      registeredMaterialElement &&
+      sharedMaterial instanceof Material &&
+      registeredMaterialElement !== sharedMaterial
+    ) {
+      // Fallback to shared material
+      this.registeredChildMaterial = null;
+      this.addSideEffectChild(sharedMaterial);
+    }
+    if ((!childMaterial && !sharedMaterialId) || childMaterial === sharedMaterial) {
       this.material = this.getDefaultMaterial();
       this.mesh.material = this.material;
       this.registeredChildMaterial = null;
