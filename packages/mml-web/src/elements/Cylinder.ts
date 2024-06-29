@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
 import { Material } from "./Material";
+import { MaterialManager } from "./MaterialManager";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -19,6 +20,7 @@ const defaultCylinderRadius = 0.5;
 const defaultCylinderHeight = 1;
 const defaultCylinderOpacity = 1;
 const defaultCylinderCastShadows = true;
+const defaultMaterialId = "";
 
 export class Cylinder extends TransformableElement {
   static tagName = "m-cylinder";
@@ -81,6 +83,7 @@ export class Cylinder extends TransformableElement {
     color: defaultCylinderColor,
     opacity: defaultCylinderOpacity,
     castShadows: defaultCylinderCastShadows,
+    materialId: defaultMaterialId,
   };
 
   private mesh: THREE.Mesh<THREE.CylinderGeometry, THREE.Material | Array<THREE.Material>>;
@@ -117,6 +120,27 @@ export class Cylinder extends TransformableElement {
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultCylinderCastShadows);
       instance.mesh.castShadow = instance.props.castShadows;
+    },
+    "material-id": (instance, newValue) => {
+      instance.props.materialId = newValue ?? defaultMaterialId;
+
+      // Check if child material is the registered material, if so do nothing
+      const childMaterial = instance.querySelector("m-material") as Material;
+      const materialManager = MaterialManager.getInstance();
+      if (instance.props.materialId) {
+        if (instance.registeredChildMaterial) {
+          // remove previously attached element
+          instance.disconnectChildMaterial();
+        }
+        materialManager.registerMaterialUser(instance.props.materialId, instance);
+      } else {
+        materialManager.unregisterMaterialUser(instance.props.materialId, instance);
+        if (childMaterial) {
+          instance.setChildMaterial(childMaterial);
+        } else {
+          instance.disconnectChildMaterial();
+        }
+      }
     },
   });
 
@@ -181,13 +205,24 @@ export class Cylinder extends TransformableElement {
     super.connectedCallback();
     this.material = this.getDefaultMaterial();
     this.mesh.material = this.material;
+
+    if (this.props.materialId) {
+      const materialManager = MaterialManager.getInstance();
+      materialManager.registerMaterialUser(this.props.materialId, this);
+    }
+
     this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 
   disconnectedCallback() {
     this.collideableHelper.removeColliders();
-    if (this.material) {
+    const materialManager = MaterialManager.getInstance();
+    if (this.registeredChildMaterial) {
+      this.disconnectChildMaterial();
+      materialManager.unregisterMaterialUser(this.props.materialId, this);
+    }
+    if (this.material && !this.registeredChildMaterial) {
       this.material.dispose();
       this.mesh.material = [];
       this.material = null;

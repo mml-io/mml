@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
 import { Material } from "./Material";
+import { MaterialManager } from "./MaterialManager";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -18,7 +19,7 @@ const defaultSphereColor = new THREE.Color(0xffffff);
 const defaultSphereRadius = 0.5;
 const defaultSphereOpacity = 1;
 const defaultSphereCastShadows = true;
-
+const defaultMaterialId = "";
 const defaultSphereWidthSegments = 16;
 const defaultSphereHeightSegments = 16;
 
@@ -73,6 +74,7 @@ export class Sphere extends TransformableElement {
     color: defaultSphereColor,
     opacity: defaultSphereOpacity,
     castShadows: defaultSphereCastShadows,
+    materialId: defaultMaterialId,
   };
 
   private mesh: THREE.Mesh<THREE.SphereGeometry, THREE.Material | Array<THREE.Material>>;
@@ -103,6 +105,27 @@ export class Sphere extends TransformableElement {
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultSphereCastShadows);
       instance.mesh.castShadow = instance.props.castShadows;
+    },
+    "material-id": (instance, newValue) => {
+      instance.props.materialId = newValue ?? defaultMaterialId;
+
+      // Check if child material is the registered material, if so do nothing
+      const childMaterial = instance.querySelector("m-material") as Material;
+      const materialManager = MaterialManager.getInstance();
+      if (instance.props.materialId) {
+        if (instance.registeredChildMaterial) {
+          // remove previously attached element
+          instance.disconnectChildMaterial();
+        }
+        materialManager.registerMaterialUser(instance.props.materialId, instance);
+      } else {
+        materialManager.unregisterMaterialUser(instance.props.materialId, instance);
+        if (childMaterial) {
+          instance.setChildMaterial(childMaterial);
+        } else {
+          instance.disconnectChildMaterial();
+        }
+      }
     },
   });
 

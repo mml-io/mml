@@ -270,6 +270,21 @@
     </xs:attribute>
   </xs:attributeGroup>
 
+  <xs:attributeGroup name="material">
+      <xs:annotation>
+      <xs:documentation>
+        The material id attribute is a string that indicates the id of the shared material to be applied to the element.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="material-id" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          The id of the shared material to be applied to the element. If not specified, the default material is applied.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
   <xs:annotation>
     <xs:documentation>
       Document Structure
@@ -412,6 +427,7 @@
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="shadows"/>
+          <xs:attributeGroup ref="material"/>
           <xs:attribute name="width" type="xs:float">
             <xs:annotation>
               <xs:documentation>
@@ -461,6 +477,7 @@
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="shadows"/>
+          <xs:attributeGroup ref="material"/>
           <xs:attribute name="radius" type="xs:float">
             <xs:annotation>
               <xs:documentation>
@@ -496,6 +513,7 @@
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="shadows"/>
+          <xs:attributeGroup ref="material"/>
           <xs:attribute name="radius" type="xs:float">
             <xs:annotation>
               <xs:documentation>
@@ -600,6 +618,7 @@
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="shadows"/>
+          <xs:attributeGroup ref="material"/>
           <xs:attribute name="width" type="xs:float">
             <xs:annotation>
               <xs:documentation>
@@ -1090,7 +1109,6 @@
             </xs:annotation>
           </xs:attribute>
 
-
           <xs:attribute name="normal-scale" type="xs:string">
             <xs:annotation>
               <xs:documentation>
@@ -1151,14 +1169,6 @@
             <xs:annotation>
               <xs:documentation>
                 Whether the material should be rendered in wireframe mode. Default value is false.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-
-          <xs:attribute name="wireframe-line-width" type="xs:float">
-            <xs:annotation>
-              <xs:documentation>
-                The width of the wireframe lines. Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
