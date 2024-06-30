@@ -3,7 +3,6 @@ import * as THREE from "three";
 import { AnimationType } from "./AttributeAnimation";
 import { MaterialManager } from "./MaterialManager";
 import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -15,11 +14,6 @@ import {
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 export type MaterialLoadedEvent = CustomEvent;
-export interface ElementWithMesh extends TransformableElement {
-  mesh: THREE.Mesh;
-  material: THREE.Material;
-  getDefaultMaterial: () => THREE.Material;
-}
 
 const defaultMaterialId = "";
 const defaultMaterialColor = new THREE.Color(0xffffff);
@@ -122,7 +116,7 @@ export class Material extends MElement {
       instance.props.id = newValue ?? defaultMaterialId;
       if (!instance.material) return;
       if (oldValue && instance.isSharedMaterial) {
-        instance.materialManager.unregisterSharedMaterial(oldValue);
+        instance.materialManager.unregisterSharedMaterial(oldValue, instance);
         instance.isSharedMaterial = false;
       }
       if (instance.props.id && instance.props.id !== oldValue) {
@@ -501,17 +495,18 @@ export class Material extends MElement {
       this.registeredParentAttachment.addSideEffectChild(this);
     }
 
+    if (this.props.id) {
+      this.materialManager.registerSharedMaterial(this.props.id, this);
+      this.isSharedMaterial = true;
+    }
+
     this.loadTextures().then(() => {
-      this.registeredParentAttachment?.dispatchEvent(
+      this.dispatchEvent(
         new CustomEvent("materialLoaded", {
           detail: {},
         }) satisfies MaterialLoadedEvent,
       );
       this.isLoaded = true;
-      if (this.props.id) {
-        this.materialManager.registerSharedMaterial(this.props.id, this);
-        this.isSharedMaterial = true;
-      }
     });
   }
 
@@ -522,7 +517,7 @@ export class Material extends MElement {
       parent.dispatchEvent(new CustomEvent("materialDisconnected"));
     }
     if (this.isSharedMaterial) {
-      this.materialManager.unregisterSharedMaterial(this.props.id);
+      this.materialManager.unregisterSharedMaterial(this.props.id, this);
     }
 
     this.materialManager.mapKeys.map((key) => {

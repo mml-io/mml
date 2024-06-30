@@ -89,6 +89,11 @@ export class MaterialManager {
   registerSharedMaterial(id: string, material: Material) {
     if (!id) return;
     let sharedMaterial = this.sharedMaterials.get(id);
+    if (sharedMaterial && sharedMaterial.material) {
+      console.warn(`Material with id ${id} already exists`);
+      return;
+    }
+
     // If the shared material already exists, update the material and update all the user elements that registered before it became available
     if (sharedMaterial) {
       sharedMaterial.material = material;
@@ -120,14 +125,19 @@ export class MaterialManager {
     }
   }
 
-  unregisterSharedMaterial(id: string) {
-    if (!id) return;
+  unregisterSharedMaterial(id: string, material: Material) {
     const sharedMaterial = this.sharedMaterials.get(id);
-    if (sharedMaterial) {
+    if (!id || material !== sharedMaterial?.material) return;
+    if (sharedMaterial && sharedMaterial.material) {
       sharedMaterial.userElements.forEach((element) => {
         sharedMaterial.material && element.removeSideEffectChild(sharedMaterial.material);
+        sharedMaterial.material && element.dispatchEvent(new CustomEvent("materialDisconnected"));
       });
       sharedMaterial.material = null;
+
+      // Check for a duplicate material id and make it the shared material
+      const newMaterial = document.querySelector(`m-material[id="${id}"]`) as Material;
+      newMaterial && this.registerSharedMaterial(id, newMaterial);
     }
   }
 

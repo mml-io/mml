@@ -136,17 +136,19 @@ export class Cube extends TransformableElement {
     "material-id": (instance, newValue) => {
       const oldId = instance.props.materialId;
       instance.props.materialId = newValue ?? defaultMaterialId;
-      // Ignore changes in material id if the element has a direct child material
       if (
         instance.registeredChildMaterial &&
         instance.registeredChildMaterial.parentElement === instance
       ) {
+        // Ignore changes in material id if the element has a direct child material
         return;
       }
 
       const materialManager = MaterialManager.getInstance();
-      materialManager.unregisterMaterialUser(oldId, instance);
-      instance.disconnectChildMaterial();
+      if (oldId && instance.registeredChildMaterial) {
+        materialManager.unregisterMaterialUser(oldId, instance);
+        instance.disconnectChildMaterial();
+      }
       if (instance.props.materialId) {
         materialManager.registerMaterialUser(instance.props.materialId, instance);
       }
@@ -197,7 +199,7 @@ export class Cube extends TransformableElement {
       if (child.isLoaded) {
         this.setChildMaterial(child);
       } else {
-        this.addEventListener("materialLoaded", () => {
+        child.addEventListener("materialLoaded", () => {
           this.setChildMaterial(child);
         });
       }
@@ -233,13 +235,9 @@ export class Cube extends TransformableElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    this.material = this.getDefaultMaterial();
-    this.mesh.material = this.material;
-
-    const childMaterial = this.querySelector("m-material");
-    if (this.props.materialId && !childMaterial) {
-      const materialManager = MaterialManager.getInstance();
-      materialManager.registerMaterialUser(this.props.materialId, this);
+    if (!this.material) {
+      this.material = this.getDefaultMaterial();
+      this.mesh.material = this.material;
     }
 
     this.applyBounds();
@@ -310,7 +308,7 @@ export class Cube extends TransformableElement {
       this.registeredChildMaterial = null;
       this.addSideEffectChild(sharedMaterial);
     }
-    if ((!childMaterial && !sharedMaterialId) || childMaterial === sharedMaterial) {
+    if ((!childMaterial && !sharedMaterial) || childMaterial === sharedMaterial) {
       this.material = this.getDefaultMaterial();
       this.mesh.material = this.material;
       this.registeredChildMaterial = null;

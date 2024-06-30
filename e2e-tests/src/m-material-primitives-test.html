@@ -61,7 +61,8 @@
   let materialsLoaded = 0;
   const elements = [...document.querySelectorAll("#primitives > *")];
   elements.forEach((element) => {
-    element.addEventListener("materialLoaded", () => {
+    const material = element.querySelector("m-material");
+    material.addEventListener("materialLoaded", () => {
       materialsLoaded++;
       document.querySelector("m-group").setAttribute("data-loaded-materials", materialsLoaded);
     });
