@@ -1,8 +1,6 @@
 import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
-import { Material } from "./Material";
-import { MaterialManager } from "./MaterialManager";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -13,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { MaterialElementHelper } from "../utils/MaterialHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultCubeColor = new THREE.Color(0xffffff);
@@ -21,7 +20,6 @@ const defaultCubeHeight = 1;
 const defaultCubeDepth = 1;
 const defaultCubeOpacity = 1;
 const defaultCubeCastShadows = true;
-const defaultMaterialId = "";
 
 export class Cube extends TransformableElement {
   static tagName = "m-cube";
@@ -32,7 +30,7 @@ export class Cube extends TransformableElement {
       defaultCubeColor,
       (newValue: THREE.Color) => {
         this.props.color = newValue;
-        if (this.material && !this.registeredChildMaterial) {
+        if (this.material && !this.materialHelper.registeredChildMaterial) {
           this.material.color = this.props.color;
         }
       },
@@ -72,7 +70,7 @@ export class Cube extends TransformableElement {
       defaultCubeOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material && !this.registeredChildMaterial) {
+        if (this.material && !this.materialHelper.registeredChildMaterial) {
           const needsUpdate = this.material.transparent === (this.props.opacity === 1);
           this.material.transparent = this.props.opacity !== 1;
           this.material.needsUpdate = needsUpdate;
@@ -91,12 +89,11 @@ export class Cube extends TransformableElement {
     color: defaultCubeColor,
     opacity: defaultCubeOpacity,
     castShadows: defaultCubeCastShadows,
-    materialId: defaultMaterialId,
   };
   private mesh: THREE.Mesh<THREE.BoxGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial | null = null;
   private collideableHelper = new CollideableHelper(this);
-  private registeredChildMaterial: Material | null = null;
+  private materialHelper = new MaterialElementHelper(this);
 
   private static attributeHandler = new AttributeHandler<Cube>({
     width: (instance, newValue) => {
@@ -133,26 +130,6 @@ export class Cube extends TransformableElement {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultCubeCastShadows);
       instance.mesh.castShadow = instance.props.castShadows;
     },
-    "material-id": (instance, newValue) => {
-      const oldId = instance.props.materialId;
-      instance.props.materialId = newValue ?? defaultMaterialId;
-      if (
-        instance.registeredChildMaterial &&
-        instance.registeredChildMaterial.parentElement === instance
-      ) {
-        // Ignore changes in material id if the element has a direct child material
-        return;
-      }
-
-      const materialManager = MaterialManager.getInstance();
-      if (oldId && instance.registeredChildMaterial) {
-        materialManager.unregisterMaterialUser(oldId, instance);
-        instance.disconnectChildMaterial();
-      }
-      if (instance.props.materialId) {
-        materialManager.registerMaterialUser(instance.props.materialId, instance);
-      }
-    },
   });
 
   protected enable() {
@@ -175,6 +152,7 @@ export class Cube extends TransformableElement {
       ...TransformableElement.observedAttributes,
       ...Cube.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...MaterialElementHelper.observedAttributes,
     ];
   }
 
@@ -191,27 +169,13 @@ export class Cube extends TransformableElement {
 
   public addSideEffectChild(child: MElement): void {
     this.cubeAnimatedAttributeHelper.addSideEffectChild(child);
-    if (
-      child instanceof Material &&
-      (!this.registeredChildMaterial || child.parentElement === this)
-    ) {
-      this.registeredChildMaterial = child;
-      if (child.isLoaded) {
-        this.setChildMaterial(child);
-      } else {
-        child.addEventListener("materialLoaded", () => {
-          this.setChildMaterial(child);
-        });
-      }
-    }
+    this.materialHelper.addSideEffectChild(child);
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
     this.cubeAnimatedAttributeHelper.removeSideEffectChild(child);
-    if (child === this.registeredChildMaterial) {
-      this.disconnectChildMaterial();
-    }
+    this.materialHelper.removeSideEffectChild(child);
     super.removeSideEffectChild(child);
   }
 
@@ -231,6 +195,7 @@ export class Cube extends TransformableElement {
     super.attributeChangedCallback(name, oldValue, newValue);
     Cube.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.materialHelper.handle(name, newValue);
   }
 
   public connectedCallback(): void {
@@ -246,20 +211,13 @@ export class Cube extends TransformableElement {
 
   public disconnectedCallback(): void {
     this.collideableHelper.removeColliders();
-    const materialManager = MaterialManager.getInstance();
+    this.materialHelper.disconnectedCallback();
 
-    // Disconnect shared material
-    if (
-      this.registeredChildMaterial &&
-      this.props.materialId &&
-      this.props.materialId === this.registeredChildMaterial.id
-    ) {
-      this.disconnectChildMaterial();
-      materialManager.unregisterMaterialUser(this.props.materialId, this);
+    if (!this.materialHelper.registeredChildMaterial) {
+      this.material?.dispose();
     }
 
-    if (this.material && !this.registeredChildMaterial) {
-      this.material.dispose();
+    if (this.material) {
       this.mesh.material = [];
       this.material = null;
     }
@@ -274,44 +232,11 @@ export class Cube extends TransformableElement {
     });
   }
 
-  private setChildMaterial(materialElement: Material) {
-    const newMaterial = materialElement?.getMaterial();
-    if (newMaterial) {
-      if (this.material) {
-        this.material.dispose();
-      }
-      this.material = newMaterial;
-      this.mesh.material = this.material;
-      this.registeredChildMaterial = materialElement;
+  public setMaterial(material: THREE.MeshStandardMaterial) {
+    if (this.material) {
+      this.material.dispose();
     }
-  }
-
-  private disconnectChildMaterial() {
-    const registeredMaterialElement = this.registeredChildMaterial;
-    const childMaterial = this.querySelector("m-material") as Material;
-    const sharedMaterialId = this.props.materialId;
-    const sharedMaterial = document.getElementById(sharedMaterialId) as Material;
-    if (
-      registeredMaterialElement &&
-      childMaterial instanceof Material &&
-      registeredMaterialElement !== childMaterial
-    ) {
-      // Fallback to child
-      this.registeredChildMaterial = null;
-      this.addSideEffectChild(childMaterial);
-    } else if (
-      registeredMaterialElement &&
-      sharedMaterial instanceof Material &&
-      registeredMaterialElement !== sharedMaterial
-    ) {
-      // Fallback to shared material
-      this.registeredChildMaterial = null;
-      this.addSideEffectChild(sharedMaterial);
-    }
-    if ((!childMaterial && !sharedMaterial) || childMaterial === sharedMaterial) {
-      this.material = this.getDefaultMaterial();
-      this.mesh.material = this.material;
-      this.registeredChildMaterial = null;
-    }
+    this.material = material;
+    this.mesh.material = this.material;
   }
 }

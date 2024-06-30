@@ -1,8 +1,6 @@
 import * as THREE from "three";
 
 import { AnimationType } from "./AttributeAnimation";
-import { Material } from "./Material";
-import { MaterialManager } from "./MaterialManager";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
@@ -13,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { MaterialElementHelper } from "../utils/MaterialHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultPlaneColor = new THREE.Color(0xffffff);
@@ -20,7 +19,6 @@ const defaultPlaneWidth = 1;
 const defaultPlaneHeight = 1;
 const defaultPlaneOpacity = 1;
 const defaultPlaneCastShadows = true;
-const defaultMaterialId = "";
 
 export class Plane extends TransformableElement {
   static tagName = "m-plane";
@@ -31,7 +29,7 @@ export class Plane extends TransformableElement {
       defaultPlaneColor,
       (newValue: THREE.Color) => {
         this.props.color = newValue;
-        if (this.material && !this.registeredChildMaterial) {
+        if (this.material && !this.materialHelper.registeredChildMaterial) {
           this.material.color = this.props.color;
         }
       },
@@ -61,7 +59,7 @@ export class Plane extends TransformableElement {
       defaultPlaneOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material && !this.registeredChildMaterial) {
+        if (this.material && !this.materialHelper.registeredChildMaterial) {
           const needsUpdate = this.material.transparent === (this.props.opacity === 1);
           this.material.transparent = this.props.opacity !== 1;
           this.material.needsUpdate = needsUpdate;
@@ -79,12 +77,11 @@ export class Plane extends TransformableElement {
     color: defaultPlaneColor,
     opacity: defaultPlaneOpacity,
     castShadows: defaultPlaneCastShadows,
-    materialId: defaultMaterialId,
   };
   private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial | null = null;
   private collideableHelper = new CollideableHelper(this);
-  private registeredChildMaterial: Material | null = null;
+  private materialHelper = new MaterialElementHelper(this);
 
   private static attributeHandler = new AttributeHandler<Plane>({
     width: (instance, newValue) => {
@@ -115,27 +112,6 @@ export class Plane extends TransformableElement {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultPlaneCastShadows);
       instance.mesh.castShadow = instance.props.castShadows;
     },
-    "material-id": (instance, newValue) => {
-      instance.props.materialId = newValue ?? defaultMaterialId;
-
-      // Check if child material is the registered material, if so do nothing
-      const childMaterial = instance.querySelector("m-material") as Material;
-      const materialManager = MaterialManager.getInstance();
-      if (instance.props.materialId) {
-        if (instance.registeredChildMaterial) {
-          // remove previously attached element
-          instance.disconnectChildMaterial();
-        }
-        materialManager.registerMaterialUser(instance.props.materialId, instance);
-      } else {
-        materialManager.unregisterMaterialUser(instance.props.materialId, instance);
-        if (childMaterial) {
-          instance.setChildMaterial(childMaterial);
-        } else {
-          instance.disconnectChildMaterial();
-        }
-      }
-    },
   });
 
   static get observedAttributes(): Array<string> {
@@ -143,6 +119,7 @@ export class Plane extends TransformableElement {
       ...TransformableElement.observedAttributes,
       ...Plane.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...MaterialElementHelper.observedAttributes,
     ];
   }
 
@@ -159,10 +136,12 @@ export class Plane extends TransformableElement {
 
   protected enable() {
     this.collideableHelper.enable();
+    this.materialHelper.enable();
   }
 
   protected disable() {
     this.collideableHelper.disable();
+    this.materialHelper.disable();
   }
 
   protected getContentBounds(): OrientedBoundingBox | null {
@@ -174,17 +153,13 @@ export class Plane extends TransformableElement {
 
   public addSideEffectChild(child: MElement): void {
     this.planeAnimatedAttributeHelper.addSideEffectChild(child);
-    if (child instanceof Material) {
-      this.setChildMaterial(child);
-    }
+    this.materialHelper.addSideEffectChild(child);
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
     this.planeAnimatedAttributeHelper.removeSideEffectChild(child);
-    if (child === this.registeredChildMaterial) {
-      this.disconnectChildMaterial();
-    }
+    this.materialHelper.removeSideEffectChild(child);
     super.removeSideEffectChild(child);
   }
 
@@ -207,20 +182,29 @@ export class Plane extends TransformableElement {
     super.attributeChangedCallback(name, oldValue, newValue);
     Plane.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.materialHelper.handle(name, newValue);
   }
 
   public connectedCallback(): void {
     super.connectedCallback();
-    this.material = this.getDefaultMaterial();
-    this.mesh.material = this.material;
+    if (!this.material) {
+      this.material = this.getDefaultMaterial();
+      this.mesh.material = this.material;
+    }
+
     this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 
   public disconnectedCallback(): void {
     this.collideableHelper.removeColliders();
+    this.materialHelper.disconnectedCallback();
+
+    if (!this.materialHelper.registeredChildMaterial) {
+      this.material?.dispose();
+    }
+
     if (this.material) {
-      this.material.dispose();
       this.mesh.material = [];
       this.material = null;
     }
@@ -235,24 +219,11 @@ export class Plane extends TransformableElement {
     });
   }
 
-  private setChildMaterial(materialElement: Material) {
-    const newMaterial = materialElement?.getMaterial();
-    if (newMaterial) {
-      if (this.material) {
-        this.material.dispose();
-      }
-      this.material = newMaterial;
-      this.mesh.material = this.material;
-      this.registeredChildMaterial = materialElement;
+  public setMaterial(material: THREE.MeshStandardMaterial) {
+    if (this.material) {
+      this.material.dispose();
     }
-  }
-
-  private disconnectChildMaterial() {
-    const childMaterialElement = this.registeredChildMaterial;
-    if (childMaterialElement) {
-      this.material = this.getDefaultMaterial();
-      this.mesh.material = this.material;
-      this.registeredChildMaterial = null;
-    }
+    this.material = material;
+    this.mesh.material = this.material;
   }
 }
