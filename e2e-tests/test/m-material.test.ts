@@ -13,6 +13,7 @@ const sharedMaterialTestCoords = {
   test2: { x: 315, y: 180 },
   test3: { x: 505, y: 180 },
   test4: { x: 710, y: 180 },
+  test5: { x: 910, y: 180 },
 };
 
 describe("m-material", () => {
@@ -180,6 +181,30 @@ describe("m-material", () => {
     await page.waitForSelector("#container");
 
     await page.click("canvas", { offset: sharedMaterialTestCoords.test4 });
+
+    await page.waitForSelector("m-group[data-test-step='0']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='1']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='2']");
+    await takeAndCompareScreenshot(page);
+
+    await page.waitForSelector("m-group[data-test-step='-1']");
+    await page.close();
+  }, 60000);
+
+  test("Non-unique material ids should respect the order in the document", async () => {
+    const page = await __BROWSER_GLOBAL__.newPage();
+
+    await page.setViewport({ width: 1024, height: 1024 });
+
+    await page.goto("http://localhost:7079/m-material-priority-test.html/reset");
+
+    await page.waitForSelector("#container");
+
+    await page.click("canvas", { offset: sharedMaterialTestCoords.test5 });
 
     await page.waitForSelector("m-group[data-test-step='0']");
     await takeAndCompareScreenshot(page);

@@ -42,6 +42,16 @@
     onclick="Test4()"
   ></m-label>
   <m-label id="stepLabel" x="0" y="1.5" content="-1" alignment="center"> </m-label>
+  <m-label
+    id="Test5"
+    x="6"
+    y="0"
+    z="0"
+    content="Run Test 5 (Red, Green, Blue)"
+    width="2"
+    alignment="center"
+    onclick="Test5()"
+  ></m-label>
 </m-group>
 
 <m-group id="container" data-test-step="-1"> </m-group>
@@ -183,13 +193,44 @@
     }, 2500);
   }
 
-  function createSharedMaterial() {
-    const sharedMaterial = createMaterial(
-      "green",
-      1.0,
-      "http://localhost:7079/assets/test-image.jpg",
-    );
-    sharedMaterial.setAttribute("id", "shared-material");
+  /**
+   * Test 5: Test duplicate material id
+   * Order should be green -> yellow -> orange
+   */
+  async function Test5() {
+    cleanup();
+    const cube = createCube(0, 0, 0);
+    const shared1 = createSharedMaterial("shared-material", "red", 1.0);
+    const shared2 = createSharedMaterial("shared-material", "green", 1.0, "");
+    const shared3 = createSharedMaterial("shared-material", "blue", 1.0, "");
+
+    cube.setAttribute("material-id", "shared-material");
+    container.appendChild(cube);
+    updateDataStep(0);
+
+    setTimeout(() => {
+      container.removeChild(shared1);
+      updateDataStep(1);
+    }, 1000);
+
+    setTimeout(() => {
+      container.removeChild(shared2);
+      updateDataStep(2);
+    }, 2000);
+
+    setTimeout(() => {
+      cleanup();
+    }, 2500);
+  }
+
+  function createSharedMaterial(
+    id = "shared-material",
+    color = "green",
+    opacity = 1.0,
+    map = "http://localhost:7079/assets/test-image.jpg",
+  ) {
+    const sharedMaterial = createMaterial(color, opacity, map);
+    sharedMaterial.setAttribute("id", id);
     container.appendChild(sharedMaterial);
     return sharedMaterial;
   }
