@@ -435,6 +435,7 @@ export class Model extends TransformableElement {
       Model.disposeOfGroup(this.loadedState.group);
       this.loadedState = null;
     }
+    this.latestSrcModelPromise = null;
     this.srcLoadingInstanceManager.dispose();
     this.animLoadingInstanceManager.dispose();
     this.clearDebugVisualisation();

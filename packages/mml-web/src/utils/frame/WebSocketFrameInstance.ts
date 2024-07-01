@@ -16,13 +16,15 @@ export class WebSocketFrameInstance {
   private targetForWrapper: MElement;
   private scene: IMMLScene;
   private statusElement: THREE.Mesh | null = null;
-  private loadingProgressManager: LoadingProgressManager;
+  private loadingProgressManagerForFrameContent: LoadingProgressManager;
+  private parentLoadingProgressManager?: LoadingProgressManager | null;
 
   constructor(targetElement: MElement, src: string, scene: IMMLScene) {
     this.targetForWrapper = targetElement;
     this.src = src;
     this.scene = scene;
     this.container = new THREE.Group();
+    this.parentLoadingProgressManager = scene.getLoadingProgressManager?.();
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const windowTarget = targetElement.ownerDocument.defaultView!;
@@ -35,19 +37,19 @@ export class WebSocketFrameInstance {
       overriddenHandler(element, event);
     };
 
-    this.loadingProgressManager = new LoadingProgressManager();
-    this.loadingProgressManager.addProgressCallback(() => {
-      scene.getLoadingProgressManager?.()?.updateDocumentProgress(this);
+    this.loadingProgressManagerForFrameContent = new LoadingProgressManager();
+    this.loadingProgressManagerForFrameContent.addProgressCallback(() => {
+      this.parentLoadingProgressManager?.updateDocumentProgress(this);
     });
 
     scene
       .getLoadingProgressManager?.()
-      ?.addLoadingDocument(this, this.src, this.loadingProgressManager);
+      ?.addLoadingDocument(this, this.src, this.loadingProgressManagerForFrameContent);
 
     const wrappedScene: IMMLScene = createWrappedScene(
       this.scene,
       this.container,
-      this.loadingProgressManager,
+      this.loadingProgressManagerForFrameContent,
     );
 
     const websocketAddress = this.srcToAddress(this.src);
@@ -80,9 +82,9 @@ export class WebSocketFrameInstance {
           mesh.position.set(0, height / 2, 0);
           this.statusElement = mesh;
           this.container.add(this.statusElement);
-          this.loadingProgressManager.setInitialLoad(new Error("Failed to connect"));
+          this.loadingProgressManagerForFrameContent.setInitialLoad(new Error("Failed to connect"));
         } else if (status === NetworkedDOMWebsocketStatus.Connected) {
-          this.loadingProgressManager.setInitialLoad(true);
+          this.loadingProgressManagerForFrameContent.setInitialLoad(true);
         }
       },
     );
@@ -120,6 +122,6 @@ export class WebSocketFrameInstance {
   dispose() {
     this.domWebsocket.stop();
     this.targetForWrapper.removeChild(this.remoteDocumentWrapper.remoteDocument);
-    this.scene.getLoadingProgressManager?.()?.removeLoadingDocument(this);
+    this.parentLoadingProgressManager?.removeLoadingDocument(this);
   }
 }

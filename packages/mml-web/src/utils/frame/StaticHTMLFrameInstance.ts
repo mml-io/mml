@@ -13,7 +13,8 @@ export class StaticHTMLFrameInstance {
   private readonly remoteDocumentWrapper: RemoteDocumentWrapper;
   private readonly targetForWrapper: MElement;
   private readonly scene: IMMLScene;
-  private loadingProgressManager: LoadingProgressManager;
+  private loadingProgressManagerForFrameContent: LoadingProgressManager;
+  private parentLoadingProgressManager?: LoadingProgressManager | null;
 
   static parser = new DOMParser();
 
@@ -22,23 +23,24 @@ export class StaticHTMLFrameInstance {
     this.src = src;
     this.scene = scene;
     this.container = new THREE.Group();
+    this.parentLoadingProgressManager = scene.getLoadingProgressManager?.();
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const windowTarget = targetElement.ownerDocument.defaultView!;
 
-    this.loadingProgressManager = new LoadingProgressManager();
-    this.loadingProgressManager.addProgressCallback(() => {
-      scene.getLoadingProgressManager?.()?.updateDocumentProgress(this);
+    this.loadingProgressManagerForFrameContent = new LoadingProgressManager();
+    this.loadingProgressManagerForFrameContent.addProgressCallback(() => {
+      this.parentLoadingProgressManager?.updateDocumentProgress(this);
     });
 
     scene
       .getLoadingProgressManager?.()
-      ?.addLoadingDocument(this, this.src, this.loadingProgressManager);
+      ?.addLoadingDocument(this, this.src, this.loadingProgressManagerForFrameContent);
 
     const wrappedScene: IMMLScene = createWrappedScene(
       this.scene,
       this.container,
-      this.loadingProgressManager,
+      this.loadingProgressManagerForFrameContent,
     );
 
     const address = this.targetForWrapper.contentSrcToContentAddress(this.src);
@@ -62,7 +64,7 @@ export class StaticHTMLFrameInstance {
       response = await fetch(address);
     } catch (err) {
       console.error("Failed to fetch static MML page", err);
-      this.loadingProgressManager.setInitialLoad(err);
+      this.loadingProgressManagerForFrameContent.setInitialLoad(err);
       return;
     }
     const text = await response.text();
@@ -72,11 +74,11 @@ export class StaticHTMLFrameInstance {
     );
     DOMSanitizer.sanitise(remoteDocumentAsHTMLNode.body);
     this.remoteDocumentWrapper.remoteDocument.append(remoteDocumentAsHTMLNode.body);
-    this.loadingProgressManager.setInitialLoad(true);
+    this.loadingProgressManagerForFrameContent.setInitialLoad(true);
   }
 
   public dispose() {
     this.targetForWrapper.removeChild(this.remoteDocumentWrapper.remoteDocument);
-    this.loadingProgressManager.removeLoadingDocument(this);
+    this.parentLoadingProgressManager?.removeLoadingDocument(this);
   }
 }
