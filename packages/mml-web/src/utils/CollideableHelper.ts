@@ -119,6 +119,8 @@ export class CollideableHelper {
 
     scene.removeCollider?.(this.collider, this.element);
 
+    this.collider = null;
+
     this.scene = null;
   }
 
