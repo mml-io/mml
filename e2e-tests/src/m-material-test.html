@@ -1,0 +1,168 @@
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="17.5" y="15" z="10"></m-light>
+
+<m-group id="cubes" data-loaded-materials="0"></m-group>
+
+<m-group id="ui" y="10">
+  <m-label
+    id="addCube"
+    x="-6"
+    y="0"
+    z="0"
+    content="Create cube"
+    width="2"
+    alignment="center"
+  ></m-label>
+  <m-label
+    id="removeCube"
+    x="-3"
+    y="0"
+    z="0"
+    content="Remove cube"
+    width="2"
+    alignment="center"
+  ></m-label>
+  <m-label
+    id="useSharedMaterial"
+    x="0"
+    y="0"
+    z="0"
+    content="Use shared material"
+    width="3"
+    alignment="center"
+    font-color="red"
+  ></m-label>
+</m-group>
+
+<script>
+  const addCubeButton = document.getElementById("addCube");
+  const removeCubeButton = document.getElementById("removeCube");
+  const useSharedMaterialButton = document.getElementById("useSharedMaterial");
+  const cubes = document.getElementById("cubes");
+  const canvasWidth = 14;
+  const cubeSize = 2;
+  const gap = 0.5;
+  let useSharedMaterial = false;
+  cubes.setAttribute("data-loaded-materials", 0);
+
+  useSharedMaterialButton.addEventListener("click", (event) => {
+    updateSharedMaterialButton();
+  });
+  function updateSharedMaterialButton() {
+    useSharedMaterial = !useSharedMaterial;
+    useSharedMaterialButton.setAttribute("font-color", useSharedMaterial ? "green" : "red");
+    replaceMaterialType();
+  }
+
+  function replaceMaterialType() {
+    let sharedMaterial = document.getElementById("shared-material");
+    if (!sharedMaterial && useSharedMaterial) {
+      sharedMaterial = createMaterial();
+      sharedMaterial.setAttribute("id", "shared-material");
+      document.body.appendChild(sharedMaterial);
+    } else {
+      document.body.removeChild(sharedMaterial);
+    }
+
+    cubes.childNodes.forEach((cube) => {
+      const material = cube.querySelector("m-material");
+      if (useSharedMaterial) {
+        material && cube.removeChild(material);
+        cube.setAttribute("material-id", "shared-material");
+      } else {
+        cube.setAttribute("material-id", "");
+        cube.appendChild(createMaterial());
+      }
+    });
+  }
+
+  function createMaterial() {
+    const material = document.createElement("m-material");
+    material.setAttribute("map", "http://localhost:7079/assets/test-image.jpg");
+    material.setAttribute("color", useSharedMaterial ? "green" : "red");
+    return material;
+  }
+
+  function createCube() {
+    const material = createMaterial();
+    const cube = document.createElement("m-cube");
+
+    const limitPerRow = Math.floor(canvasWidth / (cubeSize + gap));
+    const newCubeCount = cubes.children.length + 1;
+    const cubeIndex = newCubeCount - 1;
+    const curY = Math.floor(cubeIndex / limitPerRow) * (cubeSize + gap);
+    const curX = (cubeIndex % limitPerRow) * (cubeSize + gap) - canvasWidth / 2 + cubeSize;
+
+    cube.setAttribute("width", cubeSize.toString());
+    cube.setAttribute("height", cubeSize.toString());
+    cube.setAttribute("depth", cubeSize.toString());
+
+    cube.setAttribute("x", curX);
+    cube.setAttribute("y", curY);
+
+    // make sure this doesnt affect child or shared material;
+    cube.setAttribute("opacity", "0.5");
+    cube.setAttribute("color", "yellow");
+
+    if (!useSharedMaterial) {
+      cube.appendChild(material);
+    } else {
+      cube.setAttribute("material-id", "shared-material");
+    }
+
+    // Removes m-material child
+    cube.addEventListener("click", (event) => {
+      const materialChild = event.target.querySelector("m-material");
+      if (materialChild) {
+        event.target.removeChild(materialChild);
+      } else {
+        event.target.setAttribute("material-id", "");
+      }
+    });
+
+    material.addEventListener("materialLoaded", (event) => {
+      cubes.setAttribute(
+        "data-loaded-materials",
+        parseInt(cubes.getAttribute("data-loaded-materials")) + 1,
+      );
+    });
+    cube.addEventListener("materialDisconnected", (event) => {
+      cubes.setAttribute(
+        "data-loaded-materials",
+        parseInt(cubes.getAttribute("data-loaded-materials")) - 1,
+      );
+    });
+
+    cubes.appendChild(cube);
+    return cube;
+  }
+
+  function removeCube(element) {
+    const toRemove = element ? element : cubes.lastElementChild;
+    const hasChildMaterial = !!toRemove.querySelector("m-material");
+    if (toRemove) {
+      cubes.removeChild(toRemove);
+    }
+    if (hasChildMaterial) {
+      // the disconnected event is not fired when removing the parent
+      cubes.setAttribute(
+        "data-loaded-materials",
+        parseInt(cubes.getAttribute("data-loaded-materials")) - 1,
+      );
+    }
+  }
+  addCubeButton.addEventListener("click", (event) => createCube());
+  removeCubeButton.addEventListener("click", (event) => removeCube());
+
+  const animAttrs = ["x", "y", "z", "sx", "sy", "sz"];
+  function createAnimElement(container) {
+    const animElement = document.createElement("m-attr-anim");
+    animElement.setAttribute("attr", animAttrs[Math.floor(Math.random() * animAttrs.length)]);
+    animElement.setAttribute("start", "1");
+    animElement.setAttribute("end", "2");
+    animElement.setAttribute("start-time", "1000");
+    animElement.setAttribute("duration", "500");
+    animElement.setAttribute("ping-pong", "true");
+    animElement.setAttribute("easing", "easeInOutCubic");
+    container.appendChild(animElement);
+  }
+</script>

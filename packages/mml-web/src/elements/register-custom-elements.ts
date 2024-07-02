@@ -11,6 +11,7 @@ import { Image } from "./Image";
 import { Interaction } from "./Interaction";
 import { Label } from "./Label";
 import { Light } from "./Light";
+import { Material } from "./Material";
 import { MElement } from "./MElement";
 import { Model } from "./Model";
 import { Plane } from "./Plane";
@@ -44,4 +45,5 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Interaction.tagName, Interaction);
   targetWindow.customElements.define(AttributeAnimation.tagName, AttributeAnimation);
   targetWindow.customElements.define(AttributeLerp.tagName, AttributeLerp);
+  targetWindow.customElements.define(Material.tagName, Material);
 }

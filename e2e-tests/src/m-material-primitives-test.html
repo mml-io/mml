@@ -1,0 +1,39 @@
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="17.5" y="15" z="10"></m-light>
+
+<m-group id="primitives" data-loaded-materials="0">
+  <m-cube y="2" x="0" ry="45" width="2" height="2" depth="2">
+    <m-material
+      map="http://localhost:7079/assets/test-image.jpg"
+    ></m-material>
+  </m-cube>
+
+  <m-cylinder y="2" x="-4" ry="45" radius="1" height="2">
+    <m-material
+      map="http://localhost:7079/assets/test-image.jpg"
+    ></m-material>
+  </m-cylinder>
+
+  <m-plane width="20" height="20" rx="-90">
+    <m-material
+      map="http://localhost:7079/assets/test-image.jpg"
+    ></m-material>
+  </m-plane>
+
+  <m-sphere radius="1" y="2" x="4">
+    <m-material
+      map="http://localhost:7079/assets/test-image.jpg"
+    ></m-material>
+  </m-sphere>
+</m-group>
+
+<script>
+  let materialsLoaded = 0;
+  const elements = [...document.querySelectorAll("#primitives > *")];
+  elements.forEach((element) => {
+    const material = element.querySelector("m-material");
+    material.addEventListener("materialLoaded", () => {
+      materialsLoaded++;
+      document.querySelector("m-group").setAttribute("data-loaded-materials", materialsLoaded);
+    });
+  });
+</script>
