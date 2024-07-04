@@ -11,6 +11,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
+import { MaterialElementHelper } from "../utils/MaterialHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 const defaultCylinderColor = new THREE.Color(0xffffff);
@@ -28,7 +29,7 @@ export class Cylinder extends TransformableElement {
       defaultCylinderColor,
       (newValue: THREE.Color) => {
         this.props.color = newValue;
-        if (this.material) {
+        if (this.material && !this.materialHelper.registeredChildMaterial) {
           this.material.color = this.props.color;
         }
       },
@@ -58,7 +59,7 @@ export class Cylinder extends TransformableElement {
       defaultCylinderOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material) {
+        if (this.material && !this.materialHelper.registeredChildMaterial) {
           const needsUpdate = this.material.transparent === (this.props.opacity === 1);
           this.material.transparent = this.props.opacity !== 1;
           this.material.needsUpdate = needsUpdate;
@@ -86,6 +87,7 @@ export class Cylinder extends TransformableElement {
   private material: THREE.MeshStandardMaterial | null = null;
 
   private collideableHelper = new CollideableHelper(this);
+  private materialHelper = new MaterialElementHelper(this);
 
   private static attributeHandler = new AttributeHandler<Cylinder>({
     height: (instance, newValue) => {
@@ -120,10 +122,12 @@ export class Cylinder extends TransformableElement {
 
   protected enable() {
     this.collideableHelper.enable();
+    this.materialHelper.enable();
   }
 
   protected disable() {
     this.collideableHelper.disable();
+    this.materialHelper.disable();
   }
 
   static get observedAttributes(): Array<string> {
@@ -131,6 +135,7 @@ export class Cylinder extends TransformableElement {
       ...TransformableElement.observedAttributes,
       ...Cylinder.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...MaterialElementHelper.observedAttributes,
     ];
   }
 
@@ -155,13 +160,13 @@ export class Cylinder extends TransformableElement {
 
   public addSideEffectChild(child: MElement): void {
     this.cylinderAnimatedAttributeHelper.addSideEffectChild(child);
-
+    this.materialHelper.addSideEffectChild(child);
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
     this.cylinderAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    this.materialHelper.removeSideEffectChild(child);
     super.removeSideEffectChild(child);
   }
 
@@ -169,24 +174,29 @@ export class Cylinder extends TransformableElement {
     super.attributeChangedCallback(name, oldValue, newValue);
     Cylinder.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.materialHelper.handle(name, newValue);
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this.material = new THREE.MeshStandardMaterial({
-      color: this.props.color,
-      transparent: this.props.opacity === 1 ? false : true,
-      opacity: this.props.opacity,
-    });
-    this.mesh.material = this.material;
+    if (!this.material) {
+      this.material = this.getDefaultMaterial();
+      this.mesh.material = this.material;
+    }
+
     this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 
   disconnectedCallback() {
     this.collideableHelper.removeColliders();
+    this.materialHelper.disconnectedCallback();
+
+    if (!this.materialHelper.registeredChildMaterial) {
+      this.material?.dispose();
+    }
+
     if (this.material) {
-      this.material.dispose();
       this.mesh.material = [];
       this.material = null;
     }
@@ -206,5 +216,21 @@ export class Cylinder extends TransformableElement {
     THREE.Material | Array<THREE.Material>
   > | null {
     return this.mesh;
+  }
+
+  public getDefaultMaterial() {
+    return new THREE.MeshStandardMaterial({
+      color: this.props.color,
+      transparent: this.props.opacity === 1 ? false : true,
+      opacity: this.props.opacity,
+    });
+  }
+
+  public setMaterial(material: THREE.MeshStandardMaterial) {
+    if (this.material) {
+      this.material.dispose();
+    }
+    this.material = material;
+    this.mesh.material = this.material;
   }
 }
