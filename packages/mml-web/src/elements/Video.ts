@@ -28,6 +28,7 @@ const defaultVideoStartTime = 0;
 const defaultVideoPauseTime = null;
 const defaultVideoSrc = null;
 const defaultVideoCastShadows = true;
+const defaultEmissive = 0.5;
 
 export class Video extends TransformableElement {
   static tagName = "m-video";
@@ -85,6 +86,7 @@ export class Video extends TransformableElement {
     volume: defaultVideoVolume,
     width: defaultVideoWidth as number | null,
     height: defaultVideoHeight as number | null,
+    emissive: defaultEmissive as number,
   };
 
   private static attributeHandler = new AttributeHandler<Video>({
@@ -132,6 +134,10 @@ export class Video extends TransformableElement {
     },
     "cast-shadows": (instance, newValue) => {
       instance.mesh.castShadow = parseBoolAttribute(newValue, defaultVideoCastShadows);
+    },
+    emissive: (instance, newValue) => {
+      instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
+      instance.updateMaterialEmissiveIntensity();
     },
   });
 
@@ -232,6 +238,11 @@ export class Video extends TransformableElement {
       const video = document.createElement("video");
       const material = this.mesh.material;
       const videoTexture = new THREE.VideoTexture(video);
+      videoTexture.colorSpace = THREE.SRGBColorSpace;
+      videoTexture.needsUpdate = true;
+      (material as THREE.MeshStandardMaterial).emissive = new THREE.Color(0xffffff);
+      (material as THREE.MeshStandardMaterial).emissiveMap = videoTexture;
+      (material as THREE.MeshStandardMaterial).emissiveIntensity = this.props.emissive;
       material.map = videoTexture;
       material.needsUpdate = true;
 
@@ -338,6 +349,14 @@ export class Video extends TransformableElement {
     THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
   > {
     return this.mesh;
+  }
+
+  private updateMaterialEmissiveIntensity() {
+    if (this.loadedVideoState && this.loadedVideoState.material) {
+      const material = this.loadedVideoState.material as THREE.MeshStandardMaterial;
+      material.emissiveIntensity = this.props.emissive;
+      material.needsUpdate = true;
+    }
   }
 
   private updateHeightAndWidth() {

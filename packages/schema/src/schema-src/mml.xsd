@@ -993,6 +993,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="emissive" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The emissiveness strength of the video (how much perceived light it will emit). Default value is 0.5.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="loop" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
