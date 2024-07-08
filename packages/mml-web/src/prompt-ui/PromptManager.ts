@@ -1,7 +1,7 @@
 import { ConfirmModal } from "./ConfirmModal";
 import { Modal } from "./Modal";
 import { PromptModal } from "./PromptModal";
-import { PromptProps } from "../MMLScene";
+import { LinkProps, PromptProps } from "../MMLScene";
 
 type PromptState = {
   prompt?: PromptModal;
@@ -11,21 +11,18 @@ type PromptState = {
 
 type LinkState = {
   href: string;
+  popup: boolean;
   windowCallback: (openedWindow: Window | null) => void;
 };
 
 export class PromptManager {
   private promptHolderElement: HTMLDivElement;
 
-  private container: HTMLElement;
-
   private queue = new Array<PromptState | LinkState>();
   private currentPrompt: PromptState | LinkState | null = null;
   private currentModal: Modal | null = null;
 
-  private constructor(container: HTMLElement) {
-    this.container = container;
-
+  private constructor(private container: HTMLElement) {
     const holderElement = document.createElement("div");
     holderElement.setAttribute("data-test-id", "prompt-holder");
     holderElement.style.zIndex = "100";
@@ -34,7 +31,7 @@ export class PromptManager {
     holderElement.style.left = "50%";
     holderElement.style.transform = "translate(-50%, -50%)";
     this.promptHolderElement = holderElement;
-    container.appendChild(this.promptHolderElement);
+    this.container.appendChild(this.promptHolderElement);
   }
 
   static init(container: HTMLElement): PromptManager {
@@ -49,23 +46,37 @@ export class PromptManager {
     this.currentPrompt = promptState;
     if ("href" in promptState) {
       const confirmModal = new ConfirmModal(
-        "Confirm",
-        "Are you sure you want to navigate to: " + promptState.href,
+        "Confirm Navigation",
+        `Open ${promptState.href}?`,
         (result: boolean) => {
           this.currentPrompt = null;
           this.currentModal = null;
           if (result) {
-            const openedWindow = window.open(
-              promptState.href,
-              "_blank",
-              // "scrollbars=no," +
-              //   "resizable=no," +
-              //   "status=no," +
-              //   "location=no," +
-              "toolbar=no," + "menubar=no," + "width=500," + "height=500,", // +
-              // "left=-1000," +
-              // "top=-1000",
-            );
+            let features;
+            if (promptState.popup) {
+              const popupWidth = 500;
+              const popupHeight = 500;
+
+              const screenLeft =
+                window.screenLeft !== undefined ? window.screenLeft : window.screenX;
+              const screenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
+              const windowWidth = window.innerWidth
+                ? window.innerWidth
+                : document.documentElement.clientWidth
+                  ? document.documentElement.clientWidth
+                  : screen.width;
+              const windowHeight = window.innerHeight
+                ? window.innerHeight
+                : document.documentElement.clientHeight
+                  ? document.documentElement.clientHeight
+                  : screen.height;
+
+              const left = (windowWidth - popupWidth) / 2 + screenLeft;
+              const top = (windowHeight - popupHeight) / 2 + screenTop;
+              features = `toolbar=no,menubar=no,width=${popupWidth},height=${popupHeight},left=${left},top=${top}`;
+            }
+
+            const openedWindow = window.open(promptState.href, "_blank", features);
             promptState.windowCallback(openedWindow);
           }
           this.showNextPromptIfAny();
@@ -116,7 +127,7 @@ export class PromptManager {
   }
 
   public link(
-    href: string,
+    linkProps: LinkProps,
     abortSignal: AbortSignal,
     windowCallback: (openedWindow: Window | null) => void,
   ) {
@@ -134,7 +145,8 @@ export class PromptManager {
       }
     });
     const linkState: LinkState = {
-      href,
+      href: linkProps.href,
+      popup: linkProps.popup ?? false,
       windowCallback,
     };
     if (this.currentPrompt !== null) {

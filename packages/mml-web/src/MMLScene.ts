@@ -34,6 +34,11 @@ export type PromptProps = {
   prefill?: string;
 };
 
+export type LinkProps = {
+  href: string;
+  popup?: boolean;
+};
+
 /**
  * The IMMLScene interface is the public interface for attaching content (E.g. an MML Document) into the underlying
  * (THREE.js) Scene, but it can be implemented by classes other than MMLScene.
@@ -68,7 +73,7 @@ export type IMMLScene = {
 
   getLoadingProgressManager?: () => LoadingProgressManager | null;
   link: (
-    href: string,
+    linkProps: LinkProps,
     abortSignal: AbortSignal,
     windowCallback: (openedWindow: Window | null) => void,
   ) => void;
@@ -288,11 +293,11 @@ export class MMLScene implements IMMLScene {
   }
 
   public link(
-    href: string,
+    linkProps: LinkProps,
     abortSignal: AbortSignal,
     windowCallback: (openedWindow: Window | null) => void,
   ) {
-    this.promptManager.link(href, abortSignal, windowCallback);
+    this.promptManager.link(linkProps, abortSignal, windowCallback);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

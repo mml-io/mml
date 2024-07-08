@@ -1,10 +1,34 @@
 import { TransformableElement } from "./TransformableElement";
 import { AttributeHandler } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+
+enum MessageLinkState {
+  IDLE,
+  QUEUED,
+  OPENED,
+}
 
 export class MessageLink extends TransformableElement {
   static tagName = "m-message-link";
 
-  private abortController: AbortController | null = null;
+  private state:
+    | {
+        state: MessageLinkState.IDLE;
+      }
+    | {
+        state: MessageLinkState.QUEUED;
+        abortController: AbortController;
+      }
+    | {
+        state: MessageLinkState.OPENED;
+        openedWindow: Window;
+        closeInterval: NodeJS.Timeout;
+        unload: () => void;
+        messageListener: (event: MessageEvent) => void;
+        clearListeners: () => void;
+      } = {
+    state: MessageLinkState.IDLE,
+  };
 
   private props = {
     href: undefined as string | undefined,
@@ -23,6 +47,24 @@ export class MessageLink extends TransformableElement {
     ];
   }
 
+  private clearState() {
+    switch (this.state.state) {
+      case MessageLinkState.IDLE:
+        break;
+      case MessageLinkState.QUEUED:
+        this.state.abortController.abort();
+        this.state = { state: MessageLinkState.IDLE };
+        break;
+      case MessageLinkState.OPENED:
+        this.state.clearListeners();
+        clearInterval(this.state.closeInterval);
+        this.state.unload();
+        this.state.openedWindow.close();
+        this.state = { state: MessageLinkState.IDLE };
+        break;
+    }
+  }
+
   constructor() {
     super();
 
@@ -30,25 +72,28 @@ export class MessageLink extends TransformableElement {
     this.addEventListener("click", () => {
       console.log("Link click");
       if (this.props.href) {
-        if (this.abortController) {
-          this.abortController.abort();
-          this.abortController = null;
-        }
-        this.abortController = new AbortController();
+        this.clearState();
+
+        const abortController = new AbortController();
+        this.state = {
+          state: MessageLinkState.QUEUED,
+          abortController,
+        };
         this.getScene().link(
-          this.props.href,
-          this.abortController.signal,
+          { href: this.props.href, popup: true },
+          abortController.signal,
           (openedWindow: Window | null) => {
             console.log("Link windowCallback");
-            this.abortController = null;
-            if (openedWindow) {
+
+            if (!openedWindow) {
+              this.clearState();
+            } else {
               this.dispatchEvent(new CustomEvent("opened"));
-              // TODO - handle messages listening / unlistening
-              openedWindow.postMessage("Hello, opened window!", "*");
 
               const closeInterval = setInterval(() => {
                 console.log("openedWindow.closed", openedWindow.closed);
                 if (openedWindow.closed) {
+                  this.clearState();
                   clearInterval(closeInterval);
                   this.dispatchEvent(new CustomEvent("closed"));
                 }
@@ -62,9 +107,8 @@ export class MessageLink extends TransformableElement {
                   setTimeout(() => {
                     console.log("Opener window focused - focusing opened window - again");
                     openedWindow.focus();
-                  },100);
+                  }, 100);
                 }
-
               });
               (window as any).openedWindow = openedWindow;
 
@@ -84,6 +128,14 @@ export class MessageLink extends TransformableElement {
                 window.removeEventListener("unload", unload);
                 window.removeEventListener("message", messageListener);
               };
+              this.state = {
+                state: MessageLinkState.OPENED,
+                openedWindow,
+                closeInterval,
+                unload,
+                messageListener,
+                clearListeners,
+              };
 
               window.addEventListener("unload", unload);
 
@@ -96,10 +148,7 @@ export class MessageLink extends TransformableElement {
   }
 
   disconnectedCallback() {
-    if (this.abortController) {
-      this.abortController.abort();
-      this.abortController = null;
-    }
+    this.clearState();
     super.disconnectedCallback();
   }
 
@@ -114,5 +163,17 @@ export class MessageLink extends TransformableElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     MessageLink.attributeHandler.handle(this, name, newValue);
+  }
+
+  protected disable(): void {
+    // no-op
+  }
+
+  protected enable(): void {
+    // no-op
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return null;
   }
 }

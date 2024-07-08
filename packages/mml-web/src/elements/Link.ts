@@ -1,5 +1,6 @@
 import { TransformableElement } from "./TransformableElement";
 import { AttributeHandler } from "../utils/attribute-handling";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 export class Link extends TransformableElement {
   static tagName = "m-link";
@@ -31,9 +32,9 @@ export class Link extends TransformableElement {
         }
         this.abortController = new AbortController();
         this.getScene().link(
-          this.props.href,
+          { href: this.props.href, popup: false },
           this.abortController.signal,
-          (openedWindow: Window | null) => {
+          () => {
             this.abortController = null;
           },
         );
@@ -52,5 +53,17 @@ export class Link extends TransformableElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Link.attributeHandler.handle(this, name, newValue);
+  }
+
+  protected disable(): void {
+    // no-op
+  }
+
+  protected enable(): void {
+    // no-op
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return null;
   }
 }
