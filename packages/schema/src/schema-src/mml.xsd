@@ -359,6 +359,7 @@
       <xs:element ref="m-image"/>
       <xs:element ref="m-video"/>
       <xs:element ref="m-prompt"/>
+      <xs:element ref="m-link"/>
       <xs:element ref="m-position-probe"/>
       <xs:element ref="m-chat-probe"/>
       <xs:element ref="m-interaction"/>
@@ -1202,6 +1203,34 @@
               <xs:appinfo>prompt|MMLPromptEvent</xs:appinfo>
               <xs:documentation>
                 A script expression to be executed when a user submits their input.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-link">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-link` element is used to open a web address when the element is clicked in a 3D scene.
+
+        The web address is opened in a new tab or window depending on the client implementation.
+
+        The `m-link` element has no visual representation in the scene; clicking children of element activates the link.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="href" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The web address to open when the link is clicked.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
