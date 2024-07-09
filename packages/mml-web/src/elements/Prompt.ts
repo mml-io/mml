@@ -5,6 +5,8 @@ import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 export class Prompt extends TransformableElement {
   static tagName = "m-prompt";
 
+  private abortController: AbortController | null = null;
+
   private props = {
     message: undefined as string | undefined,
     placeholder: undefined as string | undefined,
@@ -61,7 +63,12 @@ export class Prompt extends TransformableElement {
   }
 
   private trigger(): void {
-    this.getScene().prompt(this.props, (result) => {
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+    this.abortController = new AbortController();
+    this.getScene().prompt(this.props, this.abortController.signal, (result) => {
       if (!this.isConnected) {
         return;
       }

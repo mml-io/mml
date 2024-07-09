@@ -34,6 +34,11 @@ export type PromptProps = {
   prefill?: string;
 };
 
+export type LinkProps = {
+  href: string;
+  popup?: boolean;
+};
+
 /**
  * The IMMLScene interface is the public interface for attaching content (E.g. an MML Document) into the underlying
  * (THREE.js) Scene, but it can be implemented by classes other than MMLScene.
@@ -60,9 +65,18 @@ export type IMMLScene = {
 
   getUserPositionAndRotation(): PositionAndRotation;
 
-  prompt: (promptProps: PromptProps, callback: (message: string | null) => void) => void;
+  prompt: (
+    promptProps: PromptProps,
+    abortSignal: AbortSignal,
+    callback: (message: string | null) => void,
+  ) => void;
 
   getLoadingProgressManager?: () => LoadingProgressManager | null;
+  link: (
+    linkProps: LinkProps,
+    abortSignal: AbortSignal,
+    windowCallback: (openedWindow: Window | null) => void,
+  ) => void;
 };
 
 export enum ControlsType {
@@ -266,12 +280,24 @@ export class MMLScene implements IMMLScene {
     this.interactionManager.dispose();
   }
 
-  public prompt(promptProps: PromptProps, callback: (message: string | null) => void) {
+  public prompt(
+    promptProps: PromptProps,
+    abortSignal: AbortSignal,
+    callback: (message: string | null) => void,
+  ) {
     if (!this) {
       console.error("MMLScene not initialized");
       return;
     }
-    this.promptManager.prompt(promptProps, callback);
+    this.promptManager.prompt(promptProps, abortSignal, callback);
+  }
+
+  public link(
+    linkProps: LinkProps,
+    abortSignal: AbortSignal,
+    windowCallback: (openedWindow: Window | null) => void,
+  ) {
+    this.promptManager.link(linkProps, abortSignal, windowCallback);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
