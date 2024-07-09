@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { Interaction, MElement } from "../../elements";
 import { ChatProbe } from "../../elements/ChatProbe";
 import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
-import { IMMLScene, PromptProps } from "../../MMLScene";
+import { IMMLScene, LinkProps, PromptProps } from "../../MMLScene";
 
 export function createWrappedScene(
   scene: IMMLScene,
@@ -68,8 +68,19 @@ export function createWrappedScene(
     getCamera(): THREE.Camera {
       return scene.getCamera();
     },
-    prompt(promptProps: PromptProps, callback: (result: string | null) => void) {
-      scene.prompt(promptProps, callback);
+    prompt(
+      promptProps: PromptProps,
+      abortSignal: AbortSignal,
+      callback: (result: string | null) => void,
+    ) {
+      scene.prompt(promptProps, abortSignal, callback);
+    },
+    link(
+      linkProps: LinkProps,
+      abortSignal: AbortSignal,
+      windowCallback: (openedWindow: Window) => void,
+    ) {
+      scene.link(linkProps, abortSignal, windowCallback);
     },
     getRootContainer: () => {
       return container;
