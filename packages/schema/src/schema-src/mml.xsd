@@ -996,7 +996,7 @@
           <xs:attribute name="emissive" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                The emissiveness strength of the video (how much perceived light it will emit). Default value is 0.5.
+                The emissiveness strength of the video (how much perceived light it will emit). Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

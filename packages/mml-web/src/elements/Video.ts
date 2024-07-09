@@ -28,7 +28,7 @@ const defaultVideoStartTime = 0;
 const defaultVideoPauseTime = null;
 const defaultVideoSrc = null;
 const defaultVideoCastShadows = true;
-const defaultEmissive = 0.5;
+const defaultEmissive = 0;
 
 export class Video extends TransformableElement {
   static tagName = "m-video";
@@ -137,7 +137,9 @@ export class Video extends TransformableElement {
     },
     emissive: (instance, newValue) => {
       instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
-      instance.updateMaterialEmissiveIntensity();
+      if (instance.loadedVideoState) {
+        instance.updateMaterialEmissiveIntensity();
+      }
     },
   });
 
@@ -238,11 +240,11 @@ export class Video extends TransformableElement {
       const video = document.createElement("video");
       const material = this.mesh.material;
       const videoTexture = new THREE.VideoTexture(video);
-      videoTexture.colorSpace = THREE.SRGBColorSpace;
-      videoTexture.needsUpdate = true;
-      (material as THREE.MeshStandardMaterial).emissive = new THREE.Color(0xffffff);
-      (material as THREE.MeshStandardMaterial).emissiveMap = videoTexture;
-      (material as THREE.MeshStandardMaterial).emissiveIntensity = this.props.emissive;
+      if (this.props.emissive > 0) {
+        (material as THREE.MeshStandardMaterial).emissive = new THREE.Color(0xffffff);
+        (material as THREE.MeshStandardMaterial).emissiveMap = videoTexture;
+        (material as THREE.MeshStandardMaterial).emissiveIntensity = this.props.emissive;
+      }
       material.map = videoTexture;
       material.needsUpdate = true;
 
@@ -352,10 +354,20 @@ export class Video extends TransformableElement {
   }
 
   private updateMaterialEmissiveIntensity() {
-    if (this.loadedVideoState && this.loadedVideoState.material) {
+    if (this.loadedVideoState) {
       const material = this.loadedVideoState.material as THREE.MeshStandardMaterial;
-      material.emissiveIntensity = this.props.emissive;
-      material.needsUpdate = true;
+      if (this.props.emissive > 0) {
+        const videoTexture = new THREE.VideoTexture(this.loadedVideoState.video);
+        material.emissive = new THREE.Color(0xffffff);
+        material.emissiveMap = videoTexture;
+        material.emissiveIntensity = this.props.emissive;
+        material.needsUpdate = true;
+      } else {
+        material.emissive = new THREE.Color(0x000000);
+        material.emissiveMap = null;
+        material.emissiveIntensity = 1;
+        material.needsUpdate = true;
+      }
     }
   }
 
