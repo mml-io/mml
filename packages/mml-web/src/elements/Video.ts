@@ -240,11 +240,6 @@ export class Video extends TransformableElement {
       const video = document.createElement("video");
       const material = this.mesh.material;
       const videoTexture = new THREE.VideoTexture(video);
-      if (this.props.emissive > 0) {
-        (material as THREE.MeshStandardMaterial).emissive = new THREE.Color(0xffffff);
-        (material as THREE.MeshStandardMaterial).emissiveMap = videoTexture;
-        (material as THREE.MeshStandardMaterial).emissiveIntensity = this.props.emissive;
-      }
       material.map = videoTexture;
       material.needsUpdate = true;
 
@@ -259,6 +254,9 @@ export class Video extends TransformableElement {
         material,
         videoTexture,
       };
+      if (this.props.emissive > 0) {
+        this.updateMaterialEmissiveIntensity();
+      }
       this.container.add(audio);
     }
 
