@@ -1,7 +1,7 @@
 import { takeAndCompareScreenshot } from "./testing-utils";
 
-describe("m-label", () => {
-  test("label visible", async () => {
+describe("m-label-emissive", () => {
+  test("label emissive", async () => {
     const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
