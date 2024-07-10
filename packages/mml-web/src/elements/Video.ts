@@ -28,6 +28,7 @@ const defaultVideoStartTime = 0;
 const defaultVideoPauseTime = null;
 const defaultVideoSrc = null;
 const defaultVideoCastShadows = true;
+const defaultEmissive = 0;
 
 export class Video extends TransformableElement {
   static tagName = "m-video";
@@ -85,6 +86,7 @@ export class Video extends TransformableElement {
     volume: defaultVideoVolume,
     width: defaultVideoWidth as number | null,
     height: defaultVideoHeight as number | null,
+    emissive: defaultEmissive as number,
   };
 
   private static attributeHandler = new AttributeHandler<Video>({
@@ -132,6 +134,12 @@ export class Video extends TransformableElement {
     },
     "cast-shadows": (instance, newValue) => {
       instance.mesh.castShadow = parseBoolAttribute(newValue, defaultVideoCastShadows);
+    },
+    emissive: (instance, newValue) => {
+      instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
+      if (instance.loadedVideoState) {
+        instance.updateMaterialEmissiveIntensity();
+      }
     },
   });
 
@@ -246,6 +254,9 @@ export class Video extends TransformableElement {
         material,
         videoTexture,
       };
+      if (this.props.emissive > 0) {
+        this.updateMaterialEmissiveIntensity();
+      }
       this.container.add(audio);
     }
 
@@ -338,6 +349,24 @@ export class Video extends TransformableElement {
     THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
   > {
     return this.mesh;
+  }
+
+  private updateMaterialEmissiveIntensity() {
+    if (this.loadedVideoState) {
+      const material = this.loadedVideoState.material as THREE.MeshStandardMaterial;
+      if (this.props.emissive > 0) {
+        const videoTexture = new THREE.VideoTexture(this.loadedVideoState.video);
+        material.emissive = new THREE.Color(0xffffff);
+        material.emissiveMap = videoTexture;
+        material.emissiveIntensity = this.props.emissive;
+        material.needsUpdate = true;
+      } else {
+        material.emissive = new THREE.Color(0x000000);
+        material.emissiveMap = null;
+        material.emissiveIntensity = 1;
+        material.needsUpdate = true;
+      }
+    }
   }
 
   private updateHeightAndWidth() {

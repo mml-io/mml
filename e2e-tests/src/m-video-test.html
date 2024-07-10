@@ -3,32 +3,47 @@
 
 <m-label width="5" y="1" rx="-45" z="3" content="This test targets a snapshot of the state at 10000ms of document time. The document time is overridden in e2e tests"></m-label>
 
-<m-group z="-7.5" x="-9" y="8">
+<m-group z="-7.5" x="-9" y="13.5">
   <m-label content="pause-time=0" y="2.75" height="0.75" font-size="40" width="7" alignment="center"></m-label>
   <m-video width="8" src="/assets/timestamp-video.mp4" start-time="0" pause-time="0"></m-video>
 </m-group>
 
-<m-group z="-7.5" x="0" y="8">
+<m-group z="-7.5" x="0" y="13.5">
   <m-label content="enabled=false" y="2.75" height="0.75" font-size="40" width="7" alignment="center"></m-label>
   <m-video width="8" src="/assets/timestamp-video.mp4" enabled="false"></m-video>
 </m-group>
 
-<m-group z="-7.5" x="9" y="8">
+<m-group z="-7.5" x="9" y="13.5">
   <m-label content="pause-time=3000 height=4" y="2.75" height="0.75" font-size="40" width="7" alignment="center"></m-label>
   <m-video height="4" src="/assets/timestamp-video.mp4" pause-time="3000"></m-video>
 </m-group>
 
-<m-group z="-7.5" x="9" y="2.5">
+<m-group z="-7.5" x="9" y="8">
   <m-label content="start-time=-5000 pause-time=5000" y="2.75" height="0.75" font-size="40" width="7" alignment="center"></m-label>
   <m-video height="4" src="/assets/timestamp-video.mp4" start-time="-5000" pause-time="5000"></m-video>
 </m-group>
 
-<m-group z="-7.5" x="-9" y="2.5">
+<m-group z="-7.5" x="-9" y="8">
   <m-label content="pause-time=5000" y="2.75" height="0.75" font-size="40" width="7" alignment="center"></m-label>
   <m-video width="8" src="/assets/timestamp-video.mp4" start-time="0" pause-time="5000"></m-video>
 </m-group>
 
-<m-group z="-7.5" x="0" y="2.5">
+<m-group z="-7.5" x="0" y="8">
   <m-label content="start-time pause-time height+width" y="2.25" height="0.75" font-size="40" width="7" alignment="center"></m-label>
   <m-video width="8" height="3" src="/assets/timestamp-video.mp4" start-time="1000" pause-time="5000"></m-video>
+</m-group>
+
+<m-group z="-7.5" x="9" y="2.5">
+  <m-label content="emissive=1" y="2.75" height="0.75" font-size="40" width="7" alignment="center"></m-label>
+  <m-video height="4" src="/assets/timestamp-video.mp4" start-time="-5000" pause-time="5000" emissive="1"></m-video>
+</m-group>
+
+<m-group z="-7.5" x="-9" y="2.5">
+  <m-label content="no emissive" y="2.75" height="0.75" font-size="40" width="7" alignment="center"></m-label>
+  <m-video width="8" src="/assets/timestamp-video.mp4" start-time="0" pause-time="5000"></m-video>
+</m-group>
+
+<m-group z="-7.5" x="0" y="2.5">
+  <m-label content="emissive=0" y="2.25" height="0.75" font-size="40" width="7" alignment="center"></m-label>
+  <m-video width="8" height="3" src="/assets/timestamp-video.mp4" start-time="1000" pause-time="5000" emissive="0"></m-video>
 </m-group>
