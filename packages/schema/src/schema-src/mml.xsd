@@ -1077,6 +1077,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="emissive" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The emissiveness strength of the label (how much perceived light it will emit). Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="font-size" type="xs:float">
             <xs:annotation>
               <xs:documentation>

@@ -28,6 +28,7 @@ const defaultLabelPadding = 8;
 const defaultLabelWidth = 1;
 const defaultLabelHeight = 1;
 const defaultLabelCastShadows = true;
+const defaultEmissive = 0;
 
 export class Label extends TransformableElement {
   static tagName = "m-label";
@@ -95,6 +96,7 @@ export class Label extends TransformableElement {
     color: defaultLabelColor,
     fontColor: defaultFontColor,
     castShadows: defaultLabelCastShadows,
+    emissive: defaultEmissive as number,
   };
   private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial | null = null;
@@ -151,6 +153,10 @@ export class Label extends TransformableElement {
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultLabelCastShadows);
       instance.mesh.castShadow = instance.props.castShadows;
+    },
+    emissive: (instance, newValue) => {
+      instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
+      instance.updateMaterialEmissiveIntensity();
     },
   });
 
@@ -234,6 +240,23 @@ export class Label extends TransformableElement {
     super.disconnectedCallback();
   }
 
+  private updateMaterialEmissiveIntensity() {
+    if (this.material) {
+      const map = this.material.map as THREE.Texture;
+      if (this.props.emissive > 0) {
+        this.material.emissive = new THREE.Color(0xffffff);
+        this.material.emissiveMap = map;
+        this.material.emissiveIntensity = this.props.emissive;
+        this.material.needsUpdate = true;
+      } else {
+        this.material.emissive = new THREE.Color(0x000000);
+        this.material.emissiveMap = null;
+        this.material.emissiveIntensity = 1;
+        this.material.needsUpdate = true;
+      }
+    }
+  }
+
   private redrawText() {
     if (!this.material) {
       return;
@@ -243,7 +266,7 @@ export class Label extends TransformableElement {
     }
     const { texture, width, height } = THREECanvasTextTexture(this.props.content, {
       bold: true,
-      fontSize: this.props.fontSize,
+      fontSize: this.props.fontSize * 2,
       paddingPx: this.props.padding,
       textColorRGB255A1: {
         r: this.props.fontColor.r * 255,
@@ -258,16 +281,17 @@ export class Label extends TransformableElement {
         a: 1.0,
       },
       dimensions: {
-        width: this.props.width * 100,
-        height: this.props.height * 100,
+        width: this.props.width * 200,
+        height: this.props.height * 200,
       },
       alignment: this.props.alignment,
     });
 
     this.material.map = texture;
     this.material.needsUpdate = true;
+    this.updateMaterialEmissiveIntensity();
 
-    this.mesh.scale.x = width / 100;
-    this.mesh.scale.y = height / 100;
+    this.mesh.scale.x = width / 200;
+    this.mesh.scale.y = height / 200;
   }
 }

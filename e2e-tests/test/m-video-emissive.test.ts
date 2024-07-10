@@ -1,6 +1,6 @@
 import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
-describe("m-video", () => {
+describe("m-video-emissive", () => {
   test("emissive property of videos", async () => {
     const page = await __BROWSER_GLOBAL__.newPage();
 
