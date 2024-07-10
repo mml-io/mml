@@ -254,9 +254,7 @@ export class Video extends TransformableElement {
         material,
         videoTexture,
       };
-      if (this.props.emissive > 0) {
-        this.updateMaterialEmissiveIntensity();
-      }
+      this.updateMaterialEmissiveIntensity();
       this.container.add(audio);
     }
 
