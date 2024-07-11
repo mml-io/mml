@@ -18,6 +18,7 @@ const defaultImageWidth = null;
 const defaultImageHeight = null;
 const defaultImageOpacity = 1;
 const defaultImageCastShadows = true;
+const defaultEmissive = 0;
 
 export class Image extends TransformableElement {
   static tagName = "m-image";
@@ -62,6 +63,7 @@ export class Image extends TransformableElement {
     height: defaultImageHeight as number | null,
     opacity: defaultImageOpacity,
     castShadows: defaultImageCastShadows,
+    emissive: defaultEmissive as number,
   };
 
   private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
@@ -102,6 +104,10 @@ export class Image extends TransformableElement {
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultImageCastShadows);
       instance.mesh.castShadow = instance.props.castShadows;
+    },
+    emissive: (instance, newValue) => {
+      instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
+      instance.updateMaterialEmissiveIntensity();
     },
   });
 
@@ -148,12 +154,35 @@ export class Image extends TransformableElement {
     super.removeSideEffectChild(child);
   }
 
+  private updateMaterialEmissiveIntensity() {
+    if (this.material) {
+      const map = this.material.map as THREE.Texture;
+      if (this.props.emissive > 0) {
+        this.material.emissive = new THREE.Color(0xffffff);
+        this.material.emissiveMap = map;
+        this.material.emissiveIntensity = this.props.emissive;
+        this.material.needsUpdate = true;
+      } else {
+        this.material.emissive = new THREE.Color(0x000000);
+        this.material.emissiveMap = null;
+        this.material.emissiveIntensity = 1;
+        this.material.needsUpdate = true;
+      }
+    }
+  }
+
   private clearImage() {
     this.loadedImage = null;
     this.srcApplyPromise = null;
-    if (this.material && this.material.map) {
-      this.material.map.dispose();
-      this.material.map = null;
+    if (this.material) {
+      if (this.material.map) {
+        this.material.map.dispose();
+        this.material.map = null;
+      }
+      if (this.material.emissiveMap) {
+        this.material.emissiveMap.dispose();
+        this.material.emissiveMap = null;
+      }
     }
   }
 
@@ -233,6 +262,7 @@ export class Image extends TransformableElement {
     this.material.transparent = this.props.opacity !== 1 || this.loadedImageHasTransparency;
     this.material.map = new THREE.CanvasTexture(this.loadedImage);
     this.material.needsUpdate = true;
+    this.updateMaterialEmissiveIntensity();
     this.updateHeightAndWidth();
   }
 
@@ -269,10 +299,13 @@ export class Image extends TransformableElement {
   disconnectedCallback() {
     this.collideableHelper.removeColliders();
     if (this.material) {
-      this.material.dispose();
       if (this.material.map) {
         this.material.map.dispose();
       }
+      if (this.material.emissiveMap) {
+        this.material.emissiveMap.dispose();
+      }
+      this.material.dispose();
       this.mesh.material = [];
       this.material = null;
     }
