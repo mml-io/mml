@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { Material } from "./Material";
 import { MElement } from "./MElement";
+import { RemoteDocument } from "./RemoteDocument";
 
 interface MaterialTextureCacheItem {
   userMaterials: Map<Material, Material>;
@@ -10,6 +11,7 @@ interface MaterialTextureCacheItem {
 
 interface SharedMaterialItem {
   material: Material | null;
+  remoteDocument: RemoteDocument | null;
   userElements: Map<MElement, MElement>;
 }
 
@@ -40,6 +42,10 @@ export class MaterialManager {
       MaterialManager.instance = new MaterialManager();
     }
     return MaterialManager.instance;
+  }
+
+  static getScopedMaterialKey(remoteAddress: string, materialId: string) {
+    return `${remoteAddress}#${materialId}`;
   }
 
   public getTexture(src: string) {
@@ -86,63 +92,97 @@ export class MaterialManager {
     }
   }
 
-  registerSharedMaterial(id: string, material: Material) {
-    if (!id) return;
-    let sharedMaterial = this.sharedMaterials.get(id);
-    if (sharedMaterial && sharedMaterial.material) {
-      console.warn(`Material with id ${id} already exists`);
+  registerSharedMaterial(remoteAddress: string, id: string, material: Material) {
+    const scopedId = MaterialManager.getScopedMaterialKey(remoteAddress, id);
+    let sharedMaterial = this.sharedMaterials.get(scopedId);
+
+    if (sharedMaterial && sharedMaterial.material?.getMaterial()) {
+      console.warn(`${remoteAddress}: Material with id ${id} already exists in their scope.`);
       return;
     }
 
-    // If the shared material already exists, update the material and update all the user elements that registered before it became available
+    // If the shared material already exists, update the material
+    // and update all the user elements that registered before it became available
     if (sharedMaterial) {
       sharedMaterial.material = material;
+      sharedMaterial.remoteDocument = material.getRemoteDocument() || null;
       sharedMaterial.userElements.forEach((element) => {
         element.addSideEffectChild(material);
       });
     } else {
       sharedMaterial = {
         material,
+        remoteDocument: material.getRemoteDocument() || null,
         userElements: new Map(),
       };
     }
-    this.sharedMaterials.set(id, sharedMaterial);
+    this.sharedMaterials.set(scopedId, sharedMaterial);
   }
 
-  registerMaterialUser(id: string, element: MElement) {
-    let sharedMaterial = this.sharedMaterials.get(id);
-    // If a user element tries to register before a material is available, create an empty shared material entry
+  registerMaterialUser(remoteAddress: string, id: string, element: MElement) {
+    const scopedId = MaterialManager.getScopedMaterialKey(remoteAddress, id);
+    let sharedMaterial = this.sharedMaterials.get(scopedId);
+
     if (!sharedMaterial) {
+      // If a user element tries to register before a material is available, create an empty shared material entry
       sharedMaterial = {
         material: null,
+        remoteDocument: null,
         userElements: new Map([[element, element]]),
       };
-      this.sharedMaterials.set(id, sharedMaterial);
+      this.sharedMaterials.set(scopedId, sharedMaterial);
     }
+
+    if (sharedMaterial.userElements.has(element)) {
+      console.warn(
+        `${remoteAddress}: Element with id ${element.id} already uses material with id ${id}.`,
+      );
+      return;
+    }
+
     sharedMaterial.userElements.set(element, element);
-    if (sharedMaterial.material?.getMaterial()) {
+    if (sharedMaterial.material) {
       element.addSideEffectChild(sharedMaterial.material);
     }
   }
 
-  unregisterSharedMaterial(id: string, material: Material) {
-    const sharedMaterial = this.sharedMaterials.get(id);
+  unregisterSharedMaterial(remoteAddress: string, id: string, material: Material) {
+    const scopedId = MaterialManager.getScopedMaterialKey(remoteAddress, id);
+    const sharedMaterial = this.sharedMaterials.get(scopedId);
+
     if (!id || material !== sharedMaterial?.material) return;
     if (sharedMaterial && sharedMaterial.material) {
       sharedMaterial.userElements.forEach((element) => {
         sharedMaterial.material && element.removeSideEffectChild(sharedMaterial.material);
         sharedMaterial.material && element.dispatchEvent(new CustomEvent("materialDisconnected"));
       });
+      const oldMaterial = sharedMaterial.material;
       sharedMaterial.material = null;
 
-      // Check for a duplicate material id and make it the shared material
-      const newMaterial = document.querySelector(`m-material[id="${id}"]`) as Material;
-      newMaterial && this.registerSharedMaterial(id, newMaterial);
+      // Fallback to a previously conflicting shared material if available
+      const newMaterial = this.getSharedMaterialFallback(remoteAddress, id);
+      if (newMaterial && newMaterial !== oldMaterial) {
+        this.registerSharedMaterial(remoteAddress, id, newMaterial);
+      }
     }
   }
 
-  unregisterMaterialUser(id: string, element: MElement) {
-    const sharedMaterial = this.sharedMaterials.get(id);
+  getSharedMaterialFallback(remoteAddress: string, id: string): Material | null {
+    const scopedId = MaterialManager.getScopedMaterialKey(remoteAddress, id);
+    const sharedMaterial = this.sharedMaterials.get(scopedId);
+    if (sharedMaterial) {
+      const newMaterial = (sharedMaterial.remoteDocument?.querySelector(`m-material[id="${id}"]`) ??
+        null) as Material | null;
+      const isSameDocument =
+        newMaterial?.getRemoteDocument()?.getDocumentAddress() === remoteAddress;
+      return isSameDocument ? newMaterial : null;
+    }
+    return null;
+  }
+
+  unregisterMaterialUser(remoteAddress: string, id: string, element: MElement) {
+    const scopedId = MaterialManager.getScopedMaterialKey(remoteAddress, id);
+    const sharedMaterial = this.sharedMaterials.get(scopedId);
     if (sharedMaterial) {
       sharedMaterial.userElements.delete(element);
     }

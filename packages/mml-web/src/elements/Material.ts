@@ -109,6 +109,7 @@ export class Material extends MElement {
   private registeredParentAttachment: MElement | null = null;
   private isSharedMaterial = false;
   public isLoaded = false;
+  private remoteAddress: string;
 
   private static attributeHandler = new AttributeHandler<Material>({
     id: (instance, newValue) => {
@@ -116,11 +117,19 @@ export class Material extends MElement {
       instance.props.id = newValue ?? defaultMaterialId;
       if (!instance.material) return;
       if (oldValue && instance.isSharedMaterial) {
-        instance.materialManager.unregisterSharedMaterial(oldValue, instance);
+        instance.materialManager.unregisterSharedMaterial(
+          instance.remoteAddress,
+          oldValue,
+          instance,
+        );
         instance.isSharedMaterial = false;
       }
       if (instance.props.id && instance.props.id !== oldValue) {
-        instance.materialManager.registerSharedMaterial(instance.props.id, instance);
+        instance.materialManager.registerSharedMaterial(
+          instance.remoteAddress,
+          instance.props.id,
+          instance,
+        );
         instance.isSharedMaterial = true;
       }
     },
@@ -495,8 +504,9 @@ export class Material extends MElement {
       this.registeredParentAttachment.addSideEffectChild(this);
     }
 
+    this.remoteAddress = this.getRemoteDocument()?.getDocumentAddress() ?? "";
     if (this.props.id) {
-      this.materialManager.registerSharedMaterial(this.props.id, this);
+      this.materialManager.registerSharedMaterial(this.remoteAddress, this.props.id, this);
       this.isSharedMaterial = true;
     }
 
@@ -510,16 +520,26 @@ export class Material extends MElement {
     });
   }
 
+  public getParentAttachment(): MElement | null {
+    return this.registeredParentAttachment;
+  }
+
   public disconnectedCallback(): void {
+    // Need to set material to null before removing it from user elements
+    if (this.material) {
+      this.material.dispose();
+      this.material = null;
+    }
+
     const parent = this.registeredParentAttachment;
     if (parent) {
       parent.removeSideEffectChild(this);
       parent.dispatchEvent(new CustomEvent("materialDisconnected"));
     }
     if (this.isSharedMaterial) {
-      this.materialManager.unregisterSharedMaterial(this.props.id, this);
+      this.materialManager.unregisterSharedMaterial(this.remoteAddress, this.props.id, this);
     }
-
+    this.isLoaded = false;
     this.materialManager.mapKeys.map((key) => {
       const srcValue = (this.props as Record<string, any>)[key];
       if (srcValue && typeof srcValue === "string") {
@@ -527,10 +547,6 @@ export class Material extends MElement {
       }
     });
 
-    if (this.material) {
-      this.material.dispose();
-      this.material = null;
-    }
     super.disconnectedCallback();
   }
 }

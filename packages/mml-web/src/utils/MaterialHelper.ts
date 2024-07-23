@@ -21,23 +21,34 @@ export class MaterialElementHelper {
       const oldId = instance.props.materialId;
       instance.props.materialId = newValue ?? defaultMaterialId;
       if (
-        instance.registeredChildMaterial &&
-        instance.registeredChildMaterial.parentElement === instance.element
+        (instance.registeredChildMaterial &&
+          instance.registeredChildMaterial.parentElement === instance.element) ||
+        !instance.element.getRemoteDocument()
       ) {
         // Ignore changes in material id if the element has a direct child material
+        // or if the document is not available
         return;
       }
 
-      if (oldId && instance.registeredChildMaterial) {
-        instance.materialManager.unregisterMaterialUser(oldId, instance.element);
+      if (oldId) {
+        instance.materialManager.unregisterMaterialUser(
+          instance.remoteAddress,
+          oldId,
+          instance.element,
+        );
         instance.disconnectChildMaterial();
       }
       if (instance.props.materialId) {
-        instance.materialManager.registerMaterialUser(instance.props.materialId, instance.element);
+        instance.materialManager.registerMaterialUser(
+          instance.remoteAddress,
+          instance.props.materialId,
+          instance.element,
+        );
       }
     },
   });
   static observedAttributes = MaterialElementHelper.AttributeHandler.getAttributes();
+  private remoteAddress: string;
 
   constructor(element: Cube | Cylinder | Plane | Sphere) {
     this.element = element;
@@ -62,17 +73,28 @@ export class MaterialElementHelper {
     this.enabled = false;
   }
 
-  public connectedCallback() {}
+  public connectedCallback() {
+    // Save the remote address so we can dispose of the material when the element is removed
+    this.remoteAddress = this.element.getRemoteDocument()?.getDocumentAddress() ?? "";
+    if (this.props.materialId && !this.registeredChildMaterial) {
+      this.materialManager.registerMaterialUser(
+        this.remoteAddress,
+        this.props.materialId,
+        this.element,
+      );
+    }
+  }
 
   public disconnectedCallback() {
     // Disconnect shared material
-    if (
-      this.registeredChildMaterial &&
-      this.props.materialId &&
-      this.props.materialId === this.registeredChildMaterial.id
-    ) {
+    if (this.props.materialId) {
+      this.materialManager.unregisterMaterialUser(
+        this.remoteAddress,
+        this.props.materialId,
+        this.element,
+      );
       this.disconnectChildMaterial();
-      this.materialManager.unregisterMaterialUser(this.props.materialId, this.element);
+      this.registeredChildMaterial = null;
     }
   }
 
@@ -94,7 +116,11 @@ export class MaterialElementHelper {
 
   public removeSideEffectChild(child: MElement) {
     if (child instanceof Material && child === this.registeredChildMaterial) {
-      this.disconnectChildMaterial();
+      const isDirectChild = child.getParentAttachment() === this.element;
+      const isChildStillValid = !!child.getMaterial();
+      if (!isDirectChild || !isChildStillValid) {
+        this.disconnectChildMaterial();
+      }
     }
   }
 
@@ -112,9 +138,18 @@ export class MaterialElementHelper {
 
   public disconnectChildMaterial() {
     const registeredMaterialElement = this.registeredChildMaterial;
+    const remoteDocument = this.element.getRemoteDocument();
+    const remoteAddress = remoteDocument?.getDocumentAddress();
     const childMaterial = this.element.querySelector("m-material") as Material;
     const sharedMaterialId = this.props.materialId;
-    const sharedMaterial = document.getElementById(sharedMaterialId) as Material;
+    let sharedMaterial = null;
+    if (remoteDocument && remoteAddress) {
+      sharedMaterial = this.materialManager.getSharedMaterialFallback(
+        remoteAddress,
+        sharedMaterialId,
+      );
+    }
+
     if (
       registeredMaterialElement &&
       childMaterial instanceof Material &&
@@ -122,7 +157,7 @@ export class MaterialElementHelper {
     ) {
       // Fallback to child
       this.registeredChildMaterial = null;
-      this.element.addSideEffectChild(childMaterial);
+      return this.element.addSideEffectChild(childMaterial);
     } else if (
       registeredMaterialElement &&
       sharedMaterial instanceof Material &&
@@ -130,11 +165,9 @@ export class MaterialElementHelper {
     ) {
       // Fallback to shared material
       this.registeredChildMaterial = null;
-      this.element.addSideEffectChild(sharedMaterial);
+      return this.element.addSideEffectChild(sharedMaterial);
     }
-    if ((!childMaterial && !sharedMaterial) || childMaterial === sharedMaterial) {
-      this.element.setMaterial(this.element.getDefaultMaterial());
-      this.registeredChildMaterial = null;
-    }
+    this.element.setMaterial(this.element.getDefaultMaterial());
+    this.registeredChildMaterial = null;
   }
 }

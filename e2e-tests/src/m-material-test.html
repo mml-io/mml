@@ -1,4 +1,4 @@
-<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="17.5" y="15" z="10"></m-light>
+<m-light type="spotlight" intensity="900" ry="90" rx="90" rz="-45" x="0" y="35" z="10"></m-light>
 
 <m-group id="cubes" data-loaded-materials="0"></m-group>
 
@@ -40,6 +40,7 @@
   const cubes = document.getElementById("cubes");
   const canvasWidth = 14;
   const cubeSize = 2;
+  const maxCubes = 20;
   const gap = 0.5;
   let useSharedMaterial = false;
   cubes.setAttribute("data-loaded-materials", 0);
@@ -64,7 +65,7 @@
     }
 
     cubes.childNodes.forEach((cube) => {
-      const material = cube.querySelector("m-material");
+      const material = cube?.querySelector("m-material");
       if (useSharedMaterial) {
         material && cube.removeChild(material);
         cube.setAttribute("material-id", "shared-material");
@@ -83,6 +84,9 @@
   }
 
   function createCube() {
+    if (cubes.children.length >= maxCubes) {
+      return;
+    }
     const material = createMaterial();
     const cube = document.createElement("m-cube");
 
@@ -111,7 +115,7 @@
 
     // Removes m-material child
     cube.addEventListener("click", (event) => {
-      const materialChild = event.target.querySelector("m-material");
+      const materialChild = event.target?.querySelector("m-material");
       if (materialChild) {
         event.target.removeChild(materialChild);
       } else {
@@ -138,7 +142,7 @@
 
   function removeCube(element) {
     const toRemove = element ? element : cubes.lastElementChild;
-    const hasChildMaterial = !!toRemove.querySelector("m-material");
+    const hasChildMaterial = !!toRemove?.querySelector("m-material");
     if (toRemove) {
       cubes.removeChild(toRemove);
     }

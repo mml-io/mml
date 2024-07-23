@@ -1,0 +1,37 @@
+<m-light type="spotlight" intensity="2000" ry="45" rx="65" rz="-45" x="10" y="30" z="10"></m-light>
+<m-plane color="#262626" width="100" height="100" x="0" y="0" z="-5"></m-plane>
+
+<m-material id="shared-material" color="red"> </sm-material>
+
+<m-cube id="3" material-id="shared-material">
+  <m-material color="orange" id="shared-material"> </m-material>
+</m-cube>
+
+<m-material id="shared-material" color="green"> </m-material>
+<m-material id="shared-material" color="purple"> </m-material>
+
+
+<m-frame
+  x="-4"
+  sx=".55"
+  sy=".55"
+  sz=".55"
+  x="-2"
+  src="ws://localhost:7079/m-material-test.html"
+></m-frame>
+
+<m-group></m-group>
+
+<m-frame
+  x="4"
+  sx=".55"
+  sy=".55"
+  sz=".55"
+  src="ws://localhost:7079/m-material-priority-test.html"
+></m-frame>
+
+<m-group y="2">
+  <m-label content="root (red)" y="2"></m-label>
+  <m-cube id="0" color="gray" material-id="shared-material"> </m-cube>
+</m-group>
+

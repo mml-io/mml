@@ -200,7 +200,8 @@ export class Cube extends TransformableElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    if (!this.material) {
+    this.materialHelper.connectedCallback();
+    if (!this.materialHelper.registeredChildMaterial) {
       this.material = this.getDefaultMaterial();
       this.mesh.material = this.material;
     }
@@ -210,8 +211,8 @@ export class Cube extends TransformableElement {
   }
 
   public disconnectedCallback(): void {
-    this.collideableHelper.removeColliders();
     this.materialHelper.disconnectedCallback();
+    this.collideableHelper.removeColliders();
 
     if (!this.materialHelper.registeredChildMaterial) {
       this.material?.dispose();
@@ -234,7 +235,7 @@ export class Cube extends TransformableElement {
 
   public setMaterial(material: THREE.MeshStandardMaterial) {
     if (this.material) {
-      this.material.dispose();
+      // this.material.dispose();
     }
     this.material = material;
     this.mesh.material = this.material;
