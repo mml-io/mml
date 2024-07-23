@@ -52,6 +52,11 @@ export class MaterialManager {
     return this.textureCache.get(src);
   }
 
+  public getSharedMaterial(remoteAddress: string, id: string) {
+    const scopedId = MaterialManager.getScopedMaterialKey(remoteAddress, id);
+    return this.sharedMaterials.get(scopedId)?.material;
+  }
+
   public async loadTexture(src: string, materialElement: Material): Promise<THREE.Texture | null> {
     if (!src) {
       return null;
@@ -97,8 +102,16 @@ export class MaterialManager {
     let sharedMaterial = this.sharedMaterials.get(scopedId);
 
     if (sharedMaterial && sharedMaterial.material?.getMaterial()) {
-      console.warn(`${remoteAddress}: Material with id ${id} already exists in their scope.`);
-      return;
+      const conflictingNodes = sharedMaterial.remoteDocument?.querySelectorAll(
+        `m-material[id="${id}"]`,
+      );
+      const topMaterial = conflictingNodes?.[0] as Material;
+      if (topMaterial === sharedMaterial.material) {
+        console.warn(
+          `${remoteAddress}: Higher priority material with id ${id} already exists in their scope.`,
+        );
+        return;
+      }
     }
 
     // If the shared material already exists, update the material

@@ -60,6 +60,7 @@
       sharedMaterial = createMaterial();
       sharedMaterial.setAttribute("id", "shared-material");
       document.body.appendChild(sharedMaterial);
+      listenMaterialEvents(sharedMaterial);
     } else {
       document.body.removeChild(sharedMaterial);
     }
@@ -72,6 +73,7 @@
       } else {
         cube.setAttribute("material-id", "");
         cube.appendChild(createMaterial());
+        listenMaterialEvents(material, cube);
       }
     });
   }
@@ -123,21 +125,24 @@
       }
     });
 
-    material.addEventListener("materialLoaded", (event) => {
+    listenMaterialEvents(material, cube);
+    cubes.appendChild(cube);
+    return cube;
+  }
+
+  function listenMaterialEvents(material, parentElement = null) {
+    material?.addEventListener("materialLoaded", (event) => {
       cubes.setAttribute(
         "data-loaded-materials",
         parseInt(cubes.getAttribute("data-loaded-materials")) + 1,
       );
     });
-    cube.addEventListener("materialDisconnected", (event) => {
+    parentElement?.addEventListener("materialDisconnected", (event) => {
       cubes.setAttribute(
         "data-loaded-materials",
-        parseInt(cubes.getAttribute("data-loaded-materials")) - 1,
+        Math.max(0, parseInt(cubes.getAttribute("data-loaded-materials")) - 1),
       );
     });
-
-    cubes.appendChild(cube);
-    return cube;
   }
 
   function removeCube(element) {
@@ -150,7 +155,7 @@
       // the disconnected event is not fired when removing the parent
       cubes.setAttribute(
         "data-loaded-materials",
-        parseInt(cubes.getAttribute("data-loaded-materials")) - 1,
+        Math.max(0, parseInt(cubes.getAttribute("data-loaded-materials")) - 1),
       );
     }
   }

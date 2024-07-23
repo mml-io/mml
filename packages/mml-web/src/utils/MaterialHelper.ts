@@ -99,9 +99,14 @@ export class MaterialElementHelper {
   }
 
   public addSideEffectChild(child: MElement) {
+    const sharedMaterial = this.materialManager.getSharedMaterial(
+      this.remoteAddress,
+      this.props.materialId,
+    );
     if (
       child instanceof Material &&
-      (!this.registeredChildMaterial || child.parentElement === this.element)
+      ((child === sharedMaterial && this.registeredChildMaterial?.parentElement !== this.element) ||
+        child.parentElement === this.element)
     ) {
       this.registeredChildMaterial = child;
       if (child.isLoaded) {

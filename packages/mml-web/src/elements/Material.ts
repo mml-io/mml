@@ -532,7 +532,7 @@ export class Material extends MElement {
     }
 
     const parent = this.registeredParentAttachment;
-    if (parent) {
+    if (parent && !(parent instanceof Material)) {
       parent.removeSideEffectChild(this);
       parent.dispatchEvent(new CustomEvent("materialDisconnected"));
     }

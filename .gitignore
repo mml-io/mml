@@ -6,3 +6,5 @@ build/
 .vscode/
 coverage/
 .nx/
+
+e2e-tests/src/assets/**/*
