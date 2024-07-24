@@ -187,7 +187,8 @@ export class Plane extends TransformableElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    if (!this.material) {
+    this.materialHelper.connectedCallback();
+    if (!this.materialHelper.registeredChildMaterial) {
       this.material = this.getDefaultMaterial();
       this.mesh.material = this.material;
     }
@@ -197,8 +198,8 @@ export class Plane extends TransformableElement {
   }
 
   public disconnectedCallback(): void {
-    this.collideableHelper.removeColliders();
     this.materialHelper.disconnectedCallback();
+    this.collideableHelper.removeColliders();
 
     if (!this.materialHelper.registeredChildMaterial) {
       this.material?.dispose();

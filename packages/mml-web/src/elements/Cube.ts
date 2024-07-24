@@ -235,7 +235,7 @@ export class Cube extends TransformableElement {
 
   public setMaterial(material: THREE.MeshStandardMaterial) {
     if (this.material) {
-      // this.material.dispose();
+      this.material.dispose();
     }
     this.material = material;
     this.mesh.material = this.material;

@@ -177,7 +177,8 @@ export class Sphere extends TransformableElement {
 
   connectedCallback() {
     super.connectedCallback();
-    if (!this.material) {
+    this.materialHelper.connectedCallback();
+    if (!this.materialHelper.registeredChildMaterial) {
       this.material = this.getDefaultMaterial();
       this.mesh.material = this.material;
     }
@@ -186,8 +187,8 @@ export class Sphere extends TransformableElement {
   }
 
   disconnectedCallback() {
-    this.collideableHelper.removeColliders();
     this.materialHelper.disconnectedCallback();
+    this.collideableHelper.removeColliders();
 
     if (!this.materialHelper.registeredChildMaterial) {
       this.material?.dispose();
