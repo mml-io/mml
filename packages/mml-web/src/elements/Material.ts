@@ -162,7 +162,11 @@ export class Material extends MElement {
     map: (instance, newValue) => {
       instance.props.map = newValue ?? defaultMaterialMap;
       if (instance.material) {
+        const value = instance.props.map;
         instance.materialManager.loadTexture(instance.props.map, instance).then((texture) => {
+          if (instance.props.map !== value) {
+            return;
+          }
           instance.material!.map = texture;
           instance.material!.needsUpdate = true;
         });
@@ -171,7 +175,11 @@ export class Material extends MElement {
     "light-map": (instance, newValue) => {
       instance.props.lightMap = newValue ?? defaultMaterialLightMap;
       if (instance.material) {
+        const value = instance.props.lightMap;
         instance.materialManager.loadTexture(instance.props.lightMap, instance).then((texture) => {
+          if (instance.props.lightMap !== value) {
+            return;
+          }
           instance.material!.lightMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -190,7 +198,11 @@ export class Material extends MElement {
     "ao-map": (instance, newValue) => {
       instance.props.aoMap = newValue ?? defaultMaterialAoMap;
       if (instance.material) {
+        const value = instance.props.aoMap;
         instance.materialManager.loadTexture(instance.props.aoMap, instance).then((texture) => {
+          if (instance.props.aoMap !== value) {
+            return;
+          }
           instance.material!.aoMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -223,9 +235,13 @@ export class Material extends MElement {
     "emissive-map": (instance, newValue) => {
       instance.props.emissiveMap = newValue ?? defaultMaterialEmissiveMap;
       if (instance.material) {
+        const value = instance.props.emissiveMap;
         instance.materialManager
           .loadTexture(instance.props.emissiveMap, instance)
           .then((texture) => {
+            if (instance.props.emissiveMap !== value) {
+              return;
+            }
             instance.material!.emissiveMap = texture;
             instance.material!.needsUpdate = true;
           });
@@ -234,7 +250,11 @@ export class Material extends MElement {
     "bump-map": (instance, newValue) => {
       instance.props.bumpMap = newValue ?? defaultMaterialBumpMap;
       if (instance.material) {
+        const value = instance.props.bumpMap;
         instance.materialManager.loadTexture(instance.props.bumpMap, instance).then((texture) => {
+          if (instance.props.bumpMap !== value) {
+            return;
+          }
           instance.material!.bumpMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -250,7 +270,11 @@ export class Material extends MElement {
     "normal-map": (instance, newValue) => {
       instance.props.normalMap = newValue ?? defaultMaterialNormalMap;
       if (instance.material) {
+        const value = instance.props.normalMap;
         instance.materialManager.loadTexture(instance.props.normalMap, instance).then((texture) => {
+          if (instance.props.normalMap !== value) {
+            return;
+          }
           instance.material!.normalMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -293,9 +317,13 @@ export class Material extends MElement {
     "roughness-map": (instance, newValue) => {
       instance.props.roughnessMap = newValue ?? defaultMaterialRoughnessMap;
       if (instance.material) {
+        const value = instance.props.roughnessMap;
         instance.materialManager
           .loadTexture(instance.props.roughnessMap, instance)
           .then((texture) => {
+            if (instance.props.roughnessMap !== value) {
+              return;
+            }
             instance.material!.roughnessMap = texture;
             instance.material!.needsUpdate = true;
           });
@@ -304,9 +332,13 @@ export class Material extends MElement {
     "metalness-map": (instance, newValue) => {
       instance.props.metalnessMap = newValue ?? defaultMaterialMetalnessMap;
       if (instance.material) {
+        const value = instance.props.metalnessMap;
         instance.materialManager
           .loadTexture(instance.props.metalnessMap, instance)
           .then((texture) => {
+            if (instance.props.metalnessMap !== value) {
+              return;
+            }
             instance.material!.metalnessMap = texture;
             instance.material!.needsUpdate = true;
           });
@@ -315,7 +347,11 @@ export class Material extends MElement {
     "alpha-map": (instance, newValue) => {
       instance.props.alphaMap = newValue ?? defaultMaterialAlphaMap;
       if (instance.material) {
+        const value = instance.props.alphaMap;
         instance.materialManager.loadTexture(instance.props.alphaMap, instance).then((texture) => {
+          if (instance.props.alphaMap !== value) {
+            return;
+          }
           instance.material!.alphaMap = texture;
           instance.material!.transparent = !!texture;
           instance.material!.needsUpdate = true;
@@ -325,7 +361,11 @@ export class Material extends MElement {
     "env-map": (instance, newValue) => {
       instance.props.envMap = newValue ?? defaultMaterialEnvMap;
       if (instance.material) {
+        const value = instance.props.envMap;
         instance.materialManager.loadTexture(instance.props.envMap, instance).then((texture) => {
+          if (instance.props.envMap !== value) {
+            return;
+          }
           instance.material!.envMap = texture;
           instance.material!.needsUpdate = true;
         });
@@ -457,6 +497,10 @@ export class Material extends MElement {
             .loadTexture(value.toString(), this)
             .catch(() => null);
           if (texture && this.material && key in this.material) {
+            // Check if the texture is outdated
+            if (this.props[key] !== value) {
+              return;
+            }
             (this.material[key] as unknown as THREE.Texture) = texture;
           }
         }
