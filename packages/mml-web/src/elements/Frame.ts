@@ -389,6 +389,7 @@ export class Frame extends TransformableElement {
       this.container.remove(this.frameContentsInstance.container);
       this.frameContentsInstance.dispose();
       this.frameContentsInstance = null;
+      this.isActivelyLoaded = false;
     }
   }
 
