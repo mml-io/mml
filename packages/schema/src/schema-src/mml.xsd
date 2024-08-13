@@ -1255,6 +1255,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="target" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                Where the address should be opened. "_self" opens in the current context / tab / window (if the content is in a context in which that is valid). "_blank" opens in a new tab / window. Default value is "_blank".
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>

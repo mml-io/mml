@@ -36,6 +36,7 @@ export type PromptProps = {
 
 export type LinkProps = {
   href: string;
+  target?: string;
   popup?: boolean;
 };
 
