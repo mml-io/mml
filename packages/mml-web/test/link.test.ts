@@ -25,4 +25,16 @@ describe("m-link", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-link", Link);
     expect(schema.name).toEqual(Link.tagName);
   });
+
+  test("isAcceptableHref", () => {
+    expect(Link.isAcceptableHref("http://example.com")).toBe(true);
+    expect(Link.isAcceptableHref("https://example.com")).toBe(true);
+    expect(Link.isAcceptableHref("https://example.com/foo")).toBe(true);
+    expect(Link.isAcceptableHref("/foo")).toBe(true);
+    expect(Link.isAcceptableHref("/")).toBe(true);
+
+    expect(Link.isAcceptableHref("ftp://example.com")).toBe(false);
+    expect(Link.isAcceptableHref("javascript:alert('foo')")).toBe(false);
+    expect(Link.isAcceptableHref("mailto:test@example.com")).toBe(false);
+  });
 });

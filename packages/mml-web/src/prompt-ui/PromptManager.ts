@@ -11,6 +11,7 @@ type PromptState = {
 
 type LinkState = {
   href: string;
+  target?: string;
   popup: boolean;
   windowCallback: (openedWindow: Window | null) => void;
 };
@@ -76,7 +77,11 @@ export class PromptManager {
               features = `toolbar=no,menubar=no,width=${popupWidth},height=${popupHeight},left=${left},top=${top}`;
             }
 
-            const openedWindow = window.open(promptState.href, "_blank", features);
+            const openedWindow = window.open(
+              promptState.href,
+              promptState.target ?? "_blank",
+              features,
+            );
             promptState.windowCallback(openedWindow);
           }
           this.showNextPromptIfAny();
@@ -142,6 +147,7 @@ export class PromptManager {
     });
     const linkState: LinkState = {
       href: linkProps.href,
+      target: linkProps.target,
       popup: linkProps.popup ?? false,
       windowCallback,
     };

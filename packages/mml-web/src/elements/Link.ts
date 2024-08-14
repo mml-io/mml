@@ -9,11 +9,15 @@ export class Link extends TransformableElement {
 
   private props = {
     href: undefined as string | undefined,
+    target: undefined as string | undefined,
   };
 
   private static attributeHandler = new AttributeHandler<Link>({
     href: (instance, newValue) => {
       instance.props.href = newValue !== null ? newValue : undefined;
+    },
+    target: (instance, newValue) => {
+      instance.props.target = newValue !== null ? newValue : undefined;
     },
   });
 
@@ -21,18 +25,38 @@ export class Link extends TransformableElement {
     return [...TransformableElement.observedAttributes, ...Link.attributeHandler.getAttributes()];
   }
 
+  /*
+   This is a simple check to ensure that the href is an acceptable URL and is
+   not a "javascript:alert('foo')" URL or something other than a navigable URL.
+  */
+  static isAcceptableHref(href: string): boolean {
+    const url = new URL(href, window.location.href);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return true;
+    }
+    return false;
+  }
+
   constructor() {
     super();
 
     this.addEventListener("click", () => {
       if (this.props.href) {
+        const href = this.props.href;
+        if (!Link.isAcceptableHref(href)) {
+          console.warn(
+            `Refusing to navigate to ${href} as it does not meet the acceptable href criteria.`,
+          );
+          return;
+        }
+
         if (this.abortController) {
           this.abortController.abort();
           this.abortController = null;
         }
         this.abortController = new AbortController();
         this.getScene().link(
-          { href: this.props.href, popup: false },
+          { href, target: this.props.target, popup: false },
           this.abortController.signal,
           () => {
             this.abortController = null;
