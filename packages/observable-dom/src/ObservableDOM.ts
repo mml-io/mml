@@ -185,33 +185,8 @@ export class ObservableDOM implements ObservableDOMInterface {
         throw new Error("Unknown node:" + targetNode + "," + mutation.type);
       }
 
-      let firstNonIgnoredPreviousSibling: Element | Text | null = mutation.previousSibling as
-        | Element
-        | Text;
+      let previousSiblingElement: LiveVirtualDOMElement | null = null;
       let insertionIndex = 0;
-      while (
-        firstNonIgnoredPreviousSibling &&
-        this.isIgnoredElement(firstNonIgnoredPreviousSibling as Element | Text)
-      ) {
-        firstNonIgnoredPreviousSibling = firstNonIgnoredPreviousSibling.previousSibling as
-          | Element
-          | Text
-          | null;
-      }
-      let previousSiblingElement: LiveVirtualDOMElement | undefined = undefined;
-      if (firstNonIgnoredPreviousSibling) {
-        previousSiblingElement = this.realElementToVirtualElement.get(
-          firstNonIgnoredPreviousSibling as Element | Text,
-        );
-        if (!previousSiblingElement) {
-          throw new Error("Unknown previous sibling");
-        }
-        insertionIndex = targetElement.childNodes.indexOf(previousSiblingElement);
-        if (insertionIndex === -1) {
-          throw new Error("Previous sibling is not currently a child of the parent element");
-        }
-        insertionIndex += 1;
-      }
       const toAdd: Array<LiveVirtualDOMElement> = [];
       const removedNodeIds: Array<number> = [];
 
@@ -255,6 +230,47 @@ export class ObservableDOM implements ObservableDOMInterface {
           if (asElementOrText.parentNode !== targetNode) {
             // Ignore this addition - it is likely overridden by an earlier addition of this element to its eventual node in this mutation batch
           } else {
+            if (!previousSiblingElement) {
+              /*
+               Either there is no previous element (this is the first element)
+               or the previous element has not yet been determined.
+
+               Use the current previous sibling of this added node as the first
+               choice for the previous sibling, but only use previous siblings
+               that are not ignored (are tracked as virtual elements).
+              */
+              let firstNonIgnoredPreviousSibling: Element | Text | null =
+                asElementOrText.previousSibling as Element | Text;
+              let virtualPreviousSibling: LiveVirtualDOMElement | undefined;
+              while (firstNonIgnoredPreviousSibling && !virtualPreviousSibling) {
+                virtualPreviousSibling = this.realElementToVirtualElement.get(
+                  firstNonIgnoredPreviousSibling as Element | Text,
+                );
+                if (
+                  virtualPreviousSibling &&
+                  targetElement.childNodes.indexOf(virtualPreviousSibling) === -1
+                ) {
+                  // This element is not a child of the parent element - it is not a valid previous sibling
+                  virtualPreviousSibling = undefined;
+                }
+
+                firstNonIgnoredPreviousSibling = firstNonIgnoredPreviousSibling.previousSibling as
+                  | Element
+                  | Text
+                  | null;
+              }
+
+              if (virtualPreviousSibling) {
+                previousSiblingElement = virtualPreviousSibling;
+                insertionIndex = targetElement.childNodes.indexOf(previousSiblingElement);
+                if (insertionIndex === -1) {
+                  throw new Error(
+                    "Previous sibling is not currently a child of the parent element",
+                  );
+                }
+                insertionIndex += 1;
+              }
+            }
             const childVirtualDOMElement = this.createVirtualDOMElementWithChildren(
               asElementOrText,
               targetElement,
@@ -291,7 +307,9 @@ export class ObservableDOM implements ObservableDOMInterface {
         targetId: targetElement.nodeId,
         addedNodes,
         removedNodeIds,
-        previousSiblingId: previousSiblingElement ? previousSiblingElement.nodeId : null,
+        previousSiblingId: previousSiblingElement
+          ? (previousSiblingElement as LiveVirtualDOMElement).nodeId
+          : null,
         attribute: mutation.attributeName
           ? {
               attributeName: mutation.attributeName,
