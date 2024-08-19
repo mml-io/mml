@@ -704,6 +704,149 @@ describe("end to end", () => {
     ]);
   });
 
+  test("multiple element creations with removal of previous sibling", async () => {
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    currentDoc = doc;
+    doc.load(`
+<m-group id="holder">
+</m-group>
+
+<script>
+  const holder = document.getElementById("holder");
+  const c0 = document.createElement("m-cube");
+  c0.setAttribute("color", "black");
+  c0.setAttribute("z", "1");
+  const c1 = document.createElement("m-cube");
+  c1.setAttribute("color", "red");
+  c1.setAttribute("z", "2");
+  const c2 = document.createElement("m-cube");
+  c2.setAttribute("color", "green");
+  c2.setAttribute("x", "2");
+  const c3 = document.createElement("m-cube");
+  c3.setAttribute("color", "blue");
+  c3.setAttribute("y", "2");
+  setTimeout(() => {
+    holder.appendChild(c0);
+    holder.appendChild(c1);
+    holder.appendChild(c2);
+    holder.insertBefore(c3, c2);
+    c1.remove();
+  }, 1);
+</script>`);
+
+    const clientWs = new MockWebsocket();
+    doc.addWebSocket(clientWs as unknown as WebSocket);
+
+    expect(await clientWs.waitForTotalMessageCount(4)).toEqual([
+      [
+        {
+          documentTime: expect.any(Number),
+          snapshot: {
+            attributes: {},
+            children: [
+              {
+                attributes: {},
+                children: [
+                  {
+                    attributes: {},
+                    children: [],
+                    nodeId: 3,
+                    tag: "HEAD",
+                    type: "element",
+                  },
+                  {
+                    attributes: {},
+                    children: [
+                      {
+                        attributes: {
+                          id: "holder",
+                        },
+                        children: [],
+                        nodeId: 5,
+                        tag: "M-GROUP",
+                        type: "element",
+                      },
+                    ],
+                    nodeId: 4,
+                    tag: "BODY",
+                    type: "element",
+                  },
+                ],
+                nodeId: 2,
+                tag: "HTML",
+                type: "element",
+              },
+            ],
+            nodeId: 1,
+            tag: "DIV",
+            type: "element",
+          },
+          type: "snapshot",
+        },
+      ],
+      [
+        {
+          addedNodes: [
+            {
+              attributes: {
+                color: "black",
+                z: "1",
+              },
+              children: [],
+              nodeId: 6,
+              tag: "M-CUBE",
+              type: "element",
+            },
+          ],
+          nodeId: 5,
+          previousNodeId: null,
+          removedNodes: [],
+          type: "childrenChanged",
+        },
+      ],
+      [
+        {
+          addedNodes: [
+            {
+              attributes: {
+                color: "green",
+                x: "2",
+              },
+              children: [],
+              nodeId: 7,
+              tag: "M-CUBE",
+              type: "element",
+            },
+          ],
+          nodeId: 5,
+          previousNodeId: 6,
+          removedNodes: [],
+          type: "childrenChanged",
+        },
+      ],
+      [
+        {
+          addedNodes: [
+            {
+              attributes: {
+                color: "blue",
+                y: "2",
+              },
+              children: [],
+              nodeId: 8,
+              tag: "M-CUBE",
+              type: "element",
+            },
+          ],
+          nodeId: 5,
+          previousNodeId: 6,
+          removedNodes: [],
+          type: "childrenChanged",
+        },
+      ],
+    ]);
+  });
+
   test("multiple element additions after removal", async () => {
     /* TODO - this test is not desirable behaviour, but is here to ensure that
         the handling of this case is done without errors. If a more correct
@@ -1098,7 +1241,7 @@ setTimeout(() => {
         {
           addedNodes: [],
           nodeId: 5,
-          previousNodeId: 6,
+          previousNodeId: null,
           removedNodes: [7],
           type: "childrenChanged",
         },
@@ -1128,7 +1271,7 @@ setTimeout(() => {
         {
           addedNodes: [],
           nodeId: 5,
-          previousNodeId: 6,
+          previousNodeId: null,
           removedNodes: [9],
           type: "childrenChanged",
         },
@@ -1158,7 +1301,7 @@ setTimeout(() => {
         {
           addedNodes: [],
           nodeId: 5,
-          previousNodeId: 6,
+          previousNodeId: null,
           removedNodes: [8],
           type: "childrenChanged",
         },
