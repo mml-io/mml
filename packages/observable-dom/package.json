@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/observable-dom",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "publishConfig": {
     "access": "public"
   },
@@ -19,7 +19,7 @@
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
-    "@mml-io/observable-dom-common": "^0.17.1",
+    "@mml-io/observable-dom-common": "^0.18.0",
     "jsdom": "24.0.0",
     "node-fetch": "3.3.2"
   },
