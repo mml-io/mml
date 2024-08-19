@@ -125,6 +125,7 @@ jobs:
 
   publish-experimental-packages:
     name: Publish Experimental Packages
+    environment: experimental-package-release
     needs: summary
     runs-on: ubuntu-latest
     steps:
