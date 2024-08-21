@@ -564,7 +564,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="cast-shadow" type="xs:boolean">
+          <xs:attribute name="cast-shadows" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
                 Whether the light cast shadows (true) or not (false). Default value is true.
