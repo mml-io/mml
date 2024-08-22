@@ -1,2 +1,2 @@
-export * from "./NetworkedDOM";
 export * from "./EditableNetworkedDOM";
+export * from "./NetworkedDOM";

@@ -1,8 +1,5 @@
 import * as THREE from "three";
 
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -14,6 +11,9 @@ import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { StaticFileVideoSource } from "../utils/video/StaticFileVideoSource";
 import { VideoSource } from "../utils/video/VideoSource";
 import { WHEPVideoSource } from "../utils/video/WHEPVideoSource";
+import { AnimationType } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
 const audioRefDistance = 1;
 const audioRolloffFactor = 1;

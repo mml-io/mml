@@ -14,8 +14,8 @@
     "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
     "iterate": "tsx ./build.ts --watch",
-    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0 --ignore-pattern ./networked-dom-web-runner-iframe",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix --ignore-pattern ./networked-dom-web-runner-iframe",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },

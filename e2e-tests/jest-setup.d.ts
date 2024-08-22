@@ -12,3 +12,11 @@ declare global {
 
   export const __BROWSER_GLOBAL__: puppeteer.Browser;
 }
+
+declare module "@jest/types" {
+  namespace Global {
+    interface Global {
+      __BROWSER_GLOBAL__: puppeteer.Browser;
+    }
+  }
+}

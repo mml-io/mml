@@ -1,9 +1,9 @@
 import * as THREE from "three";
 
-import { MElement } from "./MElement";
 import { AttributeHandler, parseFloatAttribute } from "../utils/attribute-handling";
 import { easingsByName } from "../utils/easings";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { MElement } from "./MElement";
 
 const defaultAttribute: string = "all";
 const defaultEasing = "";

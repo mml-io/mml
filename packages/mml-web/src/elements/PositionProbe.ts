@@ -1,8 +1,5 @@
 import * as THREE from "three";
 
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -11,6 +8,9 @@ import {
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
+import { AnimationType } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
 const defaultPositionProbeRange = 10;
 const defaultPositionProbeInterval = 1000;

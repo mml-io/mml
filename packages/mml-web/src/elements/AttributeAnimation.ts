@@ -1,6 +1,5 @@
 import * as THREE from "three";
 
-import { MElement } from "./MElement";
 import {
   EndOfAnimationSymbol,
   getEasedRatioForTime,
@@ -13,6 +12,7 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { MElement } from "./MElement";
 
 const defaultAttribute: string | null = null;
 const defaultStart = 0;

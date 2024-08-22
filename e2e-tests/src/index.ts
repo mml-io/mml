@@ -1,11 +1,10 @@
+import * as chokidar from "chokidar";
+import express, { Request, static as expressStatic } from "express";
+import enableWs from "express-ws";
 import * as fs from "fs";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import * as path from "path";
 import * as url from "url";
-
-import * as chokidar from "chokidar";
-import express, { static as expressStatic, Request } from "express";
-import enableWs from "express-ws";
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 
 const port = process.env.PORT || 7079;
 

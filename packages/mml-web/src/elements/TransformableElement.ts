@@ -1,8 +1,5 @@
 import * as THREE from "three";
 
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { Model } from "./Model";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -11,6 +8,9 @@ import {
 } from "../utils/attribute-handling";
 import { DebugHelper } from "../utils/DebugHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimationType } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { Model } from "./Model";
 
 // Workaround for zero-scale values breaking audio playback in THREE PositionalAudio
 function minimumNonZero(value: number): number {

@@ -1,5 +1,5 @@
-import { TransformableElement } from "./TransformableElement";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { TransformableElement } from "./TransformableElement";
 
 export class Group extends TransformableElement {
   static tagName = "m-group";

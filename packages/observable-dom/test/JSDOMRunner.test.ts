@@ -1,5 +1,5 @@
-import { DOMToJSON } from "./DOMToJSON";
 import { DOMRunnerMessage, JSDOMRunnerFactory } from "../src";
+import { DOMToJSON } from "./DOMToJSON";
 
 export function waitUntil(checkFn: () => boolean, message?: string) {
   return new Promise((resolve, reject) => {

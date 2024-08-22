@@ -1,8 +1,8 @@
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Plane } from "../src/elements/Plane";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);

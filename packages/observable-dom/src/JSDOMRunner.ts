@@ -1,5 +1,3 @@
-import vm from "vm";
-
 import { LogMessage, RemoteEvent } from "@mml-io/observable-dom-common";
 import {
   AbortablePromise,
@@ -12,6 +10,7 @@ import {
 } from "jsdom";
 import * as nodeFetch from "node-fetch";
 import nodeFetchFn from "node-fetch";
+import vm from "vm";
 
 import { DOMRunnerFactory, DOMRunnerInterface, DOMRunnerMessage } from "./ObservableDOM";
 

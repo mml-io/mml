@@ -1,8 +1,8 @@
-import specJSON from "./spec.json";
 import { Operation } from "../diff";
 import { applyPatch, createPatch } from "../index";
 import { Pointer } from "../pointer";
 import { clone } from "../util";
+import specJSON from "./spec.json";
 
 interface Spec {
   name: string;

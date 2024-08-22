@@ -14,17 +14,17 @@
     "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
     "iterate": "tsx ./build.ts --watch",
-    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
     "@mml-io/observable-dom-common": "^0.18.0",
-    "jsdom": "24.0.0",
+    "jsdom": "24.1.1",
     "node-fetch": "3.3.2"
   },
   "devDependencies": {
-    "@types/jsdom": "^21.1.6",
+    "@types/jsdom": "^21.1.7",
     "@types/node-fetch": "2.6.11"
   }
 }

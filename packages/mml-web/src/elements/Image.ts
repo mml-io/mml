@@ -1,8 +1,5 @@
 import * as THREE from "three";
 
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { LoadingInstanceManager } from "../loading/LoadingInstanceManager";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
@@ -12,6 +9,9 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimationType } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
 const defaultImageSrc = "";
 const defaultImageWidth = null;
@@ -384,6 +384,7 @@ function hasTransparency(image: HTMLImageElement) {
   const canvas = document.createElement("canvas");
   canvas.width = image.width;
   canvas.height = image.height;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(image, 0, 0);
 

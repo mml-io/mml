@@ -1,12 +1,12 @@
 import { jest } from "@jest/globals";
 import { Cache } from "three";
 
-import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Image } from "../src/elements/Image";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);

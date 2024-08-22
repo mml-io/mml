@@ -1,17 +1,10 @@
-// eslint-disable-next-line import/no-unresolved,@typescript-eslint/ban-ts-comment
-// @ts-ignore
-// eslint-disable-next-line import/no-unresolved
+// @ts-expect-error - import is defined in esbuild plugin
 import DRACO_DECODER_WASM from "esbuild-embed-draco-decoder-wasm";
-// eslint-disable-next-line import/no-unresolved,@typescript-eslint/ban-ts-comment
-// @ts-ignore
-// eslint-disable-next-line import/no-unresolved
+// @ts-expect-error - import is defined in esbuild plugin
 import DRACO_WASM_WRAPPER from "esbuild-embed-draco-wasm-wrapper-js";
 import { AnimationClip, FileLoader, Group, LoaderUtils, LoadingManager } from "three";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-expect-error - import is a js file from three.js
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";

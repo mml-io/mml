@@ -1,8 +1,8 @@
 import { Cache } from "three";
 
-import { createSceneAttachedElement } from "./scene-test-utils";
 import { Cube } from "../src";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { createSceneAttachedElement } from "./scene-test-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);

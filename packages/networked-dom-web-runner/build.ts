@@ -11,10 +11,10 @@ handleLibraryBuild([
   {
     name: "runner-iframe-js-text-plugin",
     setup({ onResolve, onLoad }) {
-      onResolve({ filter: /runner-iframe-js-text/ }, (args) => {
+      onResolve({ filter: /runner-iframe-js-text/ }, () => {
         return { path: pathToIframeJS, namespace: "runner-iframe-js-text-namespace" };
       });
-      onLoad({ filter: /.*/, namespace: "runner-iframe-js-text-namespace" }, (args) => {
+      onLoad({ filter: /.*/, namespace: "runner-iframe-js-text-namespace" }, () => {
         return {
           contents: fs.readFileSync(pathToIframeJS, "utf8"),
           loader: "text",

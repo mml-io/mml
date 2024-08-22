@@ -3,8 +3,8 @@ import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { IframeObservableDOMFactory } from "@mml-io/networked-dom-web-runner";
 import { MMLScene, registerCustomElementsToWindow } from "mml-web";
 
-import { waitFor } from "./test-util";
 import { MMLWebRunnerClient } from "../build/index";
+import { waitFor } from "./test-util";
 
 jest.unstable_mockModule("three", () => {
   const THREE = jest.requireActual("three") as typeof import("three");

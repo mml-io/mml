@@ -179,7 +179,6 @@ export class NetworkedDOMWebsocket {
     if (this.stopped) {
       return;
     }
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (this.stopped) {
         return;
@@ -188,6 +187,7 @@ export class NetworkedDOMWebsocket {
         await this.createWebsocketWithTimeout(maximumWebsocketConnectionTimeout);
         break;
       } catch (e) {
+        console.error("Websocket connection failed", e);
         // Connection failed, retry with backoff
         this.setStatus(NetworkedDOMWebsocketStatus.Reconnecting);
         await this.waitBackoffTime();

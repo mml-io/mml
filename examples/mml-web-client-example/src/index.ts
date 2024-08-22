@@ -1,12 +1,11 @@
-import * as fs from "fs";
-import * as path from "path";
-import * as url from "url";
-
 import { NetworkedDOM } from "@mml-io/networked-dom-document";
 import * as chokidar from "chokidar";
-import express, { static as expressStatic, Request } from "express";
+import express, { Request, static as expressStatic } from "express";
 import enableWs from "express-ws";
+import * as fs from "fs";
 import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
+import * as path from "path";
+import * as url from "url";
 import ws from "ws";
 
 const port = process.env.PORT || 7070;

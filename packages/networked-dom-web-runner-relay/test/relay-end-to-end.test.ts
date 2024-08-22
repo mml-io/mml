@@ -11,13 +11,13 @@ import {
   ToObservableDOMInstanceMessage,
 } from "@mml-io/observable-dom-common";
 
-import { waitFor } from "./test-util";
 import {
   FromRemoteInstanceMessage,
   RemoteNetworkedDOMInstanceClient,
   RemoteNetworkedDOMInstanceServer,
   ToRemoteServerMessage,
 } from "../src";
+import { waitFor } from "./test-util";
 
 const jestConsoleLog = console.log;
 const jestConsoleInfo = console.info;
