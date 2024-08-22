@@ -1,9 +1,6 @@
 import * as THREE from "three";
 import { PositionalAudioHelper } from "three/addons/helpers/PositionalAudioHelper.js";
 
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -11,6 +8,9 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimationType } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
 const debugAudioSphereSize = 0.25;
 const debugAudioGeometry = new THREE.SphereGeometry(debugAudioSphereSize, 4, 2);
@@ -282,6 +282,7 @@ export class Audio extends TransformableElement {
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const documentTime = this.getDocumentTime()!;
     if (this.props.pauseTime !== null) {
       const timeUntilPause = this.props.pauseTime - documentTime;

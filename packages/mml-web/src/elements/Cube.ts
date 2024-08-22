@@ -1,8 +1,5 @@
 import * as THREE from "three";
 
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -12,6 +9,9 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimationType } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
 const defaultCubeColor = new THREE.Color(0xffffff);
 const defaultCubeWidth = 1;

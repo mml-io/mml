@@ -2,11 +2,11 @@ import { jest } from "@jest/globals";
 import * as THREE from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Character } from "../src/elements/Character";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);

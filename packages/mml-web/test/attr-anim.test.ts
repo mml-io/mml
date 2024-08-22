@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
 
-import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Cube } from "../src";
 import { AttributeAnimation } from "../src/elements/AttributeAnimation";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);

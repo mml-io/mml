@@ -1,6 +1,6 @@
-import { Modal } from "./Modal";
 import { PromptProps } from "../MMLScene";
 import { EventHandlerCollection } from "../utils/events/EventHandlerCollection";
+import { Modal } from "./Modal";
 
 export class PromptModal extends Modal {
   private promptContentsElement: HTMLDivElement;

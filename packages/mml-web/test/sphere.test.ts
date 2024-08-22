@@ -1,9 +1,9 @@
 import * as THREE from "three";
 
-import { createSceneAttachedElement } from "./scene-test-utils";
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { Sphere } from "../src/elements/Sphere";
+import { createSceneAttachedElement } from "./scene-test-utils";
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);

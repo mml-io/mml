@@ -1,8 +1,5 @@
 import * as THREE from "three";
 
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { IMMLScene } from "../MMLScene";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
@@ -12,6 +9,9 @@ import {
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
+import { AnimationType } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
 const defaultChatProbeRange = 10;
 const defaultChatProbeDebug = false;

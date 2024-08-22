@@ -1,4 +1,4 @@
-export * from "./xsd";
-export * from "./xml";
 export * from "./json";
 export * from "./schemaDefinition";
+export * from "./xml";
+export * from "./xsd";

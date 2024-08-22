@@ -1,8 +1,6 @@
 import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
 import * as THREE from "three";
 
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { LoadingInstanceManager } from "../loading/LoadingInstanceManager";
 import {
   AttributeHandler,
@@ -11,6 +9,8 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
 const defaultModelSrc = "";
 const defaultModelAnim = "";
@@ -129,6 +129,7 @@ export class Model extends TransformableElement {
     // Add the socketed children back to the parent
     if (this.loadedState) {
       this.socketChildrenByBone.forEach((children, boneName) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const bone = this.loadedState!.bones.get(boneName);
         children.forEach((child) => {
           if (bone) {
@@ -182,6 +183,7 @@ export class Model extends TransformableElement {
     this.attachments.add(attachment);
     // Temporarily remove the sockets from the attachment so that they don't get animated
     attachment.disableSockets();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.animationGroup.add(attachment.loadedState!.group);
     // Restore the sockets after adding the attachment to the animation group
     attachment.restoreSockets();
@@ -190,6 +192,7 @@ export class Model extends TransformableElement {
 
   public unregisterAttachment(attachment: Model) {
     this.attachments.delete(attachment);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.animationGroup.remove(attachment.loadedState!.group);
   }
 
@@ -334,6 +337,7 @@ export class Model extends TransformableElement {
     }
     for (const animationAttachment of this.attachments) {
       animationAttachment.disableSockets();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.animationGroup.add(animationAttachment.loadedState!.group);
     }
     const action = this.animationMixer.clipAction(this.currentAnimationClip);

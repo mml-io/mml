@@ -1,7 +1,7 @@
-import { MElement } from "./MElement";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene } from "../MMLScene";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { MElement } from "./MElement";
 
 export class RemoteDocument extends MElement {
   static tagName = "m-remote-document";

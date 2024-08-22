@@ -7,19 +7,14 @@
     "lib": ["es2020", "dom"],
     "sourceMap": true,
     "allowJs": true,
-    "types": [
-      "node",
-      "jest"
-    ],
+    "types": ["node", "jest"],
     "strictNullChecks": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "downlevelIteration": true,
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["**/build/*", "types-src"]
 }

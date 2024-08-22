@@ -1,8 +1,7 @@
+import { jest } from "@jest/globals";
 import fs from "fs";
 import path from "path";
 import url from "url";
-
-import { jest } from "@jest/globals";
 
 import { ModelLoader } from "../build/index";
 

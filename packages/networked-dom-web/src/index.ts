@@ -1,2 +1,2 @@
-export * from "./NetworkedDOMWebsocket";
 export * from "./DOMSanitizer";
+export * from "./NetworkedDOMWebsocket";

@@ -12,11 +12,25 @@ describe("m-plane position click", () => {
 
     await takeAndCompareScreenshot(page);
 
+    const labelSelector = await page.waitForSelector("m-label");
+    const labelContent = (await labelSelector?.evaluate((el) => el.getAttribute("content")))!;
+
     await clickElement(page, "m-plane");
 
-    const textSelector = await page.waitForSelector("m-label");
-    const labelContent = (await textSelector?.evaluate((el) => el.getAttribute("content")))!;
-    const parsedTitle = JSON.parse(labelContent);
+    // Wait for the label to update
+    await page.waitForFunction(
+      (labelSelector, labelContent) => {
+        return labelSelector?.getAttribute("content") !== labelContent;
+      },
+      {},
+      labelSelector,
+      labelContent,
+    );
+
+    const labelContentAfterClick = (await labelSelector?.evaluate((el) =>
+      el.getAttribute("content"),
+    ))!;
+    const parsedTitle = JSON.parse(labelContentAfterClick);
     const { x, y, z } = parsedTitle;
 
     expect(x).toBeLessThan(0.1);
@@ -41,10 +55,22 @@ describe("m-plane position click", () => {
 
     await takeAndCompareScreenshot(page);
 
+    const labelSelector = await page.waitForSelector("m-label");
+    const labelContent = (await labelSelector?.evaluate((el) => el.getAttribute("content")))!;
+
     // Clicking in the bottom left quadrant
     await clickElement(page, "m-plane", { x: 0.25, y: 0.75 });
 
-    const labelSelector = await page.waitForSelector("m-label");
+    // Wait for the label to update
+    await page.waitForFunction(
+      (labelSelector, labelContent) => {
+        return labelSelector?.getAttribute("content") !== labelContent;
+      },
+      {},
+      labelSelector,
+      labelContent,
+    );
+
     const labelContentExample1 = (await labelSelector?.evaluate((el) =>
       el.getAttribute("content"),
     ))!;
@@ -59,6 +85,16 @@ describe("m-plane position click", () => {
 
     // Clicking in the bottom right quadrant
     await clickElement(page, "m-plane", { x: 0.75, y: 0.75 });
+
+    // Wait for the label to update
+    await page.waitForFunction(
+      (labelSelector, labelContent) => {
+        return labelSelector?.getAttribute("content") !== labelContent;
+      },
+      {},
+      labelSelector,
+      labelContentExample1,
+    );
 
     const labelContentExample2 = (await labelSelector?.evaluate((el) =>
       el.getAttribute("content"),
@@ -75,6 +111,16 @@ describe("m-plane position click", () => {
     // Clicking in the top left quadrant
     await clickElement(page, "m-plane", { x: 0.25, y: 0.25 });
 
+    // Wait for the label to update
+    await page.waitForFunction(
+      (labelSelector, labelContent) => {
+        return labelSelector?.getAttribute("content") !== labelContent;
+      },
+      {},
+      labelSelector,
+      labelContentExample2,
+    );
+
     const labelContentExample3 = (await labelSelector?.evaluate((el) =>
       el.getAttribute("content"),
     ))!;
@@ -89,6 +135,16 @@ describe("m-plane position click", () => {
 
     // Clicking in the top right quadrant
     await clickElement(page, "m-plane", { x: 0.75, y: 0.25 });
+
+    // Wait for the label to update
+    await page.waitForFunction(
+      (labelSelector, labelContent) => {
+        return labelSelector?.getAttribute("content") !== labelContent;
+      },
+      {},
+      labelSelector,
+      labelContentExample3,
+    );
 
     const labelContentExample4 = (await labelSelector?.evaluate((el) =>
       el.getAttribute("content"),

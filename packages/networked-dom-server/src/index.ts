@@ -12,5 +12,5 @@ export function LocalObservableDOMFactory(
   return new ObservableDOM(observableDOMParameters, callback, JSDOMRunnerFactory);
 }
 
-export * from "@mml-io/observable-dom";
 export * from "@mml-io/networked-dom-document";
+export * from "@mml-io/observable-dom";

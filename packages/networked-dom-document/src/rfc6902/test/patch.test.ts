@@ -1,5 +1,5 @@
-import { resultName } from "./_index";
 import { applyPatch } from "../index";
+import { resultName } from "./_index";
 
 describe("patch", () => {
   test("broken add", () => {

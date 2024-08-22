@@ -3,9 +3,7 @@ import {
   ObservableDOMParameters,
   ToObservableDOMInstanceMessage,
 } from "@mml-io/observable-dom-common";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-// eslint-disable-next-line import/no-unresolved
+// @ts-expect-error - import is defined in esbuild plugin
 import runnerText from "runner-iframe-js-text";
 
 /**

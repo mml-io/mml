@@ -1,8 +1,8 @@
-import { resultName } from "./_index";
 import { Operation, VoidableDiff } from "../diff";
 import { applyPatch, createPatch } from "../index";
 import { Pointer } from "../pointer";
 import { clone } from "../util";
+import { resultName } from "./_index";
 
 function checkRoundtrip(
   input: any,

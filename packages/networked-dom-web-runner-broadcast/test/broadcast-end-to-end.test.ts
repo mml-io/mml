@@ -6,13 +6,13 @@ import {
 } from "@mml-io/networked-dom-web-runner";
 import { LogMessage } from "@mml-io/observable-dom-common";
 
-import { waitFor } from "./test-util";
 import {
   FromBroadcastInstanceMessage,
   NetworkedDOMBroadcastReceiver,
   NetworkedDOMBroadcastRunner,
   ToBroadcastInstanceMessage,
 } from "../src";
+import { waitFor } from "./test-util";
 
 const jestConsoleLog = console.log;
 const jestConsoleInfo = console.info;

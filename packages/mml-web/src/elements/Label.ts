@@ -1,8 +1,5 @@
 import * as THREE from "three";
 
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -13,6 +10,9 @@ import {
 } from "../utils/attribute-handling";
 import { THREECanvasTextTexture } from "../utils/CanvasText";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimationType } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
 enum labelAlignment {
   left = "left",

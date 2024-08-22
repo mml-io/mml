@@ -22,6 +22,7 @@ export class MMLDocumentTimeManager {
     if (this.overridenDocumentTime !== null) {
       return this.overridenDocumentTime;
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return (document.timeline.currentTime as number)! - this.relativeDocumentStartTime;
   }
 
@@ -52,6 +53,7 @@ export class MMLDocumentTimeManager {
     if (this.overridenDocumentTime !== null) {
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.relativeDocumentStartTime = (document.timeline.currentTime as number)! - documentTime;
 
     for (const cb of this.documentTimeListeners) {
