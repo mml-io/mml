@@ -8,15 +8,15 @@
     "build": "tsx ./build.ts --build",
     "iterate": "npm run build && npm run serve",
     "serve": "node --enable-source-maps ./build/index.js",
-    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix"
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
     "chokidar": "3.6.0",
     "express": "4.19.2",
     "express-ws": "5.0.2",
     "networked-dom-server": "^0.18.0",
-    "ws": "8.16.0"
+    "ws": "8.18.0"
   },
   "devDependencies": {
     "@types/cors": "2.8.17",

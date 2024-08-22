@@ -1,8 +1,8 @@
 import * as THREE from "three";
 
-import { AttributeHandler, parseBoolAttribute } from "./attribute-handling";
 import { MElement } from "../elements/MElement";
 import { IMMLScene } from "../MMLScene";
+import { AttributeHandler, parseBoolAttribute } from "./attribute-handling";
 
 const collideAttributeName = "collide";
 const collisionIntervalAttributeName = "collision-interval";

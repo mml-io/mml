@@ -1,6 +1,5 @@
-import EventEmitter from "events";
-
 import { jest } from "@jest/globals";
+import EventEmitter from "events";
 
 import { Writeable } from "./types";
 

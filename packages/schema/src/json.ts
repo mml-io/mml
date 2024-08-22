@@ -1,10 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-// eslint-disable-next-line import/no-unresolved
 import eventsSchemaContentsJSON from "mml-events-json";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-// eslint-disable-next-line import/no-unresolved
 import schemaContentsJSON from "mml-xsd-json";
 import { DeclarationReflection, ProjectReflection } from "typedoc";
 import { SomeType } from "typedoc/dist/lib/models/types";

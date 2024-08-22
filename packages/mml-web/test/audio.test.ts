@@ -1,5 +1,5 @@
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Audio, FullScreenMMLScene, registerCustomElementsToWindow, RemoteDocument } from "../src";
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);

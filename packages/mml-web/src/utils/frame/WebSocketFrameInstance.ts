@@ -1,12 +1,12 @@
 import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 import * as THREE from "three";
 
-import { createWrappedScene } from "./CreateWrappedScene";
 import { MElement } from "../../elements/MElement";
 import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
 import { IMMLScene } from "../../MMLScene";
 import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
 import { getReconnectingStatus } from "../reconnecting-status";
+import { createWrappedScene } from "./CreateWrappedScene";
 
 export class WebSocketFrameInstance {
   public readonly src: string;

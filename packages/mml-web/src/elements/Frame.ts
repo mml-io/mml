@@ -1,6 +1,5 @@
 import * as THREE from "three";
 
-import { TransformableElement } from "./TransformableElement";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -10,6 +9,7 @@ import { StaticHTMLFrameInstance } from "../utils/frame/StaticHTMLFrameInstance"
 import { WebSocketFrameInstance } from "../utils/frame/WebSocketFrameInstance";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
+import { TransformableElement } from "./TransformableElement";
 
 const defaultUnloadRange = 1;
 const defaultFrameDebug = false;

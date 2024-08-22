@@ -1,6 +1,6 @@
-import { TransformableElement } from "./TransformableElement";
 import { AttributeHandler } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { TransformableElement } from "./TransformableElement";
 
 export class Prompt extends TransformableElement {
   static tagName = "m-prompt";

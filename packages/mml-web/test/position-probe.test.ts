@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
 import * as THREE from "three";
 
-import { createSceneAttachedElement } from "./scene-test-utils";
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { PositionProbe } from "../src/elements/PositionProbe";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { createSceneAttachedElement } from "./scene-test-utils";
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);

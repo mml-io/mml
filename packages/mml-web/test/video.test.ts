@@ -1,14 +1,14 @@
 import { jest } from "@jest/globals";
 
+import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { RemoteDocument } from "../src/elements/RemoteDocument";
+import { Video } from "../src/elements/Video";
+import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
 import { createMockMediaStream } from "./mocks/MockMediaStream";
 import { createMockPeerConnection } from "./mocks/MockPeerConnection";
 import { createMockVideoElement } from "./mocks/MockVideoElement";
 import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { Video } from "../src/elements/Video";
-import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
 
 const originalCreateElement = document.createElement.bind(document);
 let createElementSpy: jest.SpiedFunction<any>;

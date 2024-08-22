@@ -1,11 +1,11 @@
 import * as THREE from "three";
 
-import { RemoteDocument } from "./RemoteDocument";
 import { consumeEventEventName } from "../common";
 import { getGlobalDocumentTimeManager, getGlobalMMLScene } from "../global";
 import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene, PositionAndRotation } from "../MMLScene";
+import { RemoteDocument } from "./RemoteDocument";
 
 const MELEMENT_PROPERTY_NAME = "m-element-property";
 
@@ -76,6 +76,7 @@ export abstract class MElement extends HTMLElement {
       // Check if the src is a valid URL - if so then it's already absolute
       const url = new URL(src);
       return url.toString();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       // Do nothing
     }
@@ -125,7 +126,8 @@ export abstract class MElement extends HTMLElement {
     if (documentTimeContextProvider) {
       return documentTimeContextProvider.getWindowTime();
     }
-    return document.timeline.currentTime!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return Number(document.timeline.currentTime!);
   }
 
   protected getLoadingProgressManager(): LoadingProgressManager | null {

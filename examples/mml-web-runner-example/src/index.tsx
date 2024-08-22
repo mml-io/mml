@@ -64,7 +64,6 @@ function createCloseableClient(
 window.addEventListener("DOMContentLoaded", async () => {
   const { iframeWindow, iframeBody } = await IframeWrapper.create();
   registerCustomElementsToWindow(iframeWindow);
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const networkedDOMDocument = new EditableNetworkedDOM(
     "http://example.com/index.html",
     IframeObservableDOMFactory,

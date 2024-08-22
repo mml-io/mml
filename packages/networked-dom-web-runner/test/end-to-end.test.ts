@@ -1,8 +1,8 @@
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { LogMessage } from "@mml-io/observable-dom-common";
 
-import { waitFor } from "./test-util";
 import { IframeObservableDOMFactory, NetworkedDOMWebRunnerClient } from "../build/index";
+import { waitFor } from "./test-util";
 
 const jestConsoleLog = console.log;
 const jestConsoleInfo = console.info;

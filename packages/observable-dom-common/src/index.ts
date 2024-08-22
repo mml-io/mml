@@ -1,4 +1,3 @@
-export type { RemoteEvent } from "@mml-io/networked-dom-protocol";
-
-export * from "./ObservableDOMInterface";
 export * from "./messages";
+export * from "./ObservableDOMInterface";
+export type { RemoteEvent } from "@mml-io/networked-dom-protocol";

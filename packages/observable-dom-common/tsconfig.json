@@ -17,6 +17,6 @@
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["src/**/*", "test/**/*", "./build.ts"],
+  "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

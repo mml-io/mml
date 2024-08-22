@@ -365,7 +365,7 @@ export class NetworkedDOM {
         try {
           parsed = JSON.parse(string) as ClientMessage;
         } catch (e) {
-          console.error(`Error parsing message from websocket: ${string}`);
+          console.error(`Error parsing message from websocket: ${string}`, e);
           console.trace();
           return;
         }

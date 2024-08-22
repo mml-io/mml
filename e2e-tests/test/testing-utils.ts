@@ -1,7 +1,6 @@
 import * as puppeteer from "puppeteer";
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface Window {
     "mml-web-client": {
       mmlScene: {
@@ -24,8 +23,10 @@ export async function clickElement(
   selector: string,
   coordsOffset?: { x: number; y: number },
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const coords = (await page.evaluate((selector: string) => {
     const { mmlScene } = window["mml-web-client"];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return mmlScene.getBoundingBoxForElement(document.querySelector(selector)!);
   }, selector))!;
 

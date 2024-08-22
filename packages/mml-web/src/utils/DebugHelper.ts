@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
-import { parseBoolAttribute } from "./attribute-handling";
 import { MElement } from "../elements";
+import { parseBoolAttribute } from "./attribute-handling";
 
 const debugAttributeName = "debug";
 

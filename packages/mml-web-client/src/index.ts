@@ -13,7 +13,6 @@ const thisScript = document.currentScript as HTMLScriptElement;
 const scriptUrl = new URL(thisScript.src);
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface Window {
     "mml-web-client": {
       mmlScene: MMLScene;

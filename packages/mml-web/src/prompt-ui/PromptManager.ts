@@ -1,7 +1,7 @@
+import { LinkProps, PromptProps } from "../MMLScene";
 import { ConfirmModal } from "./ConfirmModal";
 import { Modal } from "./Modal";
 import { PromptModal } from "./PromptModal";
-import { LinkProps, PromptProps } from "../MMLScene";
 
 type PromptState = {
   prompt?: PromptModal;
