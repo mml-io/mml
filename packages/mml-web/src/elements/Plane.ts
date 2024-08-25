@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -9,11 +12,8 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
-const defaultPlaneColor = new THREE.Color(0xffffff);
+const defaultPlaneColor = new playcanvas.Color(0xffffff);
 const defaultPlaneWidth = 1;
 const defaultPlaneHeight = 1;
 const defaultPlaneOpacity = 1;
@@ -26,7 +26,7 @@ export class Plane extends TransformableElement {
     color: [
       AnimationType.Color,
       defaultPlaneColor,
-      (newValue: THREE.Color) => {
+      (newValue: playcanvas.Color) => {
         this.props.color = newValue;
         if (this.material) {
           this.material.color = this.props.color;
@@ -67,8 +67,6 @@ export class Plane extends TransformableElement {
       },
     ],
   });
-
-  private static planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
 
   private props = {
     width: defaultPlaneWidth,
@@ -128,7 +126,7 @@ export class Plane extends TransformableElement {
     this.mesh.scale.y = this.props.height;
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
-    this.container.add(this.mesh);
+    this.getContainer().addChild(this.mesh);
   }
 
   protected enable() {
@@ -141,20 +139,28 @@ export class Plane extends TransformableElement {
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.width, this.props.height, 0),
+      new Vect3(this.props.width, this.props.height, 0),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.planeAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.planeAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.planeAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.planeAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -173,7 +179,7 @@ export class Plane extends TransformableElement {
     return this.mesh;
   }
 
-  public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Plane.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);

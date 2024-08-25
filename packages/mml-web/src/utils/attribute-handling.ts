@@ -1,4 +1,6 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
+
+import { colors } from "./colors";
 
 export type AttributeHandlerMap<T> = {
   [key: string]: (instance: T, newValue: string | null) => void;
@@ -25,12 +27,18 @@ export class AttributeHandler<T> {
   }
 }
 
-export function parseColorAttribute(value: string | null, defaultValue: null): THREE.Color | null;
-export function parseColorAttribute(value: string | null, defaultValue: THREE.Color): THREE.Color;
 export function parseColorAttribute(
   value: string | null,
-  defaultValue: THREE.Color | null,
-): THREE.Color | null {
+  defaultValue: null,
+): playcanvas.Color | null;
+export function parseColorAttribute(
+  value: string | null,
+  defaultValue: playcanvas.Color,
+): playcanvas.Color;
+export function parseColorAttribute(
+  value: string | null,
+  defaultValue: playcanvas.Color | null,
+): playcanvas.Color | null {
   return parseAttribute(value, defaultValue, (value) => {
     // special case for hsl/hsla to change the behaviour at extremes such that animations can differentiate (and therefore lerp) between 0 and 360 degrees, and 0-1 lightness and saturation
     const m = /^(hsl|hsla)\(([^)]*)\)/.exec(value);
@@ -62,18 +70,24 @@ export function parseColorAttribute(
         } else if (l === 1) {
           l = 0.99999;
         }
-        return new THREE.Color().setHSL(h, s, l, THREE.SRGBColorSpace);
+        return new playcanvas.Color().setHSL(h, s, l, THREE.SRGBColorSpace);
       }
     }
+
+    const colorNameValues = colors[value];
+    if (colorNameValues) {
+      return new playcanvas.Color(colorNameValues);
+    }
+
     if (
-      value in THREE.Color.NAMES ||
+      // TODO - handle color parsing
       (value.indexOf("#") === 0 && value.length === 7) ||
       (value.indexOf("#") === 0 && value.length === 4) ||
       (value.indexOf("hsl(") === 0 && value.indexOf(")") === value.length - 1) ||
       (value.indexOf("rgb(") === 0 && value.indexOf(")") === value.length - 1) ||
       (value.indexOf("rgba(") === 0 && value.indexOf(")") === value.length - 1)
     ) {
-      return new THREE.Color(value);
+      return new playcanvas.Color(value);
     }
     return null;
   });

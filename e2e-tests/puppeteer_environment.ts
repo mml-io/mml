@@ -1,22 +1,21 @@
-import { readFileSync } from "node:fs";
+const { readFile } = require("fs").promises;
+const os = require("os");
+const path = require("path");
 
-import { EnvironmentContext, JestEnvironmentConfig } from "@jest/environment";
-import { TestEnvironment as NodeEnvironment } from "jest-environment-node";
-import os from "os";
-import path from "path";
-import puppeteer from "puppeteer";
+const puppeteer = require("puppeteer");
+const NodeEnvironment = require("jest-environment-node").TestEnvironment;
 
 const DIR = path.join(os.tmpdir(), "jest_puppeteer_global_setup");
 
 export default class PuppeteerEnvironment extends NodeEnvironment {
-  constructor(config: JestEnvironmentConfig, environmentContext: EnvironmentContext) {
-    super(config, environmentContext);
+  constructor(config) {
+    super(config);
   }
 
   async setup() {
     await super.setup();
     // get the wsEndpoint
-    const wsEndpoint = readFileSync(path.join(DIR, "wsEndpoint"), { encoding: "utf8" });
+    const wsEndpoint = await readFile(path.join(DIR, "wsEndpoint"), "utf8");
     if (!wsEndpoint) {
       throw new Error("wsEndpoint not found");
     }

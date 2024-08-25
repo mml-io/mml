@@ -3,16 +3,21 @@ import {
   configureWindowForMML,
   FullScreenMMLScene,
   IframeWrapper,
+  IMMLScene,
   MMLScene,
+  MMLSceneOptions,
   NetworkedDOMWebsocket,
   registerCustomElementsToWindow,
   RemoteDocumentWrapper,
+  StandalonePlayCanvasAdapter,
+  StandaloneThreeJSAdapter,
 } from "mml-web";
 
 const thisScript = document.currentScript as HTMLScriptElement;
 const scriptUrl = new URL(thisScript.src);
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface Window {
     "mml-web-client": {
       mmlScene: MMLScene;
@@ -51,7 +56,24 @@ function createStatusElement() {
 
   window.addEventListener("load", async () => {
     // Make a fixed-position centered status element
-    const fullScreenMMLScene = new FullScreenMMLScene();
+    const fullScreenMMLScene = new FullScreenMMLScene({
+      createGraphicsAdapter: async (
+        element: HTMLElement,
+        mmlScene: IMMLScene,
+        options: MMLSceneOptions,
+      ) => {
+        if (window.location.search.includes("playcanvas")) {
+          return await StandalonePlayCanvasAdapter.create(element, mmlScene, {
+            controlsType: options.controlsType,
+          });
+        } else {
+          return await StandaloneThreeJSAdapter.create(element, mmlScene, {
+            controlsType: options.controlsType,
+          });
+        }
+      },
+    });
+    await fullScreenMMLScene.init();
 
     const useIframe = new URL(window.location.href).searchParams.get("iframe") === "true";
     const documentWebsocketUrls = websocketUrl.split(",");

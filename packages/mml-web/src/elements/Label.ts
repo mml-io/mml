@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -10,9 +13,6 @@ import {
 } from "../utils/attribute-handling";
 import { THREECanvasTextTexture } from "../utils/CanvasText";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
 enum labelAlignment {
   left = "left",
@@ -20,15 +20,14 @@ enum labelAlignment {
   right = "right",
 }
 
-const defaultLabelColor = new THREE.Color(0xffffff);
-const defaultFontColor = new THREE.Color(0x000000);
+const defaultLabelColor = new playcanvas.Color(0xffffff);
+const defaultFontColor = new playcanvas.Color(0x000000);
 const defaultLabelAlignment = labelAlignment.left;
 const defaultLabelFontSize = 24;
 const defaultLabelPadding = 8;
 const defaultLabelWidth = 1;
 const defaultLabelHeight = 1;
 const defaultLabelCastShadows = true;
-const defaultEmissive = 0;
 
 export class Label extends TransformableElement {
   static tagName = "m-label";
@@ -37,7 +36,7 @@ export class Label extends TransformableElement {
     color: [
       AnimationType.Color,
       defaultLabelColor,
-      (newValue: THREE.Color) => {
+      (newValue: playcanvas.Color) => {
         this.props.color = newValue;
         this.redrawText();
       },
@@ -45,7 +44,7 @@ export class Label extends TransformableElement {
     "font-color": [
       AnimationType.Color,
       defaultFontColor,
-      (newValue: THREE.Color) => {
+      (newValue: playcanvas.Color) => {
         this.props.fontColor = newValue;
         this.redrawText();
       },
@@ -96,7 +95,6 @@ export class Label extends TransformableElement {
     color: defaultLabelColor,
     fontColor: defaultFontColor,
     castShadows: defaultLabelCastShadows,
-    emissive: defaultEmissive as number,
   };
   private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial | null = null;
@@ -154,10 +152,6 @@ export class Label extends TransformableElement {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultLabelCastShadows);
       instance.mesh.castShadow = instance.props.castShadows;
     },
-    emissive: (instance, newValue) => {
-      instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
-      instance.updateMaterialEmissiveIntensity();
-    },
   });
 
   protected enable() {
@@ -180,25 +174,33 @@ export class Label extends TransformableElement {
     this.mesh.scale.y = this.props.height;
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
-    this.container.add(this.mesh);
+    this.getContainer().addChild(this.mesh);
   }
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0),
+      new Vect3(this.mesh.scale.x, this.mesh.scale.y, 0),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.labelAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.labelAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.labelAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.labelAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -217,7 +219,7 @@ export class Label extends TransformableElement {
     return this.mesh;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Label.attributeHandler.handle(this, name, newValue);
   }
@@ -240,23 +242,6 @@ export class Label extends TransformableElement {
     super.disconnectedCallback();
   }
 
-  private updateMaterialEmissiveIntensity() {
-    if (this.material) {
-      const map = this.material.map as THREE.Texture;
-      if (this.props.emissive > 0) {
-        this.material.emissive = new THREE.Color(0xffffff);
-        this.material.emissiveMap = map;
-        this.material.emissiveIntensity = this.props.emissive;
-        this.material.needsUpdate = true;
-      } else {
-        this.material.emissive = new THREE.Color(0x000000);
-        this.material.emissiveMap = null;
-        this.material.emissiveIntensity = 1;
-        this.material.needsUpdate = true;
-      }
-    }
-  }
-
   private redrawText() {
     if (!this.material) {
       return;
@@ -266,7 +251,7 @@ export class Label extends TransformableElement {
     }
     const { texture, width, height } = THREECanvasTextTexture(this.props.content, {
       bold: true,
-      fontSize: this.props.fontSize * 2,
+      fontSize: this.props.fontSize,
       paddingPx: this.props.padding,
       textColorRGB255A1: {
         r: this.props.fontColor.r * 255,
@@ -281,17 +266,16 @@ export class Label extends TransformableElement {
         a: 1.0,
       },
       dimensions: {
-        width: this.props.width * 200,
-        height: this.props.height * 200,
+        width: this.props.width * 100,
+        height: this.props.height * 100,
       },
       alignment: this.props.alignment,
     });
 
     this.material.map = texture;
     this.material.needsUpdate = true;
-    this.updateMaterialEmissiveIntensity();
 
-    this.mesh.scale.x = width / 200;
-    this.mesh.scale.y = height / 200;
+    this.mesh.scale.x = width / 100;
+    this.mesh.scale.y = height / 100;
   }
 }

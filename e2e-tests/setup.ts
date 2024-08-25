@@ -1,8 +1,8 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+const { mkdir, writeFile } = require("fs").promises;
+const os = require("os");
+const path = require("path");
 
-import os from "os";
-import path from "path";
-import puppeteer from "puppeteer";
+const puppeteer = require("puppeteer");
 
 const DIR = path.join(os.tmpdir(), "jest_puppeteer_global_setup");
 
@@ -13,13 +13,13 @@ if (process.env.HEADLESS === "true") {
 
 module.exports = async function () {
   const browser = await puppeteer.launch({
-    headless: headless ? "shell" : false,
+    headless: headless ? "new" : false,
   });
   // store the browser instance so we can teardown it later
   // this global is only available in the teardown but not in TestEnvironments
-  (globalThis as any).__BROWSER_GLOBAL__ = browser;
+  globalThis.__BROWSER_GLOBAL__ = browser;
 
   // use the file system to expose the wsEndpoint for TestEnvironments
-  mkdirSync(DIR, { recursive: true });
-  writeFileSync(path.join(DIR, "wsEndpoint"), browser.wsEndpoint());
+  await mkdir(DIR, { recursive: true });
+  await writeFile(path.join(DIR, "wsEndpoint"), browser.wsEndpoint());
 };

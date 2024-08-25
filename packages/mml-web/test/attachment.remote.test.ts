@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
 import { Cube } from "../src/elements/Cube";
 import { Group } from "../src/elements/Group";
@@ -54,7 +54,7 @@ describe("m-element m-remote-document attachment", () => {
       ],
     });
 
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new Vect3())).toMatchObject({
       x: 0,
       y: 0,
       z: 0,
@@ -64,7 +64,7 @@ describe("m-element m-remote-document attachment", () => {
     cube.setAttribute("y", "2");
     cube.setAttribute("z", "3");
 
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new Vect3())).toMatchObject({
       x: 1,
       y: 2,
       z: 3,
@@ -74,7 +74,7 @@ describe("m-element m-remote-document attachment", () => {
     group.setAttribute("x", "10");
     group.setAttribute("y", "20");
     group.setAttribute("z", "30");
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new Vect3())).toMatchObject({
       x: 11,
       y: 22,
       z: 33,
@@ -89,7 +89,7 @@ describe("m-element m-remote-document attachment", () => {
     secondGroup.append(div);
 
     // The cube should now have the world position from the second group
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new Vect3())).toMatchObject({
       x: 101,
       y: 202,
       z: 303,

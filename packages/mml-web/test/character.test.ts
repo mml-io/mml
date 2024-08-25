@@ -1,12 +1,12 @@
 import { jest } from "@jest/globals";
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Character } from "../src/elements/Character";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -45,7 +45,7 @@ describe("m-character", () => {
     element.setAttribute("sx", "5");
     expect(element.getContainer().scale.x).toBe(5);
 
-    const testNode = new THREE.Group();
+    const testNode = new playcanvas.Entity();
     testNode.name = "MY_LOADED_ASSET";
 
     // mock the loader to return a specific THREE node

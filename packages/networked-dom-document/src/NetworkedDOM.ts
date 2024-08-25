@@ -15,6 +15,7 @@ import {
   StaticVirtualDOMElement,
   StaticVirtualDOMMutationIdsRecord,
 } from "@mml-io/observable-dom-common";
+import { applyPatch } from "rfc6902";
 
 import { StaticVirtualDOMMutationRecord, VirtualDOMDiffStruct } from "./common";
 import {
@@ -24,7 +25,6 @@ import {
   findParentNodeOfNodeId,
   virtualDOMDiffToVirtualDOMMutationRecord,
 } from "./diffing";
-import { applyPatch } from "./rfc6902";
 
 export const networkedDOMProtocolSubProtocol_v0_1 = "networked-dom-v0.1";
 export const defaultWebsocketSubProtocol = networkedDOMProtocolSubProtocol_v0_1;
@@ -308,7 +308,7 @@ export class NetworkedDOM {
         const asServerMessages: Array<ServerMessage> = diffs;
         const firstDiff = diffs[0];
         firstDiff.documentTime = this.getDocumentTime();
-        const serializedDiffs = JSON.stringify(asServerMessages);
+        const serializedDiffs = JSON.stringify(asServerMessages, null, 4);
         const webSocketContext = this.connectionIdToWebSocketContext.get(connectionId);
         if (!webSocketContext) {
           throw new Error(`webSocketContext not found in addExistingWebsockets`);
@@ -365,7 +365,7 @@ export class NetworkedDOM {
         try {
           parsed = JSON.parse(string) as ClientMessage;
         } catch (e) {
-          console.error(`Error parsing message from websocket: ${string}`, e);
+          console.error(`Error parsing message from websocket: ${string}`);
           console.trace();
           return;
         }
@@ -519,7 +519,7 @@ export class NetworkedDOM {
     diffsByConnectionId.forEach((diffs, connectionId) => {
       if (diffs.length > 0) {
         const asServerMessages: Array<ServerMessage> = diffs;
-        const serializedDiffs = JSON.stringify(asServerMessages);
+        const serializedDiffs = JSON.stringify(asServerMessages, null, 4);
         const webSocketContext = this.connectionIdToWebSocketContext.get(connectionId);
         if (!webSocketContext) {
           throw new Error(`webSocketContext not found in processModificationList`);

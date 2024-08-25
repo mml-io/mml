@@ -1,6 +1,7 @@
+import * as process from "process";
+
 import * as esbuild from "esbuild";
 import { copy } from "esbuild-plugin-copy";
-import * as process from "process";
 
 const buildMode = "--build";
 const serveMode = "--serve";

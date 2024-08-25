@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
 import { THREECanvasTextTexture } from "./CanvasText";
 

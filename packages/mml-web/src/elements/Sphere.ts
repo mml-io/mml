@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -9,11 +12,8 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
-const defaultSphereColor = new THREE.Color(0xffffff);
+const defaultSphereColor = new playcanvas.Color(0xffffff);
 const defaultSphereRadius = 0.5;
 const defaultSphereOpacity = 1;
 const defaultSphereCastShadows = true;
@@ -28,7 +28,7 @@ export class Sphere extends TransformableElement {
     color: [
       AnimationType.Color,
       defaultSphereColor,
-      (newValue: THREE.Color) => {
+      (newValue: playcanvas.Color) => {
         this.props.color = newValue;
         if (this.material) {
           this.material.color = this.props.color;
@@ -120,7 +120,7 @@ export class Sphere extends TransformableElement {
     this.mesh.scale.z = this.props.radius * 2;
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
-    this.container.add(this.mesh);
+    this.getContainer().addChild(this.mesh);
   }
 
   protected enable() {
@@ -133,20 +133,28 @@ export class Sphere extends TransformableElement {
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.radius * 2, this.props.radius * 2, this.props.radius * 2),
+      new Vect3(this.props.radius * 2, this.props.radius * 2, this.props.radius * 2),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.sphereAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.sphereAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.sphereAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.sphereAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -165,7 +173,7 @@ export class Sphere extends TransformableElement {
     return this.mesh;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Sphere.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);

@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
 import { MElement } from "./elements";
 
@@ -7,7 +7,7 @@ export type CollisionData = {
 };
 
 export type ColliderData = {
-  collider: THREE.Object3D;
+  collider: playcanvas.Entity;
   mElement: MElement;
   currentlyColliding: boolean;
   lastUpdate: number;
@@ -36,14 +36,14 @@ export function getCollisionInterval(mElement: MElement): null | number {
  * colliding with, and dispatches events to the elements if they are listening for collisions.
  */
 export class MMLCollisionTrigger {
-  private colliderToElementMap = new Map<THREE.Object3D, ColliderData>();
-  private currentCollidingColliders = new Set<THREE.Object3D>();
+  private colliderToElementMap = new Map<playcanvas.Entity, ColliderData>();
+  private currentCollidingColliders = new Set<playcanvas.Entity>();
 
   static init(): MMLCollisionTrigger {
     return new MMLCollisionTrigger();
   }
 
-  public setCurrentCollisions(currentCollisions: Map<THREE.Object3D, CollisionData> | null) {
+  public setCurrentCollisions(currentCollisions: Map<playcanvas.Entity, CollisionData> | null) {
     const currentTime = performance.now();
     if (currentCollisions) {
       for (const [collider, collisionData] of currentCollisions) {
@@ -106,7 +106,7 @@ export class MMLCollisionTrigger {
     }
   }
 
-  public addCollider(collider: THREE.Object3D, mElement: MElement) {
+  public addCollider(collider: playcanvas.Entity, mElement: MElement) {
     this.colliderToElementMap.set(collider, {
       collider,
       currentlyColliding: false,
@@ -115,7 +115,7 @@ export class MMLCollisionTrigger {
     });
   }
 
-  public removeCollider(collider: THREE.Object3D) {
+  public removeCollider(collider: playcanvas.Entity) {
     this.colliderToElementMap.delete(collider);
     this.currentCollidingColliders.delete(collider);
   }

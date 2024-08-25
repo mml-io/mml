@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 import { IMMLScene } from "../MMLScene";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
@@ -8,9 +11,6 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
 const defaultInteractionRange = 5;
 const defaultInteractionInFocus = true;
@@ -90,20 +90,28 @@ export class Interaction extends TransformableElement {
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      new Vect3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.interactionAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.interactionAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.interactionAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.interactionAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -128,7 +136,7 @@ export class Interaction extends TransformableElement {
     super.disconnectedCallback();
   }
 
-  public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     if (Interaction.attributeHandler.handle(this, name, newValue)) {
       this.updateDebugVisualisation();
@@ -144,7 +152,7 @@ export class Interaction extends TransformableElement {
 
   private updateDebugVisualisation() {
     if (!this.props.debug && this.debugMesh) {
-      this.debugMesh.removeFromParent();
+      this.debugMesh.remove();
       this.debugMesh = null;
       return;
     }
@@ -154,14 +162,14 @@ export class Interaction extends TransformableElement {
         new THREE.SphereGeometry(1, 32, 32),
         new THREE.MeshBasicMaterial({ color: 0x00aa00, wireframe: true }),
       );
-      this.container.add(this.debugMesh);
+      this.getContainer().addChild(this.debugMesh);
     }
 
     if (this.debugMesh) {
       // scale the debug mesh by the inverse of the parent's scale, so that range
       // is absolute
       const scale = this.props.range;
-      const parentWorldScale = new THREE.Vector3();
+      const parentWorldScale = new Vect3();
       this.container.getWorldScale(parentWorldScale);
       if (parentWorldScale.x !== 0 && parentWorldScale.y !== 0 && parentWorldScale.z !== 0) {
         this.debugMesh.scale.set(

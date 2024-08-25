@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { createTestScene } from "./scene-test-utils";
 import { MElement, MMLCollisionTrigger } from "../src";
 import { Cube } from "../src/elements/Cube";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { createTestScene } from "./scene-test-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -21,11 +21,11 @@ describe("MMLCollisionTrigger", () => {
 
     jest
       .spyOn(scene, "addCollider")
-      .mockImplementation((collider: THREE.Object3D, element: MElement) => {
+      .mockImplementation((collider: playcanvas.Entity, element: MElement) => {
         mmlCollisionTrigger.addCollider(collider, element);
       });
 
-    jest.spyOn(scene, "removeCollider").mockImplementation((collider: THREE.Object3D) => {
+    jest.spyOn(scene, "removeCollider").mockImplementation((collider: playcanvas.Entity) => {
       mmlCollisionTrigger.removeCollider(collider);
     });
 
@@ -51,7 +51,7 @@ describe("MMLCollisionTrigger", () => {
         [
           element.getCube()!,
           {
-            position: new THREE.Vector3(1, 2, 3),
+            position: new Vect3(1, 2, 3),
           },
         ],
       ]),
@@ -71,7 +71,7 @@ describe("MMLCollisionTrigger", () => {
         [
           element.getCube()!,
           {
-            position: new THREE.Vector3(2, 4, 6),
+            position: new Vect3(2, 4, 6),
           },
         ],
       ]),

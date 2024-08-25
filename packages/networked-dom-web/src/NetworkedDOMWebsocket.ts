@@ -179,6 +179,7 @@ export class NetworkedDOMWebsocket {
     if (this.stopped) {
       return;
     }
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (this.stopped) {
         return;
@@ -187,7 +188,6 @@ export class NetworkedDOMWebsocket {
         await this.createWebsocketWithTimeout(maximumWebsocketConnectionTimeout);
         break;
       } catch (e) {
-        console.error("Websocket connection failed", e);
         // Connection failed, retry with backoff
         this.setStatus(NetworkedDOMWebsocketStatus.Reconnecting);
         await this.waitBackoffTime();
@@ -313,37 +313,27 @@ export class NetworkedDOMWebsocket {
     if (!this.isHTMLElement(parent)) {
       throw new Error("Parent is not an HTMLElement (that supports children)");
     }
-    let nextElement = null;
-    let previousElement = null;
+    let previousElement;
     if (previousNodeId) {
       previousElement = this.idToElement.get(previousNodeId);
       if (!previousElement) {
         throw new Error("No previous element found for childrenChanged message");
       }
-      nextElement = previousElement.nextSibling;
     }
 
-    const elementsToAdd = [];
     for (const addedNode of addedNodes) {
       const childElement = this.handleNewElement(addedNode);
       if (childElement) {
-        elementsToAdd.push(childElement);
-      }
-    }
-    if (elementsToAdd.length) {
-      if (previousElement) {
-        if (nextElement) {
-          // There is a previous and next element - insertBefore the next element
-          const docFrag = new DocumentFragment();
-          docFrag.append(...elementsToAdd);
-          parent.insertBefore(docFrag, nextElement);
+        if (previousElement) {
+          const nextElement = previousElement.nextSibling;
+          if (nextElement) {
+            parent.insertBefore(childElement, nextElement);
+          } else {
+            parent.append(childElement);
+          }
         } else {
-          // No next element - must be the last children
-          parent.append(...elementsToAdd);
+          parent.append(childElement);
         }
-      } else {
-        // No previous element - must be the first children
-        parent.prepend(...elementsToAdd);
       }
     }
     for (const removedNode of removedNodes) {

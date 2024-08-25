@@ -1,5 +1,9 @@
-import * as THREE from "three";
-
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { Model } from "./Model";
+import { Matr4 } from "../math/Matr4";
+import { Quat } from "../math/Quat";
+import { TransformableGraphics } from "../MMLGraphicsInterface";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -8,9 +12,6 @@ import {
 } from "../utils/attribute-handling";
 import { DebugHelper } from "../utils/DebugHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { Model } from "./Model";
 
 // Workaround for zero-scale values breaking audio playback in THREE PositionalAudio
 function minimumNonZero(value: number): number {
@@ -19,13 +20,40 @@ function minimumNonZero(value: number): number {
 
 const defaultVisible = true;
 
+export type TransformableElementProps = {
+  x: number;
+  y: number;
+  z: number;
+  rx: number;
+  ry: number;
+  rz: number;
+  sx: number;
+  sy: number;
+  sz: number;
+};
+
 export abstract class TransformableElement extends MElement {
+  private static tempQuat = new Quat();
   private socketName: string | null = null;
+
+  private transformableElementProps: TransformableElementProps = {
+    x: 0,
+    y: 0,
+    z: 0,
+    rx: 0,
+    ry: 0,
+    rz: 0,
+    sx: 1,
+    sy: 1,
+    sz: 1,
+  };
 
   private desiredVisible = defaultVisible;
   private appliedBounds = new Map<unknown, OrientedBoundingBox>();
   protected directlyDisabledByBounds = false;
   protected disabledByParent = false;
+
+  private transformableElementGraphics?: TransformableGraphics;
 
   private getTransformableElementParent(): TransformableElement | null {
     let parentNode = this.parentNode;
@@ -36,6 +64,27 @@ export abstract class TransformableElement extends MElement {
       parentNode = parentNode.parentNode;
     }
     return null;
+  }
+
+  calculateLocalMatrix(matrix: Matr4): void {
+    const pos = {
+      x: this.transformableElementProps.x,
+      y: this.transformableElementProps.y,
+      z: this.transformableElementProps.z,
+    };
+    const eulerXYZRotation = {
+      x: this.transformableElementProps.rx,
+      y: this.transformableElementProps.ry,
+      z: this.transformableElementProps.rz,
+    };
+    const scale = {
+      x: this.transformableElementProps.sx,
+      y: this.transformableElementProps.sy,
+      z: this.transformableElementProps.sz,
+    };
+    const quaternion = TransformableElement.tempQuat;
+    quaternion.setFromEulerXYZ(eulerXYZRotation);
+    matrix.compose(pos, quaternion, scale);
   }
 
   connectedCallback(): void {
@@ -52,12 +101,16 @@ export abstract class TransformableElement extends MElement {
       });
       return;
     }
+    this.transformableElementGraphics =
+      new (this.getScene().getGraphicsAdapterFactory().MMLTransformableGraphicsInterface)(this);
   }
 
   disconnectedCallback(): void {
     if (this.socketName !== null) {
       this.unregisterFromParentModel(this.socketName);
     }
+    this.transformableElementGraphics?.dispose();
+    this.transformableElementGraphics = undefined;
     super.disconnectedCallback();
   }
 
@@ -66,7 +119,8 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       0,
       (newValue: number) => {
-        this.container.position.x = newValue;
+        this.transformableElementProps.x = newValue;
+        this.transformableElementGraphics?.setX(newValue, this.transformableElementProps);
         this.didUpdateTransformation();
       },
     ],
@@ -74,7 +128,8 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       0,
       (newValue: number) => {
-        this.container.position.y = newValue;
+        this.transformableElementProps.y = newValue;
+        this.transformableElementGraphics?.setY(newValue, this.transformableElementProps);
         this.didUpdateTransformation();
       },
     ],
@@ -82,7 +137,8 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       0,
       (newValue: number) => {
-        this.container.position.z = newValue;
+        this.transformableElementProps.z = newValue;
+        this.transformableElementGraphics?.setZ(newValue, this.transformableElementProps);
         this.didUpdateTransformation();
       },
     ],
@@ -90,7 +146,8 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       0,
       (newValue: number) => {
-        this.container.rotation.x = newValue * THREE.MathUtils.DEG2RAD;
+        this.transformableElementProps.rx = newValue;
+        this.transformableElementGraphics?.setRotationX(newValue, this.transformableElementProps);
         this.didUpdateTransformation();
       },
     ],
@@ -98,7 +155,8 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       0,
       (newValue: number) => {
-        this.container.rotation.y = newValue * THREE.MathUtils.DEG2RAD;
+        this.transformableElementProps.ry = newValue;
+        this.transformableElementGraphics?.setRotationY(newValue, this.transformableElementProps);
         this.didUpdateTransformation();
       },
     ],
@@ -106,7 +164,8 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       0,
       (newValue: number) => {
-        this.container.rotation.z = newValue * THREE.MathUtils.DEG2RAD;
+        this.transformableElementProps.rz = newValue;
+        this.transformableElementGraphics?.setRotationZ(newValue, this.transformableElementProps);
         this.didUpdateTransformation();
       },
     ],
@@ -114,7 +173,11 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       1,
       (newValue: number) => {
-        this.container.scale.x = minimumNonZero(newValue);
+        this.transformableElementProps.sx = newValue;
+        this.transformableElementGraphics?.setScaleX(
+          minimumNonZero(newValue),
+          this.transformableElementProps,
+        );
         this.didUpdateTransformation();
       },
     ],
@@ -122,7 +185,11 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       1,
       (newValue: number) => {
-        this.container.scale.y = minimumNonZero(newValue);
+        this.transformableElementProps.sy = newValue;
+        this.transformableElementGraphics?.setScaleY(
+          minimumNonZero(newValue),
+          this.transformableElementProps,
+        );
         this.didUpdateTransformation();
       },
     ],
@@ -130,7 +197,11 @@ export abstract class TransformableElement extends MElement {
       AnimationType.Number,
       1,
       (newValue: number) => {
-        this.container.scale.z = minimumNonZero(newValue);
+        this.transformableElementProps.sz = newValue;
+        this.transformableElementGraphics?.setScaleZ(
+          minimumNonZero(newValue),
+          this.transformableElementProps,
+        );
         this.didUpdateTransformation();
       },
     ],
@@ -185,11 +256,21 @@ export abstract class TransformableElement extends MElement {
   protected abstract getContentBounds(): OrientedBoundingBox | null;
 
   public addSideEffectChild(child: MElement): void {
-    this.animatedAttributeHelper.addSideEffectChild(child);
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.animatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.animatedAttributeHelper.removeSideEffectChild(child);
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.animatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
   }
 
   private handleSocketChange(socketName: string | null): void {
@@ -247,7 +328,7 @@ export abstract class TransformableElement extends MElement {
     });
   }
 
-  public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     TransformableElement.TransformableElementAttributeHandler.handle(this, name, newValue);
     this.debugHelper.handle(name, newValue);
   }
@@ -346,7 +427,7 @@ export abstract class TransformableElement extends MElement {
   protected abstract enable(): void;
 
   private updateVisibility() {
-    this.container.visible = this.desiredVisible && !this.isDisabled();
+    this.transformableElementGraphics?.setVisibility(this.desiredVisible && !this.isDisabled());
   }
 }
 

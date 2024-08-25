@@ -1,7 +1,10 @@
-import * as esbuild from "esbuild";
-import cssModulesPlugin from "esbuild-css-modules-plugin";
-import { copy } from "esbuild-plugin-copy";
+import * as path from "path";
 import * as process from "process";
+
+import * as esbuild from "esbuild";
+import { copy } from "esbuild-plugin-copy";
+
+const cssModulesPlugin = require("esbuild-css-modules-plugin");
 
 const buildMode = "--build";
 const serveMode = "--serve";
@@ -34,6 +37,9 @@ const buildOptions: esbuild.BuildOptions = {
   },
   plugins: [
     cssModulesPlugin({
+      cssModulesOption: {
+        root: path.sep === "\\" ? "." : "",
+      },
       inject: true,
     }),
     copy({

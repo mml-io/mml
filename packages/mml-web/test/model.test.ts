@@ -1,12 +1,12 @@
 import { jest } from "@jest/globals";
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { createTestScene } from "./scene-test-utils";
+import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 import { Model } from "../src/elements/Model";
 import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { RemoteDocument } from "../src/elements/RemoteDocument";
 import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
-import { createTestScene } from "./scene-test-utils";
-import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -45,7 +45,7 @@ describe("m-model", () => {
     element.setAttribute("sx", "5");
     expect(element.getContainer().scale.x).toBe(5);
 
-    const testNode = new THREE.Group();
+    const testNode = new playcanvas.Entity();
     testNode.name = "MY_LOADED_ASSET";
 
     // mock the loader to return a specific THREE node
@@ -73,7 +73,7 @@ describe("m-model", () => {
     const firstBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
     const firstMaterial = new THREE.MeshStandardMaterial();
     const firstMesh = new THREE.Mesh(firstBoxGeometry, firstMaterial);
-    const firstGroup = new THREE.Group();
+    const firstGroup = new playcanvas.Entity();
     firstGroup.add(firstMesh);
     const firstGeometryDisposeSpy = jest.spyOn(firstBoxGeometry, "dispose");
     const firstMaterialDisposeSpy = jest.spyOn(firstMaterial, "dispose");
@@ -114,7 +114,7 @@ describe("m-model", () => {
     const secondBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
     const secondMaterial = new THREE.MeshStandardMaterial();
     const secondMesh = new THREE.Mesh(secondBoxGeometry, secondMaterial);
-    const secondGroup = new THREE.Group();
+    const secondGroup = new playcanvas.Entity();
     secondGroup.add(secondMesh);
 
     asyncLoadSpy.mockResolvedValueOnce({

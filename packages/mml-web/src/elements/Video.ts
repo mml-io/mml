@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -11,9 +14,6 @@ import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { StaticFileVideoSource } from "../utils/video/StaticFileVideoSource";
 import { VideoSource } from "../utils/video/VideoSource";
 import { WHEPVideoSource } from "../utils/video/WHEPVideoSource";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
 const audioRefDistance = 1;
 const audioRolloffFactor = 1;
@@ -28,7 +28,6 @@ const defaultVideoStartTime = 0;
 const defaultVideoPauseTime = null;
 const defaultVideoSrc = null;
 const defaultVideoCastShadows = true;
-const defaultEmissive = 0;
 
 export class Video extends TransformableElement {
   static tagName = "m-video";
@@ -86,7 +85,6 @@ export class Video extends TransformableElement {
     volume: defaultVideoVolume,
     width: defaultVideoWidth as number | null,
     height: defaultVideoHeight as number | null,
-    emissive: defaultEmissive as number,
   };
 
   private static attributeHandler = new AttributeHandler<Video>({
@@ -135,12 +133,6 @@ export class Video extends TransformableElement {
     "cast-shadows": (instance, newValue) => {
       instance.mesh.castShadow = parseBoolAttribute(newValue, defaultVideoCastShadows);
     },
-    emissive: (instance, newValue) => {
-      instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
-      if (instance.loadedVideoState) {
-        instance.updateMaterialEmissiveIntensity();
-      }
-    },
   });
 
   protected enable() {
@@ -165,25 +157,33 @@ export class Video extends TransformableElement {
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.castShadow = true;
     this.mesh.receiveShadow = false;
-    this.container.add(this.mesh);
+    this.getContainer().addChild(this.mesh);
   }
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0),
+      new Vect3(this.mesh.scale.x, this.mesh.scale.y, 0),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.videoAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.videoAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.videoAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.videoAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -195,7 +195,7 @@ export class Video extends TransformableElement {
     return true;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Video.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
@@ -254,8 +254,7 @@ export class Video extends TransformableElement {
         material,
         videoTexture,
       };
-      this.updateMaterialEmissiveIntensity();
-      this.container.add(audio);
+      this.getContainer().addChild(audio);
     }
 
     if (!this.props.enabled) {
@@ -347,24 +346,6 @@ export class Video extends TransformableElement {
     THREE.MeshStandardMaterial | THREE.MeshBasicMaterial
   > {
     return this.mesh;
-  }
-
-  private updateMaterialEmissiveIntensity() {
-    if (this.loadedVideoState) {
-      const material = this.loadedVideoState.material as THREE.MeshStandardMaterial;
-      if (this.props.emissive > 0) {
-        const videoTexture = new THREE.VideoTexture(this.loadedVideoState.video);
-        material.emissive = new THREE.Color(0xffffff);
-        material.emissiveMap = videoTexture;
-        material.emissiveIntensity = this.props.emissive;
-        material.needsUpdate = true;
-      } else {
-        material.emissive = new THREE.Color(0x000000);
-        material.emissiveMap = null;
-        material.emissiveIntensity = 1;
-        material.needsUpdate = true;
-      }
-    }
   }
 
   private updateHeightAndWidth() {

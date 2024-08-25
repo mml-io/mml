@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -8,9 +11,6 @@ import {
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
 const defaultPositionProbeRange = 10;
 const defaultPositionProbeInterval = 1000;
@@ -95,20 +95,28 @@ export class PositionProbe extends TransformableElement {
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      new Vect3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.positionProbeAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.positionProbeAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.positionProbeAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.positionProbeAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -120,7 +128,7 @@ export class PositionProbe extends TransformableElement {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     PositionProbe.attributeHandler.handle(this, name, newValue);
     this.updateDebugVisualisation();
@@ -134,11 +142,11 @@ export class PositionProbe extends TransformableElement {
     );
 
     // Check if the position is within range
-    const distance = new THREE.Vector3().copy(elementRelative.position as THREE.Vector3).length();
+    const distance = new Vect3().copy(elementRelative.position as playcanvas.Vec3).length();
 
     let withinBounds = true;
     this.getAppliedBounds().forEach((bounds) => {
-      if (!bounds.containsPoint(userPositionAndRotation.position as THREE.Vector3)) {
+      if (!bounds.containsPoint(userPositionAndRotation.position as playcanvas.Vec3)) {
         withinBounds = false;
       }
     });
@@ -226,7 +234,7 @@ export class PositionProbe extends TransformableElement {
 
   private clearDebugVisualisation() {
     if (this.debugMesh) {
-      this.debugMesh.removeFromParent();
+      this.debugMesh.remove();
       this.debugMesh = null;
     }
   }
@@ -240,7 +248,7 @@ export class PositionProbe extends TransformableElement {
         mesh.castShadow = false;
         mesh.receiveShadow = false;
         this.debugMesh = mesh;
-        this.container.add(this.debugMesh);
+        this.getContainer().addChild(this.debugMesh);
       }
 
       if (this.debugMesh) {

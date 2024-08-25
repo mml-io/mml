@@ -1,7 +1,8 @@
+import { MElement } from "./MElement";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
+import { RemoteDocumentGraphics } from "../MMLGraphicsInterface";
 import { IMMLScene } from "../MMLScene";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { MElement } from "./MElement";
 
 export class RemoteDocument extends MElement {
   static tagName = "m-remote-document";
@@ -10,6 +11,7 @@ export class RemoteDocument extends MElement {
   private documentAddress: string | null = null;
   private documentTimeManager: MMLDocumentTimeManager;
   private animationFrameCallback: number | null = null;
+  private remoteDocumentGraphics?: RemoteDocumentGraphics;
 
   constructor() {
     super();
@@ -42,10 +44,21 @@ export class RemoteDocument extends MElement {
 
   connectedCallback() {
     this.style.display = "none";
+    super.connectedCallback();
+    this.remoteDocumentGraphics =
+      new (this.getScene().getGraphicsAdapterFactory().RemoteDocumentGraphicsInterface)(this);
     this.animationFrameCallback = window.requestAnimationFrame(() => {
       this.tick();
     });
-    super.connectedCallback();
+  }
+
+  disconnectedCallback() {
+    if (this.animationFrameCallback) {
+      window.cancelAnimationFrame(this.animationFrameCallback);
+      this.animationFrameCallback = null;
+    }
+    this.remoteDocumentGraphics?.dispose();
+    super.disconnectedCallback();
   }
 
   dispatchEvent(event: CustomEvent): boolean {
@@ -56,21 +69,12 @@ export class RemoteDocument extends MElement {
     }
   }
 
-  disconnectedCallback() {
-    if (this.animationFrameCallback) {
-      window.cancelAnimationFrame(this.animationFrameCallback);
-      this.animationFrameCallback = null;
-    }
-    super.disconnectedCallback();
-  }
-
   init(mmlScene: IMMLScene, documentAddress: string) {
     if (this.scene) {
       throw new Error("Scene already set");
     }
     this.scene = mmlScene;
     this.documentAddress = documentAddress;
-    this.scene.getRootContainer().add(this.container);
   }
 
   public getDocumentAddress(): string | null {

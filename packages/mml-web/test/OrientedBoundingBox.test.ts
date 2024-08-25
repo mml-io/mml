@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { Matrix4, Vector3 } from "three";
+import { Matrix4, Vector3 } from "playcanvas";
 
 import { OrientedBoundingBox } from "../src/utils/OrientedBoundingBox";
 

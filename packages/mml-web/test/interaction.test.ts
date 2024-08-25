@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
-import { Interaction } from "../src/elements/Interaction";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { Interaction } from "../src/elements/Interaction";
+import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -90,7 +90,7 @@ describe("m-interaction", () => {
     expect(updateInteractionSpy).toHaveBeenCalledTimes(1);
     expect(updateInteractionSpy).toHaveBeenCalledWith(mInteraction);
     expect(addInteractionSpy).toHaveBeenCalledTimes(1);
-    const worldPos = new THREE.Vector3();
+    const worldPos = new Vect3();
     mInteraction.getContainer().getWorldPosition(worldPos);
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 3 });
 

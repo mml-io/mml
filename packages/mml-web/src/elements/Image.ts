@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 import { LoadingInstanceManager } from "../loading/LoadingInstanceManager";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
@@ -9,16 +12,12 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
 const defaultImageSrc = "";
 const defaultImageWidth = null;
 const defaultImageHeight = null;
 const defaultImageOpacity = 1;
 const defaultImageCastShadows = true;
-const defaultEmissive = 0;
 
 export class Image extends TransformableElement {
   static tagName = "m-image";
@@ -63,7 +62,6 @@ export class Image extends TransformableElement {
     height: defaultImageHeight as number | null,
     opacity: defaultImageOpacity,
     castShadows: defaultImageCastShadows,
-    emissive: defaultEmissive as number,
   };
 
   private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
@@ -75,9 +73,7 @@ export class Image extends TransformableElement {
   private loadedImage: HTMLImageElement | null;
   private loadedImageHasTransparency = false;
 
-  private srcLoadingInstanceManager = new LoadingInstanceManager(
-    `${(this.constructor as typeof Image).tagName}.src`,
-  );
+  private srcLoadingInstanceManager = new LoadingInstanceManager(`${Image.tagName}.src`);
 
   private static attributeHandler = new AttributeHandler<Image>({
     width: (instance, newValue) => {
@@ -105,10 +101,6 @@ export class Image extends TransformableElement {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultImageCastShadows);
       instance.mesh.castShadow = instance.props.castShadows;
     },
-    emissive: (instance, newValue) => {
-      instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
-      instance.updateMaterialEmissiveIntensity();
-    },
   });
 
   protected enable() {
@@ -132,57 +124,42 @@ export class Image extends TransformableElement {
     this.mesh = new THREE.Mesh(Image.planeGeometry);
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
-    this.container.add(this.mesh);
+    this.getContainer().addChild(this.mesh);
   }
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0),
+      new Vect3(this.mesh.scale.x, this.mesh.scale.y, 0),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.imageAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.imageAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.imageAnimatedAttributeHelper.removeSideEffectChild(child);
-
-    super.removeSideEffectChild(child);
-  }
-
-  private updateMaterialEmissiveIntensity() {
-    if (this.material) {
-      const map = this.material.map as THREE.Texture;
-      if (this.props.emissive > 0) {
-        this.material.emissive = new THREE.Color(0xffffff);
-        this.material.emissiveMap = map;
-        this.material.emissiveIntensity = this.props.emissive;
-        this.material.needsUpdate = true;
-      } else {
-        this.material.emissive = new THREE.Color(0x000000);
-        this.material.emissiveMap = null;
-        this.material.emissiveIntensity = 1;
-        this.material.needsUpdate = true;
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.imageAnimatedAttributeHelper.removeAnimation(child, attr);
       }
     }
+    super.removeSideEffectChild(child);
   }
 
   private clearImage() {
     this.loadedImage = null;
     this.srcApplyPromise = null;
-    if (this.material) {
-      if (this.material.map) {
-        this.material.map.dispose();
-        this.material.map = null;
-      }
-      if (this.material.emissiveMap) {
-        this.material.emissiveMap.dispose();
-        this.material.emissiveMap = null;
-      }
+    if (this.material && this.material.map) {
+      this.material.map.dispose();
+      this.material.map = null;
     }
   }
 
@@ -262,7 +239,6 @@ export class Image extends TransformableElement {
     this.material.transparent = this.props.opacity !== 1 || this.loadedImageHasTransparency;
     this.material.map = new THREE.CanvasTexture(this.loadedImage);
     this.material.needsUpdate = true;
-    this.updateMaterialEmissiveIntensity();
     this.updateHeightAndWidth();
   }
 
@@ -274,7 +250,7 @@ export class Image extends TransformableElement {
     return true;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Image.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
@@ -299,13 +275,10 @@ export class Image extends TransformableElement {
   disconnectedCallback() {
     this.collideableHelper.removeColliders();
     if (this.material) {
+      this.material.dispose();
       if (this.material.map) {
         this.material.map.dispose();
       }
-      if (this.material.emissiveMap) {
-        this.material.emissiveMap.dispose();
-      }
-      this.material.dispose();
       this.mesh.material = [];
       this.material = null;
     }
@@ -384,7 +357,6 @@ function hasTransparency(image: HTMLImageElement) {
   const canvas = document.createElement("canvas");
   canvas.width = image.width;
   canvas.height = image.height;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(image, 0, 0);
 

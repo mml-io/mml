@@ -15,6 +15,6 @@
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["**/build/*"]
 }

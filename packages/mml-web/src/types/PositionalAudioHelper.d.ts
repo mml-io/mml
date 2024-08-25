@@ -1,5 +1,5 @@
 declare module "three/addons/helpers/PositionalAudioHelper.js" {
-  import { Object3D, PositionalAudio } from "three";
+  import { Object3D, PositionalAudio } from "playcanvas";
   export class PositionalAudioHelper extends Object3D {
     constructor(
       audio: PositionalAudio,

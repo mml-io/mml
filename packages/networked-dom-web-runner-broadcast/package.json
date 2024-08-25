@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-web-runner-broadcast",
-  "version": "0.18.0",
+  "version": "0.14.0",
   "publishConfig": {
     "access": "public"
   },
@@ -14,14 +14,14 @@
     "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
     "iterate": "tsx ./build.ts --watch",
-    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web-runner": "^0.18.0",
-    "@mml-io/observable-dom-common": "^0.18.0"
+    "@mml-io/networked-dom-web-runner": "^0.14.0",
+    "@mml-io/observable-dom-common": "^0.14.0"
   },
   "devDependencies": {
     "jest-environment-jsdom": "29.7.0",

@@ -1,27 +1,27 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
 import { Interaction, MElement } from "../../elements";
 import { ChatProbe } from "../../elements/ChatProbe";
 import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
-import { IMMLScene, LinkProps, PromptProps } from "../../MMLScene";
+import { IMMLScene, PromptProps } from "../../MMLScene";
 
 export function createWrappedScene(
   scene: IMMLScene,
-  container: THREE.Group,
+  container: playcanvas.Entity,
   loadingProgressManager: LoadingProgressManager | null,
 ): IMMLScene {
   return {
-    addCollider(collider: THREE.Object3D, element: MElement): void {
+    addCollider(collider: playcanvas.Entity, element: MElement): void {
       if (scene.addCollider) {
         scene.addCollider(collider, element);
       }
     },
-    updateCollider(collider: THREE.Object3D, element: MElement): void {
+    updateCollider(collider: playcanvas.Entity, element: MElement): void {
       if (scene.updateCollider) {
         scene.updateCollider(collider, element);
       }
     },
-    removeCollider(collider: THREE.Object3D, element: MElement): void {
+    removeCollider(collider: playcanvas.Entity, element: MElement): void {
       if (scene.removeCollider) {
         scene.removeCollider(collider, element);
       }
@@ -68,19 +68,8 @@ export function createWrappedScene(
     getCamera(): THREE.Camera {
       return scene.getCamera();
     },
-    prompt(
-      promptProps: PromptProps,
-      abortSignal: AbortSignal,
-      callback: (result: string | null) => void,
-    ) {
-      scene.prompt(promptProps, abortSignal, callback);
-    },
-    link(
-      linkProps: LinkProps,
-      abortSignal: AbortSignal,
-      windowCallback: (openedWindow: Window) => void,
-    ) {
-      scene.link(linkProps, abortSignal, windowCallback);
+    prompt(promptProps: PromptProps, callback: (result: string | null) => void) {
+      scene.prompt(promptProps, callback);
     },
     getRootContainer: () => {
       return container;

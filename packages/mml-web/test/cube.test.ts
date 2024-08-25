@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
-import { Cube } from "../src/elements/Cube";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { Cube } from "../src/elements/Cube";
+import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -36,7 +36,7 @@ describe("m-cube", () => {
     // Setting scale attributes should affect the container of the element, but not the (cube) mesh itself
     expect(element.getContainer().scale).toMatchObject({ x: 5, y: 6, z: 7 });
     expect(element.getCube()!.scale).toMatchObject({ x: 1, y: 1, z: 1 });
-    expect(element.getCube()!.getWorldScale(new THREE.Vector3())).toMatchObject({
+    expect(element.getCube()!.getWorldScale(new Vect3())).toMatchObject({
       x: 5,
       y: 6,
       z: 7,
@@ -61,7 +61,7 @@ describe("m-cube", () => {
     // Setting the width, height, and depth attributes should affect the (cube) mesh, but not the container
     expect(element.getContainer().scale).toMatchObject({ x: 1, y: 1, z: 1 });
     expect(element.getCube()!.scale).toMatchObject({ x: 5, y: 6, z: 7 });
-    expect(element.getCube()!.getWorldScale(new THREE.Vector3())).toMatchObject({
+    expect(element.getCube()!.getWorldScale(new Vect3())).toMatchObject({
       x: 5,
       y: 6,
       z: 7,
@@ -85,7 +85,7 @@ describe("m-cube", () => {
     // Setting the width, height, and depth attributes should affect the (cube) mesh, but not the container
     expect(element.getContainer().scale).toMatchObject({ x: 2, y: 1, z: 1 });
     expect(element.getCube()!.scale).toMatchObject({ x: 3, y: 1, z: 1 });
-    expect(element.getCube()!.getWorldScale(new THREE.Vector3())).toMatchObject({
+    expect(element.getCube()!.getWorldScale(new Vect3())).toMatchObject({
       x: 6,
       y: 1,
       z: 1,
@@ -100,7 +100,7 @@ describe("m-cube", () => {
       b: 1,
     });
 
-    // Color set as string should be parsed to a THREE.Color
+    // Color set as string should be parsed to a playcanvas.Color
     element.setAttribute("color", "red");
     expect((element.getCube()!.material as THREE.MeshStandardMaterial).color).toMatchObject({
       r: 1,
@@ -186,7 +186,7 @@ describe("m-cube", () => {
     element.setAttribute("y", "1");
     expect(updateColliderSpy).toHaveBeenCalledTimes(1);
     expect(updateColliderSpy).toHaveBeenCalledWith(mCube.getCube(), mCube);
-    const worldPos = new THREE.Vector3();
+    const worldPos = new Vect3();
     mCube.getCube()!.getWorldPosition(worldPos);
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 3 });
 

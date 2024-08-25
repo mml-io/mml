@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
 import { Model } from "./Model";
 
@@ -13,7 +13,7 @@ export class Character extends Model {
     super();
   }
 
-  public getCharacter(): THREE.Object3D | null {
+  public getCharacter(): playcanvas.Entity | null {
     return this.loadedState?.group || null;
   }
 

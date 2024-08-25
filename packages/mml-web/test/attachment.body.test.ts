@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
 import { configureWindowForMML } from "../src";
 import { Cube } from "../src/elements/Cube";
@@ -24,7 +24,7 @@ describe("m-element direct page attachment", () => {
     // The div should be skipped in the threejs scene
     expect(group.getContainer().children[0].children[0]).toBe(cube.getCube());
 
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new Vect3())).toMatchObject({
       x: 0,
       y: 0,
       z: 0,
@@ -34,7 +34,7 @@ describe("m-element direct page attachment", () => {
     cube.setAttribute("y", "2");
     cube.setAttribute("z", "3");
 
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new Vect3())).toMatchObject({
       x: 1,
       y: 2,
       z: 3,
@@ -44,7 +44,7 @@ describe("m-element direct page attachment", () => {
     group.setAttribute("x", "10");
     group.setAttribute("y", "20");
     group.setAttribute("z", "30");
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new Vect3())).toMatchObject({
       x: 11,
       y: 22,
       z: 33,
@@ -59,7 +59,7 @@ describe("m-element direct page attachment", () => {
     secondGroup.append(div);
 
     // The cube should now have the world position from the second group
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cube.getCube()!.getWorldPosition(new Vect3())).toMatchObject({
       x: 101,
       y: 202,
       z: 303,

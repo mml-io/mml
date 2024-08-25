@@ -1,30 +1,28 @@
 import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { createWrappedScene } from "./CreateWrappedScene";
 import { MElement } from "../../elements/MElement";
 import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
 import { IMMLScene } from "../../MMLScene";
 import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
 import { getReconnectingStatus } from "../reconnecting-status";
-import { createWrappedScene } from "./CreateWrappedScene";
 
 export class WebSocketFrameInstance {
   public readonly src: string;
-  public readonly container: THREE.Group;
+  public readonly container: playcanvas.Entity;
   private domWebsocket: NetworkedDOMWebsocket;
   private remoteDocumentWrapper: RemoteDocumentWrapper;
   private targetForWrapper: MElement;
   private scene: IMMLScene;
   private statusElement: THREE.Mesh | null = null;
-  private loadingProgressManagerForFrameContent: LoadingProgressManager;
-  private parentLoadingProgressManager?: LoadingProgressManager | null;
+  private loadingProgressManager: LoadingProgressManager;
 
   constructor(targetElement: MElement, src: string, scene: IMMLScene) {
     this.targetForWrapper = targetElement;
     this.src = src;
     this.scene = scene;
-    this.container = new THREE.Group();
-    this.parentLoadingProgressManager = scene.getLoadingProgressManager?.();
+    this.container = new playcanvas.Entity();
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const windowTarget = targetElement.ownerDocument.defaultView!;
@@ -37,19 +35,19 @@ export class WebSocketFrameInstance {
       overriddenHandler(element, event);
     };
 
-    this.loadingProgressManagerForFrameContent = new LoadingProgressManager();
-    this.loadingProgressManagerForFrameContent.addProgressCallback(() => {
-      this.parentLoadingProgressManager?.updateDocumentProgress(this);
+    this.loadingProgressManager = new LoadingProgressManager();
+    this.loadingProgressManager.addProgressCallback(() => {
+      scene.getLoadingProgressManager?.()?.updateDocumentProgress(this);
     });
 
     scene
       .getLoadingProgressManager?.()
-      ?.addLoadingDocument(this, this.src, this.loadingProgressManagerForFrameContent);
+      ?.addLoadingDocument(this, this.src, this.loadingProgressManager);
 
     const wrappedScene: IMMLScene = createWrappedScene(
       this.scene,
       this.container,
-      this.loadingProgressManagerForFrameContent,
+      this.loadingProgressManager,
     );
 
     const websocketAddress = this.srcToAddress(this.src);
@@ -81,10 +79,10 @@ export class WebSocketFrameInstance {
           );
           mesh.position.set(0, height / 2, 0);
           this.statusElement = mesh;
-          this.container.add(this.statusElement);
-          this.loadingProgressManagerForFrameContent.setInitialLoad(new Error("Failed to connect"));
+          this.getContainer().addChild(this.statusElement);
+          this.loadingProgressManager.setInitialLoad(new Error("Failed to connect"));
         } else if (status === NetworkedDOMWebsocketStatus.Connected) {
-          this.loadingProgressManagerForFrameContent.setInitialLoad(true);
+          this.loadingProgressManager.setInitialLoad(true);
         }
       },
     );
@@ -122,6 +120,6 @@ export class WebSocketFrameInstance {
   dispose() {
     this.domWebsocket.stop();
     this.targetForWrapper.removeChild(this.remoteDocumentWrapper.remoteDocument);
-    this.parentLoadingProgressManager?.removeLoadingDocument(this);
+    this.scene.getLoadingProgressManager?.()?.removeLoadingDocument(this);
   }
 }

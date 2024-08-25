@@ -1,8 +1,8 @@
 import { RemoteEvent } from "@mml-io/networked-dom-protocol";
 import { LocalObservableDOMFactory } from "networked-dom-server";
 
-import { EditableNetworkedDOM } from "../src";
 import { MockWebsocket } from "./mock.websocket";
+import { EditableNetworkedDOM } from "../src";
 
 let currentDoc: EditableNetworkedDOM | null = null;
 afterEach(() => {

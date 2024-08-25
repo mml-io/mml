@@ -69,7 +69,6 @@ export class StaticFileVideoSource implements VideoSource {
           if (this.delayedPauseTimer === delayedPauseTimer) {
             this.delayedPauseTimer = null;
           }
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           this.syncVideoSource(this.latestProps!);
         }, pauseTimeMilliseconds - documentTimeMilliseconds);
         this.delayedPauseTimer = delayedPauseTimer;
@@ -108,7 +107,6 @@ export class StaticFileVideoSource implements VideoSource {
         if (this.delayedStartTimer === delayedStartTimer) {
           this.delayedStartTimer = null;
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.syncVideoSource(this.latestProps!);
       }, -currentTimeSeconds * 1000);
       this.delayedStartTimer = delayedStartTimer;

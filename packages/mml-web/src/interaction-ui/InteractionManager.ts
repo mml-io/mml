@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
 import { Interaction } from "../elements/Interaction";
 import { InteractionListener } from "../MMLScene";
@@ -124,14 +124,14 @@ export class InteractionManager {
     return `${interaction.props.prompt ?? "Interact"}`;
   }
 
-  private static worldPos = new THREE.Vector3();
+  private static worldPos = new playcanvas.Vec3();
 
-  private static matrix = new THREE.Matrix4();
-  private static frustum = new THREE.Frustum();
+  private static matrix = new playcanvas.Mat4();
+  // private static frustum = new THREE.Frustum();
 
-  private static raycaster = new THREE.Raycaster();
-  private static intersections = new Array<THREE.Intersection<THREE.Object3D>>();
-  private static direction = new THREE.Vector3();
+  // private static raycaster = new playcanvas.Raycaster();
+  private static intersections = new Array<THREE.Intersection<playcanvas.Entity>>();
+  private static direction = new playcanvas.Vec3();
 
   private static shouldShowInteraction(
     interaction: Interaction,
@@ -176,7 +176,7 @@ export class InteractionManager {
     return distance;
   }
 
-  private static hasAncestor(object: THREE.Object3D, ancestor: THREE.Object3D): boolean {
+  private static hasAncestor(object: playcanvas.Entity, ancestor: playcanvas.Entity): boolean {
     let parent = object.parent;
     while (parent !== null) {
       if (parent === ancestor) {
@@ -270,8 +270,8 @@ export class InteractionManager {
   }
 
   private static getRaycastResults(
-    a: THREE.Vector3,
-    b: THREE.Vector3,
+    a: playcanvas.Vec3,
+    b: playcanvas.Vec3,
     distance: number,
     scene: THREE.Scene,
   ) {

@@ -1,5 +1,5 @@
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { TransformableElement } from "./TransformableElement";
+import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
 export class Group extends TransformableElement {
   static tagName = "m-group";
@@ -31,7 +31,7 @@ export class Group extends TransformableElement {
     return true;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
   }
 }

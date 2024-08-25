@@ -2,9 +2,17 @@ import { registerCustomElementsToWindow } from "./elements/register-custom-eleme
 import { FullScreenMMLScene } from "./FullScreenMMLScene";
 import { setGlobalDocumentTimeManager, setGlobalMMLScene } from "./global";
 import { MMLDocumentTimeManager } from "./MMLDocumentTimeManager";
+import { MMLSceneOptions } from "./MMLScene";
+import { StandalonePlayCanvasAdapter } from "./playcanvas/StandalonePlayCanvasAdapter";
 
 export function configureWindowForMML(window: Window) {
-  const fullScreenMMLScene = new FullScreenMMLScene();
+  const fullScreenMMLScene = new FullScreenMMLScene({
+    createGraphicsAdapter: async (element: HTMLElement, options: MMLSceneOptions) => {
+      return await StandalonePlayCanvasAdapter.create(element, {
+        controlsType: options.controlsType,
+      });
+    },
+  });
   const mmlDocumentTimeManager = new MMLDocumentTimeManager();
   setGlobalMMLScene(fullScreenMMLScene);
   setGlobalDocumentTimeManager(mmlDocumentTimeManager);

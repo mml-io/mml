@@ -1,7 +1,7 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
-import { MElement } from "../elements";
 import { parseBoolAttribute } from "./attribute-handling";
+import { MElement } from "../elements";
 
 const debugAttributeName = "debug";
 
@@ -20,7 +20,7 @@ export class DebugHelper {
       if (parseBoolAttribute(newValue, false)) {
         if (!this.debugAxes) {
           this.debugAxes = new THREE.AxesHelper(1);
-          this.element.getContainer().add(this.debugAxes);
+          this.element.getContainer().addChild(this.debugAxes);
         }
       } else {
         if (this.debugAxes) {

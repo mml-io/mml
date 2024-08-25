@@ -12,14 +12,12 @@
       "jest"
     ],
     "strictNullChecks": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "downlevelIteration": true,
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
+  "include": ["src/**/*", "test/**/*", "./build.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

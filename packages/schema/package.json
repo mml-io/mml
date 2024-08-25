@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-schema",
-  "version": "0.18.0",
+  "version": "0.14.0",
   "publishConfig": {
     "access": "public"
   },
@@ -15,15 +15,13 @@
     "build": "tsx ./build.ts --build",
     "generate-events-docs": "tsx ./generate-events-docs.ts",
     "iterate": "tsx ./build.ts --watch",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
-    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
-    "typedoc": "0.26.6"
+    "typedoc": "0.24.8"
   },
   "devDependencies": {
-    "@types/libxmljs": "^0.18.13",
+    "@types/libxmljs": "^0.18.12",
     "xml-js": "1.6.11"
   }
 }

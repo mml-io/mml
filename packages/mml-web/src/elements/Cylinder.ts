@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -9,11 +12,8 @@ import {
 } from "../utils/attribute-handling";
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
-const defaultCylinderColor = new THREE.Color(0xffffff);
+const defaultCylinderColor = new playcanvas.Color(0xffffff);
 const defaultCylinderRadius = 0.5;
 const defaultCylinderHeight = 1;
 const defaultCylinderOpacity = 1;
@@ -26,7 +26,7 @@ export class Cylinder extends TransformableElement {
     color: [
       AnimationType.Color,
       defaultCylinderColor,
-      (newValue: THREE.Color) => {
+      (newValue: playcanvas.Color) => {
         this.props.color = newValue;
         if (this.material) {
           this.material.color = this.props.color;
@@ -143,29 +143,37 @@ export class Cylinder extends TransformableElement {
     this.mesh.scale.z = this.props.radius * 2;
     this.mesh.castShadow = this.props.castShadows;
     this.mesh.receiveShadow = true;
-    this.container.add(this.mesh);
+    this.getContainer().addChild(this.mesh);
   }
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.radius * 2, this.props.height, this.props.radius * 2),
+      new Vect3(this.props.radius * 2, this.props.height, this.props.radius * 2),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.cylinderAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.cylinderAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.cylinderAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.cylinderAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Cylinder.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);

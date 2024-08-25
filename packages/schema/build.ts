@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as TypeDoc from "typedoc";
 import url from "url";
+
+import * as TypeDoc from "typedoc";
 import { xml2json } from "xml-js";
 
 import { handleLibraryBuild } from "../../utils/build-library";
@@ -15,10 +16,10 @@ handleLibraryBuild(
     {
       name: "mml-xsd",
       setup({ onResolve, onLoad }) {
-        onResolve({ filter: /mml-xsd-json/ }, () => {
+        onResolve({ filter: /mml-xsd-json/ }, (args) => {
           return { path: pathToXSD, namespace: "xsd-json-namespace" };
         });
-        onLoad({ filter: /.*/, namespace: "xsd-json-namespace" }, () => {
+        onLoad({ filter: /.*/, namespace: "xsd-json-namespace" }, (args) => {
           return {
             contents: xml2json(fs.readFileSync(pathToXSD, "utf8"), {
               compact: true,
@@ -32,21 +33,19 @@ handleLibraryBuild(
     {
       name: "mml-events-schema",
       setup({ onResolve, onLoad }) {
-        onResolve({ filter: /mml-events-json/ }, () => {
+        onResolve({ filter: /mml-events-json/ }, (args) => {
           return { path: pathToEventsSchema, namespace: "events-schema-json-namespace" };
         });
-        onLoad({ filter: /.*/, namespace: "events-schema-json-namespace" }, async () => {
-          const app = await TypeDoc.Application.bootstrapWithPlugins(
-            {
-              entryPoints: [pathToEventsSchema],
-              entryPointStrategy: TypeDoc.EntryPointStrategy.Resolve,
-              tsconfig: path.join(dirname, "events-tsconfig.json"),
-            },
-            [new TypeDoc.TSConfigReader()],
-          );
+        onLoad({ filter: /.*/, namespace: "events-schema-json-namespace" }, (args) => {
+          const app = new TypeDoc.Application();
+          app.options.addReader(new TypeDoc.TSConfigReader());
 
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const project = (await app.convert())!;
+          app.bootstrap({
+            tsconfig: path.join(dirname, "src/schema-src/tsconfig.json"),
+            entryPoints: [pathToEventsSchema],
+          });
+
+          const project = app.convert()!;
           const eventDefinitions = app.serializer.projectToObject(project, process.cwd());
 
           return {

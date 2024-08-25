@@ -1,8 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AttributeHandler, parseBoolAttribute } from "./attribute-handling";
 import { MElement } from "../elements/MElement";
 import { IMMLScene } from "../MMLScene";
-import { AttributeHandler, parseBoolAttribute } from "./attribute-handling";
 
 const collideAttributeName = "collide";
 const collisionIntervalAttributeName = "collision-interval";
@@ -40,7 +40,7 @@ export class CollideableHelper {
   }
 
   private scene: IMMLScene | null = null;
-  private collider: THREE.Object3D | null = null;
+  private collider: playcanvas.Entity | null = null;
   private added: boolean = false;
   private enabled: boolean = true;
 
@@ -62,7 +62,7 @@ export class CollideableHelper {
     this.updateCollider(this.collider);
   }
 
-  public updateCollider(collider: THREE.Object3D | null) {
+  public updateCollider(collider: playcanvas.Entity | null) {
     if (!this.element.isConnected) {
       //element not connected to scene yet - keep track of the collider for when it is connected
       this.collider = collider;
@@ -118,8 +118,6 @@ export class CollideableHelper {
     }
 
     scene.removeCollider?.(this.collider, this.element);
-
-    this.collider = null;
 
     this.scene = null;
   }

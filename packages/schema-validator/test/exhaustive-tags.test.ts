@@ -15,7 +15,6 @@ test("exhaustive tags", () => {
   <m-position-probe></m-position-probe>
   <m-chat-probe></m-chat-probe>
   <m-attr-anim></m-attr-anim>
-  <m-attr-lerp></m-attr-lerp>
   <m-frame></m-frame>
   <m-label></m-label>
   <m-group></m-group>

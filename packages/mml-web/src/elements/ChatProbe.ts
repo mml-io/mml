@@ -1,5 +1,9 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
+import { MElement } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
+import { Vect3 } from "../math/Vect3";
 import { IMMLScene } from "../MMLScene";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
@@ -9,9 +13,6 @@ import {
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
-import { AnimationType } from "./AttributeAnimation";
-import { MElement } from "./MElement";
-import { TransformableElement } from "./TransformableElement";
 
 const defaultChatProbeRange = 10;
 const defaultChatProbeDebug = false;
@@ -81,20 +82,28 @@ export class ChatProbe extends TransformableElement {
 
   protected getContentBounds(): OrientedBoundingBox | null {
     return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      new Vect3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
       this.container,
     );
   }
 
   public addSideEffectChild(child: MElement): void {
-    this.chatProbeAnimatedAttributeHelper.addSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.chatProbeAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement): void {
-    this.chatProbeAnimatedAttributeHelper.removeSideEffectChild(child);
-
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.chatProbeAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -107,7 +116,7 @@ export class ChatProbe extends TransformableElement {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     ChatProbe.attributeHandler.handle(this, name, newValue);
     this.updateDebugVisualisation();
@@ -117,15 +126,15 @@ export class ChatProbe extends TransformableElement {
     const userPositionAndRotation = this.getUserPositionAndRotation();
     const elementRelative = getRelativePositionAndRotationRelativeToObject(
       userPositionAndRotation,
-      this.getContainer(),
+      this,
     );
 
     // Check if the position is within range
-    const distance = new THREE.Vector3().copy(elementRelative.position as THREE.Vector3).length();
+    const distance = new Vect3().copy(elementRelative.position).length();
 
     let withinBounds = true;
     this.getAppliedBounds().forEach((bounds) => {
-      if (!bounds.containsPoint(userPositionAndRotation.position as THREE.Vector3)) {
+      if (!bounds.containsPoint(userPositionAndRotation.position)) {
         withinBounds = false;
       }
     });
@@ -155,7 +164,7 @@ export class ChatProbe extends TransformableElement {
 
   private clearDebugVisualisation() {
     if (this.debugMesh) {
-      this.debugMesh.removeFromParent();
+      this.debugMesh.remove();
       this.debugMesh = null;
     }
   }
@@ -169,7 +178,7 @@ export class ChatProbe extends TransformableElement {
         mesh.castShadow = false;
         mesh.receiveShadow = false;
         this.debugMesh = mesh;
-        this.container.add(this.debugMesh);
+        this.getContainer().addChild(this.debugMesh);
       }
 
       if (this.debugMesh) {

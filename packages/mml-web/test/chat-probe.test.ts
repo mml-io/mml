@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
-import { ChatProbe } from "../src/elements/ChatProbe";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { ChatProbe } from "../src/elements/ChatProbe";
+import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
@@ -31,7 +31,7 @@ describe("m-chat-probe", () => {
 
     const sendPositionSpy = jest.spyOn(scene, "getUserPositionAndRotation");
     sendPositionSpy.mockImplementation(() => ({
-      position: new THREE.Vector3(1, 2, 3),
+      position: new Vect3(1, 2, 3),
       rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(45), 0),
     }));
 
@@ -104,7 +104,7 @@ describe("m-chat-probe", () => {
     expect(updateChatProbeSpy).toHaveBeenCalledTimes(1);
     expect(updateChatProbeSpy).toHaveBeenCalledWith(mChatProbe);
     expect(addChatProbeSpy).toHaveBeenCalledTimes(1);
-    const worldPos = new THREE.Vector3();
+    const worldPos = new Vect3();
     mChatProbe.getContainer().getWorldPosition(worldPos);
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 3 });
 

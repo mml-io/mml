@@ -1,20 +1,19 @@
 import { DOMSanitizer } from "@mml-io/networked-dom-web";
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { createWrappedScene } from "./CreateWrappedScene";
 import { MElement } from "../../elements/MElement";
 import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
 import { IMMLScene } from "../../MMLScene";
 import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
-import { createWrappedScene } from "./CreateWrappedScene";
 
 export class StaticHTMLFrameInstance {
   public readonly src: string;
-  public readonly container: THREE.Group;
+  public readonly container: playcanvas.Entity;
   private readonly remoteDocumentWrapper: RemoteDocumentWrapper;
   private readonly targetForWrapper: MElement;
   private readonly scene: IMMLScene;
-  private loadingProgressManagerForFrameContent: LoadingProgressManager;
-  private parentLoadingProgressManager?: LoadingProgressManager | null;
+  private loadingProgressManager: LoadingProgressManager;
 
   static parser = new DOMParser();
 
@@ -22,25 +21,24 @@ export class StaticHTMLFrameInstance {
     this.targetForWrapper = targetElement;
     this.src = src;
     this.scene = scene;
-    this.container = new THREE.Group();
-    this.parentLoadingProgressManager = scene.getLoadingProgressManager?.();
+    this.container = new playcanvas.Entity();
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const windowTarget = targetElement.ownerDocument.defaultView!;
 
-    this.loadingProgressManagerForFrameContent = new LoadingProgressManager();
-    this.loadingProgressManagerForFrameContent.addProgressCallback(() => {
-      this.parentLoadingProgressManager?.updateDocumentProgress(this);
+    this.loadingProgressManager = new LoadingProgressManager();
+    this.loadingProgressManager.addProgressCallback(() => {
+      scene.getLoadingProgressManager?.()?.updateDocumentProgress(this);
     });
 
     scene
       .getLoadingProgressManager?.()
-      ?.addLoadingDocument(this, this.src, this.loadingProgressManagerForFrameContent);
+      ?.addLoadingDocument(this, this.src, this.loadingProgressManager);
 
     const wrappedScene: IMMLScene = createWrappedScene(
       this.scene,
       this.container,
-      this.loadingProgressManagerForFrameContent,
+      this.loadingProgressManager,
     );
 
     const address = this.targetForWrapper.contentSrcToContentAddress(this.src);
@@ -64,7 +62,7 @@ export class StaticHTMLFrameInstance {
       response = await fetch(address);
     } catch (err) {
       console.error("Failed to fetch static MML page", err);
-      this.loadingProgressManagerForFrameContent.setInitialLoad(err);
+      this.loadingProgressManager.setInitialLoad(err);
       return;
     }
     const text = await response.text();
@@ -74,11 +72,11 @@ export class StaticHTMLFrameInstance {
     );
     DOMSanitizer.sanitise(remoteDocumentAsHTMLNode.body);
     this.remoteDocumentWrapper.remoteDocument.append(remoteDocumentAsHTMLNode.body);
-    this.loadingProgressManagerForFrameContent.setInitialLoad(true);
+    this.loadingProgressManager.setInitialLoad(true);
   }
 
   public dispose() {
     this.targetForWrapper.removeChild(this.remoteDocumentWrapper.remoteDocument);
-    this.parentLoadingProgressManager?.removeLoadingDocument(this);
+    this.loadingProgressManager.removeLoadingDocument(this);
   }
 }

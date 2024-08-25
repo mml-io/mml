@@ -1,5 +1,5 @@
-import * as THREE from "three";
-
+import { TransformableElement } from "./TransformableElement";
+import { Vect3 } from "../math/Vect3";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -9,7 +9,6 @@ import { StaticHTMLFrameInstance } from "../utils/frame/StaticHTMLFrameInstance"
 import { WebSocketFrameInstance } from "../utils/frame/WebSocketFrameInstance";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
-import { TransformableElement } from "./TransformableElement";
 
 const defaultUnloadRange = 1;
 const defaultFrameDebug = false;
@@ -96,9 +95,9 @@ export class Frame extends TransformableElement {
     if (boxBounds) {
       const [minX, maxX, minY, maxY, minZ, maxZ] = boxBounds;
       const obb = OrientedBoundingBox.fromSizeMatrixWorldProviderAndCenter(
-        new THREE.Vector3(maxX - minX, maxY - minY, maxZ - minZ),
+        new Vect3(maxX - minX, maxY - minY, maxZ - minZ),
         this.container,
-        new THREE.Vector3((maxX + minX) / 2, (maxY + minY) / 2, (maxZ + minZ) / 2),
+        new Vect3((maxX + minX) / 2, (maxY + minY) / 2, (maxZ + minZ) / 2),
       );
       this.addOrUpdateParentBound(this, obb);
     } else {
@@ -263,14 +262,14 @@ export class Frame extends TransformableElement {
     } else {
       this.frameContentsInstance = new StaticHTMLFrameInstance(this, src, this.getScene());
     }
-    this.container.add(this.frameContentsInstance.container);
+    this.getContainer().addChild(this.frameContentsInstance.container);
   }
 
   private clearDebugVisualisation() {
     if (this.debugMeshes) {
-      this.debugMeshes.debugBoxConstraintMesh.removeFromParent();
-      this.debugMeshes.debugBoxLoadRangeMesh.removeFromParent();
-      this.debugMeshes.debugBoxUnloadRangeMesh.removeFromParent();
+      this.debugMeshes.debugBoxConstraintMesh.remove();
+      this.debugMeshes.debugBoxLoadRangeMesh.remove();
+      this.debugMeshes.debugBoxUnloadRangeMesh.remove();
       this.debugMeshes = null;
     }
   }
@@ -327,11 +326,9 @@ export class Frame extends TransformableElement {
             Frame.DebugUnloadRangeMaterial,
           ),
         };
-        this.container.add(
-          this.debugMeshes.debugBoxConstraintMesh,
-          this.debugMeshes.debugBoxLoadRangeMesh,
-          this.debugMeshes.debugBoxUnloadRangeMesh,
-        );
+        this.getContainer().addChild(this.debugMeshes.debugBoxConstraintMesh);
+        this.getContainer().addChild(this.debugMeshes.debugBoxLoadRangeMesh);
+        this.getContainer().addChild(this.debugMeshes.debugBoxUnloadRangeMesh);
       }
 
       let boxBounds = this.getDefinedBoxBounds();
@@ -389,11 +386,10 @@ export class Frame extends TransformableElement {
       this.container.remove(this.frameContentsInstance.container);
       this.frameContentsInstance.dispose();
       this.frameContentsInstance = null;
-      this.isActivelyLoaded = false;
     }
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Frame.attributeHandler.handle(this, name, newValue);
   }

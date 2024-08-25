@@ -1,5 +1,8 @@
-import * as THREE from "three";
+import * as playcanvas from "playcanvas";
 
+import { MElement } from "./MElement";
+import { lerpHSL } from "../color-utils";
+import { MMLColor } from "../MMLGraphicsInterface";
 import {
   EndOfAnimationSymbol,
   getEasedRatioForTime,
@@ -12,7 +15,6 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { MElement } from "./MElement";
 
 const defaultAttribute: string | null = null;
 const defaultStart = 0;
@@ -30,7 +32,7 @@ export enum AnimationType {
   Color,
 }
 
-const defaultColor = new THREE.Color(0xffffff);
+const defaultColor: MMLColor = { r: 1, g: 1, b: 1 };
 
 /*
  Attribute animations are applied with the following precedence:
@@ -45,8 +47,8 @@ export class AttributeAnimation extends MElement {
 
   private props = {
     attr: defaultAttribute,
-    start: defaultStart as number | THREE.Color,
-    end: defaultEnd as number | THREE.Color,
+    start: defaultStart as number | MMLColor,
+    end: defaultEnd as number | MMLColor,
     loop: defaultLoop,
     pingPong: defaultPingPong,
     pingPongDelay: defaultPingPongDelay,
@@ -69,7 +71,7 @@ export class AttributeAnimation extends MElement {
       }
     },
     start: (instance, newValue) => {
-      let parsedValue: number | THREE.Color | null = parseFloatAttribute(newValue, null);
+      let parsedValue: number | playcanvas.Color | null = parseFloatAttribute(newValue, null);
       if (parsedValue === null) {
         parsedValue = parseColorAttribute(newValue, null);
       }
@@ -80,7 +82,7 @@ export class AttributeAnimation extends MElement {
       }
     },
     end: (instance, newValue) => {
-      let parsedValue: number | THREE.Color | null = parseFloatAttribute(newValue, null);
+      let parsedValue: number | playcanvas.Color | null = parseFloatAttribute(newValue, null);
       if (parsedValue === null) {
         parsedValue = parseColorAttribute(newValue, null);
       }
@@ -109,7 +111,7 @@ export class AttributeAnimation extends MElement {
       instance.props.pauseTime = parseFloatAttribute(newValue, defaultPauseTime);
     },
     duration: (instance, newValue) => {
-      instance.props.animDuration = Math.max(0, parseFloatAttribute(newValue, defaultAnimDuration));
+      instance.props.animDuration = parseFloatAttribute(newValue, defaultAnimDuration);
     },
   });
 
@@ -144,7 +146,7 @@ export class AttributeAnimation extends MElement {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     AttributeAnimation.attributeHandler.handle(this, name, newValue);
   }
@@ -167,10 +169,9 @@ export class AttributeAnimation extends MElement {
     super.disconnectedCallback();
   }
 
-  public getColorValueForTime(docTimeMs: number): [THREE.Color, number] {
+  public getColorValueForTime(docTimeMs: number): [MMLColor, number] {
     const [ratio, state] = getEasedRatioForTime(docTimeMs, this.props);
-    if (!(this.props.start instanceof THREE.Color) || !(this.props.end instanceof THREE.Color)) {
-      // TODO - this is just showing a default color rather than "failing" the animation and falling back to the element
+    if (typeof this.props.start !== "object" || typeof this.props.end !== "object") {
       return [defaultColor, state];
     }
     if (ratio === StartOfAnimationSymbol) {
@@ -178,14 +179,14 @@ export class AttributeAnimation extends MElement {
     } else if (ratio === EndOfAnimationSymbol) {
       return [this.props.end, state];
     } else {
-      const value = new THREE.Color(this.props.start).lerpHSL(this.props.end, ratio);
+      const value = lerpHSL(this.props.start, this.props.end, ratio);
       return [value, state];
     }
   }
 
   public getFloatValueForTime(docTimeMs: number): [number, number] {
     const [ratio, state] = getEasedRatioForTime(docTimeMs, this.props);
-    if (this.props.start instanceof THREE.Color || this.props.end instanceof THREE.Color) {
+    if (typeof this.props.start !== "number" || typeof this.props.end !== "number") {
       return [0, state];
     }
     if (ratio === StartOfAnimationSymbol) {

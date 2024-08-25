@@ -22,15 +22,7 @@ export class MMLDocumentTimeManager {
     if (this.overridenDocumentTime !== null) {
       return this.overridenDocumentTime;
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return (document.timeline.currentTime as number)! - this.relativeDocumentStartTime;
-  }
-
-  public getWindowTime(): number {
-    if (this.overridenDocumentTime !== null) {
-      return this.overridenDocumentTime;
-    }
-    return document.timeline.currentTime as number;
   }
 
   public addDocumentTimeListenerCallback(cb: (time: number) => void) {
@@ -53,7 +45,6 @@ export class MMLDocumentTimeManager {
     if (this.overridenDocumentTime !== null) {
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.relativeDocumentStartTime = (document.timeline.currentTime as number)! - documentTime;
 
     for (const cb of this.documentTimeListeners) {

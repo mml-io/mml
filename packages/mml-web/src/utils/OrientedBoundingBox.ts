@@ -1,40 +1,41 @@
-import * as THREE from "three";
+import { Matr4 } from "../math/Matr4";
+import { Vect3 } from "../math/Vect3";
 
 type MatrixWorldProvider = {
-  matrixWorld: THREE.Matrix4;
+  matrixWorld: Matr4;
   updateMatrixWorld(force?: boolean): void;
 };
 
 // Amount to tolerate on bounds (to avoid floating point errors)
 const epsilon = 0.0001;
 
-const matrix1 = new THREE.Matrix4();
-const vector1 = new THREE.Vector3();
+const matrix1 = new Matr4();
+const vector1 = new Vect3();
 
 export class OrientedBoundingBox {
   private constructor(
-    public size: THREE.Vector3,
+    public size: Vect3,
     public matrixWorldProvider: MatrixWorldProvider,
-    public centerOffset: THREE.Vector3 | null = null,
+    public centerOffset: Vect3 | null = null,
   ) {}
 
   static fromSizeAndMatrixWorldProvider(
-    size: THREE.Vector3,
+    size: Vect3,
     matrixWorldProvider: MatrixWorldProvider,
   ): OrientedBoundingBox {
     return new OrientedBoundingBox(size, matrixWorldProvider);
   }
 
   static fromSizeMatrixWorldProviderAndCenter(
-    size: THREE.Vector3,
+    size: Vect3,
     matrixWorldProvider: MatrixWorldProvider,
-    centerOffset: THREE.Vector3,
+    centerOffset: Vect3,
   ): OrientedBoundingBox {
     return new OrientedBoundingBox(size, matrixWorldProvider, centerOffset);
   }
 
   static fromMatrixWorldProvider(matrixWorldProvider: MatrixWorldProvider): OrientedBoundingBox {
-    return new OrientedBoundingBox(new THREE.Vector3(), matrixWorldProvider);
+    return new OrientedBoundingBox(new Vect3(), matrixWorldProvider);
   }
 
   public completelyContainsBoundingBox(childOBB: OrientedBoundingBox): boolean {
@@ -77,7 +78,7 @@ export class OrientedBoundingBox {
     return true;
   }
 
-  public containsPoint(point: THREE.Vector3): boolean {
+  public containsPoint(point: Vect3): boolean {
     this.matrixWorldProvider.updateMatrixWorld(true);
     const invertedMatrix = matrix1.copy(this.matrixWorldProvider.matrixWorld).invert();
 

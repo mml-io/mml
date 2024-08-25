@@ -1,11 +1,9 @@
+import { TransformableElement } from "./TransformableElement";
 import { AttributeHandler } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { TransformableElement } from "./TransformableElement";
 
 export class Prompt extends TransformableElement {
   static tagName = "m-prompt";
-
-  private abortController: AbortController | null = null;
 
   private props = {
     message: undefined as string | undefined,
@@ -57,18 +55,13 @@ export class Prompt extends TransformableElement {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     Prompt.attributeHandler.handle(this, name, newValue);
   }
 
   private trigger(): void {
-    if (this.abortController) {
-      this.abortController.abort();
-      this.abortController = null;
-    }
-    this.abortController = new AbortController();
-    this.getScene().prompt(this.props, this.abortController.signal, (result) => {
+    this.getScene().prompt(this.props, (result) => {
       if (!this.isConnected) {
         return;
       }

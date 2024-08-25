@@ -10,7 +10,7 @@ const jestConfig: JestConfigWithTsJest = {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
-  setupFilesAfterEnv: ["jest-expect-message", "../../test-utils/jest-browser-polyfills.ts"],
+  setupFilesAfterEnv: ["jest-expect-message", "./test/jest.setup.ts"],
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",
