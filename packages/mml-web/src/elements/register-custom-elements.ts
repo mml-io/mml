@@ -2,6 +2,7 @@ import { AttributeAnimation } from "./AttributeAnimation";
 import { Cube } from "./Cube";
 import { Cylinder } from "./Cylinder";
 import { Group } from "./Group";
+import { Image } from "./Image";
 import { Light } from "./Light";
 import { MElement } from "./MElement";
 import { Model } from "./Model";
@@ -25,7 +26,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Group.tagName, Group);
   // targetWindow.customElements.define(Prompt.tagName, Prompt);
   targetWindow.customElements.define(Sphere.tagName, Sphere);
-  // targetWindow.customElements.define(Image.tagName, Image);
+  targetWindow.customElements.define(Image.tagName, Image);
   // targetWindow.customElements.define(Video.tagName, Video);
   // targetWindow.customElements.define(Audio.tagName, Audio);
   // targetWindow.customElements.define(PositionProbe.tagName, PositionProbe);

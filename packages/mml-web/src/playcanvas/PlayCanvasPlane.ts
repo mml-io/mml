@@ -56,6 +56,7 @@ export class PlayCanvasPlane extends PlaneGraphics {
   }
 
   setCastShadows(castShadows: boolean, mPlaneProps: MPlaneProps): void {
+    // TODO - not casting shadows?
     this.modelComponent.castShadows = castShadows;
   }
 

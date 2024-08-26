@@ -6,7 +6,7 @@ export * from "./Cube";
 export * from "./Sphere";
 // export * from "./Frame";
 export * from "./Group";
-// export * from "./Image";
+export * from "./Image";
 // export * from "./Interaction";
 // export * from "./Label";
 export * from "./Light";

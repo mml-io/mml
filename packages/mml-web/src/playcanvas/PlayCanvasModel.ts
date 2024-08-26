@@ -84,7 +84,6 @@ export class PlayCanvasModel extends ModelGraphics {
           type: "mesh",
           asset,
         }) as playcanvas.CollisionComponent;
-        playcanvasEntity.setLocalPosition(0, 0.1, -5);
         playcanvasEntity.setLocalEulerAngles(0, 0, 0);
         const bones = new Map<string, playcanvas.Entity>();
         // group.traverse((object) => {

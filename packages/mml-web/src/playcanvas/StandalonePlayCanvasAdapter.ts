@@ -55,8 +55,9 @@ export class StandalonePlayCanvasAdapter implements GraphicsAdapter {
 
     const gfxOptions = {
       deviceTypes: ["webgpu", "webgl2"],
-      glslangUrl: "https://playcanvas.github.io/static/lib/glslang/glslang.js",
-      twgslUrl: "https://playcanvas.github.io/static/lib/twgsl/twgsl.js",
+      // TODO - Avoid these files being external
+      glslangUrl: "http://localhost:7079/assets/glslang.js",
+      twgslUrl: "http://localhost:7079/assets/twgsl.js",
     };
 
     const device = await playcanvas.createGraphicsDevice(this.canvas, gfxOptions);

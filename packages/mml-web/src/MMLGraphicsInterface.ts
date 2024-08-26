@@ -13,6 +13,7 @@ import {
   TransformableElementProps,
 } from "./elements";
 import { Cylinder, MCylinderProps } from "./elements/Cylinder";
+import { Image, MImageProps } from "./elements/Image";
 import { Model } from "./elements/Model";
 import { MSphereProps, Sphere } from "./elements/Sphere";
 
@@ -72,6 +73,21 @@ export abstract class ModelGraphics {
 
   abstract setSrc(src: string | null, mModelProps: MModelProps): void;
   abstract setDebug(debug: boolean, mModelProps: MModelProps): void;
+
+  abstract dispose(): void;
+}
+
+export abstract class ImageGraphics {
+  constructor(element: Image) {}
+
+  abstract enable(): void;
+  abstract disable(): void;
+
+  abstract setSrc(src: string | null, mImageProps: MImageProps): void;
+  abstract setWidth(width: number | null, mImageProps: MImageProps): void;
+  abstract setHeight(height: number | null, mImageProps: MImageProps): void;
+  abstract setOpacity(opacity: number, mImageProps: MImageProps): void;
+  abstract setCastShadows(castShadows: boolean, mImageProps: MImageProps): void;
 
   abstract dispose(): void;
 }
@@ -159,6 +175,7 @@ export interface MMLGraphicsInterface<C> {
   RemoteDocumentGraphicsInterface: new (element: RemoteDocument) => RemoteDocumentGraphics;
   MElementGraphicsInterface: new (element: MElement) => MElementGraphics<C>;
   MMLTransformableGraphicsInterface: new (element: TransformableElement) => TransformableGraphics;
+  MMLImageGraphicsInterface: new (element: Image) => ImageGraphics;
   MMLCubeGraphicsInterface: new (element: Cube) => CubeGraphics;
   MMLPlaneGraphicsInterface: new (element: Plane) => PlaneGraphics;
   MMLSphereGraphicsInterface: new (element: Sphere) => SphereGraphics;
