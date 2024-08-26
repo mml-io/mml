@@ -9,15 +9,6 @@ import {
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
-const debugAudioSphereSize = 0.25;
-const debugAudioGeometry = new THREE.SphereGeometry(debugAudioSphereSize, 4, 2);
-const debugAudioMaterial = new THREE.MeshBasicMaterial({
-  wireframe: true,
-  fog: false,
-  toneMapped: false,
-  color: 0x00ff00,
-});
-
 const audioRefDistance = 1;
 const audioRolloffFactor = 1;
 

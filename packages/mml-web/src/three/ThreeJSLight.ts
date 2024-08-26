@@ -91,7 +91,7 @@ export class ThreeJSLight extends LightGraphics {
     }
 
     if (this.threeLightHelper) {
-      this.light.getContainer().addChild(this.threeLightHelper);
+      this.light.getContainer().add(this.threeLightHelper);
       this.threeLightHelper.matrix = this.threeLight.matrix;
       this.threeLightHelper.visible = this.threeLight.visible;
     }

@@ -16,6 +16,7 @@ import { Cylinder, MCylinderProps } from "./elements/Cylinder";
 import { Image, MImageProps } from "./elements/Image";
 import { Model } from "./elements/Model";
 import { MSphereProps, Sphere } from "./elements/Sphere";
+import { DebugHelper } from "./utils/DebugHelper";
 
 export type MMLColor = {
   r: number;
@@ -88,6 +89,12 @@ export abstract class ImageGraphics {
   abstract setHeight(height: number | null, mImageProps: MImageProps): void;
   abstract setOpacity(opacity: number, mImageProps: MImageProps): void;
   abstract setCastShadows(castShadows: boolean, mImageProps: MImageProps): void;
+
+  abstract dispose(): void;
+}
+
+export abstract class DebugHelperGraphics {
+  constructor(debugHelper: DebugHelper) {}
 
   abstract dispose(): void;
 }
@@ -172,6 +179,7 @@ export abstract class LightGraphics {
 }
 
 export interface MMLGraphicsInterface<C> {
+  MMLDebugHelperGraphicsInterface: new (debugHelper: DebugHelper) => DebugHelperGraphics;
   RemoteDocumentGraphicsInterface: new (element: RemoteDocument) => RemoteDocumentGraphics;
   MElementGraphicsInterface: new (element: MElement) => MElementGraphics<C>;
   MMLTransformableGraphicsInterface: new (element: TransformableElement) => TransformableGraphics;

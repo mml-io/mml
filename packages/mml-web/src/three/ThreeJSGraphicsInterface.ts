@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { ThreeJSCube } from "./ThreeJSCube";
 import { ThreeJSCylinder } from "./ThreeJSCylinder";
+import { ThreeJSDebugHelper } from "./ThreeJSDebugHelper";
 import { ThreeJSImage } from "./ThreeJSImage";
 import { ThreeJSLight } from "./ThreeJSLight";
 import { ThreeJSMElement } from "./ThreeJSMElement";
@@ -13,6 +14,7 @@ import { ThreeJSTransformable } from "./ThreeJSTransformable";
 import { MMLGraphicsInterface } from "../MMLGraphicsInterface";
 
 export const ThreeJSGraphicsInterface: MMLGraphicsInterface<THREE.Group> = {
+  MMLDebugHelperGraphicsInterface: ThreeJSDebugHelper,
   MElementGraphicsInterface: ThreeJSMElement,
   MMLCubeGraphicsInterface: ThreeJSCube,
   MMLSphereGraphicsInterface: ThreeJSSphere,

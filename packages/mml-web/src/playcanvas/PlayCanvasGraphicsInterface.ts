@@ -2,6 +2,7 @@ import * as playcanvas from "playcanvas";
 
 import { PlayCanvasCube } from "./PlayCanvasCube";
 import { PlayCanvasCylinder } from "./PlayCanvasCylinder";
+import { PlayCanvasDebugHelper } from "./PlayCanvasDebugHelper";
 import { PlayCanvasImage } from "./PlayCanvasImage";
 import { PlayCanvasLight } from "./PlayCanvasLight";
 import { PlayCanvasMElement } from "./PlayCanvasMElement";
@@ -13,6 +14,7 @@ import { PlayCanvasTransformable } from "./PlayCanvasTransformable";
 import { MMLGraphicsInterface } from "../MMLGraphicsInterface";
 
 export const PlayCanvasGraphicsInterface: MMLGraphicsInterface<playcanvas.Entity> = {
+  MMLDebugHelperGraphicsInterface: PlayCanvasDebugHelper,
   MElementGraphicsInterface: PlayCanvasMElement,
   MMLCubeGraphicsInterface: PlayCanvasCube,
   MMLSphereGraphicsInterface: PlayCanvasSphere,
