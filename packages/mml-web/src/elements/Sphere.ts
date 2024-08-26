@@ -1,8 +1,8 @@
-import * as playcanvas from "playcanvas";
-
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { Vect3 } from "../math/Vect3";
+import { MMLColor, SphereGraphics } from "../MMLGraphicsInterface";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -13,26 +13,35 @@ import {
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
-const defaultSphereColor = new playcanvas.Color(0xffffff);
+const defaultSphereColor: MMLColor = { r: 1, g: 1, b: 1 };
 const defaultSphereRadius = 0.5;
 const defaultSphereOpacity = 1;
 const defaultSphereCastShadows = true;
 
-const defaultSphereWidthSegments = 16;
-const defaultSphereHeightSegments = 16;
+export type MSphereProps = {
+  radius: number;
+  color: MMLColor;
+  opacity: number;
+  castShadows: boolean;
+};
 
 export class Sphere extends TransformableElement {
   static tagName = "m-sphere";
+
+  public props: MSphereProps = {
+    radius: defaultSphereRadius,
+    color: defaultSphereColor,
+    opacity: defaultSphereOpacity,
+    castShadows: defaultSphereCastShadows,
+  };
 
   private sphereAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     color: [
       AnimationType.Color,
       defaultSphereColor,
-      (newValue: playcanvas.Color) => {
+      (newValue: MMLColor) => {
         this.props.color = newValue;
-        if (this.material) {
-          this.material.color = this.props.color;
-        }
+        this.sphereGraphics?.setColor(newValue, this.props);
       },
     ],
     radius: [
@@ -40,8 +49,7 @@ export class Sphere extends TransformableElement {
       defaultSphereRadius,
       (newValue: number) => {
         this.props.radius = newValue;
-        const scale = this.props.radius * 2;
-        this.mesh.scale.set(scale, scale, scale);
+        this.sphereGraphics?.setRadius(newValue, this.props);
         this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
@@ -51,45 +59,23 @@ export class Sphere extends TransformableElement {
       defaultSphereOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material) {
-          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
-          this.material.transparent = this.props.opacity !== 1;
-          this.material.needsUpdate = needsUpdate;
-          this.material.opacity = newValue;
-        }
+        this.sphereGraphics?.setOpacity(newValue, this.props);
       },
     ],
   });
-
-  static sphereGeometry = new THREE.SphereGeometry(
-    defaultSphereRadius,
-    defaultSphereWidthSegments,
-    defaultSphereHeightSegments,
-  );
-
-  private props = {
-    radius: defaultSphereRadius as number,
-    color: defaultSphereColor,
-    opacity: defaultSphereOpacity,
-    castShadows: defaultSphereCastShadows,
-  };
-
-  private mesh: THREE.Mesh<THREE.SphereGeometry, THREE.Material | Array<THREE.Material>>;
-  private material: THREE.MeshStandardMaterial | null = null;
-
   private collideableHelper = new CollideableHelper(this);
 
   private static attributeHandler = new AttributeHandler<Sphere>({
-    color: (instance, newValue) => {
-      instance.sphereAnimatedAttributeHelper.elementSetAttribute(
-        "color",
-        parseColorAttribute(newValue, defaultSphereColor),
-      );
-    },
     radius: (instance, newValue) => {
       instance.sphereAnimatedAttributeHelper.elementSetAttribute(
         "radius",
         parseFloatAttribute(newValue, defaultSphereRadius),
+      );
+    },
+    color: (instance, newValue) => {
+      instance.sphereAnimatedAttributeHelper.elementSetAttribute(
+        "color",
+        parseColorAttribute(newValue, defaultSphereColor),
       );
     },
     opacity: (instance, newValue) => {
@@ -100,28 +86,10 @@ export class Sphere extends TransformableElement {
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultSphereCastShadows);
-      instance.mesh.castShadow = instance.props.castShadows;
+      instance.sphereGraphics?.setCastShadows(instance.props.castShadows, instance.props);
     },
   });
-
-  static get observedAttributes(): Array<string> {
-    return [
-      ...TransformableElement.observedAttributes,
-      ...Sphere.attributeHandler.getAttributes(),
-      ...CollideableHelper.observedAttributes,
-    ];
-  }
-
-  constructor() {
-    super();
-    this.mesh = new THREE.Mesh(Sphere.sphereGeometry);
-    this.mesh.scale.x = this.props.radius * 2;
-    this.mesh.scale.y = this.props.radius * 2;
-    this.mesh.scale.z = this.props.radius * 2;
-    this.mesh.castShadow = this.props.castShadows;
-    this.mesh.receiveShadow = true;
-    this.getContainer().addChild(this.mesh);
-  }
+  private sphereGraphics?: SphereGraphics;
 
   protected enable() {
     this.collideableHelper.enable();
@@ -136,6 +104,18 @@ export class Sphere extends TransformableElement {
       new Vect3(this.props.radius * 2, this.props.radius * 2, this.props.radius * 2),
       this.container,
     );
+  }
+
+  static get observedAttributes(): Array<string> {
+    return [
+      ...TransformableElement.observedAttributes,
+      ...Sphere.attributeHandler.getAttributes(),
+      ...CollideableHelper.observedAttributes,
+    ];
+  }
+
+  constructor() {
+    super();
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -166,38 +146,37 @@ export class Sphere extends TransformableElement {
     return true;
   }
 
-  public getSphere(): THREE.Mesh<
-    THREE.SphereGeometry,
-    THREE.Material | Array<THREE.Material>
-  > | null {
-    return this.mesh;
-  }
-
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.isConnected) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Sphere.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
   }
 
-  connectedCallback() {
+  public connectedCallback(): void {
     super.connectedCallback();
-    this.material = new THREE.MeshStandardMaterial({
-      color: this.props.color,
-      transparent: this.props.opacity === 1 ? false : true,
-      opacity: this.props.opacity,
-    });
-    this.mesh.material = this.material;
+
+    this.sphereGraphics =
+      new (this.getScene().getGraphicsAdapterFactory().MMLSphereGraphicsInterface)(this);
+
+    for (const name of Sphere.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
     this.applyBounds();
     this.collideableHelper.updateCollider(this.mesh);
   }
 
-  disconnectedCallback() {
+  public disconnectedCallback(): void {
+    console.log("Sphere disconnected");
     this.collideableHelper.removeColliders();
-    if (this.material) {
-      this.material.dispose();
-      this.mesh.material = [];
-      this.material = null;
-    }
+    this.sphereGraphics?.dispose();
+    this.sphereGraphics = undefined;
     super.disconnectedCallback();
   }
 }

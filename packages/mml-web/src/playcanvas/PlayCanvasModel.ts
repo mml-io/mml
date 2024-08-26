@@ -75,6 +75,7 @@ export class PlayCanvasModel extends ModelGraphics {
         //   }
         // });
         this.latestSrcModelPromise = null;
+        // TODO - use "render" component?
         const modelComponent = playcanvasEntity.addComponent("model", {
           type: "asset",
           asset: asset.id,

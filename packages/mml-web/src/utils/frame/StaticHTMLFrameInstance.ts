@@ -27,7 +27,7 @@ export class StaticHTMLFrameInstance {
     const windowTarget = targetElement.ownerDocument.defaultView!;
 
     this.loadingProgressManager = new LoadingProgressManager();
-    this.loadingProgressManager.addProgressCallback(() => {
+    this.loadingProgressManager.addProgressCallback(() => {}
       scene.getLoadingProgressManager?.()?.updateDocumentProgress(this);
     });
 

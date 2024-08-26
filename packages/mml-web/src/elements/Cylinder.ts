@@ -1,8 +1,8 @@
-import * as playcanvas from "playcanvas";
-
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { Vect3 } from "../math/Vect3";
+import { CylinderGraphics, MMLColor } from "../MMLGraphicsInterface";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -13,24 +13,38 @@ import {
 import { CollideableHelper } from "../utils/CollideableHelper";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 
-const defaultCylinderColor = new playcanvas.Color(0xffffff);
+const defaultCylinderColor: MMLColor = { r: 1, g: 1, b: 1 };
 const defaultCylinderRadius = 0.5;
 const defaultCylinderHeight = 1;
 const defaultCylinderOpacity = 1;
 const defaultCylinderCastShadows = true;
 
+export type MCylinderProps = {
+  radius: number;
+  height: number;
+  color: MMLColor;
+  opacity: number;
+  castShadows: boolean;
+};
+
 export class Cylinder extends TransformableElement {
   static tagName = "m-cylinder";
+
+  public props: MCylinderProps = {
+    radius: defaultCylinderRadius,
+    height: defaultCylinderHeight,
+    color: defaultCylinderColor,
+    opacity: defaultCylinderOpacity,
+    castShadows: defaultCylinderCastShadows,
+  };
 
   private cylinderAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     color: [
       AnimationType.Color,
       defaultCylinderColor,
-      (newValue: playcanvas.Color) => {
+      (newValue: MMLColor) => {
         this.props.color = newValue;
-        if (this.material) {
-          this.material.color = this.props.color;
-        }
+        this.cylinderGraphics?.setColor(newValue, this.props);
       },
     ],
     radius: [
@@ -38,7 +52,7 @@ export class Cylinder extends TransformableElement {
       defaultCylinderRadius,
       (newValue: number) => {
         this.props.radius = newValue;
-        this.mesh.scale.set(this.props.radius * 2, this.props.height, this.props.radius * 2);
+        this.cylinderGraphics?.setRadius(newValue, this.props);
         this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
@@ -48,7 +62,7 @@ export class Cylinder extends TransformableElement {
       defaultCylinderHeight,
       (newValue: number) => {
         this.props.height = newValue;
-        this.mesh.scale.y = this.props.height;
+        this.cylinderGraphics?.setHeight(newValue, this.props);
         this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
@@ -58,46 +72,23 @@ export class Cylinder extends TransformableElement {
       defaultCylinderOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material) {
-          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
-          this.material.transparent = this.props.opacity !== 1;
-          this.material.needsUpdate = needsUpdate;
-          this.material.opacity = newValue;
-        }
+        this.cylinderGraphics?.setOpacity(newValue, this.props);
       },
     ],
   });
-
-  static cylinderGeometry = new THREE.CylinderGeometry(
-    defaultCylinderRadius,
-    defaultCylinderRadius,
-    defaultCylinderHeight,
-  );
-
-  private props = {
-    radius: defaultCylinderRadius as number,
-    height: defaultCylinderHeight as number,
-    color: defaultCylinderColor,
-    opacity: defaultCylinderOpacity,
-    castShadows: defaultCylinderCastShadows,
-  };
-
-  private mesh: THREE.Mesh<THREE.CylinderGeometry, THREE.Material | Array<THREE.Material>>;
-  private material: THREE.MeshStandardMaterial | null = null;
-
   private collideableHelper = new CollideableHelper(this);
 
   private static attributeHandler = new AttributeHandler<Cylinder>({
-    height: (instance, newValue) => {
-      instance.cylinderAnimatedAttributeHelper.elementSetAttribute(
-        "height",
-        parseFloatAttribute(newValue, defaultCylinderHeight),
-      );
-    },
     radius: (instance, newValue) => {
       instance.cylinderAnimatedAttributeHelper.elementSetAttribute(
         "radius",
         parseFloatAttribute(newValue, defaultCylinderRadius),
+      );
+    },
+    height: (instance, newValue) => {
+      instance.cylinderAnimatedAttributeHelper.elementSetAttribute(
+        "height",
+        parseFloatAttribute(newValue, defaultCylinderHeight),
       );
     },
     color: (instance, newValue) => {
@@ -114,9 +105,10 @@ export class Cylinder extends TransformableElement {
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultCylinderCastShadows);
-      instance.mesh.castShadow = instance.props.castShadows;
+      instance.cylinderGraphics?.setCastShadows(instance.props.castShadows, instance.props);
     },
   });
+  private cylinderGraphics?: CylinderGraphics;
 
   protected enable() {
     this.collideableHelper.enable();
@@ -124,6 +116,13 @@ export class Cylinder extends TransformableElement {
 
   protected disable() {
     this.collideableHelper.disable();
+  }
+
+  protected getContentBounds(): OrientedBoundingBox | null {
+    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
+      new Vect3(this.props.radius * 2, this.props.height, this.props.radius * 2),
+      this.container,
+    );
   }
 
   static get observedAttributes(): Array<string> {
@@ -136,21 +135,6 @@ export class Cylinder extends TransformableElement {
 
   constructor() {
     super();
-
-    this.mesh = new THREE.Mesh(Cylinder.cylinderGeometry);
-    this.mesh.scale.x = this.props.radius * 2;
-    this.mesh.scale.y = this.props.height;
-    this.mesh.scale.z = this.props.radius * 2;
-    this.mesh.castShadow = this.props.castShadows;
-    this.mesh.receiveShadow = true;
-    this.getContainer().addChild(this.mesh);
-  }
-
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new Vect3(this.props.radius * 2, this.props.height, this.props.radius * 2),
-      this.container,
-    );
   }
 
   public addSideEffectChild(child: MElement): void {
@@ -173,34 +157,6 @@ export class Cylinder extends TransformableElement {
     super.removeSideEffectChild(child);
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
-    super.attributeChangedCallback(name, oldValue, newValue);
-    Cylinder.attributeHandler.handle(this, name, newValue);
-    this.collideableHelper.handle(name, newValue);
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this.material = new THREE.MeshStandardMaterial({
-      color: this.props.color,
-      transparent: this.props.opacity === 1 ? false : true,
-      opacity: this.props.opacity,
-    });
-    this.mesh.material = this.material;
-    this.applyBounds();
-    this.collideableHelper.updateCollider(this.mesh);
-  }
-
-  disconnectedCallback() {
-    this.collideableHelper.removeColliders();
-    if (this.material) {
-      this.material.dispose();
-      this.mesh.material = [];
-      this.material = null;
-    }
-    super.disconnectedCallback();
-  }
-
   public parentTransformed(): void {
     this.collideableHelper.parentTransformed();
   }
@@ -209,10 +165,37 @@ export class Cylinder extends TransformableElement {
     return true;
   }
 
-  public getCylinder(): THREE.Mesh<
-    THREE.CylinderGeometry,
-    THREE.Material | Array<THREE.Material>
-  > | null {
-    return this.mesh;
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.isConnected) {
+      return;
+    }
+    super.attributeChangedCallback(name, oldValue, newValue);
+    Cylinder.attributeHandler.handle(this, name, newValue);
+    this.collideableHelper.handle(name, newValue);
+  }
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+
+    this.cylinderGraphics =
+      new (this.getScene().getGraphicsAdapterFactory().MMLCylinderGraphicsInterface)(this);
+
+    for (const name of Cylinder.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
+    this.applyBounds();
+    this.collideableHelper.updateCollider(this.mesh);
+  }
+
+  public disconnectedCallback(): void {
+    console.log("Cylinder disconnected");
+    this.collideableHelper.removeColliders();
+    this.cylinderGraphics?.dispose();
+    this.cylinderGraphics = undefined;
+    super.disconnectedCallback();
   }
 }

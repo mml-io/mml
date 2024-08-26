@@ -1,5 +1,3 @@
-import * as playcanvas from "playcanvas";
-
 import { MElement } from "./MElement";
 import { lerpHSL } from "../color-utils";
 import { MMLColor } from "../MMLGraphicsInterface";
@@ -71,7 +69,7 @@ export class AttributeAnimation extends MElement {
       }
     },
     start: (instance, newValue) => {
-      let parsedValue: number | playcanvas.Color | null = parseFloatAttribute(newValue, null);
+      let parsedValue: number | MMLColor | null = parseFloatAttribute(newValue, null);
       if (parsedValue === null) {
         parsedValue = parseColorAttribute(newValue, null);
       }
@@ -82,7 +80,7 @@ export class AttributeAnimation extends MElement {
       }
     },
     end: (instance, newValue) => {
-      let parsedValue: number | playcanvas.Color | null = parseFloatAttribute(newValue, null);
+      let parsedValue: number | MMLColor | null = parseFloatAttribute(newValue, null);
       if (parsedValue === null) {
         parsedValue = parseColorAttribute(newValue, null);
       }
@@ -162,6 +160,7 @@ export class AttributeAnimation extends MElement {
   }
 
   disconnectedCallback() {
+    console.log("AttributeAnimation disconnected");
     if (this.registeredParentAttachment && this.props.attr) {
       this.registeredParentAttachment.removeSideEffectChild(this);
     }

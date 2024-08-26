@@ -1,5 +1,3 @@
-import * as playcanvas from "playcanvas";
-
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
@@ -48,7 +46,7 @@ export class Light extends TransformableElement {
     color: [
       AnimationType.Color,
       defaultLightColor,
-      (newValue: playcanvas.Color) => {
+      (newValue: MMLColor) => {
         this.props.color = newValue;
         this.lightGraphics?.setColor(newValue, this.props);
       },
@@ -104,12 +102,16 @@ export class Light extends TransformableElement {
       );
     },
     angle: (instance, newValue) => {
-      instance.props.angleDeg = parseFloatAttribute(newValue, defaultLightAngle);
-      instance.lightGraphics?.setAngle(instance.props.angleDeg, instance.props);
+      instance.lightAnimatedAttributeHelper.elementSetAttribute(
+        "angle",
+        parseFloatAttribute(newValue, defaultLightAngle),
+      );
     },
     distance: (instance, newValue) => {
-      instance.props.distance = parseFloatAttribute(newValue, defaultLightDistance);
-      instance.lightGraphics?.setDistance(instance.props.distance, instance.props);
+      instance.lightAnimatedAttributeHelper.elementSetAttribute(
+        "distance",
+        parseFloatAttribute(newValue, defaultLightDistance),
+      );
     },
     enabled: (instance, newValue) => {
       instance.props.enabled = parseBoolAttribute(newValue, defaultLightEnabled);
@@ -132,9 +134,6 @@ export class Light extends TransformableElement {
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes, ...Light.attributeHandler.getAttributes()];
   }
-
-  private light: playcanvas.Entity;
-  private lightComponent: playcanvas.LightComponent;
 
   constructor() {
     super();

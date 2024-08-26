@@ -1,5 +1,3 @@
-import * as playcanvas from "playcanvas";
-
 import { parseBoolAttribute } from "./attribute-handling";
 import { MElement } from "../elements";
 

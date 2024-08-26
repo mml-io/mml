@@ -9,8 +9,7 @@ export class PlayCanvasMElement extends MElementGraphics<playcanvas.Entity> {
 
   constructor(private element: MElement) {
     super(element);
-    console.log("element.constructor.name", element.constructor.tagName);
-    this.container = new playcanvas.Entity(element.constructor.tagName);
+    this.container = new playcanvas.Entity(element.constructor.name);
     (this.container as any)[MELEMENT_PROPERTY_NAME] = element;
 
     if (this.currentParentContainer !== null) {

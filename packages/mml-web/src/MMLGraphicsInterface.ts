@@ -6,16 +6,21 @@ import {
   MCubeProps,
   MElement,
   MModelProps,
+  MPlaneProps,
+  Plane,
   RemoteDocument,
   TransformableElement,
   TransformableElementProps,
 } from "./elements";
+import { Cylinder, MCylinderProps } from "./elements/Cylinder";
 import { Model } from "./elements/Model";
+import { MSphereProps, Sphere } from "./elements/Sphere";
 
 export type MMLColor = {
   r: number;
   g: number;
   b: number;
+  a?: number;
 };
 
 export abstract class MElementGraphics<C> {
@@ -87,6 +92,51 @@ export abstract class CubeGraphics {
   abstract dispose(): void;
 }
 
+export abstract class PlaneGraphics {
+  constructor(element: Plane) {}
+
+  abstract enable(): void;
+  abstract disable(): void;
+
+  abstract setWidth(width: number, mPlaneProps: MPlaneProps): void;
+  abstract setHeight(height: number, mPlaneProps: MPlaneProps): void;
+  abstract setDepth(depth: number, mPlaneProps: MPlaneProps): void;
+  abstract setColor(color: MMLColor, mPlaneProps: MPlaneProps): void;
+  abstract setOpacity(opacity: number, mPlaneProps: MPlaneProps): void;
+  abstract setCastShadows(castShadows: boolean, mPlaneProps: MPlaneProps): void;
+
+  abstract dispose(): void;
+}
+
+export abstract class CylinderGraphics {
+  constructor(element: Cylinder) {}
+
+  abstract enable(): void;
+  abstract disable(): void;
+
+  abstract setRadius(radius: number, mCylinderProps: MCylinderProps): void;
+  abstract setHeight(height: number, mCylinderProps: MCylinderProps): void;
+  abstract setColor(color: MMLColor, mCylinderProps: MCylinderProps): void;
+  abstract setOpacity(opacity: number, mCylinderProps: MCylinderProps): void;
+  abstract setCastShadows(castShadows: boolean, mCylinderProps: MCylinderProps): void;
+
+  abstract dispose(): void;
+}
+
+export abstract class SphereGraphics {
+  constructor(element: Sphere) {}
+
+  abstract enable(): void;
+  abstract disable(): void;
+
+  abstract setRadius(width: number, mSphereProps: MSphereProps): void;
+  abstract setColor(color: MMLColor, mSphereProps: MSphereProps): void;
+  abstract setOpacity(opacity: number, mSphereProps: MSphereProps): void;
+  abstract setCastShadows(castShadows: boolean, mSphereProps: MSphereProps): void;
+
+  abstract dispose(): void;
+}
+
 export abstract class LightGraphics {
   constructor(element: Light) {}
 
@@ -110,6 +160,9 @@ export interface MMLGraphicsInterface<C> {
   MElementGraphicsInterface: new (element: MElement) => MElementGraphics<C>;
   MMLTransformableGraphicsInterface: new (element: TransformableElement) => TransformableGraphics;
   MMLCubeGraphicsInterface: new (element: Cube) => CubeGraphics;
+  MMLPlaneGraphicsInterface: new (element: Plane) => PlaneGraphics;
+  MMLSphereGraphicsInterface: new (element: Sphere) => SphereGraphics;
+  MMLCylinderGraphicsInterface: new (element: Cylinder) => CylinderGraphics;
   MMLLightGraphicsInterface: new (element: Light) => LightGraphics;
   MMLModelGraphicsInterface: new (element: Model) => ModelGraphics;
 }

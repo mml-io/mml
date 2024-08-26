@@ -19,14 +19,15 @@ export class PlayCanvasLight extends LightGraphics {
       lightEntity.removeComponent("light");
     }
 
+    // TODO - light color
     const { r, g, b } = this.light.props.color;
 
-    console.log("this.light.props.type", this.light.props.type);
     if (this.light.props.type === "spotlight") {
       this.lightComponent = lightEntity.addComponent("light", {
         type: "spot",
         intensity: this.light.props.intensity * lightIntensityFactor,
         castShadows: this.light.props.castShadow,
+        color: new playcanvas.Color(r, g, b),
         shadowBias: 0.1,
         normalOffsetBias: 0.1,
         shape: playcanvas.LIGHTSHAPE_DISK,
@@ -39,6 +40,7 @@ export class PlayCanvasLight extends LightGraphics {
         type: "point",
         intensity: this.light.props.intensity * lightIntensityFactor,
         castShadows: this.light.props.castShadow,
+        color: new playcanvas.Color(r, g, b),
         shadowBias: 0.1,
         normalOffsetBias: 0.1,
         range: 100,
@@ -74,7 +76,6 @@ export class PlayCanvasLight extends LightGraphics {
 
   setDistance(distance: number, mLightProps: LightProps) {
     // TODO
-    // this.threeLight.distance = distance;
   }
 
   setType(type: LightTypes, lightProps: LightProps): void {
@@ -86,8 +87,9 @@ export class PlayCanvasLight extends LightGraphics {
   }
 
   setColor(color: MMLColor, lightProps: LightProps): void {
-    // TODO
-    // this.threeLight.color.set(color.r, color.g, color.b);
+    console.log("color", color);
+    this.lightComponent.color.set(color.r, color.g, color.b);
+    this.lightComponent.refreshProperties();
   }
 
   dispose() {

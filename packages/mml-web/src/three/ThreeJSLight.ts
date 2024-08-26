@@ -20,6 +20,7 @@ export class ThreeJSLight extends LightGraphics {
     if (this.threeLight) {
       this.threeLight.remove();
     }
+    console.log("createLight", this);
 
     const { r, g, b } = this.light.props.color;
     const color = new THREE.Color(r, g, b);
@@ -122,6 +123,7 @@ export class ThreeJSLight extends LightGraphics {
   }
 
   setDistance(distance: number, mLightProps: LightProps) {
+    console.log("setDistance", distance);
     this.threeLight.distance = distance;
   }
 
@@ -145,5 +147,10 @@ export class ThreeJSLight extends LightGraphics {
     }
   }
 
-  dispose() {}
+  dispose() {
+    this.light.getContainer().remove(this.threeLight);
+    if (this.threeLightHelper) {
+      this.threeLightHelper.removeFromParent();
+    }
+  }
 }

@@ -89,6 +89,10 @@ export abstract class TransformableElement extends MElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+
+    this.transformableElementGraphics =
+      new (this.getScene().getGraphicsAdapterFactory().MMLTransformableGraphicsInterface)(this);
+
     if (this.socketName !== null) {
       this.registerWithParentModel(this.socketName);
     }
@@ -101,8 +105,6 @@ export abstract class TransformableElement extends MElement {
       });
       return;
     }
-    this.transformableElementGraphics =
-      new (this.getScene().getGraphicsAdapterFactory().MMLTransformableGraphicsInterface)(this);
   }
 
   disconnectedCallback(): void {

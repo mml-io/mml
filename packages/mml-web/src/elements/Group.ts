@@ -32,6 +32,20 @@ export class Group extends TransformableElement {
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.isConnected) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+
+    for (const name of Group.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
   }
 }

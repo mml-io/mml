@@ -1,11 +1,9 @@
 import * as playcanvas from "playcanvas";
 
+import { MElement, TransformableElement } from "../elements";
 import { IMMLScene } from "../MMLScene";
 import { EventHandlerCollection } from "../utils/events/EventHandlerCollection";
-import { MElement, TransformableElement } from "../elements";
-import {
-  getRelativePositionAndRotationRelativeToObject
-} from "../utils/position-utils";
+import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
 
 const mouseMovePixelsThreshold = 10;
 const mouseMoveTimeThresholdMilliseconds = 500;

@@ -1,6 +1,7 @@
 import * as playcanvas from "playcanvas";
 
 import { Interaction } from "../elements/Interaction";
+import { Vect3 } from "../math/Vect3";
 import { InteractionListener } from "../MMLScene";
 import { EventHandlerCollection } from "../utils/events/EventHandlerCollection";
 
@@ -124,7 +125,7 @@ export class InteractionManager {
     return `${interaction.props.prompt ?? "Interact"}`;
   }
 
-  private static worldPos = new playcanvas.Vec3();
+  private static worldPos = new Vect3();
 
   private static matrix = new playcanvas.Mat4();
   // private static frustum = new THREE.Frustum();

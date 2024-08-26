@@ -1,5 +1,3 @@
-import * as playcanvas from "playcanvas";
-
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";

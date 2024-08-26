@@ -1,5 +1,3 @@
-import * as playcanvas from "playcanvas";
-
 import { THREECanvasTextTexture } from "./CanvasText";
 
 function createReconnectingStatus() {

@@ -9,7 +9,7 @@ export function lerpHSL(colorA: MMLColor, colorB: MMLColor, alpha: number): MMLC
   return hslToRGB(h, s, l);
 }
 
-function hue2rgb(p: number, q: number, t: number) {
+function hue2RGB(p: number, q: number, t: number) {
   if (t < 0) t += 1;
   if (t > 1) t -= 1;
   if (t < 1 / 6) return p + (q - p) * 6 * t;
@@ -22,7 +22,7 @@ function euclideanModulo(n: number, m: number) {
   return ((n % m) + m) % m;
 }
 
-function hslToRGB(h: number, s: number, l: number): MMLColor {
+export function hslToRGB(h: number, s: number, l: number): MMLColor {
   h = euclideanModulo(h, 1);
   s = Math.max(0, Math.min(s, 1));
   l = Math.max(0, Math.min(l, 1));
@@ -34,9 +34,9 @@ function hslToRGB(h: number, s: number, l: number): MMLColor {
     const q = 2 * l - p;
 
     return {
-      r: hue2rgb(q, p, h + 1 / 3),
-      g: hue2rgb(q, p, h),
-      b: hue2rgb(q, p, h - 1 / 3),
+      r: hue2RGB(q, p, h + 1 / 3),
+      g: hue2RGB(q, p, h),
+      b: hue2RGB(q, p, h - 1 / 3),
     };
   }
 }

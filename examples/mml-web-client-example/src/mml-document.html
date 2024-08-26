@@ -4,7 +4,9 @@
 <!--  &lt;!&ndash; <m-attr-anim attr="sy" start="0.1" end="10" ping-pong="true" easing="easeInOutCubic" duration="10000"></m-attr-anim> &ndash;&gt;-->
 <!--</m-model>-->
 
-<m-cube y="2" z="2" id="my-cube" color="red"></m-cube>
+<m-plane rx="-25" y="2" z="2" width="1" id="my-cube" color="red">
+  <m-cube y="2" z="5" x="4" height="2"></m-cube>
+</m-plane>
 <m-model y="4" id="my-duck"
          src="https://public.mml.io/damaged-helmet.glb"
          src="https://public.mml.io/duck.glb"
@@ -12,19 +14,28 @@
   <m-attr-anim attr="x" start="0" end="10" duration="20000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>
 </m-model>
 
-<m-cube z="-10" y="2" height="1" width="3" color="red" cast-shadows="false">
-  <m-attr-anim attr="x" start="0.1" end="2" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>
-  <m-attr-anim attr="height" start="0.1" end="2" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>
-  <m-attr-anim attr="opacity" start="0.5" end="1" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>
-  <m-attr-anim attr="ry" start="0" end="360" duration="8000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>
-</m-cube>
-<m-cube z="-5" y="2" height="1" width="3" color="red">
-  <m-attr-anim attr="x" start="-0.1" end="-4" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>
-  <m-attr-anim attr="height" start="0.1" end="2" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>
-  <m-attr-anim attr="color" start="red" end="green" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>
-</m-cube>
+<!--<m-cube z="-10" y="2" height="1" width="3" color="red" cast-shadows="false">-->
+<!--  <m-attr-anim attr="x" start="0.1" end="2" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--  <m-attr-anim attr="height" start="0.1" end="2" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--  <m-attr-anim attr="opacity" start="0.5" end="1" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--  <m-attr-anim attr="ry" start="0" end="360" duration="8000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--</m-cube>-->
+
+
+<!--<m-sphere z="-10" y="5" height="1" width="3" color="hsl(360,50%,50%)" cast-shadows="false">-->
+<!--  <m-attr-anim attr="x" start="0.1" end="2" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--  <m-attr-anim attr="radius" start="0.1" end="1" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--  <m-attr-anim attr="opacity" start="0.5" end="1" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--&lt;!&ndash;  <m-attr-anim attr="ry" start="0" end="360" duration="8000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>&ndash;&gt;-->
+<!--</m-sphere>-->
+<!--<m-cube z="-5" y="2" height="1" width="3" color="red">-->
+<!--  <m-attr-anim attr="x" start="-0.1" end="-4" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--  <m-attr-anim attr="height" start="0.1" end="2" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--  <m-attr-anim attr="color" start="red" end="green" duration="2000" ping-pong="true" easing="easeInOutCubic"></m-attr-anim>-->
+<!--</m-cube>-->
 
 <m-light x="0" y="50" type="point" intensity="900"></m-light>
+<m-light x="0" y="20" type="point" intensity="900"></m-light>
 
 <script>
   let toggle = false;
@@ -32,73 +43,74 @@
   myCube.addEventListener("click", (event) => {
     console.log("CLICK!", event.detail);
     toggle = !toggle;
-    myCube.setAttribute("width", toggle ? "10" : "1");
+    myCube.setAttribute("width", toggle ? "2" : "1");
+    myCube.setAttribute("color", toggle ? "green" : "red");
   });
-
-  let duckToggle = false;
-  const myDuck = document.getElementById("my-duck");
-  myDuck.addEventListener("click", (event) => {
-    console.log("CLICK DUCK!", event.detail);
-    duckToggle = !duckToggle;
-    myDuck.setAttribute("sx", duckToggle ? "10" : "1");
-  });
-
-  for (let x = 0; x < 10; x++) {
-    const light = document.createElement("m-light");
-    light.setAttribute("rx", 175);
-    light.setAttribute("rz", 180);
-    light.setAttribute("y", 30);
-    light.setAttribute("intensity", 900);
-
-    const xAnimation = document.createElement("m-attr-anim");
-    xAnimation.setAttribute("attr", "x");
-    xAnimation.setAttribute("start", -40 * Math.random());
-    xAnimation.setAttribute("end", 40 * Math.random());
-    xAnimation.setAttribute("duration", 5000 + Math.random() * 5000);
-    xAnimation.setAttribute("ping-pong", "true");
-    xAnimation.setAttribute("easing", "easeInOutCubic");
-    light.appendChild(xAnimation);
-
-    const zAnimation = document.createElement("m-attr-anim");
-    zAnimation.setAttribute("attr", "z");
-    zAnimation.setAttribute("start", -40 * Math.random());
-    zAnimation.setAttribute("end", 40 * Math.random());
-    zAnimation.setAttribute("duration", 5000 + Math.random() * 5000);
-    zAnimation.setAttribute("ping-pong", "true");
-    zAnimation.setAttribute("easing", "easeInOutCubic");
-    light.appendChild(zAnimation);
-
-    document.body.appendChild(light);
-  }
-
-  for (let x = 0; x < 10; x++) {
-    const model = document.createElement("m-model");
-    model.setAttribute(
-      "src",
-      Math.random() > 0.5
-        ? "https://public.mml.io/duck.glb"
-        : "https://public.mml.io/damaged-helmet.glb",
-    );
-    model.setAttribute("y", 1 + Math.random() * 3);
-
-    const xAnimation = document.createElement("m-attr-anim");
-    xAnimation.setAttribute("attr", "x");
-    xAnimation.setAttribute("start", -40 * Math.random());
-    xAnimation.setAttribute("end", 40 * Math.random());
-    xAnimation.setAttribute("duration", 5000 + Math.random() * 5000);
-    xAnimation.setAttribute("ping-pong", "true");
-    xAnimation.setAttribute("easing", "easeInOutCubic");
-    model.appendChild(xAnimation);
-
-    const zAnimation = document.createElement("m-attr-anim");
-    zAnimation.setAttribute("attr", "z");
-    zAnimation.setAttribute("start", -40 * Math.random());
-    zAnimation.setAttribute("end", 40 * Math.random());
-    zAnimation.setAttribute("duration", 5000 + Math.random() * 5000);
-    zAnimation.setAttribute("ping-pong", "true");
-    zAnimation.setAttribute("easing", "easeInOutCubic");
-    model.appendChild(zAnimation);
-
-    document.body.appendChild(model);
-  }
+  //
+  // let duckToggle = false;
+  // const myDuck = document.getElementById("my-duck");
+  // myDuck.addEventListener("click", (event) => {
+  //   console.log("CLICK DUCK!", event.detail);
+  //   duckToggle = !duckToggle;
+  //   myDuck.setAttribute("sx", duckToggle ? "10" : "1");
+  // });
+  //
+  // for (let x = 0; x < 5; x++) {
+  //   const light = document.createElement("m-light");
+  //   light.setAttribute("rx", 175);
+  //   light.setAttribute("rz", 180);
+  //   light.setAttribute("y", 30);
+  //   light.setAttribute("intensity", 900);
+  //
+  //   const xAnimation = document.createElement("m-attr-anim");
+  //   xAnimation.setAttribute("attr", "x");
+  //   xAnimation.setAttribute("start", -40 * Math.random());
+  //   xAnimation.setAttribute("end", 40 * Math.random());
+  //   xAnimation.setAttribute("duration", 5000 + Math.random() * 5000);
+  //   xAnimation.setAttribute("ping-pong", "true");
+  //   xAnimation.setAttribute("easing", "easeInOutCubic");
+  //   light.appendChild(xAnimation);
+  //
+  //   const zAnimation = document.createElement("m-attr-anim");
+  //   zAnimation.setAttribute("attr", "z");
+  //   zAnimation.setAttribute("start", -40 * Math.random());
+  //   zAnimation.setAttribute("end", 40 * Math.random());
+  //   zAnimation.setAttribute("duration", 5000 + Math.random() * 5000);
+  //   zAnimation.setAttribute("ping-pong", "true");
+  //   zAnimation.setAttribute("easing", "easeInOutCubic");
+  //   light.appendChild(zAnimation);
+  //
+  //   document.body.appendChild(light);
+  // }
+  //
+  // for (let x = 0; x < 10; x++) {
+  //   const model = document.createElement("m-model");
+  //   model.setAttribute(
+  //     "src",
+  //     Math.random() > 0.5
+  //       ? "https://public.mml.io/duck.glb"
+  //       : "https://public.mml.io/damaged-helmet.glb",
+  //   );
+  //   model.setAttribute("y", 1 + Math.random() * 3);
+  //
+  //   const xAnimation = document.createElement("m-attr-anim");
+  //   xAnimation.setAttribute("attr", "x");
+  //   xAnimation.setAttribute("start", -40 * Math.random());
+  //   xAnimation.setAttribute("end", 40 * Math.random());
+  //   xAnimation.setAttribute("duration", 5000 + Math.random() * 5000);
+  //   xAnimation.setAttribute("ping-pong", "true");
+  //   xAnimation.setAttribute("easing", "easeInOutCubic");
+  //   model.appendChild(xAnimation);
+  //
+  //   const zAnimation = document.createElement("m-attr-anim");
+  //   zAnimation.setAttribute("attr", "z");
+  //   zAnimation.setAttribute("start", -40 * Math.random());
+  //   zAnimation.setAttribute("end", 40 * Math.random());
+  //   zAnimation.setAttribute("duration", 5000 + Math.random() * 5000);
+  //   zAnimation.setAttribute("ping-pong", "true");
+  //   zAnimation.setAttribute("easing", "easeInOutCubic");
+  //   model.appendChild(zAnimation);
+  //
+  //   document.body.appendChild(model);
+  // }
 </script>

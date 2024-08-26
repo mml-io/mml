@@ -1,5 +1,3 @@
-import * as playcanvas from "playcanvas";
-
 type RGBA = {
   r: number;
   g: number;

@@ -15,6 +15,7 @@ export class ThreeJSCube extends CubeGraphics {
       color: new THREE.Color(cube.props.color.r, cube.props.color.g, cube.props.color.b),
     });
     this.mesh = new THREE.Mesh(ThreeJSCube.boxGeometry, this.material);
+    this.mesh.castShadow = cube.props.castShadows;
     this.mesh.receiveShadow = true;
     this.cube.getContainer().add(this.mesh);
   }

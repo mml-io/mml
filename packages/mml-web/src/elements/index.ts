@@ -1,8 +1,9 @@
 // export * from "./Audio";
-// export * from "./Cylinder";
+export * from "./Cylinder";
 export * from "./Model";
 // export * from "./Character";
 export * from "./Cube";
+export * from "./Sphere";
 // export * from "./Frame";
 export * from "./Group";
 // export * from "./Image";

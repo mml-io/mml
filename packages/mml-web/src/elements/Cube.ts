@@ -47,7 +47,7 @@ export class Cube extends TransformableElement {
       defaultCubeColor,
       (newValue: MMLColor) => {
         this.props.color = newValue;
-        this.cubeGraphics!.setColor(newValue, this.props);
+        this.cubeGraphics?.setColor(newValue, this.props);
       },
     ],
     width: [
@@ -55,7 +55,7 @@ export class Cube extends TransformableElement {
       defaultCubeWidth,
       (newValue: number) => {
         this.props.width = newValue;
-        this.cubeGraphics!.setWidth(newValue, this.props);
+        this.cubeGraphics?.setWidth(newValue, this.props);
         this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
@@ -65,7 +65,7 @@ export class Cube extends TransformableElement {
       defaultCubeHeight,
       (newValue: number) => {
         this.props.height = newValue;
-        this.cubeGraphics!.setHeight(newValue, this.props);
+        this.cubeGraphics?.setHeight(newValue, this.props);
         this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
@@ -75,7 +75,7 @@ export class Cube extends TransformableElement {
       defaultCubeDepth,
       (newValue: number) => {
         this.props.depth = newValue;
-        this.cubeGraphics!.setDepth(newValue, this.props);
+        this.cubeGraphics?.setDepth(newValue, this.props);
         this.applyBounds();
         this.collideableHelper.updateCollider(this.mesh);
       },
@@ -85,7 +85,7 @@ export class Cube extends TransformableElement {
       defaultCubeOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        this.cubeGraphics!.setOpacity(newValue, this.props);
+        this.cubeGraphics?.setOpacity(newValue, this.props);
       },
     ],
   });
@@ -124,7 +124,7 @@ export class Cube extends TransformableElement {
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultCubeCastShadows);
-      instance.cubeGraphics!.setCastShadows(instance.props.castShadows, instance.props);
+      instance.cubeGraphics?.setCastShadows(instance.props.castShadows, instance.props);
     },
   });
   private cubeGraphics?: CubeGraphics;
@@ -212,6 +212,7 @@ export class Cube extends TransformableElement {
   }
 
   public disconnectedCallback(): void {
+    console.log("Cube disconnected");
     this.collideableHelper.removeColliders();
     this.cubeGraphics?.dispose();
     this.cubeGraphics = undefined;

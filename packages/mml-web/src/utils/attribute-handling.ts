@@ -1,6 +1,6 @@
-import * as playcanvas from "playcanvas";
-
 import { colors } from "./colors";
+import { hslToRGB } from "../color-utils";
+import { MMLColor } from "../MMLGraphicsInterface";
 
 export type AttributeHandlerMap<T> = {
   [key: string]: (instance: T, newValue: string | null) => void;
@@ -27,67 +27,95 @@ export class AttributeHandler<T> {
   }
 }
 
+export function parseColorAttribute(value: string | null, defaultValue: null): MMLColor | null;
+export function parseColorAttribute(value: string | null, defaultValue: MMLColor): MMLColor;
 export function parseColorAttribute(
   value: string | null,
-  defaultValue: null,
-): playcanvas.Color | null;
-export function parseColorAttribute(
-  value: string | null,
-  defaultValue: playcanvas.Color,
-): playcanvas.Color;
-export function parseColorAttribute(
-  value: string | null,
-  defaultValue: playcanvas.Color | null,
-): playcanvas.Color | null {
+  defaultValue: MMLColor | null,
+): MMLColor | null {
   return parseAttribute(value, defaultValue, (value) => {
-    // special case for hsl/hsla to change the behaviour at extremes such that animations can differentiate (and therefore lerp) between 0 and 360 degrees, and 0-1 lightness and saturation
-    const m = /^(hsl|hsla)\(([^)]*)\)/.exec(value);
-    if (m) {
-      // rgb / hsl
+    const colorNameValues = colors[value];
+    if (colorNameValues) {
+      return {
+        r: colorNameValues[0],
+        g: colorNameValues[1],
+        b: colorNameValues[2],
+      };
+    }
 
-      const components = m[2];
-      const color =
-        /^\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)%\s*,\s*(\d*\.?\d+)%\s*(?:,\s*(\d*\.?\d+)\s*)?$/.exec(
-          components,
-        );
-      if (color) {
-        // hsl(120,50%,50%) hsla(120,50%,50%,0.5)
-        let h = parseFloat(color[1]) / 360;
-        if (h === 0) {
-          h = 0.00001;
-        } else if (h === 1) {
-          h = 0.99999;
-        }
-        let s = parseFloat(color[2]) / 100;
-        if (s === 0) {
-          s = 0.00001;
-        } else if (s === 1) {
-          s = 0.99999;
-        }
-        let l = parseFloat(color[3]) / 100;
-        if (l === 0) {
-          l = 0.00001;
-        } else if (l === 1) {
-          l = 0.99999;
-        }
-        return new playcanvas.Color().setHSL(h, s, l, THREE.SRGBColorSpace);
+    if (value.length === 7) {
+      const hex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(value);
+      if (hex) {
+        // e.g. #ff00ff
+        return {
+          r: parseInt(hex[1], 16),
+          g: parseInt(hex[2], 16),
+          b: parseInt(hex[3], 16),
+        };
       }
     }
 
-    const colorNameValues = colors[value];
-    if (colorNameValues) {
-      return new playcanvas.Color(colorNameValues);
+    if (value.length === 4) {
+      const hex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(value);
+      if (hex) {
+        // e.g. #f0f
+        return {
+          r: parseInt(hex[1] + hex[1], 16),
+          g: parseInt(hex[2] + hex[2], 16),
+          b: parseInt(hex[3] + hex[3], 16),
+        };
+      }
     }
 
-    if (
-      // TODO - handle color parsing
-      (value.indexOf("#") === 0 && value.length === 7) ||
-      (value.indexOf("#") === 0 && value.length === 4) ||
-      (value.indexOf("hsl(") === 0 && value.indexOf(")") === value.length - 1) ||
-      (value.indexOf("rgb(") === 0 && value.indexOf(")") === value.length - 1) ||
-      (value.indexOf("rgba(") === 0 && value.indexOf(")") === value.length - 1)
-    ) {
-      return new playcanvas.Color(value);
+    if (value.indexOf("rgb(") === 0) {
+      const rgb = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(value);
+      if (rgb) {
+        // e.g. rgb(255,0,255)
+        return {
+          r: parseInt(rgb[1], 10) / 255,
+          g: parseInt(rgb[2], 10) / 255,
+          b: parseInt(rgb[3], 10) / 255,
+        };
+      }
+    }
+
+    if (value.indexOf("rgba(") === 0) {
+      const rgba = /^rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d*\.?\d+)\)$/.exec(value);
+      if (rgba) {
+        // e.g. rgba(255,0,255,0.5)
+        return {
+          r: parseInt(rgba[1], 10) / 255,
+          g: parseInt(rgba[2], 10) / 255,
+          b: parseInt(rgba[3], 10) / 255,
+          a: parseFloat(rgba[4]),
+        };
+      }
+    }
+
+    console.log(value);
+    if (value.indexOf("hsl(") === 0) {
+      const hsl = /^hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)$/.exec(value);
+      if (hsl) {
+        console.log(hsl);
+        // e.g. hsl(300, 100%, 50%)
+        return hslToRGB(
+          parseInt(hsl[1], 10) / 360,
+          parseInt(hsl[2], 10) / 100,
+          parseInt(hsl[3], 10) / 100,
+        );
+      }
+    }
+
+    if (value.indexOf("hsla(") === 0) {
+      const hsla = /^hsla\((\d+),\s*(\d+)%,\s*(\d+)%,\s*(\d*\.?\d+)\)$/.exec(value);
+      if (hsla) {
+        // e.g. hsla(300, 100%, 50%, 0.5)
+        return hslToRGB(
+          parseInt(hsla[1], 10) / 360,
+          parseInt(hsla[2], 10) / 100,
+          parseInt(hsla[3], 10) / 100,
+        );
+      }
     }
     return null;
   });
