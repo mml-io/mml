@@ -1,8 +1,10 @@
 import {
+  Audio,
   Cube,
   Light,
-  LightProps,
+  MLightProps,
   LightTypes,
+  MAudioProps,
   MCubeProps,
   MElement,
   MModelProps,
@@ -93,6 +95,28 @@ export abstract class ImageGraphics {
   abstract dispose(): void;
 }
 
+export abstract class AudioGraphics {
+  constructor(element: Audio) {}
+
+  abstract enable(): void;
+  abstract disable(): void;
+
+  abstract setSrc(src: string | null, mAudioProps: MAudioProps): void;
+  abstract setStartTime(startTime: number, mAudioProps: MAudioProps): void;
+  abstract setPauseTime(pauseTime: number | null, mAudioProps: MAudioProps): void;
+  abstract setLoopDuration(loopDuration: number | null, mAudioProps: MAudioProps): void;
+  abstract setLoop(loop: boolean, mAudioProps: MAudioProps): void;
+  abstract setEnabled(enabled: boolean, mAudioProps: MAudioProps): void;
+  abstract setVolume(volume: number, mAudioProps: MAudioProps): void;
+  abstract setConeAngle(coneAngle: number | null, mAudioProps: MAudioProps): void;
+  abstract setConeFalloffAngle(coneFalloffAngle: number | null, mAudioProps: MAudioProps): void;
+  abstract setDebug(debug: boolean, mAudioProps: MAudioProps): void;
+
+  abstract syncAudioTime(): void;
+
+  abstract dispose(): void;
+}
+
 export abstract class DebugHelperGraphics {
   constructor(debugHelper: DebugHelper) {}
 
@@ -166,14 +190,14 @@ export abstract class LightGraphics {
   abstract enable(): void;
   abstract disable(): void;
 
-  abstract setEnabled(enabled: boolean, mLightProps: LightProps): void;
-  abstract setDebug(debug: boolean, mLightProps: LightProps): void;
-  abstract setCastShadow(castShadow: boolean, mLightProps: LightProps): void;
-  abstract setAngle(angle: number, mLightProps: LightProps): void;
-  abstract setIntensity(intensity: number, mLightProps: LightProps): void;
-  abstract setDistance(distance: number, mLightProps: LightProps): void;
-  abstract setType(type: LightTypes, mLightProps: LightProps): void;
-  abstract setColor(color: MMLColor, mLightProps: LightProps): void;
+  abstract setEnabled(enabled: boolean, mLightProps: MLightProps): void;
+  abstract setDebug(debug: boolean, mLightProps: MLightProps): void;
+  abstract setCastShadow(castShadow: boolean, mLightProps: MLightProps): void;
+  abstract setAngle(angle: number, mLightProps: MLightProps): void;
+  abstract setIntensity(intensity: number, mLightProps: MLightProps): void;
+  abstract setDistance(distance: number, mLightProps: MLightProps): void;
+  abstract setType(type: LightTypes, mLightProps: MLightProps): void;
+  abstract setColor(color: MMLColor, mLightProps: MLightProps): void;
 
   abstract dispose(): void;
 }
@@ -184,6 +208,7 @@ export interface MMLGraphicsInterface<C> {
   MElementGraphicsInterface: new (element: MElement) => MElementGraphics<C>;
   MMLTransformableGraphicsInterface: new (element: TransformableElement) => TransformableGraphics;
   MMLImageGraphicsInterface: new (element: Image) => ImageGraphics;
+  MMLAudioGraphicsInterface: new (element: Audio) => AudioGraphics;
   MMLCubeGraphicsInterface: new (element: Cube) => CubeGraphics;
   MMLPlaneGraphicsInterface: new (element: Plane) => PlaneGraphics;
   MMLSphereGraphicsInterface: new (element: Sphere) => SphereGraphics;

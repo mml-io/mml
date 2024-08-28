@@ -26,7 +26,7 @@ const defaultLightDistance = 0;
 const defaultLightCastShadow = true;
 const defaultLightType = LightTypes.spotlight;
 
-export type LightProps = {
+export type MLightProps = {
   color: MMLColor;
   intensity: number;
   enabled: boolean;

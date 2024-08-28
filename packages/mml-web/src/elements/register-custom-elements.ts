@@ -1,4 +1,5 @@
 import { AttributeAnimation } from "./AttributeAnimation";
+import { Audio } from "./Audio";
 import { Cube } from "./Cube";
 import { Cylinder } from "./Cylinder";
 import { Group } from "./Group";
@@ -28,7 +29,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Sphere.tagName, Sphere);
   targetWindow.customElements.define(Image.tagName, Image);
   // targetWindow.customElements.define(Video.tagName, Video);
-  // targetWindow.customElements.define(Audio.tagName, Audio);
+  targetWindow.customElements.define(Audio.tagName, Audio);
   // targetWindow.customElements.define(PositionProbe.tagName, PositionProbe);
   // targetWindow.customElements.define(ChatProbe.tagName, ChatProbe);
   // targetWindow.customElements.define(Interaction.tagName, Interaction);

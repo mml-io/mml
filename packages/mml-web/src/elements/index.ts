@@ -1,4 +1,4 @@
-// export * from "./Audio";
+export * from "./Audio";
 export * from "./Cylinder";
 export * from "./Model";
 // export * from "./Character";

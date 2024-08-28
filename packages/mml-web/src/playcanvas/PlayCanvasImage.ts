@@ -1,6 +1,6 @@
 import * as playcanvas from "playcanvas";
 
-import { Image, MELEMENT_PROPERTY_NAME, MImageProps, MImageProps } from "../elements";
+import { Image, MELEMENT_PROPERTY_NAME, MImageProps } from "../elements";
 import { LoadingInstanceManager } from "../loading";
 import { ImageGraphics } from "../MMLGraphicsInterface";
 import { calculateContentSize } from "../utils/calculateContentSize";
@@ -75,38 +75,24 @@ export class PlayCanvasImage extends ImageGraphics {
 
   setSrc(src: string | null, mImageProps: MImageProps): void {
     console.log("setSrc", src);
-    const playcanvasEntity = this.image.getContainer() as playcanvas.Entity;
     if (this.loadedState !== null) {
-      // this.collideableHelper.removeColliders();
-      playcanvasEntity.removeComponent("render");
-      playcanvasEntity.removeComponent("collision");
+      this.loadedState.asset.unload();
       this.loadedState = null;
-      // if (this.registeredParentAttachment) {
-      //   this.registeredParentAttachment.unregisterAttachment(this);
-      //   this.registeredParentAttachment = null;
-      // }
-      // this.applyBounds();
     }
     if (!src) {
       this.srcLoadingInstanceManager.abortIfLoading();
-      // this.socketChildrenByBone.forEach((children) => {
-      //   children.forEach((child) => {
-      //     this.getContainer().addChild(child.getContainer());
-      //   });
-      // });
-      // this.applyBounds();
       return;
     }
 
     const contentSrc = this.image.contentSrcToContentAddress(src);
-    const srcModelPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
+    const srcImagePromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
       this.srcLoadingInstanceManager.setProgress(loaded / total);
     });
     this.srcLoadingInstanceManager.start(this.image.getLoadingProgressManager(), contentSrc);
-    this.latestSrcImagePromise = srcModelPromise;
-    srcModelPromise
+    this.latestSrcImagePromise = srcImagePromise;
+    srcImagePromise
       .then((asset) => {
-        if (this.latestSrcImagePromise !== srcModelPromise || !this.image.isConnected) {
+        if (this.latestSrcImagePromise !== srcImagePromise || !this.image.isConnected) {
           // TODO
           // If we've loaded a different image since, or we're no longer connected, dispose of this one
           return;
@@ -148,7 +134,7 @@ export class PlayCanvasImage extends ImageGraphics {
     this.material.update();
   }
 
-  async asyncLoadSourceAsset(
+  private async asyncLoadSourceAsset(
     url: string,
     onProgress: (loaded: number, total: number) => void,
   ): Promise<playcanvas.Asset> {

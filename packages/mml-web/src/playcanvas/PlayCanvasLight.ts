@@ -1,6 +1,6 @@
 import * as playcanvas from "playcanvas";
 
-import { Light, LightProps, LightTypes } from "../elements";
+import { Light, LightTypes, MLightProps } from "../elements";
 import { LightGraphics, MMLColor } from "../MMLGraphicsInterface";
 
 const lightIntensityFactor = 1 / 800;
@@ -52,17 +52,17 @@ export class PlayCanvasLight extends LightGraphics {
 
   enable(): void {}
 
-  setEnabled(enabled: boolean, lightProps: LightProps): void {
+  setEnabled(enabled: boolean, lightProps: MLightProps): void {
     // TODO
     // this.threeLight.visible = enabled;
   }
 
-  setCastShadow(castShadow: boolean, mLightProps: LightProps) {
+  setCastShadow(castShadow: boolean, mLightProps: MLightProps) {
     // TODO
     // this.threeLight.castShadow = castShadow;
   }
 
-  setAngle(angle: number, mLightProps: LightProps) {
+  setAngle(angle: number, mLightProps: MLightProps) {
     if (this.lightComponent.type !== "spot") {
       return;
     }
@@ -70,23 +70,23 @@ export class PlayCanvasLight extends LightGraphics {
     this.lightComponent.outerConeAngle = angle;
   }
 
-  setIntensity(intensity: number, mLightProps: LightProps) {
+  setIntensity(intensity: number, mLightProps: MLightProps) {
     this.lightComponent.intensity = intensity * lightIntensityFactor;
   }
 
-  setDistance(distance: number, mLightProps: LightProps) {
+  setDistance(distance: number, mLightProps: MLightProps) {
     // TODO
   }
 
-  setType(type: LightTypes, lightProps: LightProps): void {
+  setType(type: LightTypes, lightProps: MLightProps): void {
     this.createLight();
   }
 
-  setDebug(debug: boolean, lightProps: LightProps): void {
+  setDebug(debug: boolean, lightProps: MLightProps): void {
     // TODO
   }
 
-  setColor(color: MMLColor, lightProps: LightProps): void {
+  setColor(color: MMLColor, lightProps: MLightProps): void {
     console.log("color", color);
     this.lightComponent.color.set(color.r, color.g, color.b);
     this.lightComponent.refreshProperties();

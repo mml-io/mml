@@ -135,6 +135,11 @@ export class StandaloneThreeJSAdapter implements GraphicsAdapter {
     };
   }
 
+  // TODO - this should be on an interface that is present even when not in standalone mode
+  public getAudioListener() {
+    return this.audioListener;
+  }
+
   resize(width: number, height: number) {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();

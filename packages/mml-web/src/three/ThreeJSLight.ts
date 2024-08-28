@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { Light, LightProps, LightTypes } from "../elements";
+import { Light, MLightProps, LightTypes } from "../elements";
 import { LightGraphics, MMLColor } from "../MMLGraphicsInterface";
 
 declare type LightHelper = THREE.PointLightHelper | THREE.SpotLightHelper;
@@ -101,37 +101,37 @@ export class ThreeJSLight extends LightGraphics {
 
   enable(): void {}
 
-  setEnabled(enabled: boolean, lightProps: LightProps): void {
+  setEnabled(enabled: boolean, lightProps: MLightProps): void {
     this.threeLight.visible = enabled;
     if (this.threeLightHelper) {
       this.threeLightHelper.visible = enabled;
     }
   }
 
-  setCastShadow(castShadow: boolean, mLightProps: LightProps) {
+  setCastShadow(castShadow: boolean, mLightProps: MLightProps) {
     this.threeLight.castShadow = castShadow;
   }
 
-  setAngle(angle: number, mLightProps: LightProps) {
+  setAngle(angle: number, mLightProps: MLightProps) {
     if (this.threeLight instanceof THREE.SpotLight) {
       (this.threeLight as THREE.SpotLight).angle = THREE.MathUtils.degToRad(angle);
     }
   }
 
-  setIntensity(intensity: number, mLightProps: LightProps) {
+  setIntensity(intensity: number, mLightProps: MLightProps) {
     this.threeLight.intensity = intensity;
   }
 
-  setDistance(distance: number, mLightProps: LightProps) {
+  setDistance(distance: number, mLightProps: MLightProps) {
     console.log("setDistance", distance);
     this.threeLight.distance = distance;
   }
 
-  setType(type: LightTypes, lightProps: LightProps): void {
+  setType(type: LightTypes, lightProps: MLightProps): void {
     this.createLight();
   }
 
-  setDebug(debug: boolean, lightProps: LightProps): void {
+  setDebug(debug: boolean, lightProps: MLightProps): void {
     if (debug && !this.threeLightHelper) {
       this.makeLightHelper();
     } else if (!debug && this.threeLightHelper) {
@@ -140,7 +140,7 @@ export class ThreeJSLight extends LightGraphics {
     }
   }
 
-  setColor(color: MMLColor, lightProps: LightProps): void {
+  setColor(color: MMLColor, lightProps: MLightProps): void {
     this.threeLight.color.set(color.r, color.g, color.b);
     if (this.threeLightHelper) {
       this.threeLightHelper.color.set(color.r, color.g, color.b);

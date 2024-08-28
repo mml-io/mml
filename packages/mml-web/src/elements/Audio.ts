@@ -1,6 +1,7 @@
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
+import { AudioGraphics } from "../MMLGraphicsInterface";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -8,9 +9,6 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-
-const audioRefDistance = 1;
-const audioRolloffFactor = 1;
 
 const defaultAudioVolume = 1;
 const defaultAudioLoop = true;
@@ -26,8 +24,36 @@ function clampAudioConeAngle(angle: number) {
   return Math.max(Math.min(angle, 360), 0);
 }
 
+export type MAudioProps = {
+  src: string | null;
+  startTime: number;
+  pauseTime: number | null;
+  loop: boolean;
+  loopDuration: number | null;
+  enabled: boolean;
+  volume: number;
+  coneAngle: number;
+  coneFalloffAngle: number | null;
+  debug: boolean;
+};
+
 export class Audio extends TransformableElement {
   static tagName = "m-audio";
+
+  public props: MAudioProps = {
+    src: defaultAudioSrc as string | null,
+    startTime: defaultAudioStartTime,
+    pauseTime: defaultAudioPauseTime as number | null,
+    loop: defaultAudioLoop,
+    loopDuration: null,
+    enabled: defaultAudioEnabled,
+    volume: defaultAudioVolume,
+    coneAngle: defaultAudioInnerConeAngle,
+    coneFalloffAngle: defaultAudioOuterConeAngle as number | null,
+    debug: false,
+  };
+
+  private audioGraphics: AudioGraphics | null = null;
 
   private audioAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     volume: [
@@ -35,101 +61,58 @@ export class Audio extends TransformableElement {
       defaultAudioVolume,
       (newValue: number) => {
         this.props.volume = newValue;
-        if (this.loadedAudioState) {
-          this.loadedAudioState?.positionalAudio.setVolume(this.props.volume);
-        }
+        this.audioGraphics?.setVolume(newValue, this.props);
       },
     ],
     "cone-angle": [
       AnimationType.Number,
       defaultAudioInnerConeAngle,
       (newValue: number | null) => {
-        this.props.innerCone = newValue === null ? null : clampAudioConeAngle(newValue);
-
-        if (this.loadedAudioState) {
-          this.loadedAudioState.positionalAudio.setDirectionalCone(
-            this.props.innerCone ?? defaultAudioInnerConeAngle,
-            this.props.outerCone ?? defaultAudioOuterConeAngle,
-            0,
-          );
-        }
-
-        this.updateDebugVisualisation();
+        this.props.coneAngle =
+          newValue === null ? defaultAudioInnerConeAngle : clampAudioConeAngle(newValue);
+        this.audioGraphics?.setConeAngle(this.props.coneAngle, this.props);
       },
     ],
     "cone-falloff-angle": [
       AnimationType.Number,
       defaultAudioOuterConeAngle,
       (newValue: number) => {
-        this.props.outerCone = clampAudioConeAngle(newValue);
-        if (this.loadedAudioState) {
-          this.loadedAudioState.positionalAudio.setDirectionalCone(
-            this.props.innerCone ?? defaultAudioInnerConeAngle,
-            this.props.outerCone,
-            0,
-          );
-
-          this.updateDebugVisualisation();
-        }
+        this.props.coneFalloffAngle = clampAudioConeAngle(newValue);
+        this.audioGraphics?.setConeFalloffAngle(this.props.coneFalloffAngle, this.props);
       },
     ],
   });
 
   private documentTimeListener: { remove: () => void };
-  private delayedStartTimer: NodeJS.Timeout | null = null;
-  private delayedPauseTimer: NodeJS.Timeout | null = null;
-  private audioDebugHelper: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
-  private audioDebugConeX: PositionalAudioHelper | null;
-  private audioDebugConeY: PositionalAudioHelper | null;
 
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes, ...Audio.attributeHandler.getAttributes()];
   }
 
-  private positionalAudio: THREE.PositionalAudio;
-
-  private loadedAudioState: {
-    paused: boolean;
-    audioElement: HTMLAudioElement;
-    positionalAudio: THREE.PositionalAudio;
-  } | null = null;
-
-  private props = {
-    startTime: defaultAudioStartTime,
-    pauseTime: defaultAudioPauseTime as number | null,
-    src: defaultAudioSrc as string | null,
-    loop: defaultAudioLoop,
-    enabled: defaultAudioEnabled,
-    volume: defaultAudioVolume,
-    innerCone: null as number | null,
-    outerCone: defaultAudioOuterConeAngle,
-    debug: false,
-  };
-
   private static attributeHandler = new AttributeHandler<Audio>({
     enabled: (instance, newValue) => {
       instance.props.enabled = parseBoolAttribute(newValue, defaultAudioEnabled);
-      instance.updateAudio();
+      instance.audioGraphics?.setEnabled(instance.props.enabled, instance.props);
     },
     loop: (instance, newValue) => {
       instance.props.loop = parseBoolAttribute(newValue, defaultAudioLoop);
-      instance.updateAudio();
+      instance.audioGraphics?.setLoop(instance.props.loop, instance.props);
+    },
+    "loop-duration": (instance, newValue) => {
+      instance.props.loopDuration = parseFloatAttribute(newValue, null);
+      instance.audioGraphics?.setLoopDuration(instance.props.loopDuration, instance.props);
     },
     "start-time": (instance, newValue) => {
       instance.props.startTime = parseFloatAttribute(newValue, defaultAudioStartTime);
-      if (instance.loadedAudioState) {
-        instance.syncAudioTime();
-      }
+      instance.audioGraphics?.setStartTime(instance.props.startTime, instance.props);
     },
     "pause-time": (instance, newValue) => {
       instance.props.pauseTime = parseFloatAttribute(newValue, defaultAudioPauseTime);
-      if (instance.loadedAudioState) {
-        instance.syncAudioTime();
-      }
+      instance.audioGraphics?.setPauseTime(instance.props.pauseTime, instance.props);
     },
     src: (instance, newValue) => {
       instance.props.src = newValue;
-      instance.updateAudio();
+      instance.audioGraphics?.setSrc(newValue, instance.props);
     },
     volume: (instance, newValue) => {
       instance.audioAnimatedAttributeHelper.elementSetAttribute(
@@ -151,7 +134,7 @@ export class Audio extends TransformableElement {
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, defaultAudioDebug);
-      instance.updateDebugVisualisation();
+      instance.audioGraphics?.setDebug(instance.props.debug, instance.props);
     },
   });
 
@@ -160,11 +143,11 @@ export class Audio extends TransformableElement {
   }
 
   protected enable() {
-    this.syncAudioTime();
+    this.audioGraphics?.syncAudioTime();
   }
 
   protected disable() {
-    this.syncAudioTime();
+    this.audioGraphics?.syncAudioTime();
   }
 
   protected getContentBounds(): OrientedBoundingBox | null {
@@ -204,218 +187,8 @@ export class Audio extends TransformableElement {
     Audio.attributeHandler.handle(this, name, newValue);
   }
 
-  private syncAudioTime() {
-    if (this.delayedStartTimer) {
-      clearTimeout(this.delayedStartTimer);
-      this.delayedStartTimer = null;
-    }
-
-    if (!this.props.src) {
-      return;
-    }
-
-    if (this.loadedAudioState) {
-      const audioTag = this.loadedAudioState.audioElement;
-
-      if (audioTag.readyState === 0) {
-        return;
-      }
-
-      if (!this.props.enabled || this.isDisabled()) {
-        this.loadedAudioState.paused = true;
-        audioTag.pause();
-        return;
-      } else {
-        this.loadedAudioState.paused = false;
-      }
-
-      const documentTime = this.getDocumentTime();
-
-      if (this.delayedPauseTimer !== null) {
-        clearTimeout(this.delayedPauseTimer);
-        this.delayedPauseTimer = null;
-      }
-
-      if (this.props.pauseTime !== null) {
-        if (documentTime !== null && this.props.pauseTime > documentTime) {
-          // The pause time is in the future
-          const delayedPauseTimer = setTimeout(() => {
-            if (this.delayedPauseTimer === delayedPauseTimer) {
-              this.delayedPauseTimer = null;
-            }
-            this.syncAudioTime();
-          }, this.props.pauseTime - documentTime);
-          this.delayedPauseTimer = delayedPauseTimer;
-        } else {
-          // The audio should be paused because the pauseTime is in the past
-          let totalPlaybackTime = (this.props.pauseTime - this.props.startTime) / 1000.0;
-          if (totalPlaybackTime < 0) {
-            // The pauseTime is before the startTime - set the audio's time to zero (i.e. unplayed)
-            totalPlaybackTime = 0;
-          }
-          if (this.props.loop) {
-            totalPlaybackTime = totalPlaybackTime % audioTag.duration;
-          } else if (totalPlaybackTime > audioTag.duration) {
-            totalPlaybackTime = audioTag.duration;
-          }
-          this.loadedAudioState.paused = true;
-          audioTag.pause();
-          audioTag.currentTime = totalPlaybackTime;
-          return;
-        }
-      }
-
-      let currentTime: number;
-      if (documentTime) {
-        currentTime = (documentTime - this.props.startTime) / 1000;
-      } else {
-        currentTime = (this.props.startTime ? this.props.startTime : 0) / 1000;
-      }
-      let desiredAudioTime;
-      if (currentTime < 0) {
-        // The audio should not start yet
-        audioTag.currentTime = 0;
-        this.loadedAudioState.paused = true;
-        audioTag.pause();
-        const delayedStartTimer = setTimeout(() => {
-          if (this.delayedStartTimer === delayedStartTimer) {
-            this.delayedStartTimer = null;
-          }
-          this.syncAudioTime();
-        }, -currentTime * 1000);
-        this.delayedStartTimer = delayedStartTimer;
-        return;
-      } else if (this.props.loop) {
-        desiredAudioTime = currentTime % audioTag.duration;
-      } else {
-        desiredAudioTime = currentTime;
-      }
-
-      let delta = desiredAudioTime - audioTag.currentTime;
-      if (this.props.loop) {
-        // Check if the delta wrapping around is smaller (i.e. the desired and current are closer together if we wrap around)
-        const loopedDelta = delta - audioTag.duration;
-        if (Math.abs(delta) > Math.abs(loopedDelta)) {
-          delta = loopedDelta;
-        }
-      }
-
-      if (Math.abs(delta) < 0.1) {
-        // Do nothing - this is close enough - set the playback rate to 1
-        audioTag.playbackRate = 1;
-      } else if (Math.abs(delta) > 0.5) {
-        audioTag.currentTime = desiredAudioTime;
-        audioTag.playbackRate = 1;
-      } else {
-        if (delta > 0) {
-          audioTag.playbackRate = 1.02;
-        } else {
-          audioTag.playbackRate = 0.98;
-        }
-      }
-
-      if (desiredAudioTime >= audioTag.duration) {
-        this.loadedAudioState.paused = true;
-        audioTag.pause();
-      } else {
-        this.loadedAudioState.paused = false;
-
-        const audioListener = this.getAudioListener();
-        const audioContext = audioListener.context;
-        if (audioContext.state === "running") {
-          audioTag.play().catch((e) => {
-            console.error("failed to play", e);
-          });
-        }
-      }
-    }
-  }
-
   private documentTimeChanged() {
-    if (this.loadedAudioState) {
-      this.syncAudioTime();
-    }
-  }
-
-  private updateAudio() {
-    if (!this.isConnected) {
-      return;
-    }
-
-    const audioListener = this.getAudioListener();
-    const audioContext = audioListener.context;
-
-    if (!this.loadedAudioState) {
-      const audio = document.createElement("audio");
-      audio.addEventListener("pause", () => {
-        if (this.loadedAudioState?.paused) {
-          // Pause is intentional
-          return;
-        }
-        // The audio was likely paused (unintentionally) by the user using system controls
-        this.syncAudioTime();
-      });
-
-      this.positionalAudio = new THREE.PositionalAudio(audioListener);
-      this.positionalAudio.setMediaElementSource(audio);
-      this.positionalAudio.setVolume(this.props.volume);
-      this.positionalAudio.setDirectionalCone(
-        this.props.innerCone ?? defaultAudioInnerConeAngle,
-        this.props.outerCone,
-        0,
-      );
-      this.positionalAudio.setRefDistance(audioRefDistance);
-      this.positionalAudio.setRolloffFactor(audioRolloffFactor);
-
-      this.loadedAudioState = {
-        paused: false,
-        audioElement: audio,
-        positionalAudio: this.positionalAudio,
-      };
-
-      this.getContainer().addChild(this.positionalAudio);
-    }
-
-    const tag = this.loadedAudioState.audioElement;
-    if (!this.props.src) {
-      if (!tag.paused) {
-        this.loadedAudioState.paused = true;
-        tag.pause();
-        tag.src = "";
-        tag.remove();
-        this.positionalAudio.disconnect();
-        this.positionalAudio.remove();
-        this.loadedAudioState = null;
-      }
-    } else {
-      tag.autoplay = true;
-      tag.crossOrigin = "anonymous";
-      tag.loop = this.props.loop;
-
-      const contentAddress = this.contentSrcToContentAddress(this.props.src);
-      if (tag.src !== contentAddress) {
-        if (tag.src) {
-          // There is an existing src - stop playing to allow changing it
-          this.loadedAudioState.paused = true;
-          tag.pause();
-        }
-
-        try {
-          tag.src = contentAddress;
-        } catch (e) {
-          console.error("src failed to switch", e);
-        }
-      }
-
-      audioContext.addEventListener("statechange", () => {
-        this.syncAudioTime();
-      });
-      tag.addEventListener("loadeddata", () => {
-        this.syncAudioTime();
-      });
-    }
-
-    this.syncAudioTime();
+    this.audioGraphics?.syncAudioTime();
   }
 
   connectedCallback(): void {
@@ -424,66 +197,20 @@ export class Audio extends TransformableElement {
       this.documentTimeChanged();
     });
 
-    this.updateAudio();
-    this.updateDebugVisualisation();
+    this.audioGraphics =
+      new (this.getScene().getGraphicsAdapterFactory().MMLAudioGraphicsInterface)(this);
+
+    for (const name of Audio.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
   }
 
   disconnectedCallback() {
-    if (this.loadedAudioState) {
-      this.loadedAudioState.paused = true;
-      this.loadedAudioState.audioElement.pause();
-      this.loadedAudioState.audioElement.src = "";
-      this.loadedAudioState = null;
-    }
-    if (this.delayedStartTimer) {
-      clearTimeout(this.delayedStartTimer);
-      this.delayedStartTimer = null;
-    }
-    if (this.delayedPauseTimer) {
-      clearTimeout(this.delayedPauseTimer);
-      this.delayedPauseTimer = null;
-    }
+    this.audioGraphics?.dispose();
     this.documentTimeListener.remove();
-    this.clearDebugVisualisation();
     super.disconnectedCallback();
-  }
-
-  private clearDebugVisualisation() {
-    if (this.audioDebugHelper) {
-      this.audioDebugHelper.remove();
-      this.audioDebugHelper = null;
-    }
-    if (this.audioDebugConeX) {
-      this.audioDebugConeX.remove();
-      this.audioDebugConeX = null;
-      this.audioDebugConeY?.remove();
-      this.audioDebugConeY = null;
-    }
-  }
-
-  private updateDebugVisualisation() {
-    if (!this.props.debug) {
-      this.clearDebugVisualisation();
-    } else {
-      if (!this.audioDebugHelper) {
-        this.audioDebugHelper = new THREE.Mesh(debugAudioGeometry, debugAudioMaterial);
-        this.getContainer().addChild(this.audioDebugHelper);
-      }
-      if (!this.audioDebugConeX && this.props.innerCone) {
-        this.audioDebugConeX = new PositionalAudioHelper(this.positionalAudio, 10);
-        this.positionalAudio.add(this.audioDebugConeX);
-        this.audioDebugConeY = new PositionalAudioHelper(this.positionalAudio, 10);
-        this.audioDebugConeY.rotation.z = Math.PI / 2;
-        this.positionalAudio.add(this.audioDebugConeY);
-      }
-      if (!this.props.innerCone && this.audioDebugConeX) {
-        this.audioDebugConeX.remove();
-        this.audioDebugConeX = null;
-        this.audioDebugConeY?.remove();
-        this.audioDebugConeY = null;
-      }
-    }
-    this.audioDebugConeX?.update();
-    this.audioDebugConeY?.update();
   }
 }

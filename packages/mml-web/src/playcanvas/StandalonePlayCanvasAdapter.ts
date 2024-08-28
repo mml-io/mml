@@ -60,8 +60,10 @@ export class StandalonePlayCanvasAdapter implements GraphicsAdapter {
       twgslUrl: "http://localhost:7079/assets/twgsl.js",
     };
 
+    const soundManager = new playcanvas.SoundManager();
     const device = await playcanvas.createGraphicsDevice(this.canvas, gfxOptions);
     const createOptions = new playcanvas.AppOptions();
+    createOptions.soundManager = soundManager;
     createOptions.graphicsDevice = device;
     createOptions.componentSystems = [
       playcanvas.RenderComponentSystem,
@@ -70,8 +72,11 @@ export class StandalonePlayCanvasAdapter implements GraphicsAdapter {
       playcanvas.CameraComponentSystem,
       playcanvas.LightComponentSystem,
       playcanvas.ModelComponentSystem,
+      playcanvas.SoundComponentSystem,
+      playcanvas.AudioListenerComponentSystem,
     ];
     createOptions.resourceHandlers = [
+      playcanvas.AudioHandler,
       playcanvas.TextureHandler,
       playcanvas.ContainerHandler,
       playcanvas.ModelHandler,
@@ -80,6 +85,7 @@ export class StandalonePlayCanvasAdapter implements GraphicsAdapter {
     this.playcanvasApp.setCanvasFillMode(playcanvas.FILLMODE_FILL_WINDOW);
     this.playcanvasApp.setCanvasResolution(playcanvas.RESOLUTION_AUTO);
     this.camera = new playcanvas.Entity("camera");
+    this.camera.addComponent("audiolistener");
     this.camera.addComponent("camera", {
       fov: 75,
       clearColor: new playcanvas.Color(1, 1, 1),

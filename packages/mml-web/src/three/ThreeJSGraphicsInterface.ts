@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+import { ThreeJSAudio } from "./ThreeJSAudio";
 import { ThreeJSCube } from "./ThreeJSCube";
 import { ThreeJSCylinder } from "./ThreeJSCylinder";
 import { ThreeJSDebugHelper } from "./ThreeJSDebugHelper";
@@ -20,6 +21,7 @@ export const ThreeJSGraphicsInterface: MMLGraphicsInterface<THREE.Group> = {
   MMLSphereGraphicsInterface: ThreeJSSphere,
   MMLPlaneGraphicsInterface: ThreeJSPlane,
   MMLImageGraphicsInterface: ThreeJSImage,
+  MMLAudioGraphicsInterface: ThreeJSAudio,
   MMLCylinderGraphicsInterface: ThreeJSCylinder,
   MMLTransformableGraphicsInterface: ThreeJSTransformable,
   RemoteDocumentGraphicsInterface: ThreeJSRemoteDocument,

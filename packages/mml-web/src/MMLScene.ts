@@ -47,7 +47,7 @@ export type PromptProps = {
  * classes other than MMLScene.
  */
 export type IMMLScene = {
-  getAudioListener: () => unknown;
+  getGraphicsAdapter: () => unknown;
   getRenderer: () => unknown;
 
   getGraphicsAdapterFactory: () => MMLGraphicsInterface<unknown>;
@@ -156,20 +156,21 @@ export class MMLScene implements IMMLScene {
     }, 0);
   }
 
+  public getGraphicsAdapter(): GraphicsAdapter {
+    return this.graphicsAdapter;
+  }
+
   public getGraphicsAdapterFactory(): MMLGraphicsInterface<unknown> {
     return this.graphicsAdapter.getGraphicsAdapterFactory();
   }
 
-  public getThreeScene(): playcanvas.Scene {
+  public getThreeScene(): unknown {
     return this.threeScene;
   }
 
-  public getRenderer(): playcanvas.AppBase {
+  // TODO - playcanvas.app / three.scene?
+  public getRenderer(): unknown {
     return this.graphicsAdapter.playcanvasApp;
-  }
-
-  public getAudioListener(): playcanvas.AudioListener {
-    return this.audioListener;
   }
 
   public getRootContainer(): unknown {
