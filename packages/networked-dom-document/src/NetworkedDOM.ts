@@ -343,7 +343,11 @@ export class NetworkedDOM {
     if (parentNodeId === undefined) {
       throw new Error("Parent node ID not found");
     }
-    return this.getStaticVirtualDOMElementByInternalNodeIdOrThrow(parentNodeId);
+    const node = this.nodeIdToNode.get(parentNodeId);
+    if (!node) {
+      throw new Error("Parent node not found:" + parentNodeId);
+    }
+    return node;
   }
 
   private registerWebsocket(
