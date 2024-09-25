@@ -1,14 +1,13 @@
-import * as THREE from "three";
-
 import { MElement } from "./elements";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export type CollisionData = {
   position: { x: number; y: number; z: number };
 };
 
-export type ColliderData = {
-  collider: THREE.Object3D;
-  mElement: MElement;
+export type ColliderData<T> = {
+  collider: T;
+  mElement: MElement<GraphicsAdapter>;
   currentlyColliding: boolean;
   lastUpdate: number;
 };
@@ -19,7 +18,7 @@ export const collisionStartEventName = "collisionstart";
 export const collisionMoveEventName = "collisionmove";
 export const collisionEndEventName = "collisionend";
 
-export function getCollisionInterval(mElement: MElement): null | number {
+export function getCollisionInterval(mElement: MElement<GraphicsAdapter>): null | number {
   const collisionEventsAttr = mElement.getAttribute(collisionIntervalAttrName);
   if (collisionEventsAttr === null) {
     return null;
@@ -35,15 +34,15 @@ export function getCollisionInterval(mElement: MElement): null | number {
  * The MMLCollisionTrigger class is responsible for keeping track of which colliders the "user" (avatar) is currently
  * colliding with, and dispatches events to the elements if they are listening for collisions.
  */
-export class MMLCollisionTrigger {
-  private colliderToElementMap = new Map<THREE.Object3D, ColliderData>();
-  private currentCollidingColliders = new Set<THREE.Object3D>();
+export class MMLCollisionTrigger<T> {
+  private colliderToElementMap = new Map<T, ColliderData<T>>();
+  private currentCollidingColliders = new Set<T>();
 
-  static init(): MMLCollisionTrigger {
+  static init<T>(): MMLCollisionTrigger<T> {
     return new MMLCollisionTrigger();
   }
 
-  public setCurrentCollisions(currentCollisions: Map<THREE.Object3D, CollisionData> | null) {
+  public setCurrentCollisions(currentCollisions: Map<T, CollisionData> | null) {
     const currentTime = performance.now();
     if (currentCollisions) {
       for (const [collider, collisionData] of currentCollisions) {
@@ -106,7 +105,7 @@ export class MMLCollisionTrigger {
     }
   }
 
-  public addCollider(collider: THREE.Object3D, mElement: MElement) {
+  public addCollider(collider: T, mElement: MElement<GraphicsAdapter>) {
     this.colliderToElementMap.set(collider, {
       collider,
       currentlyColliding: false,
@@ -115,7 +114,7 @@ export class MMLCollisionTrigger {
     });
   }
 
-  public removeCollider(collider: THREE.Object3D) {
+  public removeCollider(collider: T) {
     this.colliderToElementMap.delete(collider);
     this.currentCollidingColliders.delete(collider);
   }

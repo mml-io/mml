@@ -1,5 +1,6 @@
-import * as THREE from "three";
-
+import { PositionProbeGraphics } from "../graphics/PositionProbeGraphics";
+import { GraphicsAdapter } from "../GraphicsAdapter";
+import { Vect3 } from "../math/Vect3";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -20,8 +21,17 @@ const positionProbeEnterEventName = "positionenter";
 const positionProbePositionMoveEventName = "positionmove";
 const positionProbeLeaveEventName = "positionleave";
 
-export class PositionProbe extends TransformableElement {
+export type MPositionProbeProps = {
+  intervalMs: number;
+  debug: boolean;
+  range: number;
+};
+
+export class PositionProbe<
+  G extends GraphicsAdapter = GraphicsAdapter,
+> extends TransformableElement<G> {
   static tagName = "m-position-probe";
+  private positionProbeGraphics: PositionProbeGraphics<G> | null;
 
   private positionProbeAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     range: [
@@ -29,27 +39,19 @@ export class PositionProbe extends TransformableElement {
       defaultPositionProbeRange,
       (newValue: number) => {
         this.props.range = newValue;
-        this.updateDebugVisualisation();
+        this.positionProbeGraphics?.setRange(newValue, this.props);
         this.applyBounds();
       },
     ],
   });
 
-  private props = {
+  public props: MPositionProbeProps = {
     intervalMs: defaultPositionProbeInterval,
     debug: defaultPositionProbeDebug,
     range: defaultPositionProbeRange,
   };
 
-  private static DebugGeometry = new THREE.SphereGeometry(1, 16, 16, 1);
-  private static DebugMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff0000,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.3,
-  });
-
-  private static attributeHandler = new AttributeHandler<PositionProbe>({
+  private static attributeHandler = new AttributeHandler<PositionProbe<GraphicsAdapter>>({
     range: (instance, newValue) => {
       instance.positionProbeAnimatedAttributeHelper.elementSetAttribute(
         "range",
@@ -65,6 +67,7 @@ export class PositionProbe extends TransformableElement {
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, defaultPositionProbeDebug);
+      instance.positionProbeGraphics?.setDebug(instance.props.debug, instance.props);
     },
   });
 
@@ -74,8 +77,6 @@ export class PositionProbe extends TransformableElement {
       ...PositionProbe.attributeHandler.getAttributes(),
     ];
   }
-
-  private debugMesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
 
   private timer: NodeJS.Timeout | null = null;
 
@@ -93,52 +94,55 @@ export class PositionProbe extends TransformableElement {
     // no-op
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
-      this.container,
+  public parentTransformed() {
+    // no-op
+  }
+
+  public getContentBounds(): OrientedBoundingBox | null {
+    if (!this.transformableElementGraphics) {
+      return null;
+    }
+    return OrientedBoundingBox.fromSizeAndMatrixWorld(
+      new Vect3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      this.transformableElementGraphics.getWorldMatrix(),
     );
   }
 
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<G>): void {
     this.positionProbeAnimatedAttributeHelper.addSideEffectChild(child);
-
     super.addSideEffectChild(child);
   }
 
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<G>): void {
     this.positionProbeAnimatedAttributeHelper.removeSideEffectChild(child);
-
     super.removeSideEffectChild(child);
-  }
-
-  public parentTransformed(): void {
-    this.updateDebugVisualisation();
   }
 
   public isClickable(): boolean {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.positionProbeGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     PositionProbe.attributeHandler.handle(this, name, newValue);
-    this.updateDebugVisualisation();
   }
 
   private emitPosition() {
     const userPositionAndRotation = this.getUserPositionAndRotation();
     const elementRelative = getRelativePositionAndRotationRelativeToObject(
       userPositionAndRotation,
-      this.getContainer(),
+      this,
     );
 
     // Check if the position is within range
-    const distance = new THREE.Vector3().copy(elementRelative.position as THREE.Vector3).length();
+    const distance = new Vect3().copy(elementRelative.position).length();
 
     let withinBounds = true;
     this.getAppliedBounds().forEach((bounds) => {
-      if (!bounds.containsPoint(userPositionAndRotation.position as THREE.Vector3)) {
+      if (!bounds.containsPoint(userPositionAndRotation.position)) {
         withinBounds = false;
       }
     });
@@ -147,29 +151,28 @@ export class PositionProbe extends TransformableElement {
       const elementRelativePositionAndRotation = {
         position: elementRelative.position,
         rotation: {
-          x: THREE.MathUtils.radToDeg(elementRelative.rotation.x),
-          y: THREE.MathUtils.radToDeg(elementRelative.rotation.y),
-          z: THREE.MathUtils.radToDeg(elementRelative.rotation.z),
+          x: elementRelative.rotation.x,
+          y: elementRelative.rotation.y,
+          z: elementRelative.rotation.z,
         },
       };
 
-      let documentRoot;
+      let documentRoot: MElement<G> | null = null;
       const remoteDocument = this.getRemoteDocument();
       if (remoteDocument) {
-        documentRoot = remoteDocument.getContainer();
-      } else {
-        documentRoot = this.getScene().getRootContainer();
+        documentRoot = remoteDocument;
       }
-      const documentRelative = getRelativePositionAndRotationRelativeToObject(
-        userPositionAndRotation,
-        documentRoot,
-      );
+      const documentRelative =
+        documentRoot !== null
+          ? getRelativePositionAndRotationRelativeToObject(userPositionAndRotation, documentRoot)
+          : userPositionAndRotation;
+
       const documentRelativePositionAndRotation = {
         position: documentRelative.position,
         rotation: {
-          x: THREE.MathUtils.radToDeg(documentRelative.rotation.x),
-          y: THREE.MathUtils.radToDeg(documentRelative.rotation.y),
-          z: THREE.MathUtils.radToDeg(documentRelative.rotation.z),
+          x: documentRelative.rotation.x,
+          y: documentRelative.rotation.y,
+          z: documentRelative.rotation.z,
         },
       };
       if (!this.currentlyInRange) {
@@ -200,17 +203,36 @@ export class PositionProbe extends TransformableElement {
     }
   }
 
-  connectedCallback() {
+  public connectedCallback(): void {
     super.connectedCallback();
+
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+    if (!graphicsAdapter || this.positionProbeGraphics) {
+      return;
+    }
+
+    this.positionProbeGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLPositionProbeGraphicsInterface(this);
+
+    for (const name of PositionProbe.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
+    this.applyBounds();
     this.startEmitting();
-    this.updateDebugVisualisation();
   }
 
-  disconnectedCallback() {
+  public disconnectedCallback(): void {
     if (this.timer) {
       clearInterval(this.timer);
     }
-    this.clearDebugVisualisation();
+    this.positionProbeAnimatedAttributeHelper.reset();
+    this.positionProbeGraphics?.dispose();
+    this.positionProbeGraphics = null;
     super.disconnectedCallback();
   }
 
@@ -222,30 +244,5 @@ export class PositionProbe extends TransformableElement {
     this.timer = setInterval(() => {
       this.emitPosition();
     }, this.props.intervalMs);
-  }
-
-  private clearDebugVisualisation() {
-    if (this.debugMesh) {
-      this.debugMesh.removeFromParent();
-      this.debugMesh = null;
-    }
-  }
-
-  private updateDebugVisualisation() {
-    if (!this.props.debug) {
-      this.clearDebugVisualisation();
-    } else {
-      if (this.isConnected && !this.debugMesh) {
-        const mesh = new THREE.Mesh(PositionProbe.DebugGeometry, PositionProbe.DebugMaterial);
-        mesh.castShadow = false;
-        mesh.receiveShadow = false;
-        this.debugMesh = mesh;
-        this.container.add(this.debugMesh);
-      }
-
-      if (this.debugMesh) {
-        this.debugMesh.scale.set(this.props.range, this.props.range, this.props.range);
-      }
-    }
   }
 }

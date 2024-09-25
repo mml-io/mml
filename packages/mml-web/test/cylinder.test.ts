@@ -1,7 +1,9 @@
-import { Cylinder } from "../src/elements/Cylinder";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-three-client";
+import * as THREE from "three";
+
+import { Cylinder } from "../build/index";
+import { registerCustomElementsToWindow } from "../build/index";
+import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
@@ -9,20 +11,22 @@ beforeAll(() => {
 });
 
 describe("m-cylinder", () => {
-  test("test attachment to scene", () => {
-    const scene = new FullScreenMMLScene();
-    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
-    remoteDocument.init(scene, "ws://localhost:8080");
-    document.body.append(remoteDocument);
+  test("test attachment to scene", async () => {
+    const { scene, element } = await createSceneAttachedElement<Cylinder>("m-cylinder");
 
-    const element = document.createElement("m-cylinder") as Cylinder;
-    remoteDocument.append(element);
+    const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+      .children[0 /* root container */].children[0 /* attachment container */]
+      .children[0 /* element container */];
+    const cylinderMesh = container.children[0 /* element mesh */] as THREE.Mesh;
+    expect(cylinderMesh).toBeDefined();
+    expect(element.getContainer()).toBe(container);
 
-    expect(scene.getThreeScene().children[0].children[0].children[0].children[0]).toBe(
-      element.getCylinder(),
-    );
+    expect(
+      (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene().children[0]
+        .children[0].children[0].children[0],
+    ).toBe(cylinderMesh);
 
-    expect(scene.getThreeScene()).toMatchObject({
+    expect((scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()).toMatchObject({
       // Scene
       children: [
         // Scene Root Container
@@ -33,7 +37,7 @@ describe("m-cylinder", () => {
               children: [
                 // Element Container
                 {
-                  children: expect.arrayContaining([element.getCylinder()]),
+                  children: expect.arrayContaining([cylinderMesh]),
                 },
               ],
             },
@@ -43,14 +47,16 @@ describe("m-cylinder", () => {
     });
 
     // Setting scale attribute - should affect the container of the element, but not the mesh itself
-    expect(element.getContainer().scale.x).toBe(1);
+    expect((element.getContainer() as THREE.Object3D).scale.x).toBe(1);
     element.setAttribute("sx", "5");
-    expect(element.getContainer().scale.x).toBe(5);
+    expect((element.getContainer() as THREE.Object3D).scale.x).toBe(5);
 
     // Setting the width attribute - should affect the mesh
-    expect(element.getCylinder()!.scale.x).toBe(1);
+    expect(cylinderMesh.scale.x).toBe(1);
     element.setAttribute("radius", "2.5");
-    expect(element.getCylinder()!.scale.x).toBe(5);
+    expect(cylinderMesh.scale.x).toBe(5);
+    expect(cylinderMesh.scale.y).toBe(1);
+    expect(cylinderMesh.scale.z).toBe(5);
   });
 
   test("observes the schema-specified attributes", () => {

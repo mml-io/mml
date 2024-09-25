@@ -1,8 +1,9 @@
 import { jest } from "@jest/globals";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-three-client";
 import * as THREE from "three";
 
-import { Interaction } from "../src/elements/Interaction";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { Interaction } from "../build/index";
+import { registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
@@ -16,16 +17,17 @@ describe("m-interaction", () => {
     expect(schema.name).toEqual(Interaction.tagName);
   });
 
-  test("test attachment to scene", () => {
-    const { scene, element } = createSceneAttachedElement<Interaction>("m-interaction");
+  test("test attachment to scene", async () => {
+    const { scene, element } = await createSceneAttachedElement<Interaction>("m-interaction");
     expect(
-      scene.getThreeScene().children[0 /* root container */].children[0 /* attachment container */]
+      (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+        .children[0 /* root container */].children[0 /* attachment container */]
         .children[0 /* element container */],
     ).toBe(element.getContainer());
   });
 
-  test("interaction - add and remove", () => {
-    const { scene, remoteDocument } = createTestScene();
+  test("interaction - add and remove", async () => {
+    const { scene, remoteDocument } = await createTestScene();
     const element = document.createElement("m-interaction") as Interaction;
     expect(Array.from((scene as any).interactions)).toEqual([]);
     const addInteractionSpy = jest.spyOn(scene, "addInteraction");
@@ -44,8 +46,8 @@ describe("m-interaction", () => {
     expect(removeInteractionSpy).toHaveBeenCalledWith(element);
   });
 
-  test("interaction - update", () => {
-    const { scene, remoteDocument } = createTestScene();
+  test("interaction - update", async () => {
+    const { scene, remoteDocument } = await createTestScene();
     const element = document.createElement("m-interaction") as Interaction;
     expect(Array.from((scene as any).interactions)).toEqual([]);
     const addInteractionSpy = jest.spyOn(scene, "addInteraction");
@@ -65,8 +67,8 @@ describe("m-interaction", () => {
     expect(Array.from((scene as any).interactions)).toEqual([element]);
   });
 
-  test("interaction - update from ancestor", () => {
-    const { element, scene } = createSceneAttachedElement<Interaction>("m-group");
+  test("interaction - update from ancestor", async () => {
+    const { element, scene } = await createSceneAttachedElement<Interaction>("m-group");
 
     const addInteractionSpy = jest.spyOn(scene, "addInteraction");
     const updateInteractionSpy = jest.spyOn(scene, "updateInteraction");
@@ -91,14 +93,14 @@ describe("m-interaction", () => {
     expect(updateInteractionSpy).toHaveBeenCalledWith(mInteraction);
     expect(addInteractionSpy).toHaveBeenCalledTimes(1);
     const worldPos = new THREE.Vector3();
-    mInteraction.getContainer().getWorldPosition(worldPos);
+    (mInteraction.getContainer() as THREE.Object3D).getWorldPosition(worldPos);
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 3 });
 
     innerGroup.setAttribute("z", "1");
     expect(updateInteractionSpy).toHaveBeenCalledTimes(2);
     expect(updateInteractionSpy).toHaveBeenNthCalledWith(2, mInteraction);
     expect(addInteractionSpy).toHaveBeenCalledTimes(1);
-    mInteraction.getContainer().getWorldPosition(worldPos);
+    (mInteraction.getContainer() as THREE.Object3D).getWorldPosition(worldPos);
     // z should be increased by one due to the parent group - should now be 4
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 4 });
 

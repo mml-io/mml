@@ -1,5 +1,7 @@
-import * as THREE from "three";
-
+import { MMLColor } from "../graphics/MMLColor";
+import { PlaneGraphics } from "../graphics/PlaneGraphics";
+import { GraphicsAdapter } from "../GraphicsAdapter";
+import { Vect3 } from "../math/Vect3";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -13,24 +15,39 @@ import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 
-const defaultPlaneColor = new THREE.Color(0xffffff);
+const defaultPlaneColor: MMLColor = { r: 1, g: 1, b: 1 };
 const defaultPlaneWidth = 1;
 const defaultPlaneHeight = 1;
 const defaultPlaneOpacity = 1;
 const defaultPlaneCastShadows = true;
 
-export class Plane extends TransformableElement {
+export type MPlaneProps = {
+  width: number;
+  height: number;
+  color: MMLColor;
+  opacity: number;
+  castShadows: boolean;
+};
+
+export class Plane<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-plane";
+  private planeGraphics: PlaneGraphics<G> | null;
+
+  public props: MPlaneProps = {
+    width: defaultPlaneWidth,
+    height: defaultPlaneHeight,
+    color: defaultPlaneColor,
+    opacity: defaultPlaneOpacity,
+    castShadows: defaultPlaneCastShadows,
+  };
 
   private planeAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     color: [
       AnimationType.Color,
       defaultPlaneColor,
-      (newValue: THREE.Color) => {
+      (newValue: MMLColor) => {
         this.props.color = newValue;
-        if (this.material) {
-          this.material.color = this.props.color;
-        }
+        this.planeGraphics?.setColor(newValue, this.props);
       },
     ],
     width: [
@@ -38,9 +55,9 @@ export class Plane extends TransformableElement {
       defaultPlaneWidth,
       (newValue: number) => {
         this.props.width = newValue;
-        this.mesh.scale.x = this.props.width;
+        this.planeGraphics?.setWidth(newValue, this.props);
         this.applyBounds();
-        this.collideableHelper.updateCollider(this.mesh);
+        this.collideableHelper.updateCollider(this.planeGraphics?.getCollisionElement());
       },
     ],
     height: [
@@ -48,9 +65,9 @@ export class Plane extends TransformableElement {
       defaultPlaneHeight,
       (newValue: number) => {
         this.props.height = newValue;
-        this.mesh.scale.y = this.props.height;
+        this.planeGraphics?.setHeight(newValue, this.props);
         this.applyBounds();
-        this.collideableHelper.updateCollider(this.mesh);
+        this.collideableHelper.updateCollider(this.planeGraphics?.getCollisionElement());
       },
     ],
     opacity: [
@@ -58,30 +75,13 @@ export class Plane extends TransformableElement {
       defaultPlaneOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material) {
-          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
-          this.material.transparent = this.props.opacity !== 1;
-          this.material.needsUpdate = needsUpdate;
-          this.material.opacity = newValue;
-        }
+        this.planeGraphics?.setOpacity(newValue, this.props);
       },
     ],
   });
-
-  private static planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-
-  private props = {
-    width: defaultPlaneWidth,
-    height: defaultPlaneHeight,
-    color: defaultPlaneColor,
-    opacity: defaultPlaneOpacity,
-    castShadows: defaultPlaneCastShadows,
-  };
-  private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
-  private material: THREE.MeshStandardMaterial | null = null;
   private collideableHelper = new CollideableHelper(this);
 
-  private static attributeHandler = new AttributeHandler<Plane>({
+  private static attributeHandler = new AttributeHandler<Plane<GraphicsAdapter>>({
     width: (instance, newValue) => {
       instance.planeAnimatedAttributeHelper.elementSetAttribute(
         "width",
@@ -108,9 +108,27 @@ export class Plane extends TransformableElement {
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultPlaneCastShadows);
-      instance.mesh.castShadow = instance.props.castShadows;
+      instance.planeGraphics?.setCastShadows(instance.props.castShadows, instance.props);
     },
   });
+
+  protected enable() {
+    this.collideableHelper.enable();
+  }
+
+  protected disable() {
+    this.collideableHelper.disable();
+  }
+
+  public getContentBounds(): OrientedBoundingBox | null {
+    if (!this.transformableElementGraphics) {
+      return null;
+    }
+    return OrientedBoundingBox.fromSizeAndMatrixWorld(
+      new Vect3(this.props.width, this.props.height, 0),
+      this.transformableElementGraphics.getWorldMatrix(),
+    );
+  }
 
   static get observedAttributes(): Array<string> {
     return [
@@ -122,39 +140,15 @@ export class Plane extends TransformableElement {
 
   constructor() {
     super();
-
-    this.mesh = new THREE.Mesh(Plane.planeGeometry);
-    this.mesh.scale.x = this.props.width;
-    this.mesh.scale.y = this.props.height;
-    this.mesh.castShadow = this.props.castShadows;
-    this.mesh.receiveShadow = true;
-    this.container.add(this.mesh);
   }
 
-  protected enable() {
-    this.collideableHelper.enable();
-  }
-
-  protected disable() {
-    this.collideableHelper.disable();
-  }
-
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.width, this.props.height, 0),
-      this.container,
-    );
-  }
-
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<G>): void {
     this.planeAnimatedAttributeHelper.addSideEffectChild(child);
-
     super.addSideEffectChild(child);
   }
 
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<G>): void {
     this.planeAnimatedAttributeHelper.removeSideEffectChild(child);
-
     super.removeSideEffectChild(child);
   }
 
@@ -166,14 +160,10 @@ export class Plane extends TransformableElement {
     return true;
   }
 
-  public getPlane(): THREE.Mesh<
-    THREE.PlaneGeometry,
-    THREE.Material | Array<THREE.Material>
-  > | null {
-    return this.mesh;
-  }
-
-  public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.planeGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Plane.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
@@ -181,23 +171,32 @@ export class Plane extends TransformableElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    this.material = new THREE.MeshStandardMaterial({
-      color: this.props.color,
-      transparent: this.props.opacity === 1 ? false : true,
-      opacity: this.props.opacity,
-    });
-    this.mesh.material = this.material;
+
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+    if (!graphicsAdapter || this.planeGraphics) {
+      return;
+    }
+
+    this.planeGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLPlaneGraphicsInterface(this);
+
+    for (const name of Plane.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
     this.applyBounds();
-    this.collideableHelper.updateCollider(this.mesh);
+    this.collideableHelper.updateCollider(this.planeGraphics?.getCollisionElement());
   }
 
   public disconnectedCallback(): void {
     this.collideableHelper.removeColliders();
-    if (this.material) {
-      this.material.dispose();
-      this.mesh.material = [];
-      this.material = null;
-    }
+    this.planeAnimatedAttributeHelper.reset();
+    this.planeGraphics?.dispose();
+    this.planeGraphics = null;
     super.disconnectedCallback();
   }
 }

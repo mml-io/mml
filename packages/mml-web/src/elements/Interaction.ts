@@ -1,5 +1,6 @@
-import * as THREE from "three";
-
+import { InteractionGraphics } from "../graphics/InteractionGraphics";
+import { GraphicsAdapter } from "../GraphicsAdapter";
+import { Vect3 } from "../math/Vect3";
 import { IMMLScene } from "../MMLScene";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
@@ -19,8 +20,20 @@ const defaultInteractionPriority = 1;
 const defaultInteractionPrompt = null;
 const defaultInteractionDebug = false;
 
-export class Interaction extends TransformableElement {
+export type MInteractionProps = {
+  range: number;
+  inFocus: boolean;
+  lineOfSight: boolean;
+  priority: number;
+  prompt: string | null;
+  debug: boolean;
+};
+
+export class Interaction<
+  G extends GraphicsAdapter = GraphicsAdapter,
+> extends TransformableElement<G> {
   static tagName = "m-interaction";
+  private interactionGraphics: InteractionGraphics<G> | null;
 
   private interactionAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     range: [
@@ -28,13 +41,13 @@ export class Interaction extends TransformableElement {
       defaultInteractionRange,
       (newValue: number) => {
         this.props.range = newValue;
-        this.updateDebugVisualisation();
         this.applyBounds();
+        this.interactionGraphics?.setRange(newValue, this.props);
       },
     ],
   });
 
-  private static attributeHandler = new AttributeHandler<Interaction>({
+  private static attributeHandler = new AttributeHandler<Interaction<GraphicsAdapter>>({
     range: (instance, newValue) => {
       instance.interactionAnimatedAttributeHelper.elementSetAttribute(
         "range",
@@ -43,18 +56,23 @@ export class Interaction extends TransformableElement {
     },
     "in-focus": (instance, newValue) => {
       instance.props.inFocus = parseBoolAttribute(newValue, defaultInteractionInFocus);
+      instance.interactionGraphics?.setInFocus(instance.props.inFocus, instance.props);
     },
     "line-of-sight": (instance, newValue) => {
       instance.props.lineOfSight = parseBoolAttribute(newValue, defaultInteractionLineOfSight);
+      instance.interactionGraphics?.setLineOfSight(instance.props.lineOfSight, instance.props);
     },
     priority: (instance, newValue) => {
       instance.props.priority = parseFloatAttribute(newValue, defaultInteractionPriority);
+      instance.interactionGraphics?.setPriority(instance.props.priority, instance.props);
     },
     prompt: (instance, newValue) => {
       instance.props.prompt = newValue;
+      instance.interactionGraphics?.setPrompt(instance.props.prompt, instance.props);
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, defaultInteractionDebug);
+      instance.interactionGraphics?.setDebug(instance.props.debug, instance.props);
     },
   });
   static get observedAttributes(): Array<string> {
@@ -64,7 +82,7 @@ export class Interaction extends TransformableElement {
     ];
   }
 
-  public readonly props = {
+  public props: MInteractionProps = {
     range: defaultInteractionRange as number,
     inFocus: defaultInteractionInFocus as boolean,
     lineOfSight: defaultInteractionLineOfSight as boolean,
@@ -73,8 +91,7 @@ export class Interaction extends TransformableElement {
     debug: defaultInteractionDebug as boolean,
   };
 
-  private debugMesh: THREE.Mesh | null = null;
-  private registeredScene: IMMLScene | null = null;
+  private registeredScene: IMMLScene<G> | null = null;
 
   constructor() {
     super();
@@ -88,50 +105,67 @@ export class Interaction extends TransformableElement {
     // TODO
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
-      this.container,
+  public getContentBounds(): OrientedBoundingBox | null {
+    if (!this.transformableElementGraphics) {
+      return null;
+    }
+    return OrientedBoundingBox.fromSizeAndMatrixWorld(
+      new Vect3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      this.transformableElementGraphics.getWorldMatrix(),
     );
   }
 
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<G>): void {
     this.interactionAnimatedAttributeHelper.addSideEffectChild(child);
-
     super.addSideEffectChild(child);
   }
 
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<G>): void {
     this.interactionAnimatedAttributeHelper.removeSideEffectChild(child);
-
     super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {
     this.registeredScene?.updateInteraction?.(this);
-    this.updateDebugVisualisation();
   }
 
   public isClickable(): boolean {
     return false;
   }
 
-  connectedCallback(): void {
+  public connectedCallback(): void {
     super.connectedCallback();
-    this.updateDebugVisualisation();
+
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+    if (!graphicsAdapter || this.interactionGraphics) {
+      return;
+    }
+
+    this.interactionGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLInteractionGraphicsInterface(this);
+
+    for (const name of Interaction.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
     this.registerInteraction();
   }
 
-  disconnectedCallback(): void {
+  public disconnectedCallback(): void {
     this.unregisterInteraction();
-    this.updateDebugVisualisation();
+    this.interactionAnimatedAttributeHelper.reset();
+    this.interactionGraphics?.dispose();
+    this.interactionGraphics = null;
     super.disconnectedCallback();
   }
 
-  public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     if (Interaction.attributeHandler.handle(this, name, newValue)) {
-      this.updateDebugVisualisation();
       if (this.registeredScene !== null) {
         this.registeredScene.updateInteraction?.(this);
       }
@@ -140,37 +174,6 @@ export class Interaction extends TransformableElement {
 
   public trigger() {
     this.dispatchEvent(new CustomEvent("interact", { detail: {} }));
-  }
-
-  private updateDebugVisualisation() {
-    if (!this.props.debug && this.debugMesh) {
-      this.debugMesh.removeFromParent();
-      this.debugMesh = null;
-      return;
-    }
-
-    if (this.props.debug && !this.debugMesh && this.container.parent) {
-      this.debugMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 32, 32),
-        new THREE.MeshBasicMaterial({ color: 0x00aa00, wireframe: true }),
-      );
-      this.container.add(this.debugMesh);
-    }
-
-    if (this.debugMesh) {
-      // scale the debug mesh by the inverse of the parent's scale, so that range
-      // is absolute
-      const scale = this.props.range;
-      const parentWorldScale = new THREE.Vector3();
-      this.container.getWorldScale(parentWorldScale);
-      if (parentWorldScale.x !== 0 && parentWorldScale.y !== 0 && parentWorldScale.z !== 0) {
-        this.debugMesh.scale.set(
-          scale / parentWorldScale.x,
-          scale / parentWorldScale.y,
-          scale / parentWorldScale.z,
-        );
-      }
-    }
   }
 
   private registerInteraction() {

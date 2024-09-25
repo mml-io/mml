@@ -1,33 +1,47 @@
-import * as THREE from "three";
-
+import { MElement, TransformableElement } from "../elements";
+import { GraphicsAdapter } from "../GraphicsAdapter";
+import { EulXYZ } from "../math/EulXYZ";
+import { Matr4 } from "../math/Matr4";
+import { Quat } from "../math/Quat";
+import { degToRad, radToDeg } from "../math/radToDeg";
+import { Vect3 } from "../math/Vect3";
 import { PositionAndRotation } from "../MMLScene";
 
-const tempContainerMatrix = new THREE.Matrix4();
-const tempTargetMatrix = new THREE.Matrix4();
-const tempPositionVector = new THREE.Vector3();
-const tempRotationEuler = new THREE.Euler();
-const tempRotationQuaternion = new THREE.Quaternion();
-const tempScaleVector = new THREE.Vector3();
+const tempContainerMatrix = new Matr4();
+const tempTargetMatrix = new Matr4();
+const tempPositionVector = new Vect3();
+const tempRotationEuler = new EulXYZ();
+const tempRotationQuaternion = new Quat();
+const tempScaleVector = new Vect3();
 
 export function getRelativePositionAndRotationRelativeToObject(
   positionAndRotation: PositionAndRotation,
-  container: THREE.Object3D,
+  container: MElement<GraphicsAdapter>,
 ): PositionAndRotation {
   const { x, y, z } = positionAndRotation.position;
+
+  // Rotation in degrees
   const { x: rx, y: ry, z: rz } = positionAndRotation.rotation;
 
-  container.updateWorldMatrix(true, false);
-  tempContainerMatrix.copy(container.matrixWorld).invert();
+  tempContainerMatrix.identity();
+  const tempMatr4 = new Matr4();
+  for (let obj: ParentNode | null = container; obj; obj = obj.parentNode) {
+    if (obj instanceof TransformableElement) {
+      obj.calculateLocalMatrix(tempMatr4);
+      tempContainerMatrix.premultiply(tempMatr4);
+    }
+  }
+
+  tempContainerMatrix.invert();
 
   tempPositionVector.set(x, y, z);
-  tempRotationEuler.set(rx, ry, rz);
-  tempRotationQuaternion.setFromEuler(tempRotationEuler);
+  tempRotationEuler.set(degToRad(rx), degToRad(ry), degToRad(rz));
+  tempRotationQuaternion.setFromEulerXYZ(tempRotationEuler);
   tempScaleVector.set(1, 1, 1);
-
   tempTargetMatrix.compose(tempPositionVector, tempRotationQuaternion, tempScaleVector);
+
   tempTargetMatrix.premultiply(tempContainerMatrix);
   tempTargetMatrix.decompose(tempPositionVector, tempRotationQuaternion, tempScaleVector);
-
   tempRotationEuler.setFromQuaternion(tempRotationQuaternion);
 
   return {
@@ -37,9 +51,9 @@ export function getRelativePositionAndRotationRelativeToObject(
       z: tempPositionVector.z,
     },
     rotation: {
-      x: tempRotationEuler.x,
-      y: tempRotationEuler.y,
-      z: tempRotationEuler.z,
+      x: radToDeg(tempRotationEuler.x),
+      y: radToDeg(tempRotationEuler.y),
+      z: radToDeg(tempRotationEuler.z),
     },
   };
 }

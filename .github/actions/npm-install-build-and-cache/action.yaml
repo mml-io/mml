@@ -47,4 +47,5 @@ runs:
         path: |
           packages/**/build/*
           e2e-tests/build/*
+          github-pages-publisher/build/*
         if-no-files-found: error

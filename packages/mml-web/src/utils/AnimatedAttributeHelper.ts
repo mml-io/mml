@@ -1,8 +1,8 @@
-import * as THREE from "three";
-
 import { AnimationType, AttributeAnimation } from "../elements/AttributeAnimation";
 import { AttributeLerp } from "../elements/AttributeLerp";
 import { MElement } from "../elements/MElement";
+import { MMLColor } from "../graphics/MMLColor";
+import { GraphicsAdapter } from "../GraphicsAdapter";
 
 type AttributeTuple<T extends AnimationType> = T extends AnimationType.Number
   ? [
@@ -23,7 +23,7 @@ export type AttributeHandlerRecord = Record<
 
 type AnimationTypeToValueType<T extends AnimationType> = T extends AnimationType.Number
   ? number
-  : THREE.Color;
+  : MMLColor;
 
 type AttributeState<T extends AnimationType> = {
   type: T;
@@ -36,11 +36,11 @@ type AttributeState<T extends AnimationType> = {
 };
 
 type AnimationStateRecord<T extends AnimationType> = {
-  config: AttributeState<T>;
-  animationsInOrder: Array<AttributeAnimation>;
-  animationsSet: Set<AttributeAnimation>;
-  lerpsInOrder: Array<AttributeLerp>;
-  lerpsSet: Set<AttributeLerp>;
+  attributeState: AttributeState<T>;
+  animationsInOrder: Array<AttributeAnimation<GraphicsAdapter>>;
+  animationsSet: Set<AttributeAnimation<GraphicsAdapter>>;
+  lerpsInOrder: Array<AttributeLerp<GraphicsAdapter>>;
+  lerpsSet: Set<AttributeLerp<GraphicsAdapter>>;
 };
 
 function TupleToState<T extends AnimationType>(tuple: AttributeTuple<T>): AttributeState<T> {
@@ -61,11 +61,11 @@ function updateIfChangedValue<T extends AnimationType>(
 ) {
   if (newValue === null) {
     // There is no value from the source (likely there are no animations and no attribute value), so use the default.
-    newValue = state.config.defaultValue;
+    newValue = state.attributeState.defaultValue;
   }
-  if (state.config.latestValue !== newValue) {
-    state.config.latestValue = newValue;
-    state.config.handler(newValue);
+  if (state.attributeState.latestValue !== newValue) {
+    state.attributeState.latestValue = newValue;
+    state.attributeState.handler(newValue);
   }
 }
 
@@ -85,33 +85,31 @@ function isNumberAttribute(
  * The AnimatedAttributeHelper is a utility class that manages the application of attribute animations to an element.
  *
  * It is used by an MElement that has animateable attributes and is responsible for applying the animations to the
- * element according to the precedence rules defined in the AttributeAnimation class, and falling back to the element's
+ * element according to the precedence rules defined in the AttributeAnimation<GraphicsAdapter> class, and falling back to the element's
  * attribute value if no animations are active.
  */
 export class AnimatedAttributeHelper {
-  private element: MElement;
   private stateByAttribute: {
     [p: string]: AnimationStateRecord<AnimationType>;
   } = {};
-  private allAnimations: Set<AttributeAnimation> = new Set();
-  private allLerps: Set<AttributeLerp> = new Set();
+
+  private allAnimations: Set<AttributeAnimation<GraphicsAdapter>> = new Set();
+  private allLerps: Set<AttributeLerp<GraphicsAdapter>> = new Set();
+
   private documentTimeTickListener: null | { remove: () => void } = null;
 
-  constructor(element: MElement, handlers: AttributeHandlerRecord) {
+  // Track if this helper has ticked at least once.
+  private hasTicked = false;
+
+  constructor(
+    private element: MElement<GraphicsAdapter>,
+    private handlers: AttributeHandlerRecord,
+  ) {
     this.element = element;
-    for (const key in handlers) {
-      const state = TupleToState(handlers[key]);
-      this.stateByAttribute[key] = {
-        config: state,
-        animationsInOrder: [],
-        animationsSet: new Set(),
-        lerpsInOrder: [],
-        lerpsSet: new Set(),
-      };
-    }
+    this.reset();
   }
 
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<GraphicsAdapter>): void {
     if (child instanceof AttributeAnimation) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
@@ -125,7 +123,7 @@ export class AnimatedAttributeHelper {
     }
   }
 
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<GraphicsAdapter>): void {
     if (child instanceof AttributeAnimation) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
@@ -147,12 +145,18 @@ export class AnimatedAttributeHelper {
     if (!state) {
       return;
     }
-    state.config.previousValue = state.config.latestValue;
-    state.config.elementValue = newValue;
-    if (this.element.isConnected) {
-      state.config.elementValueSetTime = this.element.getWindowTime();
+    state.attributeState.elementValue = newValue;
+    if (this.hasTicked) {
+      state.attributeState.previousValue = state.attributeState.latestValue;
     } else {
-      state.config.elementValueSetTime = null;
+      // If the element has not ticked yet, set the previous value to the new value to avoid lerping from the default value.
+      state.attributeState.previousValue = newValue;
+    }
+
+    if (this.element.isConnected) {
+      state.attributeState.elementValueSetTime = this.element.getWindowTime();
+    } else {
+      state.attributeState.elementValueSetTime = null;
     }
     if (state.animationsSet.size > 0 || state.lerpsSet.size > 0) {
       return;
@@ -171,14 +175,14 @@ export class AnimatedAttributeHelper {
       .filter((a) => this.stateByAttribute[a]);
   }
 
-  public addLerp(lerp: AttributeLerp, attributeValue: string) {
+  public addLerp(lerp: AttributeLerp<GraphicsAdapter>, attributeValue: string) {
     const attributes = this.getAttributesForAttributeValue(attributeValue);
     for (const key of attributes) {
       const state = this.stateByAttribute[key];
       if (!state) {
         return;
       }
-      if (state.animationsSet.size === 0) {
+      if (state.animationsSet.size === 0 && state.lerpsSet.size === 0) {
         // start listening to document time
         this.documentTimeTickListener = this.element.addDocumentTimeTickListener((documentTime) => {
           this.updateTime(documentTime);
@@ -189,14 +193,14 @@ export class AnimatedAttributeHelper {
       state.lerpsInOrder = [];
       const elementChildren = Array.from(this.element.children);
       for (const child of elementChildren) {
-        if (state.lerpsSet.has(child as AttributeLerp)) {
-          state.lerpsInOrder.push(child as AttributeLerp);
+        if (state.lerpsSet.has(child as AttributeLerp<GraphicsAdapter>)) {
+          state.lerpsInOrder.push(child as AttributeLerp<GraphicsAdapter>);
         }
       }
     }
   }
 
-  public removeLerp(lerp: AttributeLerp, attributeValue: string) {
+  public removeLerp(lerp: AttributeLerp<GraphicsAdapter>, attributeValue: string) {
     const attributes = this.getAttributesForAttributeValue(attributeValue);
     for (const key of attributes) {
       const state = this.stateByAttribute[key];
@@ -206,7 +210,7 @@ export class AnimatedAttributeHelper {
       state.lerpsInOrder.splice(state.lerpsInOrder.indexOf(lerp), 1);
       state.lerpsSet.delete(lerp);
       if (state.animationsSet.size === 0) {
-        updateIfChangedValue(state, state.config.elementValue);
+        updateIfChangedValue(state, state.attributeState.elementValue);
       }
       this.allLerps.delete(lerp);
       if (this.allLerps.size === 0) {
@@ -219,12 +223,12 @@ export class AnimatedAttributeHelper {
     }
   }
 
-  public addAnimation(animation: AttributeAnimation, key: string) {
+  public addAnimation(animation: AttributeAnimation<GraphicsAdapter>, key: string) {
     const state = this.stateByAttribute[key];
     if (!state) {
       return;
     }
-    if (state.animationsSet.size === 0) {
+    if (state.animationsSet.size === 0 && state.lerpsSet.size === 0) {
       // start listening to document time
       this.documentTimeTickListener = this.element.addDocumentTimeTickListener((documentTime) => {
         this.updateTime(documentTime);
@@ -235,13 +239,13 @@ export class AnimatedAttributeHelper {
     state.animationsInOrder = [];
     const elementChildren = Array.from(this.element.children);
     for (const child of elementChildren) {
-      if (state.animationsSet.has(child as AttributeAnimation)) {
-        state.animationsInOrder.push(child as AttributeAnimation);
+      if (state.animationsSet.has(child as AttributeAnimation<GraphicsAdapter>)) {
+        state.animationsInOrder.push(child as AttributeAnimation<GraphicsAdapter>);
       }
     }
   }
 
-  public removeAnimation(animation: AttributeAnimation, key: string) {
+  public removeAnimation(animation: AttributeAnimation<GraphicsAdapter>, key: string) {
     const state = this.stateByAttribute[key];
     if (!state) {
       return;
@@ -249,7 +253,7 @@ export class AnimatedAttributeHelper {
     state.animationsInOrder.splice(state.animationsInOrder.indexOf(animation), 1);
     state.animationsSet.delete(animation);
     if (state.animationsSet.size === 0) {
-      updateIfChangedValue(state, state.config.elementValue);
+      updateIfChangedValue(state, state.attributeState.elementValue);
     }
     this.allAnimations.delete(animation);
     if (this.allAnimations.size === 0) {
@@ -262,12 +266,14 @@ export class AnimatedAttributeHelper {
   }
 
   public updateTime(documentTime: number) {
+    this.hasTicked = true;
+
     for (const key in this.stateByAttribute) {
-      let stale: { value: number | THREE.Color; state: number } | null = null;
+      let stale: { value: number | MMLColor; state: number } | null = null;
       const state = this.stateByAttribute[key];
       for (const animation of state.animationsInOrder) {
         const [newValue, active] =
-          state.config.type === AnimationType.Color
+          state.attributeState.type === AnimationType.Color
             ? animation.getColorValueForTime(documentTime)
             : animation.getFloatValueForTime(documentTime);
 
@@ -297,7 +303,7 @@ export class AnimatedAttributeHelper {
 
       if (state.lerpsInOrder.length > 0) {
         const lerp = state.lerpsInOrder[0];
-        const config = state.config;
+        const config = state.attributeState;
         if (
           config.elementValueSetTime !== null &&
           config.previousValue !== null &&
@@ -326,6 +332,19 @@ export class AnimatedAttributeHelper {
           }
         }
       }
+    }
+  }
+
+  reset() {
+    for (const key in this.handlers) {
+      const state = TupleToState(this.handlers[key]);
+      this.stateByAttribute[key] = {
+        attributeState: state,
+        animationsInOrder: [],
+        animationsSet: new Set(),
+        lerpsInOrder: [],
+        lerpsSet: new Set(),
+      };
     }
   }
 }

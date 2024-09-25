@@ -139,6 +139,7 @@ export class PromptManager {
         // The current prompt is the one we are aborting
         this.currentPrompt = null;
         this.currentModal?.dispose();
+        this.currentModal = null;
         this.showNextPromptIfAny();
       } else {
         // Remove the link from the queue

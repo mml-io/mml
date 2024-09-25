@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 
-import { EventHandlerCollection } from "../src/utils/events/EventHandlerCollection";
+import { EventHandlerCollection } from "../build/index";
 
 function mouseClickEvent(): MouseEvent {
   return new MouseEvent("click", {

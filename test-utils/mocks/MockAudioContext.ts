@@ -2,8 +2,13 @@ export class MockAudioContext {
   addEventListener() {
     return;
   }
+
   removeEventListener() {
     return;
+  }
+
+  decodeAudioData(buffer: ArrayBuffer): Promise<AudioBuffer> {
+    return Promise.resolve({} as AudioBuffer);
   }
 
   createGain(): GainNode {
@@ -11,10 +16,6 @@ export class MockAudioContext {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       connect(destinationNode: AudioNode, output?: number, input?: number): AudioNode {
         return {} as AudioNode;
-      },
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      disconnect(destinationParam: AudioParam, output?: number): void {
-        return;
       },
       gain: {
         value: 1,
@@ -32,8 +33,7 @@ export class MockAudioContext {
       connect(destinationNode: AudioNode, output?: number, input?: number): AudioNode {
         return {} as AudioNode;
       },
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      disconnect(destinationParam: AudioParam, output?: number): void {
+      disconnect() {
         return;
       },
     } as PannerNode;
@@ -45,10 +45,6 @@ export class MockAudioContext {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       connect(destinationNode: AudioNode, output?: number, input?: number): AudioNode {
         return {} as AudioNode;
-      },
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      disconnect(destinationParam: AudioParam, output?: number): void {
-        return;
       },
     } as MediaElementAudioSourceNode;
   }

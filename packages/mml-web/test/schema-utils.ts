@@ -1,9 +1,10 @@
 import { createSchemaDefinition, schemaJSON } from "@mml-io/mml-schema";
 
-import { MElement } from "../src/elements/MElement";
+import { MElement } from "../build/index";
+import { GraphicsAdapter } from "../build/index";
 
 type MElementClass = {
-  new (): MElement;
+  new (): MElement<GraphicsAdapter>;
   tagName: string;
   observedAttributes: string[];
 } & typeof HTMLElement;

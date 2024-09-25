@@ -17,7 +17,9 @@ describe("m-model", () => {
         if (models.length < 2) {
           return false;
         }
-        return Array.from(models).every((model) => (model as any).getModel() !== null);
+        return Array.from(models).every(
+          (model) => (model as any).modelGraphics.getBoundingBox() !== null,
+        );
       },
       { timeout: 30000, polling: 100 },
     );

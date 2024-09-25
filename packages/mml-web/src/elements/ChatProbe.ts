@@ -1,5 +1,6 @@
-import * as THREE from "three";
-
+import { ChatProbeGraphics } from "../graphics/ChatProbeGraphics";
+import { GraphicsAdapter } from "../GraphicsAdapter";
+import { Vect3 } from "../math/Vect3";
 import { IMMLScene } from "../MMLScene";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
@@ -17,9 +18,17 @@ const defaultChatProbeRange = 10;
 const defaultChatProbeDebug = false;
 const chatProbeChatEventName = "chat";
 
-export class ChatProbe extends TransformableElement {
+export type MChatProbeProps = {
+  debug: boolean;
+  range: number;
+};
+
+export class ChatProbe<
+  G extends GraphicsAdapter = GraphicsAdapter,
+> extends TransformableElement<G> {
   static tagName = "m-chat-probe";
-  private registeredScene: IMMLScene | null = null;
+  private chatProbeGraphics: ChatProbeGraphics<G> | null = null;
+  private registeredScene: IMMLScene<G> | null = null;
 
   private chatProbeAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     range: [
@@ -27,26 +36,18 @@ export class ChatProbe extends TransformableElement {
       defaultChatProbeRange,
       (newValue: number) => {
         this.props.range = newValue;
-        this.updateDebugVisualisation();
+        this.chatProbeGraphics?.setRange(newValue, this.props);
         this.applyBounds();
       },
     ],
   });
 
-  private props = {
+  public props: MChatProbeProps = {
     debug: defaultChatProbeDebug,
     range: defaultChatProbeRange,
   };
 
-  private static DebugGeometry = new THREE.SphereGeometry(1, 16, 16, 1);
-  private static DebugMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffff00,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.3,
-  });
-
-  private static attributeHandler = new AttributeHandler<ChatProbe>({
+  private static attributeHandler = new AttributeHandler<ChatProbe<GraphicsAdapter>>({
     range: (instance, newValue) => {
       instance.chatProbeAnimatedAttributeHelper.elementSetAttribute(
         "range",
@@ -55,6 +56,7 @@ export class ChatProbe extends TransformableElement {
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, defaultChatProbeDebug);
+      instance.chatProbeGraphics?.setDebug(instance.props.debug, instance.props);
     },
   });
 
@@ -64,8 +66,6 @@ export class ChatProbe extends TransformableElement {
       ...ChatProbe.attributeHandler.getAttributes(),
     ];
   }
-
-  private debugMesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
 
   constructor() {
     super();
@@ -79,53 +79,52 @@ export class ChatProbe extends TransformableElement {
     // no-op (the probe only sends events if the position is within range)
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
-      this.container,
+  public getContentBounds(): OrientedBoundingBox | null {
+    if (!this.transformableElementGraphics) {
+      return null;
+    }
+    return OrientedBoundingBox.fromSizeAndMatrixWorld(
+      new Vect3(this.props.range * 2, this.props.range * 2, this.props.range * 2),
+      this.transformableElementGraphics.getWorldMatrix(),
     );
   }
 
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<G>): void {
     this.chatProbeAnimatedAttributeHelper.addSideEffectChild(child);
-
     super.addSideEffectChild(child);
   }
 
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<G>): void {
     this.chatProbeAnimatedAttributeHelper.removeSideEffectChild(child);
-
     super.removeSideEffectChild(child);
   }
 
   public parentTransformed(): void {
     this.registeredScene?.updateChatProbe?.(this);
-    this.updateDebugVisualisation();
   }
 
   public isClickable(): boolean {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     ChatProbe.attributeHandler.handle(this, name, newValue);
-    this.updateDebugVisualisation();
   }
 
   public trigger(message: string) {
     const userPositionAndRotation = this.getUserPositionAndRotation();
     const elementRelative = getRelativePositionAndRotationRelativeToObject(
       userPositionAndRotation,
-      this.getContainer(),
+      this,
     );
 
     // Check if the position is within range
-    const distance = new THREE.Vector3().copy(elementRelative.position as THREE.Vector3).length();
+    const distance = new Vect3().copy(elementRelative.position).length();
 
     let withinBounds = true;
     this.getAppliedBounds().forEach((bounds) => {
-      if (!bounds.containsPoint(userPositionAndRotation.position as THREE.Vector3)) {
+      if (!bounds.containsPoint(userPositionAndRotation.position)) {
         withinBounds = false;
       }
     });
@@ -141,41 +140,35 @@ export class ChatProbe extends TransformableElement {
     }
   }
 
-  connectedCallback() {
+  public connectedCallback(): void {
     super.connectedCallback();
-    this.updateDebugVisualisation();
+
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+    if (!graphicsAdapter || this.chatProbeGraphics) {
+      return;
+    }
+
+    this.chatProbeGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLChatProbeGraphicsInterface(this);
+
+    for (const name of ChatProbe.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
+    this.applyBounds();
     this.registerChatProbe();
   }
 
-  disconnectedCallback() {
+  public disconnectedCallback(): void {
     this.unregisterChatProbe();
-    this.clearDebugVisualisation();
+    this.chatProbeAnimatedAttributeHelper.reset();
+    this.chatProbeGraphics?.dispose();
+    this.chatProbeGraphics = null;
     super.disconnectedCallback();
-  }
-
-  private clearDebugVisualisation() {
-    if (this.debugMesh) {
-      this.debugMesh.removeFromParent();
-      this.debugMesh = null;
-    }
-  }
-
-  private updateDebugVisualisation() {
-    if (!this.props.debug) {
-      this.clearDebugVisualisation();
-    } else {
-      if (this.isConnected && !this.debugMesh) {
-        const mesh = new THREE.Mesh(ChatProbe.DebugGeometry, ChatProbe.DebugMaterial);
-        mesh.castShadow = false;
-        mesh.receiveShadow = false;
-        this.debugMesh = mesh;
-        this.container.add(this.debugMesh);
-      }
-
-      if (this.debugMesh) {
-        this.debugMesh.scale.set(this.props.range, this.props.range, this.props.range);
-      }
-    }
   }
 
   private registerChatProbe() {

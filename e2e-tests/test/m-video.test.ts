@@ -11,8 +11,10 @@ describe("m-video", () => {
     // Wait for the m-video content to load
     await page.waitForFunction(
       () => {
-        const videoMesh = (document.querySelector("m-video") as any).getVideoMesh();
-        return videoMesh.scale.y > 3 && videoMesh.scale.x > 3;
+        const { height, width } = (
+          document.querySelector("m-video") as any
+        ).videoGraphics!.getWidthAndHeight();
+        return width > 3 && height > 3;
       },
       { timeout: 30000, polling: 100 },
     );

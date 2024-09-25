@@ -1,27 +1,39 @@
+import { PromptGraphics } from "../graphics/PromptGraphics";
+import { GraphicsAdapter } from "../GraphicsAdapter";
 import { AttributeHandler } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { TransformableElement } from "./TransformableElement";
 
-export class Prompt extends TransformableElement {
+export type MPromptProps = {
+  message: string | undefined;
+  placeholder: string | undefined;
+  prefill: string | undefined;
+};
+
+export class Prompt<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-prompt";
+  private promptGraphics: PromptGraphics<G> | null;
 
   private abortController: AbortController | null = null;
 
-  private props = {
+  public props: MPromptProps = {
     message: undefined as string | undefined,
     placeholder: undefined as string | undefined,
     prefill: undefined as string | undefined,
   };
 
-  private static attributeHandler = new AttributeHandler<Prompt>({
+  private static attributeHandler = new AttributeHandler<Prompt<GraphicsAdapter>>({
     message: (instance, newValue) => {
       instance.props.message = newValue !== null ? newValue : undefined;
+      instance.promptGraphics?.setMessage(instance.props.message, instance.props);
     },
     placeholder: (instance, newValue) => {
       instance.props.placeholder = newValue !== null ? newValue : undefined;
+      instance.promptGraphics?.setPlaceholder(instance.props.placeholder, instance.props);
     },
     prefill: (instance, newValue) => {
       instance.props.prefill = newValue !== null ? newValue : undefined;
+      instance.promptGraphics?.setPrefill(instance.props.prefill, instance.props);
     },
   });
 
@@ -45,7 +57,7 @@ export class Prompt extends TransformableElement {
     });
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
+  public getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 
@@ -57,7 +69,10 @@ export class Prompt extends TransformableElement {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.promptGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Prompt.attributeHandler.handle(this, name, newValue);
   }
@@ -78,5 +93,31 @@ export class Prompt extends TransformableElement {
         );
       }
     });
+  }
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+    if (!graphicsAdapter || this.promptGraphics) {
+      return;
+    }
+
+    this.promptGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLPromptGraphicsInterface(this);
+
+    for (const name of Prompt.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+  }
+
+  public disconnectedCallback(): void {
+    this.promptGraphics?.dispose();
+    this.promptGraphics = null;
+    super.disconnectedCallback();
   }
 }

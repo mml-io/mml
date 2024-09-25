@@ -14,7 +14,8 @@ describe("m-frame", () => {
     await page.waitForFunction(
       () => {
         return Array.from(document.querySelectorAll("m-image") as any).every((img: any) => {
-          const aspect = img.getImageMesh().scale.x / img.getImageMesh().scale.y;
+          const { width, height } = img.imageGraphics!.getWidthAndHeight();
+          const aspect = width / height;
           const hasCorrectAspect = Math.abs(aspect - 1.333) < 0.01;
           return hasCorrectAspect;
         });
@@ -25,7 +26,8 @@ describe("m-frame", () => {
     await page.waitForFunction(
       () => {
         return Array.from(document.querySelectorAll("m-video") as any).every((video: any) => {
-          const aspect = video.getVideoMesh().scale.x / video.getVideoMesh().scale.y;
+          const { width, height } = video.videoGraphics.getWidthAndHeight();
+          const aspect = width / height;
           const hasCorrectAspect = Math.abs(aspect - 1.777) < 0.01;
           return hasCorrectAspect;
         });
@@ -37,7 +39,8 @@ describe("m-frame", () => {
     await page.waitForFunction(
       () => {
         return Array.from(document.querySelectorAll("m-model") as any).every((model: any) => {
-          return (model as any).getModel() !== null;
+          const bounds = model.modelGraphics.getBoundingBox();
+          return bounds !== null;
         });
       },
       { timeout: 5000, polling: 100 },
@@ -51,7 +54,7 @@ describe("m-frame", () => {
           const elements = Array.from(document.querySelectorAll(tag));
           results[tag] = {
             count: elements.length,
-            visible: elements.filter((element) => (element as any).container.visible === true)
+            visible: elements.filter((element) => (element as any).getContainer().visible === true)
               .length,
           };
         });

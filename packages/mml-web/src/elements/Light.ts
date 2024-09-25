@@ -1,5 +1,6 @@
-import * as THREE from "three";
-
+import { LightGraphics } from "../graphics/LightGraphics";
+import { MMLColor } from "../graphics/MMLColor";
+import { GraphicsAdapter } from "../GraphicsAdapter";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -9,40 +10,47 @@ import {
   parseFloatAttribute,
 } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { AnimationType } from "./AttributeAnimation";
+import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 
-declare type LightHelper = THREE.PointLightHelper | THREE.SpotLightHelper;
-
-enum lightTypes {
+export enum LightTypes {
   spotlight = "spotlight",
   point = "point",
 }
 
-const debugSphereSize = 0.25;
-const defaultLightColor = new THREE.Color(0xffffff);
+const defaultLightColor: MMLColor = { r: 1, g: 1, b: 1 };
 const defaultLightIntensity = 1;
 const defaultLightAngle = 45;
 const defaultLightEnabled = true;
 const defaultLightDebug = false;
-const defaultLightDistance = 0;
+const defaultLightDistance = null;
 const defaultLightCastShadows = true;
-const defaultLightType = lightTypes.spotlight;
+const defaultLightType = LightTypes.spotlight;
 
-export class Light extends TransformableElement {
+export type MLightProps = {
+  color: MMLColor;
+  intensity: number;
+  enabled: boolean;
+  angleDeg: number;
+  distance: number | null;
+  castShadows: boolean;
+  debug: boolean;
+  type: LightTypes;
+};
+
+export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-light";
+
+  private lightGraphics: LightGraphics<G> | null;
 
   private lightAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     color: [
       AnimationType.Color,
       defaultLightColor,
-      (newValue: THREE.Color) => {
+      (newValue: MMLColor) => {
         this.props.color = newValue;
-        this.light.color.set(this.props.color);
-        if (this.lightHelper) {
-          this.lightHelper.color = this.props.color;
-        }
+        this.lightGraphics?.setColor(newValue, this.props);
       },
     ],
     intensity: [
@@ -50,14 +58,28 @@ export class Light extends TransformableElement {
       defaultLightIntensity,
       (newValue: number) => {
         this.props.intensity = newValue;
-        this.light.intensity = this.props.intensity;
+        this.lightGraphics?.setIntensity(newValue, this.props);
+      },
+    ],
+    angle: [
+      AnimationType.Number,
+      defaultLightAngle,
+      (newValue: number) => {
+        this.props.angleDeg = newValue;
+        this.lightGraphics?.setAngle(newValue, this.props);
+      },
+    ],
+    distance: [
+      AnimationType.Number,
+      defaultLightDistance,
+      (newValue: number) => {
+        this.props.distance = newValue;
+        this.lightGraphics?.setDistance(newValue, this.props);
       },
     ],
   });
 
-  private lightHelper: LightHelper | null;
-
-  private props = {
+  public props: MLightProps = {
     color: defaultLightColor,
     intensity: defaultLightIntensity,
     enabled: defaultLightEnabled,
@@ -65,10 +87,10 @@ export class Light extends TransformableElement {
     distance: defaultLightDistance,
     castShadows: defaultLightCastShadows,
     debug: defaultLightDebug,
-    type: defaultLightType as lightTypes,
+    type: defaultLightType as LightTypes,
   };
 
-  private static attributeHandler = new AttributeHandler<Light>({
+  private static attributeHandler = new AttributeHandler<Light<GraphicsAdapter>>({
     color: (instance, newValue) => {
       instance.lightAnimatedAttributeHelper.elementSetAttribute(
         "color",
@@ -81,45 +103,33 @@ export class Light extends TransformableElement {
         parseFloatAttribute(newValue, defaultLightIntensity),
       );
     },
-    enabled: (instance, newValue) => {
-      instance.props.enabled = parseBoolAttribute(newValue, defaultLightEnabled);
-      instance.light.visible = instance.props.enabled;
-      if (instance.lightHelper) {
-        instance.lightHelper.visible = instance.props.enabled;
-      }
-    },
     angle: (instance, newValue) => {
-      instance.props.angleDeg = parseFloatAttribute(newValue, defaultLightAngle);
-      if (instance.light instanceof THREE.SpotLight) {
-        (instance.light as THREE.SpotLight).angle = THREE.MathUtils.degToRad(
-          instance.props.angleDeg,
-        );
-      }
+      instance.lightAnimatedAttributeHelper.elementSetAttribute(
+        "angle",
+        parseFloatAttribute(newValue, defaultLightAngle),
+      );
     },
     distance: (instance, newValue) => {
-      instance.props.distance = parseFloatAttribute(newValue, defaultLightDistance);
-      if (instance.light instanceof THREE.SpotLight) {
-        (instance.light as THREE.SpotLight).distance = instance.props.distance;
-      } else if (instance.light instanceof THREE.PointLight) {
-        (instance.light as THREE.PointLight).distance = instance.props.distance;
-      }
+      instance.lightAnimatedAttributeHelper.elementSetAttribute(
+        "distance",
+        parseFloatAttribute(newValue, defaultLightDistance),
+      );
+    },
+    enabled: (instance, newValue) => {
+      instance.props.enabled = parseBoolAttribute(newValue, defaultLightEnabled);
+      instance.lightGraphics?.setEnabled(instance.props.enabled, instance.props);
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultLightCastShadows);
-      instance.light.castShadow = instance.props.castShadows;
+      instance.lightGraphics?.setCastShadows(instance.props.castShadows, instance.props);
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, defaultLightDebug);
-      if (instance.props.debug && !instance.lightHelper) {
-        instance.makeLightHelper();
-      } else if (!instance.props.debug && instance.lightHelper) {
-        instance.container.remove(instance.lightHelper);
-        instance.lightHelper = null;
-      }
+      instance.lightGraphics?.setDebug(instance.props.debug, instance.props);
     },
     type: (instance, newValue) => {
-      instance.props.type = parseEnumAttribute(newValue, lightTypes, defaultLightType);
-      instance.createLight();
+      instance.props.type = parseEnumAttribute(newValue, LightTypes, defaultLightType);
+      instance.lightGraphics?.setType(instance.props.type, instance.props);
     },
   });
 
@@ -127,11 +137,8 @@ export class Light extends TransformableElement {
     return [...TransformableElement.observedAttributes, ...Light.attributeHandler.getAttributes()];
   }
 
-  private light: THREE.Light;
-
   constructor() {
     super();
-    this.createLight();
   }
 
   protected enable() {
@@ -142,23 +149,30 @@ export class Light extends TransformableElement {
     // no-op
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromMatrixWorldProvider(this.container);
+  public getContentBounds(): OrientedBoundingBox | null {
+    if (!this.transformableElementGraphics) {
+      return null;
+    }
+    return OrientedBoundingBox.fromMatrixWorld(this.transformableElementGraphics.getWorldMatrix());
   }
 
-  public getLight(): THREE.Light {
-    return this.light;
-  }
-
-  public addSideEffectChild(child: MElement): void {
-    this.lightAnimatedAttributeHelper.addSideEffectChild(child);
-
+  public addSideEffectChild(child: MElement<G>): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.lightAnimatedAttributeHelper.addAnimation(child, attr);
+      }
+    }
     super.addSideEffectChild(child);
   }
 
-  public removeSideEffectChild(child: MElement): void {
-    this.lightAnimatedAttributeHelper.removeSideEffectChild(child);
-
+  public removeSideEffectChild(child: MElement<G>): void {
+    if (child instanceof AttributeAnimation) {
+      const attr = child.getAnimatedAttributeName();
+      if (attr) {
+        this.lightAnimatedAttributeHelper.removeAnimation(child, attr);
+      }
+    }
     super.removeSideEffectChild(child);
   }
 
@@ -170,88 +184,38 @@ export class Light extends TransformableElement {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.lightGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Light.attributeHandler.handle(this, name, newValue);
-    if (this.lightHelper) {
-      this.lightHelper.matrix = this.light.matrix;
+  }
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+    if (!graphicsAdapter || this.lightGraphics) {
+      return;
+    }
+
+    this.lightGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLLightGraphicsInterface(this);
+
+    for (const name of Light.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
     }
   }
 
-  private createLight() {
-    if (this.light) {
-      this.light.removeFromParent();
-    }
-
-    switch (this.props.type) {
-      case lightTypes.spotlight: {
-        const light = new THREE.SpotLight(
-          this.props.color,
-          this.props.intensity,
-          this.props.distance,
-          THREE.MathUtils.degToRad(this.props.angleDeg),
-        );
-        // create a target
-        const target = new THREE.Object3D();
-        target.position.set(0, -1, 0);
-        light.position.set(0, 0, 0);
-        light.add(target);
-        light.target = target;
-        this.light = light;
-        break;
-      }
-      case lightTypes.point:
-        this.light = new THREE.PointLight(
-          this.props.color,
-          this.props.intensity,
-          this.props.distance,
-        );
-        break;
-    }
-
-    if (this.light.shadow) {
-      this.light.castShadow = this.props.castShadows;
-      this.light.shadow.mapSize.width = 512;
-      this.light.shadow.mapSize.height = 512;
-      if (this.light.shadow.camera instanceof THREE.PerspectiveCamera) {
-        this.light.shadow.camera.near = 0.5;
-        this.light.shadow.camera.far = 500;
-      }
-      this.light.shadow.bias = -0.001;
-      this.light.shadow.normalBias = 0.01;
-      const d = 10;
-      const c = this.light.shadow.camera as any;
-      c.left = -d;
-      c.right = d;
-      c.top = d;
-      c.bottom = -d;
-    }
-
-    this.light.intensity = this.props.intensity;
-
-    this.container.add(this.light);
-
-    if (this.lightHelper) {
-      this.makeLightHelper();
-    }
-  }
-
-  private makeLightHelper() {
-    if (this.lightHelper) {
-      this.lightHelper.removeFromParent();
-      this.lightHelper = null;
-    }
-
-    if (this.light instanceof THREE.PointLight) {
-      this.lightHelper = new THREE.PointLightHelper(this.light, debugSphereSize);
-    } else if (this.light instanceof THREE.SpotLight) {
-      this.lightHelper = new THREE.SpotLightHelper(this.light);
-    }
-
-    if (this.lightHelper) {
-      this.container.add(this.lightHelper);
-      this.lightHelper.matrix = this.light.matrix;
-      this.lightHelper.visible = this.light.visible;
-    }
+  public disconnectedCallback() {
+    this.lightAnimatedAttributeHelper.reset();
+    this.lightGraphics?.dispose();
+    this.lightGraphics = null;
+    super.disconnectedCallback();
   }
 }

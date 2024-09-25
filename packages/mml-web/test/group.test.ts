@@ -1,7 +1,9 @@
-import { Group } from "../src/elements/Group";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-three-client";
+import * as THREE from "three";
+
+import { Group } from "../build/index";
+import { registerCustomElementsToWindow } from "../build/index";
+import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
@@ -9,21 +11,38 @@ beforeAll(() => {
 });
 
 describe("m-group", () => {
-  test("test attachment to scene", () => {
-    const scene = new FullScreenMMLScene();
-    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
-    remoteDocument.init(scene, "ws://localhost:8080");
-    document.body.append(remoteDocument);
+  test("test attachment to scene", async () => {
+    const { scene, element } = await createSceneAttachedElement<Group>("m-group");
 
-    const element = document.createElement("m-group") as Group;
-    remoteDocument.append(element);
+    const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+      .children[0 /* root container */].children[0 /* attachment container */]
+      .children[0 /* element container */];
+    expect(element.getContainer()).toBe(container);
 
-    expect(scene.getThreeScene().children[0].children[0].children[0]).toBe(element.getContainer());
+    expect(
+      (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene().children[0]
+        .children[0].children[0],
+    ).toBe(container);
+
+    expect((scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()).toMatchObject({
+      // Scene
+      children: [
+        // Scene Root Container
+        {
+          children: [
+            // Scene Attachment Container
+            {
+              children: expect.arrayContaining([container]),
+            },
+          ],
+        },
+      ],
+    });
 
     // Setting scale attribute - should affect the container of the element, but not the mesh itself
-    expect(element.getContainer().scale.x).toBe(1);
+    expect((element.getContainer() as THREE.Object3D).scale.x).toBe(1);
     element.setAttribute("sx", "5");
-    expect(element.getContainer().scale.x).toBe(5);
+    expect((element.getContainer() as THREE.Object3D).scale.x).toBe(5);
   });
 
   test("observes the schema-specified attributes", () => {

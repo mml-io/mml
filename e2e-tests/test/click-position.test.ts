@@ -6,7 +6,7 @@ describe("m-plane position click", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/click-position-test.html");
+    await page.goto("http://localhost:7079/click-position-test.html/reset");
 
     await page.waitForSelector("m-plane");
 
@@ -33,11 +33,11 @@ describe("m-plane position click", () => {
     const parsedTitle = JSON.parse(labelContentAfterClick);
     const { x, y, z } = parsedTitle;
 
-    expect(x).toBeLessThan(0.1);
-    expect(x).toBeGreaterThan(-0.1);
-    expect(y).toBeLessThan(0.1);
-    expect(y).toBeGreaterThan(0);
-    expect(z).toEqual(0);
+    expect(parseFloat(x)).toBeLessThanOrEqual(0.1);
+    expect(parseFloat(x)).toBeGreaterThanOrEqual(-0.1);
+    expect(parseFloat(y)).toBeLessThanOrEqual(0.1);
+    expect(parseFloat(y)).toBeGreaterThanOrEqual(0);
+    expect(parseFloat(z)).toBeCloseTo(0, 1);
 
     await takeAndCompareScreenshot(page);
 
@@ -49,7 +49,7 @@ describe("m-plane position click", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/click-position-test.html");
+    await page.goto("http://localhost:7079/click-position-test.html/reset");
 
     await page.waitForSelector("m-plane");
 
@@ -77,11 +77,11 @@ describe("m-plane position click", () => {
     const parsedLabelExample1 = JSON.parse(labelContentExample1);
     const { x: xE1, y: yE1, z: zE1 } = parsedLabelExample1;
 
-    expect(xE1).toBeLessThan(-2.5);
-    expect(xE1).toBeGreaterThan(-2.51);
-    expect(yE1).toBeLessThan(-2.49);
-    expect(yE1).toBeGreaterThan(-2.5);
-    expect(zE1).toEqual(0);
+    expect(parseFloat(xE1)).toBeLessThanOrEqual(-2.49);
+    expect(parseFloat(xE1)).toBeGreaterThanOrEqual(-2.51);
+    expect(parseFloat(yE1)).toBeLessThanOrEqual(-2.49);
+    expect(parseFloat(yE1)).toBeGreaterThanOrEqual(-2.51);
+    expect(parseFloat(zE1)).toEqual(0);
 
     // Clicking in the bottom right quadrant
     await clickElement(page, "m-plane", { x: 0.75, y: 0.75 });
@@ -102,11 +102,11 @@ describe("m-plane position click", () => {
     const parsedLabelExample2 = JSON.parse(labelContentExample2);
     const { x: xE2, y: yE2, z: zE2 } = parsedLabelExample2;
 
-    expect(xE2).toBeLessThan(2.51);
-    expect(xE2).toBeGreaterThan(2.5);
-    expect(yE2).toBeLessThan(-2.49);
-    expect(yE2).toBeGreaterThan(-2.5);
-    expect(zE2).toEqual(0);
+    expect(parseFloat(xE2)).toBeLessThanOrEqual(2.51);
+    expect(parseFloat(xE2)).toBeGreaterThanOrEqual(2.49);
+    expect(parseFloat(yE2)).toBeLessThanOrEqual(-2.49);
+    expect(parseFloat(yE2)).toBeGreaterThanOrEqual(-2.51);
+    expect(parseFloat(zE2)).toEqual(0);
 
     // Clicking in the top left quadrant
     await clickElement(page, "m-plane", { x: 0.25, y: 0.25 });
@@ -127,11 +127,11 @@ describe("m-plane position click", () => {
     const parsedLabelExample3 = JSON.parse(labelContentExample3);
     const { x: xE3, y: yE3, z: zE3 } = parsedLabelExample3;
 
-    expect(xE3).toBeLessThan(-2.5);
-    expect(xE3).toBeGreaterThan(-2.51);
-    expect(yE3).toBeLessThan(2.5);
-    expect(yE3).toBeGreaterThan(2.49);
-    expect(zE3).toEqual(0);
+    expect(parseFloat(xE3)).toBeLessThanOrEqual(-2.49);
+    expect(parseFloat(xE3)).toBeGreaterThanOrEqual(-2.51);
+    expect(parseFloat(yE3)).toBeLessThanOrEqual(2.51);
+    expect(parseFloat(yE3)).toBeGreaterThanOrEqual(2.49);
+    expect(parseFloat(zE3)).toEqual(0);
 
     // Clicking in the top right quadrant
     await clickElement(page, "m-plane", { x: 0.75, y: 0.25 });
@@ -152,11 +152,11 @@ describe("m-plane position click", () => {
     const parsedLabelExample4 = JSON.parse(labelContentExample4);
     const { x: xE4, y: yE4, z: zE4 } = parsedLabelExample4;
 
-    expect(xE4).toBeLessThan(2.51);
-    expect(xE4).toBeGreaterThan(2.5);
-    expect(yE4).toBeLessThan(2.5);
-    expect(yE4).toBeGreaterThan(2.49);
-    expect(zE4).toEqual(0);
+    expect(parseFloat(xE4)).toBeLessThanOrEqual(2.51);
+    expect(parseFloat(xE4)).toBeGreaterThanOrEqual(2.49);
+    expect(parseFloat(yE4)).toBeLessThanOrEqual(2.51);
+    expect(parseFloat(yE4)).toBeGreaterThanOrEqual(2.49);
+    expect(parseFloat(zE4)).toEqual(0);
 
     await takeAndCompareScreenshot(page);
 

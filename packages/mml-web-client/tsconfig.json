@@ -7,14 +7,18 @@
     "lib": ["es2020", "dom"],
     "sourceMap": true,
     "allowJs": true,
-    "types": ["node"],
+    "types": ["node", "jest"],
     "strictNullChecks": true,
+    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "downlevelIteration": true,
+    "esModuleInterop": true,
     "outDir": "./build",
     "incremental": true
   },
   "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
-  "exclude": ["**/build/*", "types-src"]
+  "exclude": ["**/build/*", "types-src"],
+  "files": ["../../node_modules/jest-expect-message/types/index.d.ts"]
 }

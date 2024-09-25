@@ -18,7 +18,8 @@ describe("m-attr-anim assorted", () => {
     await page.waitForFunction(
       () => {
         return Array.from(document.querySelectorAll("m-image") as any).every((img: any) => {
-          const aspect = img.getImageMesh().scale.x / img.getImageMesh().scale.y;
+          const { width, height } = img.imageGraphics!.getWidthAndHeight();
+          const aspect = width / height;
           const hasCorrectAspect = Math.abs(aspect - 1.78) < 0.01;
           return hasCorrectAspect;
         });

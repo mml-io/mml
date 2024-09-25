@@ -1,0 +1,25 @@
+.header {
+  color: rgb(128, 128, 128);
+  margin-bottom: 8px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.button {
+  cursor: pointer;
+  border-radius: 4px;
+  background-color: rgb(68, 68, 68);
+  display: flex;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  transition: 0.1s;
+  overflow: hidden;
+
+  &:hover {
+    background-color: rgb(85, 85, 85);
+  }
+}
+

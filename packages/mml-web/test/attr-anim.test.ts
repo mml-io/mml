@@ -1,8 +1,8 @@
 import { jest } from "@jest/globals";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-three-client";
+import * as THREE from "three";
 
-import { Cube } from "../src";
-import { AttributeAnimation } from "../src/elements/AttributeAnimation";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { AttributeAnimation, Cube, registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
@@ -16,16 +16,17 @@ describe("m-attr-anim", () => {
     expect(schema.name).toEqual(AttributeAnimation.tagName);
   });
 
-  test("test attachment to scene", () => {
-    const { scene, element } = createSceneAttachedElement<AttributeAnimation>("m-attr-anim");
+  test("test attachment to scene", async () => {
+    const { scene, element } = await createSceneAttachedElement<AttributeAnimation>("m-attr-anim");
     expect(
-      scene.getThreeScene().children[0 /* root container */].children[0 /* attachment container */]
+      (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+        .children[0 /* root container */].children[0 /* attachment container */]
         .children[0 /* element container */],
     ).toBe(element.getContainer());
   });
 
-  test("animates parent element attribute - add and remove", () => {
-    const { remoteDocument } = createTestScene();
+  test("animates parent element attribute - add and remove", async () => {
+    const { remoteDocument } = await createTestScene();
     const cube = document.createElement("m-cube") as Cube;
     cube.setAttribute("x", "0");
     cube.setAttribute("y", "2");
@@ -33,12 +34,13 @@ describe("m-attr-anim", () => {
 
     const didUpdateTransformationSpy = jest.spyOn(cube as any, "didUpdateTransformation");
     remoteDocument.append(cube);
-    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(0);
-    cube.setAttribute("x", "1");
     expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(1);
+    cube.setAttribute("x", "1");
+    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(2);
 
-    expect(cube.getContainer().position.x).toEqual(1);
-    expect(cube.getContainer().position.y).toEqual(2);
+    const container = cube.getContainer() as THREE.Object3D;
+    expect(container.position.x).toEqual(1);
+    expect(container.position.y).toEqual(2);
 
     const attrAnim = document.createElement("m-attr-anim") as AttributeAnimation;
     attrAnim.setAttribute("attr", "x");
@@ -51,34 +53,34 @@ describe("m-attr-anim", () => {
     // Halfway through the animation
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(500);
     remoteDocument.tick();
-    expect(cube.getContainer().position.x).toEqual(15);
-    expect(cube.getContainer().position.y).toEqual(2);
-    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(2);
+    expect(container.position.x).toEqual(15);
+    expect(container.position.y).toEqual(2);
+    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(3);
 
     // Animation finishes
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(1000);
     remoteDocument.tick();
-    expect(cube.getContainer().position.x).toEqual(20);
-    expect(cube.getContainer().position.y).toEqual(2);
-    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(3);
+    expect(container.position.x).toEqual(20);
+    expect(container.position.y).toEqual(2);
+    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(4);
 
     // Animation remains finished - the value should not be repeatedly set
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(1500);
     remoteDocument.tick();
-    expect(cube.getContainer().position.x).toEqual(20);
-    expect(cube.getContainer().position.y).toEqual(2);
-    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(3);
+    expect(container.position.x).toEqual(20);
+    expect(container.position.y).toEqual(2);
+    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(4);
 
     // Removing the animation element should reset the value of the parent to the attribute value
     attrAnim.remove();
     remoteDocument.tick();
-    expect(cube.getContainer().position.x).toEqual(1);
-    expect(cube.getContainer().position.y).toEqual(2);
-    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(4);
+    expect(container.position.x).toEqual(1);
+    expect(container.position.y).toEqual(2);
+    expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(5);
   });
 
-  test("animates element attribute back to default on removal and no element value", () => {
-    const { remoteDocument } = createTestScene();
+  test("animates element attribute back to default on removal and no element value", async () => {
+    const { remoteDocument } = await createTestScene();
     const cube = document.createElement("m-cube") as Cube;
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(0);
 
@@ -97,25 +99,27 @@ describe("m-attr-anim", () => {
     // Halfway through the animation
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(500);
     remoteDocument.tick();
-    expect(cube.getContainer().scale.x).toEqual(15);
+
+    const container = cube.getContainer() as THREE.Object3D;
+    expect(container.scale.x).toEqual(15);
     expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(1);
 
     // Animation finishes
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(1000);
     remoteDocument.tick();
-    expect(cube.getContainer().scale.x).toEqual(20);
+    expect(container.scale.x).toEqual(20);
     expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(2);
 
     // Animation remains finished - the value should not be repeatedly set
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(1500);
     remoteDocument.tick();
-    expect(cube.getContainer().scale.x).toEqual(20);
+    expect(container.scale.x).toEqual(20);
     expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(2);
 
     // Removing the animation element should reset the value to the default (1) because there is no element attribute
     attrAnim.remove();
     remoteDocument.tick();
-    expect(cube.getContainer().scale.x).toEqual(1);
+    expect(container.scale.x).toEqual(1);
     expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(3);
   });
 });

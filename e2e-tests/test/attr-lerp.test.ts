@@ -19,7 +19,7 @@ describe("m-attr-lerp", () => {
         }, id);
 
         const actualHeight = await page.evaluate((id) => {
-          return (document.querySelector(`#${id}`) as any).getCube().scale.y;
+          return (document.querySelector(`#${id}`) as any).props.height;
         }, id);
 
         expect(`${id}: x: ${actualX} height: ${actualHeight}`).toEqual(

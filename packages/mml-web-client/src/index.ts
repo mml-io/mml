@@ -1,12 +1,19 @@
-import { NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
+import { StandalonePlayCanvasAdapter } from "@mml-io/mml-web-playcanvas-client";
+import {
+  StandaloneThreeJSAdapter,
+  StandaloneThreeJSAdapterControlsType,
+} from "@mml-io/mml-web-three-client";
 import {
   configureWindowForMML,
   FullScreenMMLScene,
   IframeWrapper,
   MMLScene,
   NetworkedDOMWebsocket,
+  NetworkedDOMWebsocketStatus,
   registerCustomElementsToWindow,
   RemoteDocumentWrapper,
+  StandaloneGraphicsAdapter,
+  StandaloneTagDebugAdapter,
 } from "mml-web";
 
 const thisScript = document.currentScript as HTMLScriptElement;
@@ -15,8 +22,8 @@ const scriptUrl = new URL(thisScript.src);
 declare global {
   interface Window {
     "mml-web-client": {
-      mmlScene: MMLScene;
-      remoteDocuments: RemoteDocumentWrapper[];
+      mmlScene: MMLScene<StandaloneGraphicsAdapter>;
+      remoteDocuments: RemoteDocumentWrapper<StandaloneGraphicsAdapter>[];
     };
   }
 }
@@ -41,17 +48,37 @@ function createStatusElement() {
 }
 
 (function () {
+  function getGraphicsAdapter(element: HTMLElement): Promise<StandaloneGraphicsAdapter> {
+    if (window.location.search.includes("playcanvas")) {
+      return StandalonePlayCanvasAdapter.create(element);
+    } else if (window.location.search.includes("tags")) {
+      return StandaloneTagDebugAdapter.create(element);
+    } else {
+      return StandaloneThreeJSAdapter.create(element, {
+        controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
+      });
+    }
+  }
+
   const websocketUrl = scriptUrl.searchParams.get("websocketUrl");
   if (!websocketUrl) {
     // The custom elements are assumed to already be on the page after this script - register the custom elements
     // handler before the page loads. If any elements are already present then undefined behaviour may occur.
-    configureWindowForMML(window);
+    configureWindowForMML(window, getGraphicsAdapter);
     return;
   }
 
   window.addEventListener("load", async () => {
-    // Make a fixed-position centered status element
-    const fullScreenMMLScene = new FullScreenMMLScene();
+    const element = document.createElement("div");
+    element.style.width = "100%";
+    element.style.height = "100%";
+    element.style.position = "relative";
+    document.body.append(element);
+
+    const graphicsAdapter = await getGraphicsAdapter(element);
+
+    const fullScreenMMLScene = new FullScreenMMLScene(element);
+    fullScreenMMLScene.init(graphicsAdapter);
 
     const useIframe = new URL(window.location.href).searchParams.get("iframe") === "true";
     const documentWebsocketUrls = websocketUrl.split(",");
@@ -69,7 +96,7 @@ function createStatusElement() {
     }
     registerCustomElementsToWindow(windowTarget);
 
-    const remoteDocuments: RemoteDocumentWrapper[] = [];
+    const remoteDocuments: RemoteDocumentWrapper<StandaloneGraphicsAdapter>[] = [];
     for (const documentWebsocketUrl of documentWebsocketUrls) {
       let overriddenHandler: ((element: HTMLElement, event: CustomEvent) => void) | null = null;
       const eventHandler = (element: HTMLElement, event: CustomEvent) => {
@@ -117,7 +144,5 @@ function createStatusElement() {
         remoteDocuments,
       };
     }
-
-    document.body.append(fullScreenMMLScene.element);
   });
 })();

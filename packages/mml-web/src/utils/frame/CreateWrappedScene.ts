@@ -1,72 +1,61 @@
-import * as THREE from "three";
-
 import { Interaction, MElement } from "../../elements";
 import { ChatProbe } from "../../elements/ChatProbe";
+import { GraphicsAdapter } from "../../GraphicsAdapter";
 import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
 import { IMMLScene, LinkProps, PromptProps } from "../../MMLScene";
 
-export function createWrappedScene(
-  scene: IMMLScene,
-  container: THREE.Group,
+export function createWrappedScene<G extends GraphicsAdapter = GraphicsAdapter>(
+  scene: IMMLScene<G>,
   loadingProgressManager: LoadingProgressManager | null,
-): IMMLScene {
+): IMMLScene<G> {
   return {
-    addCollider(collider: THREE.Object3D, element: MElement): void {
+    addCollider(collider: unknown, element: MElement<G>): void {
       if (scene.addCollider) {
         scene.addCollider(collider, element);
       }
     },
-    updateCollider(collider: THREE.Object3D, element: MElement): void {
+    updateCollider(collider: unknown, element: MElement<G>): void {
       if (scene.updateCollider) {
         scene.updateCollider(collider, element);
       }
     },
-    removeCollider(collider: THREE.Object3D, element: MElement): void {
+    removeCollider(collider: unknown, element: MElement<G>): void {
       if (scene.removeCollider) {
         scene.removeCollider(collider, element);
       }
     },
-    addInteraction(interaction: Interaction): void {
+    addInteraction(interaction: Interaction<G>): void {
       if (scene.addInteraction) {
         scene.addInteraction(interaction);
       }
     },
-    updateInteraction(interaction: Interaction): void {
+    updateInteraction(interaction: Interaction<G>): void {
       if (scene.updateInteraction) {
         scene.updateInteraction(interaction);
       }
     },
-    removeInteraction(interaction: Interaction): void {
+    removeInteraction(interaction: Interaction<G>): void {
       if (scene.removeInteraction) {
         scene.removeInteraction(interaction);
       }
     },
-    addChatProbe(chatProbe: ChatProbe): void {
+    addChatProbe(chatProbe: ChatProbe<G>): void {
       if (scene.addChatProbe) {
         scene.addChatProbe(chatProbe);
       }
     },
-    updateChatProbe(chatProbe: ChatProbe): void {
+    updateChatProbe(chatProbe: ChatProbe<G>): void {
       if (scene.updateChatProbe) {
         scene.updateChatProbe(chatProbe);
       }
     },
-    removeChatProbe(chatProbe: ChatProbe): void {
+    removeChatProbe(chatProbe: ChatProbe<G>): void {
       if (scene.removeChatProbe) {
         scene.removeChatProbe(chatProbe);
       }
     },
-    getAudioListener: () => {
-      return scene.getAudioListener();
-    },
-    getRenderer(): THREE.Renderer {
-      return scene.getRenderer();
-    },
-    getThreeScene(): THREE.Scene {
-      return scene.getThreeScene();
-    },
-    getCamera(): THREE.Camera {
-      return scene.getCamera();
+    getGraphicsAdapter() {
+      return scene.getGraphicsAdapter();
     },
     prompt(
       promptProps: PromptProps,
@@ -78,12 +67,12 @@ export function createWrappedScene(
     link(
       linkProps: LinkProps,
       abortSignal: AbortSignal,
-      windowCallback: (openedWindow: Window) => void,
+      windowCallback: (openedWindow: Window | null) => void,
     ) {
       scene.link(linkProps, abortSignal, windowCallback);
     },
     getRootContainer: () => {
-      return container;
+      throw new Error("Wrapped scenes do not have a root container");
     },
     getUserPositionAndRotation: () => {
       return scene.getUserPositionAndRotation();

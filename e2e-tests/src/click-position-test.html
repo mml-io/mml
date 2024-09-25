@@ -9,6 +9,7 @@
 
   myPlane.addEventListener("click", (e) => {
     toggle = !toggle;
-    myLabel.setAttribute("content", JSON.stringify(e.detail.position));
+    const {x, y, z} = e.detail.position;
+    myLabel.setAttribute("content", JSON.stringify({x: x.toFixed(3),y: y.toFixed(3),z: z.toFixed(3)}));
   });
 </script>

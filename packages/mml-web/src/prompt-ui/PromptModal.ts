@@ -91,7 +91,6 @@ export class PromptModal extends Modal {
   }
 
   dispose() {
-    this.eventHandlerCollection.clear();
     super.dispose();
   }
 

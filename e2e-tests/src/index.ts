@@ -1,4 +1,5 @@
 import { Stats } from "node:fs";
+import * as QueryString from "node:querystring";
 
 import * as chokidar from "chokidar";
 import express, { Request, static as expressStatic } from "express";
@@ -122,8 +123,10 @@ app.get("/:documentPath/reset", (req, res) => {
     return;
   }
 
+  const queryString = QueryString.encode(req.query as QueryString.ParsedUrlQueryInput);
+
   currentDocument.reload();
-  res.redirect("/" + documentPath);
+  res.redirect("/" + documentPath + "?" + queryString);
 });
 
 console.log("Serving on port:", port);

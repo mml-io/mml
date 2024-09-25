@@ -1,0 +1,48 @@
+.viewer-ui {
+  z-index: 1000;
+}
+
+.menu-button {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  padding: 10px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+}
+
+.empty-state .menu-button {
+  display: none;
+}
+
+.header {
+  font-size: 20px;
+  padding: 8px;
+}
+
+.contents {
+  position: fixed;
+  z-index: 1000;
+  font-family: Arial, sans-serif;
+  right: 0;
+  top: 0;
+  transform: translate(0, 0);
+  width: 300px;
+  max-height: 100%;
+  overflow: scroll;
+
+  color: white;
+  background-color: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.empty-state .contents {
+  right: 50%;
+  top: 50%;
+  max-width: 100%;
+  transform: translate(50%, -50%);
+  border-radius: 16px;
+}

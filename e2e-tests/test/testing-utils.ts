@@ -4,12 +4,14 @@ declare global {
   interface Window {
     "mml-web-client": {
       mmlScene: {
-        getBoundingBoxForElement(element: Element): {
-          x: number;
-          y: number;
-          width: number;
-          height: number;
-        } | null;
+        graphicsAdapter: {
+          getBoundingBoxForElement(element: Element): {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+          } | null;
+        };
       };
       remoteDocuments: Array<{
         overrideDocumentTime(documentTime: number): void;
@@ -27,7 +29,7 @@ export async function clickElement(
   const coords = (await page.evaluate((selector: string) => {
     const { mmlScene } = window["mml-web-client"];
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return mmlScene.getBoundingBoxForElement(document.querySelector(selector)!);
+    return mmlScene.graphicsAdapter.getBoundingBoxForElement(document.querySelector(selector)!);
   }, selector))!;
 
   const { x: xOffset, y: yOffset } = coordsOffset ?? { x: 0.5, y: 0.5 };

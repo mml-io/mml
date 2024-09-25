@@ -1,17 +1,18 @@
+import { GraphicsAdapter } from "./GraphicsAdapter";
 import { MMLDocumentTimeManager } from "./MMLDocumentTimeManager";
 import { IMMLScene } from "./MMLScene";
 
-let scene: IMMLScene | null = null;
+let scene: IMMLScene<GraphicsAdapter> | null = null;
 let documentTimeManager: MMLDocumentTimeManager | null = null;
 
-export function setGlobalMMLScene(sceneArg: IMMLScene) {
+export function setGlobalMMLScene(sceneArg: IMMLScene<GraphicsAdapter>) {
   if (scene) {
     throw new Error("GlobalMMLScene already set");
   }
   scene = sceneArg;
 }
 
-export function getGlobalMMLScene(): IMMLScene {
+export function getGlobalMMLScene(): IMMLScene<GraphicsAdapter> {
   if (!scene) {
     throw new Error("GlobalMMLScene not set");
   }

@@ -1,12 +1,9 @@
-import { Cache } from "three";
-
-import { Cube } from "../src";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { Cube } from "../build/index";
+import { registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement } from "./scene-test-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
-  Cache.clear();
 });
 
 describe("m-element url", () => {
@@ -77,8 +74,8 @@ describe("m-element url", () => {
   ];
   test.each(cases)(
     "document location %p with content %p should return %p",
-    (firstArg, secondArg, expectedResult) => {
-      const { element } = createSceneAttachedElement<Cube>("m-cube", firstArg);
+    async (firstArg, secondArg, expectedResult) => {
+      const { element } = await createSceneAttachedElement<Cube>("m-cube", firstArg);
       expect(element.contentSrcToContentAddress(secondArg)).toBe(expectedResult);
     },
   );

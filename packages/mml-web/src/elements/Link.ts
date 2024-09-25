@@ -1,8 +1,9 @@
+import { GraphicsAdapter } from "../GraphicsAdapter";
 import { AttributeHandler } from "../utils/attribute-handling";
 import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { TransformableElement } from "./TransformableElement";
 
-export class Link extends TransformableElement {
+export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-link";
 
   private abortController: AbortController | null = null;
@@ -12,7 +13,7 @@ export class Link extends TransformableElement {
     target: undefined as string | undefined,
   };
 
-  private static attributeHandler = new AttributeHandler<Link>({
+  private static attributeHandler = new AttributeHandler<Link<GraphicsAdapter>>({
     href: (instance, newValue) => {
       instance.props.href = newValue !== null ? newValue : undefined;
     },
@@ -87,7 +88,7 @@ export class Link extends TransformableElement {
     // no-op
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
+  public getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 }

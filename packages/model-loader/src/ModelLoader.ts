@@ -1,10 +1,11 @@
-// @ts-expect-error - import is defined in esbuild plugin
-import DRACO_DECODER_WASM from "esbuild-embed-draco-decoder-wasm";
-// @ts-expect-error - import is defined in esbuild plugin
-import DRACO_WASM_WRAPPER from "esbuild-embed-draco-wasm-wrapper-js";
-import { AnimationClip, FileLoader, Group, LoaderUtils, LoadingManager } from "three";
-// @ts-expect-error - import is a js file from three.js
+import DRACO_DECODER_WASM from "base64:three/examples/jsm/libs/draco/gltf/draco_decoder.wasm";
+import DRACO_WASM_WRAPPER from "base64:three/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js";
+import { AnimationClip, FileLoader, Group, LoadingManager } from "three";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -127,7 +128,7 @@ export class ModelLoader {
 
   public async load(url: string, onProgress?: (loaded: number, total: number) => void) {
     return new Promise<ModelLoadResult>((resolve, reject) => {
-      const resourcePath = LoaderUtils.extractUrlBase(url);
+      const resourcePath = ModelLoader.extractUrlBase(url);
 
       this.manager?.itemStart(url);
 
@@ -166,6 +167,16 @@ export class ModelLoader {
         _onError,
       );
     });
+  }
+
+  static extractUrlBase(url: string): string {
+    const index = url.lastIndexOf("/");
+
+    if (index === -1) {
+      return "./";
+    }
+
+    return url.slice(0, index + 1);
   }
 
   public async loadFromBuffer(buffer: ArrayBuffer, pathName: string): Promise<ModelLoadResult> {

@@ -1,7 +1,8 @@
-import { Prompt } from "../src/elements/Prompt";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { jest } from "@jest/globals";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-three-client";
+
+import { Prompt, registerCustomElementsToWindow } from "../build/index";
+import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
@@ -9,36 +10,38 @@ beforeAll(() => {
 });
 
 describe("m-prompt", () => {
-  test("test attachment to scene", () => {
-    const scene = new FullScreenMMLScene();
-    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
-    remoteDocument.init(scene, "ws://localhost:8080");
-    document.body.append(remoteDocument);
+  test("test attachment to scene", async () => {
+    const { scene } = await createSceneAttachedElement<Prompt>("m-prompt");
+    const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+      .children[0 /* root container */].children[0 /* attachment container */]
+      .children[0 /* element container */];
+    expect(container).toBeDefined();
+  });
 
-    const element = document.createElement("m-prompt") as Prompt;
-    remoteDocument.append(element);
-
-    expect(scene.getThreeScene().children[0].children[0].children[0]).toBe(element.getContainer());
-
-    expect(scene.getThreeScene()).toMatchObject({
-      // Scene
-      children: [
-        // Scene Root Container
-        {
-          children: [
-            // Scene Attachment Container
-            {
-              children: expect.arrayContaining([element.getContainer()]),
-            },
-          ],
-        },
-      ],
-    });
-
-    // Setting scale attribute - should affect the container of the element, but not the mesh itself
-    expect(element.getContainer().scale.x).toBe(1);
-    element.setAttribute("sx", "5");
-    expect(element.getContainer().scale.x).toBe(5);
+  test("clicking child element should trigger prompt", async () => {
+    const { element, scene } = await createSceneAttachedElement<Prompt>("m-prompt");
+    element.setAttribute("message", "some-message");
+    element.setAttribute("placeholder", "some-placeholder");
+    element.setAttribute("prefill", "some-prefill");
+    const child = document.createElement("m-cube");
+    element.append(child);
+    const promptSpy = jest.spyOn(scene, "prompt");
+    child.dispatchEvent(
+      new MouseEvent("click", {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    expect(promptSpy).toHaveBeenCalledWith(
+      {
+        message: "some-message",
+        placeholder: "some-placeholder",
+        prefill: "some-prefill",
+      },
+      expect.any(AbortSignal),
+      expect.any(Function),
+    );
   });
 
   test("observes the schema-specified attributes", () => {

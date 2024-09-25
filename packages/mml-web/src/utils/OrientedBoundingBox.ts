@@ -1,47 +1,60 @@
-import * as THREE from "three";
-
-type MatrixWorldProvider = {
-  matrixWorld: THREE.Matrix4;
-  updateMatrixWorld(force?: boolean): void;
-};
+import { Matr4 } from "../math/Matr4";
+import { IVect3, Vect3 } from "../math/Vect3";
 
 // Amount to tolerate on bounds (to avoid floating point errors)
 const epsilon = 0.0001;
 
-const matrix1 = new THREE.Matrix4();
-const vector1 = new THREE.Vector3();
+const matrix1 = new Matr4();
+const vector1 = new Vect3();
 
 export class OrientedBoundingBox {
   private constructor(
-    public size: THREE.Vector3,
-    public matrixWorldProvider: MatrixWorldProvider,
-    public centerOffset: THREE.Vector3 | null = null,
+    public size: IVect3,
+    public matr4: Matr4,
+    public centerOffset: IVect3 | null = null,
   ) {}
 
-  static fromSizeAndMatrixWorldProvider(
-    size: THREE.Vector3,
-    matrixWorldProvider: MatrixWorldProvider,
-  ): OrientedBoundingBox {
-    return new OrientedBoundingBox(size, matrixWorldProvider);
+  static fromSizeAndMatrixWorld(size: Vect3, matr4: Matr4): OrientedBoundingBox {
+    return new OrientedBoundingBox(size, matr4);
   }
 
-  static fromSizeMatrixWorldProviderAndCenter(
-    size: THREE.Vector3,
-    matrixWorldProvider: MatrixWorldProvider,
-    centerOffset: THREE.Vector3,
+  static fromSizeMatrixWorldAndCenter(
+    size: IVect3,
+    matr4: Matr4,
+    centerOffset: IVect3,
   ): OrientedBoundingBox {
-    return new OrientedBoundingBox(size, matrixWorldProvider, centerOffset);
+    return new OrientedBoundingBox(size, matr4, centerOffset);
   }
 
-  static fromMatrixWorldProvider(matrixWorldProvider: MatrixWorldProvider): OrientedBoundingBox {
-    return new OrientedBoundingBox(new THREE.Vector3(), matrixWorldProvider);
+  static fromMatrixWorld(matr4: Matr4): OrientedBoundingBox {
+    return new OrientedBoundingBox(new Vect3(), matr4);
+  }
+
+  public getCorners(): Vect3[] {
+    const corners: Vect3[] = [];
+    for (let x = -1; x <= 1; x += 2) {
+      for (let y = -1; y <= 1; y += 2) {
+        for (let z = -1; z <= 1; z += 2) {
+          const point = vector1.set(
+            x * (this.size.x / 2),
+            y * (this.size.y / 2),
+            z * (this.size.z / 2),
+          );
+
+          if (this.centerOffset !== null) {
+            point.add(this.centerOffset);
+          }
+
+          point.applyMatrix4(this.matr4);
+          corners.push(point.clone());
+        }
+      }
+    }
+    return corners;
   }
 
   public completelyContainsBoundingBox(childOBB: OrientedBoundingBox): boolean {
-    this.matrixWorldProvider.updateMatrixWorld(true);
-    childOBB.matrixWorldProvider.updateMatrixWorld(true);
-
-    const invertedMatrix = matrix1.copy(this.matrixWorldProvider.matrixWorld).invert();
+    const invertedMatrix = matrix1.copy(this.matr4).invert();
 
     for (let x = -1; x <= 1; x += 2) {
       for (let y = -1; y <= 1; y += 2) {
@@ -56,7 +69,7 @@ export class OrientedBoundingBox {
             point.add(childOBB.centerOffset);
           }
 
-          point.applyMatrix4(childOBB.matrixWorldProvider.matrixWorld);
+          point.applyMatrix4(childOBB.matr4);
 
           const localPoint = point.applyMatrix4(invertedMatrix);
           if (this.centerOffset !== null) {
@@ -77,9 +90,8 @@ export class OrientedBoundingBox {
     return true;
   }
 
-  public containsPoint(point: THREE.Vector3): boolean {
-    this.matrixWorldProvider.updateMatrixWorld(true);
-    const invertedMatrix = matrix1.copy(this.matrixWorldProvider.matrixWorld).invert();
+  public containsPoint(point: { x: number; y: number; z: number }): boolean {
+    const invertedMatrix = matrix1.copy(this.matr4).invert();
 
     const localPoint = vector1.copy(point).applyMatrix4(invertedMatrix);
     if (this.centerOffset !== null) {

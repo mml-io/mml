@@ -15,8 +15,8 @@ describe("m-character", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).getCharacter() !== null &&
-          (character as any).getCurrentAnimation() !== null
+          (character as any).modelGraphics.hasLoadedModel() !== null &&
+          (character as any).modelGraphics.hasLoadedAnimation() !== null
         );
       },
       { timeout: 30000, polling: 100 },
@@ -28,7 +28,7 @@ describe("m-character", () => {
     await page.waitForFunction(
       () => {
         const model = document.querySelector("m-model");
-        return (model as any).getModel() !== null;
+        return (model as any).modelGraphics.getBoundingBox() !== null;
       },
       { timeout: 30000, polling: 100 },
     );

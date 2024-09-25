@@ -1,5 +1,7 @@
-import * as THREE from "three";
-
+import { CubeGraphics } from "../graphics/CubeGraphics";
+import { MMLColor } from "../graphics/MMLColor";
+import { GraphicsAdapter } from "../GraphicsAdapter";
+import { Vect3 } from "../math/Vect3";
 import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
 import {
   AttributeHandler,
@@ -13,75 +15,27 @@ import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 
-const defaultCubeColor = new THREE.Color(0xffffff);
+const defaultCubeColor: MMLColor = { r: 1, g: 1, b: 1 };
 const defaultCubeWidth = 1;
 const defaultCubeHeight = 1;
 const defaultCubeDepth = 1;
 const defaultCubeOpacity = 1;
 const defaultCubeCastShadows = true;
 
-export class Cube extends TransformableElement {
+export type MCubeProps = {
+  width: number;
+  height: number;
+  depth: number;
+  color: MMLColor;
+  opacity: number;
+  castShadows: boolean;
+};
+
+export class Cube<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-cube";
+  private cubeGraphics: CubeGraphics<G> | null = null;
 
-  private cubeAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
-    color: [
-      AnimationType.Color,
-      defaultCubeColor,
-      (newValue: THREE.Color) => {
-        this.props.color = newValue;
-        if (this.material) {
-          this.material.color = this.props.color;
-        }
-      },
-    ],
-    width: [
-      AnimationType.Number,
-      defaultCubeWidth,
-      (newValue: number) => {
-        this.props.width = newValue;
-        this.mesh.scale.x = this.props.width;
-        this.applyBounds();
-        this.collideableHelper.updateCollider(this.mesh);
-      },
-    ],
-    height: [
-      AnimationType.Number,
-      defaultCubeHeight,
-      (newValue: number) => {
-        this.props.height = newValue;
-        this.mesh.scale.y = this.props.height;
-        this.applyBounds();
-        this.collideableHelper.updateCollider(this.mesh);
-      },
-    ],
-    depth: [
-      AnimationType.Number,
-      defaultCubeDepth,
-      (newValue: number) => {
-        this.props.depth = newValue;
-        this.mesh.scale.z = this.props.depth;
-        this.applyBounds();
-        this.collideableHelper.updateCollider(this.mesh);
-      },
-    ],
-    opacity: [
-      AnimationType.Number,
-      defaultCubeOpacity,
-      (newValue: number) => {
-        this.props.opacity = newValue;
-        if (this.material) {
-          const needsUpdate = this.material.transparent === (this.props.opacity === 1);
-          this.material.transparent = this.props.opacity !== 1;
-          this.material.needsUpdate = needsUpdate;
-          this.material.opacity = newValue;
-        }
-      },
-    ],
-  });
-
-  static boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-
-  private props = {
+  public props: MCubeProps = {
     width: defaultCubeWidth,
     height: defaultCubeHeight,
     depth: defaultCubeDepth,
@@ -89,11 +43,58 @@ export class Cube extends TransformableElement {
     opacity: defaultCubeOpacity,
     castShadows: defaultCubeCastShadows,
   };
-  private mesh: THREE.Mesh<THREE.BoxGeometry, THREE.Material | Array<THREE.Material>>;
-  private material: THREE.MeshStandardMaterial | null = null;
+
+  private cubeAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    color: [
+      AnimationType.Color,
+      defaultCubeColor,
+      (newValue: MMLColor) => {
+        this.props.color = newValue;
+        this.cubeGraphics?.setColor(newValue, this.props);
+      },
+    ],
+    width: [
+      AnimationType.Number,
+      defaultCubeWidth,
+      (newValue: number) => {
+        this.props.width = newValue;
+        this.cubeGraphics?.setWidth(newValue, this.props);
+        this.applyBounds();
+        this.collideableHelper.updateCollider(this.cubeGraphics?.getCollisionElement());
+      },
+    ],
+    height: [
+      AnimationType.Number,
+      defaultCubeHeight,
+      (newValue: number) => {
+        this.props.height = newValue;
+        this.cubeGraphics?.setHeight(newValue, this.props);
+        this.applyBounds();
+        this.collideableHelper.updateCollider(this.cubeGraphics?.getCollisionElement());
+      },
+    ],
+    depth: [
+      AnimationType.Number,
+      defaultCubeDepth,
+      (newValue: number) => {
+        this.props.depth = newValue;
+        this.cubeGraphics?.setDepth(newValue, this.props);
+        this.applyBounds();
+        this.collideableHelper.updateCollider(this.cubeGraphics?.getCollisionElement());
+      },
+    ],
+    opacity: [
+      AnimationType.Number,
+      defaultCubeOpacity,
+      (newValue: number) => {
+        this.props.opacity = newValue;
+        this.cubeGraphics?.setOpacity(newValue, this.props);
+      },
+    ],
+  });
   private collideableHelper = new CollideableHelper(this);
 
-  private static attributeHandler = new AttributeHandler<Cube>({
+  private static attributeHandler = new AttributeHandler<Cube<GraphicsAdapter>>({
     width: (instance, newValue) => {
       instance.cubeAnimatedAttributeHelper.elementSetAttribute(
         "width",
@@ -126,7 +127,7 @@ export class Cube extends TransformableElement {
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultCubeCastShadows);
-      instance.mesh.castShadow = instance.props.castShadows;
+      instance.cubeGraphics?.setCastShadows(instance.props.castShadows, instance.props);
     },
   });
 
@@ -138,10 +139,13 @@ export class Cube extends TransformableElement {
     this.collideableHelper.disable();
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.props.width, this.props.height, this.props.depth),
-      this.container,
+  public getContentBounds(): OrientedBoundingBox | null {
+    if (!this.transformableElementGraphics) {
+      return null;
+    }
+    return OrientedBoundingBox.fromSizeAndMatrixWorld(
+      new Vect3(this.props.width, this.props.height, this.props.depth),
+      this.transformableElementGraphics.getWorldMatrix(),
     );
   }
 
@@ -155,24 +159,15 @@ export class Cube extends TransformableElement {
 
   constructor() {
     super();
-    this.mesh = new THREE.Mesh(Cube.boxGeometry);
-    this.mesh.scale.x = this.props.width;
-    this.mesh.scale.y = this.props.height;
-    this.mesh.scale.z = this.props.depth;
-    this.mesh.castShadow = this.props.castShadows;
-    this.mesh.receiveShadow = true;
-    this.container.add(this.mesh);
   }
 
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<G>): void {
     this.cubeAnimatedAttributeHelper.addSideEffectChild(child);
-
     super.addSideEffectChild(child);
   }
 
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<G>): void {
     this.cubeAnimatedAttributeHelper.removeSideEffectChild(child);
-
     super.removeSideEffectChild(child);
   }
 
@@ -184,11 +179,10 @@ export class Cube extends TransformableElement {
     return true;
   }
 
-  public getCube(): THREE.Mesh<THREE.BoxGeometry, THREE.Material | Array<THREE.Material>> | null {
-    return this.mesh;
-  }
-
-  public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.cubeGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Cube.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
@@ -196,23 +190,30 @@ export class Cube extends TransformableElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    this.material = new THREE.MeshStandardMaterial({
-      color: this.props.color,
-      transparent: this.props.opacity === 1 ? false : true,
-      opacity: this.props.opacity,
-    });
-    this.mesh.material = this.material;
+
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+    if (!graphicsAdapter || this.cubeGraphics) {
+      return;
+    }
+
+    this.cubeGraphics = graphicsAdapter.getGraphicsAdapterFactory().MMLCubeGraphicsInterface(this);
+
+    for (const name of Cube.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
     this.applyBounds();
-    this.collideableHelper.updateCollider(this.mesh);
+    this.collideableHelper.updateCollider(this.cubeGraphics?.getCollisionElement());
   }
 
   public disconnectedCallback(): void {
     this.collideableHelper.removeColliders();
-    if (this.material) {
-      this.material.dispose();
-      this.mesh.material = [];
-      this.material = null;
-    }
+    this.cubeAnimatedAttributeHelper.reset();
+    this.cubeGraphics?.dispose();
+    this.cubeGraphics = null;
     super.disconnectedCallback();
   }
 }

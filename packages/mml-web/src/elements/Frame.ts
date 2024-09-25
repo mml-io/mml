@@ -1,5 +1,6 @@
-import * as THREE from "three";
-
+import { FrameGraphics } from "../graphics/FrameGraphics";
+import { GraphicsAdapter } from "../GraphicsAdapter";
+import { Vect3 } from "../math/Vect3";
 import {
   AttributeHandler,
   parseBoolAttribute,
@@ -14,67 +15,77 @@ import { TransformableElement } from "./TransformableElement";
 const defaultUnloadRange = 1;
 const defaultFrameDebug = false;
 
-function setMeshToBoundingBox(
-  mesh: THREE.Mesh,
-  minX: number,
-  maxX: number,
-  minY: number,
-  maxY: number,
-  minZ: number,
-  maxZ: number,
-) {
-  mesh.scale.set(maxX - minX, maxY - minY, maxZ - minZ);
-  mesh.position.set((maxX + minX) / 2, (maxY + minY) / 2, (maxZ + minZ) / 2);
-}
+export type MFrameProps = {
+  src: string | null;
+  loadRange: number | null;
+  unloadRange: number;
 
-export class Frame extends TransformableElement {
+  debug: boolean;
+
+  minX: number | null;
+  maxX: number | null;
+  minY: number | null;
+  maxY: number | null;
+  minZ: number | null;
+  maxZ: number | null;
+};
+
+export class Frame<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-frame";
+  private frameGraphics: FrameGraphics<G> | null;
 
-  private static attributeHandler = new AttributeHandler<Frame>({
+  private static attributeHandler = new AttributeHandler<Frame<GraphicsAdapter>>({
     src: (instance, newValue) => {
       instance.props.src = newValue;
       if (instance.frameContentsInstance) {
         instance.disposeInstance();
       }
       instance.syncLoadState();
+      instance.frameGraphics?.setSrc(instance.props.src, instance.props);
     },
     "load-range": (instance, newValue) => {
       instance.props.loadRange = parseFloatAttribute(newValue, null);
       instance.syncLoadState();
-      instance.updateDebugVisualisation();
+      instance.frameGraphics?.setLoadRange(instance.props.loadRange, instance.props);
     },
     "unload-range": (instance, newValue) => {
       instance.props.unloadRange = parseFloatAttribute(newValue, defaultUnloadRange);
       instance.syncLoadState();
-      instance.updateDebugVisualisation();
+      instance.frameGraphics?.setUnloadRange(instance.props.unloadRange, instance.props);
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, defaultFrameDebug);
-      instance.updateDebugVisualisation();
+      instance.frameGraphics?.setDebug(instance.props.debug, instance.props);
     },
     "min-x": (instance, newValue) => {
       instance.props.minX = parseFloatAttribute(newValue, null);
       instance.boundsUpdated();
+      instance.frameGraphics?.setMinX(instance.props.minX, instance.props);
     },
     "max-x": (instance, newValue) => {
       instance.props.maxX = parseFloatAttribute(newValue, null);
       instance.boundsUpdated();
+      instance.frameGraphics?.setMaxX(instance.props.maxX, instance.props);
     },
     "min-y": (instance, newValue) => {
       instance.props.minY = parseFloatAttribute(newValue, null);
       instance.boundsUpdated();
+      instance.frameGraphics?.setMinY(instance.props.minY, instance.props);
     },
     "max-y": (instance, newValue) => {
       instance.props.maxY = parseFloatAttribute(newValue, null);
       instance.boundsUpdated();
+      instance.frameGraphics?.setMaxY(instance.props.maxY, instance.props);
     },
     "min-z": (instance, newValue) => {
       instance.props.minZ = parseFloatAttribute(newValue, null);
       instance.boundsUpdated();
+      instance.frameGraphics?.setMinZ(instance.props.minZ, instance.props);
     },
     "max-z": (instance, newValue) => {
       instance.props.maxZ = parseFloatAttribute(newValue, null);
       instance.boundsUpdated();
+      instance.frameGraphics?.setMaxZ(instance.props.maxZ, instance.props);
     },
   });
 
@@ -86,19 +97,22 @@ export class Frame extends TransformableElement {
     // no-op
   }
 
-  private frameContentsInstance: WebSocketFrameInstance | StaticHTMLFrameInstance | null = null;
+  private frameContentsInstance: WebSocketFrameInstance<G> | StaticHTMLFrameInstance<G> | null =
+    null;
   private isActivelyLoaded = false;
   private timer: NodeJS.Timeout | null = null;
 
   private boundsUpdated() {
-    this.updateDebugVisualisation();
+    if (!this.transformableElementGraphics) {
+      return;
+    }
     const boxBounds = this.getDefinedBoxBounds();
     if (boxBounds) {
       const [minX, maxX, minY, maxY, minZ, maxZ] = boxBounds;
-      const obb = OrientedBoundingBox.fromSizeMatrixWorldProviderAndCenter(
-        new THREE.Vector3(maxX - minX, maxY - minY, maxZ - minZ),
-        this.container,
-        new THREE.Vector3((maxX + minX) / 2, (maxY + minY) / 2, (maxZ + minZ) / 2),
+      const obb = OrientedBoundingBox.fromSizeMatrixWorldAndCenter(
+        new Vect3(maxX - minX, maxY - minY, maxZ - minZ),
+        this.transformableElementGraphics.getWorldMatrix(),
+        new Vect3((maxX + minX) / 2, (maxY + minY) / 2, (maxZ + minZ) / 2),
       );
       this.addOrUpdateParentBound(this, obb);
     } else {
@@ -106,46 +120,20 @@ export class Frame extends TransformableElement {
     }
   }
 
-  private props = {
-    src: null as string | null,
-    loadRange: null as number | null,
-    unloadRange: defaultUnloadRange as number,
+  public props: MFrameProps = {
+    src: null,
+    loadRange: null,
+    unloadRange: defaultUnloadRange,
 
     debug: defaultFrameDebug,
 
-    minX: null as number | null,
-    maxX: null as number | null,
-    minY: null as number | null,
-    maxY: null as number | null,
-    minZ: null as number | null,
-    maxZ: null as number | null,
+    minX: null,
+    maxX: null,
+    minY: null,
+    maxY: null,
+    minZ: null,
+    maxZ: null,
   };
-
-  private static DebugBoxGeometry = new THREE.BoxGeometry(1, 1, 1, 1, 1, 1);
-  private static DebugConstraintMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff0000,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.3,
-  });
-  private static DebugLoadRangeMaterial = new THREE.MeshBasicMaterial({
-    color: 0x00ff00,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.3,
-  });
-  private static DebugUnloadRangeMaterial = new THREE.MeshBasicMaterial({
-    color: 0x0000ff,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.3,
-  });
-
-  private debugMeshes: {
-    debugBoxConstraintMesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>;
-    debugBoxLoadRangeMesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>;
-    debugBoxUnloadRangeMesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>;
-  } | null = null;
 
   private shouldBeLoaded() {
     if (!this.isConnected) {
@@ -158,7 +146,7 @@ export class Frame extends TransformableElement {
     const userPositionAndRotation = this.getUserPositionAndRotation();
     const elementRelative = getRelativePositionAndRotationRelativeToObject(
       userPositionAndRotation,
-      this.getContainer(),
+      this,
     );
 
     let boxBounds = this.getDefinedBoxBounds();
@@ -192,8 +180,8 @@ export class Frame extends TransformableElement {
   private syncLoadState() {
     const shouldBeLoaded = this.shouldBeLoaded();
     if (shouldBeLoaded && !this.isActivelyLoaded) {
-      this.isActivelyLoaded = true;
       if (this.props.src) {
+        this.isActivelyLoaded = true;
         this.createFrameContentsInstance(this.props.src);
       }
     } else if (!shouldBeLoaded && this.isActivelyLoaded) {
@@ -210,7 +198,7 @@ export class Frame extends TransformableElement {
     super();
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
+  public getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 
@@ -220,22 +208,6 @@ export class Frame extends TransformableElement {
 
   public isClickable(): boolean {
     return true;
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this.updateDebugVisualisation();
-    this.startEmitting();
-    this.syncLoadState();
-  }
-
-  disconnectedCallback() {
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
-    this.clearDebugVisualisation();
-    this.disposeInstance();
-    super.disconnectedCallback();
   }
 
   private startEmitting() {
@@ -263,19 +235,9 @@ export class Frame extends TransformableElement {
     } else {
       this.frameContentsInstance = new StaticHTMLFrameInstance(this, src, this.getScene());
     }
-    this.container.add(this.frameContentsInstance.container);
   }
 
-  private clearDebugVisualisation() {
-    if (this.debugMeshes) {
-      this.debugMeshes.debugBoxConstraintMesh.removeFromParent();
-      this.debugMeshes.debugBoxLoadRangeMesh.removeFromParent();
-      this.debugMeshes.debugBoxUnloadRangeMesh.removeFromParent();
-      this.debugMeshes = null;
-    }
-  }
-
-  private getDefinedBoxBounds(): [number, number, number, number, number, number] | null {
+  public getDefinedBoxBounds(): [number, number, number, number, number, number] | null {
     if (
       this.props.minX !== null ||
       this.props.maxX !== null ||
@@ -305,96 +267,55 @@ export class Frame extends TransformableElement {
     return null;
   }
 
-  private updateDebugVisualisation() {
-    if (!this.props.debug) {
-      this.clearDebugVisualisation();
-    } else {
-      if (!this.isConnected) {
-        return;
-      }
-      if (!this.debugMeshes) {
-        this.debugMeshes = {
-          debugBoxConstraintMesh: new THREE.Mesh(
-            Frame.DebugBoxGeometry,
-            Frame.DebugConstraintMaterial,
-          ),
-          debugBoxLoadRangeMesh: new THREE.Mesh(
-            Frame.DebugBoxGeometry,
-            Frame.DebugLoadRangeMaterial,
-          ),
-          debugBoxUnloadRangeMesh: new THREE.Mesh(
-            Frame.DebugBoxGeometry,
-            Frame.DebugUnloadRangeMaterial,
-          ),
-        };
-        this.container.add(
-          this.debugMeshes.debugBoxConstraintMesh,
-          this.debugMeshes.debugBoxLoadRangeMesh,
-          this.debugMeshes.debugBoxUnloadRangeMesh,
-        );
-      }
-
-      let boxBounds = this.getDefinedBoxBounds();
-      if (!boxBounds) {
-        boxBounds = [0, 0, 0, 0, 0, 0];
-      }
-
-      const [minX, maxX, minY, maxY, minZ, maxZ] = boxBounds;
-      this.debugMeshes.debugBoxConstraintMesh.visible = true;
-      this.debugMeshes.debugBoxLoadRangeMesh.visible = true;
-      this.debugMeshes.debugBoxUnloadRangeMesh.visible = true;
-
-      setMeshToBoundingBox(
-        this.debugMeshes.debugBoxConstraintMesh,
-        minX,
-        maxX,
-        minY,
-        maxY,
-        minZ,
-        maxZ,
-      );
-
-      if (this.props.loadRange === null) {
-        this.debugMeshes.debugBoxLoadRangeMesh.visible = false;
-        this.debugMeshes.debugBoxUnloadRangeMesh.visible = false;
-      } else {
-        this.debugMeshes.debugBoxLoadRangeMesh.visible = true;
-        this.debugMeshes.debugBoxUnloadRangeMesh.visible = true;
-
-        setMeshToBoundingBox(
-          this.debugMeshes.debugBoxLoadRangeMesh,
-          minX - this.props.loadRange,
-          maxX + this.props.loadRange,
-          minY - this.props.loadRange,
-          maxY + this.props.loadRange,
-          minZ - this.props.loadRange,
-          maxZ + this.props.loadRange,
-        );
-
-        setMeshToBoundingBox(
-          this.debugMeshes.debugBoxUnloadRangeMesh,
-          minX - this.props.loadRange - this.props.unloadRange,
-          maxX + this.props.loadRange + this.props.unloadRange,
-          minY - this.props.loadRange - this.props.unloadRange,
-          maxY + this.props.loadRange + this.props.unloadRange,
-          minZ - this.props.loadRange - this.props.unloadRange,
-          maxZ + this.props.loadRange + this.props.unloadRange,
-        );
-      }
-    }
-  }
-
   private disposeInstance() {
     if (this.frameContentsInstance !== null) {
-      this.container.remove(this.frameContentsInstance.container);
       this.frameContentsInstance.dispose();
       this.frameContentsInstance = null;
       this.isActivelyLoaded = false;
     }
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.frameGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Frame.attributeHandler.handle(this, name, newValue);
+  }
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+    if (!graphicsAdapter || this.frameGraphics) {
+      return;
+    }
+
+    this.startEmitting();
+    this.syncLoadState();
+
+    this.frameGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLFrameGraphicsInterface(this);
+
+    for (const name of Frame.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
+    this.applyBounds();
+  }
+
+  public disconnectedCallback(): void {
+    this.frameGraphics?.dispose();
+    this.frameGraphics = null;
+
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
+    this.disposeInstance();
+    super.disconnectedCallback();
   }
 }

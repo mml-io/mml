@@ -1,0 +1,56 @@
+.ui-field {
+  flex: 1 1 0%;
+  display: flex;
+  background: rgb(85, 85, 85);
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  align-items: stretch;
+  position: relative;
+  padding: 16px 0px 3px;
+  margin-bottom: 5px;
+}
+
+.label {
+  position: absolute;
+  top: 0;
+  left: 6px;
+  font-size: 11px;
+  display: block;
+  width: calc(100% - 16px);
+  cursor: text;
+  color: rgba(255, 255, 255, 0.5);
+  transition: 0.2s ease-in-out;
+  pointer-events: none;
+}
+
+.label-focused {
+  color: rgba(255, 255, 255, 1);
+}
+
+.text-input {
+  display: block;
+  width: 100%;
+  background: transparent;
+  padding: 0 6px;
+  border: none;
+  outline: none;
+  color: white;
+}
+
+.select-input {
+  display: block;
+  width: 100%;
+  color: white;
+  text-align: left;
+  background: rgb(128, 128, 128);
+  border: none;
+  margin-left: 4px;
+  margin-right: 4px;
+  border-radius: 4px;
+}
+
+.submit-button {
+  font-size: 14px;
+}

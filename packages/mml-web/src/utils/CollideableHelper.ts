@@ -1,6 +1,5 @@
-import * as THREE from "three";
-
 import { MElement } from "../elements/MElement";
+import { GraphicsAdapter } from "../GraphicsAdapter";
 import { IMMLScene } from "../MMLScene";
 import { AttributeHandler, parseBoolAttribute } from "./attribute-handling";
 
@@ -14,14 +13,14 @@ const defaultCollideable = true;
  * It reacts to the attribute values for the collide and collision-interval attributes and adds, updates, or removes the
  * collider from the MMLScene as appropriate.
  */
-export class CollideableHelper {
-  private element: MElement;
+export class CollideableHelper<G extends GraphicsAdapter = GraphicsAdapter> {
+  private element: MElement<G>;
 
   private props = {
     collide: defaultCollideable,
   };
 
-  static AttributeHandler = new AttributeHandler<CollideableHelper>({
+  static AttributeHandler = new AttributeHandler<CollideableHelper<GraphicsAdapter>>({
     [collideAttributeName]: (instance, newValue) => {
       const collide = parseBoolAttribute(newValue, defaultCollideable);
       if (collide !== instance.props.collide) {
@@ -35,12 +34,12 @@ export class CollideableHelper {
   });
   static observedAttributes = CollideableHelper.AttributeHandler.getAttributes();
 
-  constructor(element: MElement) {
+  constructor(element: MElement<G>) {
     this.element = element;
   }
 
-  private scene: IMMLScene | null = null;
-  private collider: THREE.Object3D | null = null;
+  private scene: IMMLScene<G> | null = null;
+  private collider: unknown | null = null;
   private added: boolean = false;
   private enabled: boolean = true;
 
@@ -62,7 +61,7 @@ export class CollideableHelper {
     this.updateCollider(this.collider);
   }
 
-  public updateCollider(collider: THREE.Object3D | null) {
+  public updateCollider(collider: unknown | null) {
     if (!this.element.isConnected) {
       //element not connected to scene yet - keep track of the collider for when it is connected
       this.collider = collider;
@@ -118,8 +117,6 @@ export class CollideableHelper {
     }
 
     scene.removeCollider?.(this.collider, this.element);
-
-    this.collider = null;
 
     this.scene = null;
   }
