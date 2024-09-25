@@ -20,10 +20,9 @@
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "typedoc": "0.26.6"
+    "typedoc": "0.26.7"
   },
   "devDependencies": {
-    "@types/libxmljs": "^0.18.13",
     "xml-js": "1.6.11"
   }
 }
