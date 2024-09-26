@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Set up nodejs
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version-file: ".nvmrc"
         cache: npm
@@ -23,7 +23,7 @@ runs:
       run: echo "NX_REJECT_UNKNOWN_LOCAL_CACHE=0" >> $GITHUB_ENV
 
     - name: Cache NPM dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache-npm-deps
       with:
         path: |
@@ -41,7 +41,7 @@ runs:
       run: npm run build
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
         path: |
