@@ -6,20 +6,20 @@ runs:
   using: "composite"
   steps:
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build-artifacts
 
     - name: Set up nodejs
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version-file: ".nvmrc"
         cache: npm
 
     - name: Cache NPM dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
-          node_modules
+          **/node_modules
           ~/.cache
         key: ${{ runner.os }}-npm-v3-${{ hashFiles('package-lock.json') }}

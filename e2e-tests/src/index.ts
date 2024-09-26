@@ -1,3 +1,5 @@
+import { Stats } from "node:fs";
+
 import * as chokidar from "chokidar";
 import express, { Request, static as expressStatic } from "express";
 import enableWs from "express-ws";
@@ -13,8 +15,11 @@ const srcPath = path.resolve(dirname, "../src");
 
 const documents: { [key: string]: { documentPath: string; document: EditableNetworkedDOM } } = {};
 
-const watchPath = path.resolve(srcPath, "*.html");
-const watcher = chokidar.watch(watchPath, { ignored: /^\./, persistent: true });
+const watcher = chokidar.watch(srcPath, {
+  ignored: (path: string, stats: Stats) => (stats?.isFile() || false) && !path.endsWith(".html"),
+  depth: 0,
+  persistent: true,
+});
 watcher
   .on("add", (relativeFilePath) => {
     const filename = path.basename(relativeFilePath);
