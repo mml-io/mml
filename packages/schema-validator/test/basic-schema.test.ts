@@ -28,7 +28,7 @@ test("basic cubes document inside html tag", () => {
 });
 
 test("invalid tag throws error", () => {
-  const validationErrors: Array<Error> = validateMMLDocument(`
+  const validationErrors: Array<Error> | null = validateMMLDocument(`
 <html>
   <head></head>
   <body>
@@ -46,7 +46,7 @@ test("invalid tag throws error", () => {
 });
 
 test("invalid attribute throws error", () => {
-  const validationErrors: Array<Error> = validateMMLDocument(`
+  const validationErrors: Array<Error> | null = validateMMLDocument(`
 <html>
   <head></head>
   <body>

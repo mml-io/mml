@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@mml-io/mml-schema": "^0.18.0",
-    "libxmljs": "1.0.10",
-    "xsd-validator": "1.1.0"
+    "libxml2-wasm": "0.4.0"
   }
 }
