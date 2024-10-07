@@ -495,7 +495,7 @@ describe("reloading", () => {
             },
           ],
           nodeId: 4,
-          previousNodeId: null,
+          previousNodeId: 7, // m-model
           removedNodes: [],
           type: "childrenChanged",
         },
@@ -631,7 +631,7 @@ describe("reloading", () => {
             },
           ],
           nodeId: 4,
-          previousNodeId: null,
+          previousNodeId: 5, // m-light
           removedNodes: [],
           type: "childrenChanged",
         },

@@ -268,4 +268,37 @@ setTimeout(() => {
     expect(testCase.getFormattedAndFilteredHTML()).toEqual(expected);
     expect(client1.getFormattedHTML()).toEqual(formatHTML(`<div>${expected}</div>`));
   });
+
+  test("add child to node with existing children", async () => {
+    const testCase = new TestCaseNetworkedDOMDocument();
+    const client1 = testCase.createClient();
+
+    testCase.doc.load(`<m-model></m-model>`);
+
+    const expected1 = formatHTML(`<html>
+  <head>
+  </head>
+  <body>
+    <m-model></m-model>
+  </body>
+</html>`);
+    await client1.waitForAllClientMessages(1);
+    expect(client1.getFormattedHTML()).toEqual(formatHTML(`<div>${expected1}</div>`));
+    expect(testCase.getFormattedAndFilteredHTML()).toEqual(expected1);
+
+    // Reload the document with changes
+    testCase.doc.load("<m-cube></m-cube><m-model></m-model>");
+
+    const expected2 = formatHTML(`<html>
+  <head>
+  </head>
+  <body>
+    <m-cube></m-cube>
+    <m-model></m-model>
+  </body>
+</html>`);
+    await client1.waitForAllClientMessages(2);
+    expect(client1.getFormattedHTML()).toEqual(formatHTML(`<div>${expected2}</div>`));
+    expect(testCase.getFormattedAndFilteredHTML()).toEqual(expected2);
+  });
 });
