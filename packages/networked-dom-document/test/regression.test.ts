@@ -190,7 +190,7 @@ describe("regression tests", () => {
             },
           ],
           nodeId: 4, // body
-          previousNodeId: null,
+          previousNodeId: 8, // m-cube id="my-cube"
           removedNodes: [],
           type: "childrenChanged",
         },
