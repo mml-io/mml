@@ -359,7 +359,11 @@ export function virtualDOMDiffToVirtualDOMMutationRecord(
 
     let previousSibling: StaticVirtualDOMElement | null = null;
     if (lastToken === "-") {
-      // Append to the end of the children
+      if (node.childNodes.length > 0) {
+        previousSibling = node.childNodes[node.childNodes.length - 1];
+      } else {
+        // There are no siblings to account for
+      }
     } else {
       const index = parseInt(lastToken, 10);
       if (index === 0) {
