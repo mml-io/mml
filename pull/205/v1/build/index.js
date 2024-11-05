@@ -552,11 +552,11 @@ var ViewerUI = class {
     document.body.append(this.element);
     this.contents = document.createElement("div");
     this.contents.className = ViewerUI_default.contents;
+    this.contents.style.display = "none";
     this.element.append(this.contents);
     this.header = document.createElement("div");
     this.header.className = ViewerUI_default.header;
     this.header.textContent = "MML Viewer (Alpha)";
-    this.header.style.display = "block";
     this.contents.append(this.header);
     this.groupHolder = document.createElement("div");
     this.contents.append(this.groupHolder);
