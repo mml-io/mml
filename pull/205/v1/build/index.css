@@ -81,6 +81,20 @@
   padding-right: 8px;
 }
 
+/* esbuild-css-modules-plugin-ns-css:src/ui/HideUISection.module.css */
+.HideUISection-module__hide-ui-section_ygtI5G__0181 {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.HideUISection-module__hide-ui-section-contents_ygtI5G__0181 {
+  justify-content: space-between;
+  margin-bottom: 32px;
+  display: flex;
+}
+.HideUISection-module__hidden_ygtI5G__0181 {
+  display: none;
+}
+
 /* esbuild-css-modules-plugin-ns-css:src/ui/tooltip.module.css */
 .tooltip-module__tooltip_qonKzG__0181 {
   position: relative;
@@ -214,14 +228,5 @@
   top: 50%;
   right: 50%;
   transform: translate(50%, -50%);
-}
-.ViewerUI-module__hide-ui-section_ne7v1W__0181 {
-  padding-left: 8px;
-  padding-right: 8px;
-}
-.ViewerUI-module__hide-ui-section-contents_ne7v1W__0181 {
-  justify-content: space-between;
-  margin-bottom: 32px;
-  display: flex;
 }
 /*# sourceMappingURL=index.css.map */

@@ -32605,7 +32605,7 @@ var ThreeJSOrbitCameraControls = class {
   getBaseYaw() {
     return -(Date.now() / 1e3 * this.degreesPerSecond) % 360 * (Math.PI / 180);
   }
-  update(dt) {
+  update() {
     const baseYaw = this.getBaseYaw();
     const yaw = baseYaw + this.yaw;
     tempSpherical.set(this.distance, this.pitch, yaw);
@@ -34069,4 +34069,4 @@ three/examples/jsm/libs/fflate.module.js:
   version 0.8.2
   *)
 */
-//# sourceMappingURL=ThreeJSModeInternal-GQDADTW3.js.map
+//# sourceMappingURL=ThreeJSModeInternal-2Q5CINU3.js.map

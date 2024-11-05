@@ -395,7 +395,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-GQDADTW3.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-2Q5CINU3.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -423,11 +423,58 @@ var ThreeJSMode = class {
   }
 };
 
+// src/ui/HideUISection.module.css
+var HideUISection_default = {
+  "hidden": "HideUISection-module__hidden_ygtI5G__0181",
+  "hideUiSection": "HideUISection-module__hide-ui-section_ygtI5G__0181",
+  "hideUiSectionContents": "HideUISection-module__hide-ui-section-contents_ygtI5G__0181"
+};
+
 // src/ui/tooltip.module.css
 var tooltip_default = {
   "tooltip": "tooltip-module__tooltip_qonKzG__0181",
   "tooltipInitiator": "tooltip-module__tooltip-initiator_qonKzG__0181",
   "tooltipItem": "tooltip-module__tooltip-item_qonKzG__0181"
+};
+
+// src/ui/HideUISection.ts
+var HideUISection = class {
+  constructor() {
+    this.element = document.createElement("div");
+    this.element.className = HideUISection_default.hideUiSection;
+    this.hideUiHeader = document.createElement("div");
+    this.hideUiHeader.textContent = "Hide UI";
+    this.hideUiHeader.className = shared_styles_default.header;
+    this.element.append(this.hideUiHeader);
+    this.hideUiSectionContents = document.createElement("div");
+    this.hideUiSectionContents.className = HideUISection_default.hideUiSectionContents;
+    this.element.append(this.hideUiSectionContents);
+    this.hideUiButton = document.createElement("button");
+    this.hideUiButton.className = shared_styles_default.button;
+    this.hideUiButton.textContent = "Hide UI";
+    this.hideUiButton.addEventListener("click", () => {
+      setUrlParam("noUI", "true");
+    });
+    this.hideUiSectionContents.append(this.hideUiButton);
+    const warningIcon = document.createElement("span");
+    warningIcon.className = tooltip_default.tooltip;
+    warningIcon.setAttribute("data-direction", "left");
+    const warningIconText = document.createElement("span");
+    warningIconText.className = tooltip_default.tooltipInitiator;
+    warningIconText.textContent = "\u26A0\uFE0F";
+    warningIcon.append(warningIconText);
+    const warningTooltip = document.createElement("span");
+    warningTooltip.className = tooltip_default.tooltipItem;
+    warningTooltip.textContent = "If you hide the UI, it can only be shown again by removing the noUI parameter from the URL";
+    warningIcon.append(warningTooltip);
+    this.hideUiSectionContents.append(warningIcon);
+  }
+  show() {
+    this.element.classList.remove(HideUISection_default.hidden);
+  }
+  hide() {
+    this.element.classList.add(HideUISection_default.hidden);
+  }
 };
 
 // src/ui/UnusedParameters.module.css
@@ -492,8 +539,6 @@ var ViewerUI_default = {
   "contents": "ViewerUI-module__contents_ne7v1W__0181",
   "emptyState": "ViewerUI-module__empty-state_ne7v1W__0181",
   "header": "ViewerUI-module__header_ne7v1W__0181",
-  "hideUiSection": "ViewerUI-module__hide-ui-section_ne7v1W__0181",
-  "hideUiSectionContents": "ViewerUI-module__hide-ui-section-contents_ne7v1W__0181",
   "menuButton": "ViewerUI-module__menu-button_ne7v1W__0181",
   "viewerUi": "ViewerUI-module__viewer-ui_ne7v1W__0181"
 };
@@ -517,35 +562,8 @@ var ViewerUI = class {
     this.contents.append(this.groupHolder);
     this.unusedParameters = new UnusedParameters();
     this.contents.append(this.unusedParameters.element);
-    this.hideUiSection = document.createElement("div");
-    this.hideUiSection.className = ViewerUI_default.hideUiSection;
-    this.contents.append(this.hideUiSection);
-    this.hideUiHeader = document.createElement("div");
-    this.hideUiHeader.textContent = "Hide UI";
-    this.hideUiHeader.className = shared_styles_default.header;
-    this.hideUiSection.append(this.hideUiHeader);
-    this.hideUiSectionContents = document.createElement("div");
-    this.hideUiSectionContents.className = ViewerUI_default.hideUiSectionContents;
-    this.hideUiSection.append(this.hideUiSectionContents);
-    this.hideUiButton = document.createElement("button");
-    this.hideUiButton.className = shared_styles_default.button;
-    this.hideUiButton.textContent = "Hide UI";
-    this.hideUiButton.addEventListener("click", () => {
-      setUrlParam("noUI", "true");
-    });
-    this.hideUiSectionContents.append(this.hideUiButton);
-    const warningIcon = document.createElement("span");
-    warningIcon.className = tooltip_default.tooltip;
-    warningIcon.setAttribute("data-direction", "left");
-    const warningIconText = document.createElement("span");
-    warningIconText.className = tooltip_default.tooltipInitiator;
-    warningIconText.textContent = "\u26A0\uFE0F";
-    warningIcon.append(warningIconText);
-    const warningTooltip = document.createElement("span");
-    warningTooltip.className = tooltip_default.tooltipItem;
-    warningTooltip.textContent = "If you hide the UI, it can only be shown again by removing the noUI parameter from the URL";
-    warningIcon.append(warningTooltip);
-    this.hideUiSectionContents.append(warningIcon);
+    this.hideUISection = new HideUISection();
+    this.contents.append(this.hideUISection.element);
     const menuIcon = document.createElement("button");
     menuIcon.className = ViewerUI_default.menuButton;
     menuIcon.addEventListener("click", () => {
@@ -561,9 +579,12 @@ var ViewerUI = class {
   }
   showAddressMenu() {
     this.element.classList.add(ViewerUI_default.emptyState);
+    this.contents.style.display = "block";
+    this.hideUISection.hide();
   }
   hideAddressMenu() {
     this.element.classList.remove(ViewerUI_default.emptyState);
+    this.hideUISection.show();
   }
   removeGroup(group) {
     this.groupHolder.removeChild(group.element);
