@@ -1,4 +1,4 @@
-export interface Controls {
+export interface PlayCanvasControls {
   type: string;
   enable: () => void;
   disable: () => void;

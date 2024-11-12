@@ -82,6 +82,9 @@ export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter>
           this.remoteDocumentWrapper.remoteDocument.showError(false);
         }
       },
+      {
+        tagPrefix: "m-",
+      },
     );
     overriddenHandler = (element: MElement<G>, event: CustomEvent) => {
       this.domWebsocket.handleEvent(element, event);

@@ -1,4 +1,7 @@
-import { StandalonePlayCanvasAdapter } from "@mml-io/mml-web-playcanvas-client";
+import {
+  StandalonePlayCanvasAdapter,
+  StandalonePlayCanvasAdapterControlsType,
+} from "@mml-io/mml-web-playcanvas-client";
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
@@ -50,7 +53,9 @@ function createStatusElement() {
 (function () {
   function getGraphicsAdapter(element: HTMLElement): Promise<StandaloneGraphicsAdapter> {
     if (window.location.search.includes("playcanvas")) {
-      return StandalonePlayCanvasAdapter.create(element);
+      return StandalonePlayCanvasAdapter.create(element, {
+        controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
+      });
     } else if (window.location.search.includes("tags")) {
       return StandaloneTagDebugAdapter.create(element);
     } else {

@@ -1,2 +1,2 @@
-export * from "./controls/PlayCanvasDragFlyCameraControls";
+export * from "./controls/";
 export * from "./StandalonePlayCanvasAdapter";

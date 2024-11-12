@@ -1,12 +1,12 @@
 import { EventHandlerCollection } from "mml-web";
 import * as THREE from "three";
 
-import { Controls } from "./Controls";
+import { ThreeJSControls } from "./ThreeJSControls";
 
 const WorldUp = new THREE.Vector3(0, 1, 0);
 
 // Creates a set of 5DOF flight controls that requires clicking the element to capture the mouse before being able to rotate and position the camera
-export class ThreeJSPointerLockFlyCameraControls implements Controls {
+export class ThreeJSPointerLockFlyCameraControls implements ThreeJSControls {
   public readonly type = "pointer-lock-fly";
 
   private enabled = false;

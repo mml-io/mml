@@ -83,6 +83,9 @@ export function connectGraphicsAdapterToFullScreenScene({
           statusElement.textContent = NetworkedDOMWebsocketStatus[status];
         }
       },
+      {
+        tagPrefix: "m-",
+      },
     );
     overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
       websocket.handleEvent(element, event);

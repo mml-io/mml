@@ -1,7 +1,7 @@
 import { EventHandlerCollection, Matr4, Quat } from "mml-web";
 import { Camera, Vector3 } from "three";
 
-import { Controls } from "./Controls";
+import { ThreeJSControls } from "./ThreeJSControls";
 
 const up = { x: 0, y: 1, z: 0 };
 const right = { x: 1, y: 0, z: 0 };
@@ -12,7 +12,7 @@ const qYaw = new Quat();
 const tempVector = new Vector3();
 
 // Creates a set of 5DOF flight controls that requires dragging the mouse to move the rotation and position of the camera
-export class ThreeJSDragFlyCameraControls implements Controls {
+export class ThreeJSDragFlyCameraControls implements ThreeJSControls {
   public readonly type = "drag-fly";
 
   private enabled = false;

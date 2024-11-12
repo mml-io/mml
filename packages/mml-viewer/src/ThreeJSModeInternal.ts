@@ -16,6 +16,7 @@ import { createFullscreenDiv } from "./CreateFullscreenDiv";
 import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
 import { MMLSource } from "./MMLSource";
+import { parseXYZ } from "./parseXYZ";
 import {
   ambientLightColorField,
   ambientLightField,
@@ -230,13 +231,4 @@ export class ThreeJSModeInternal {
       graphicsAdapter.setControlsType(StandaloneThreeJSAdapterControlsType.None);
     }
   }
-}
-
-function parseXYZ(str: string): [number, number, number] {
-  const asNumbers = str
-    .split(",")
-    .slice(0, 3)
-    .map(parseFloat)
-    .map((v) => (isNaN(v) ? 0 : v)) as [number, number, number];
-  return [asNumbers[0] || 0, asNumbers[1] || 0, asNumbers[2] || 0];
 }

@@ -1,19 +1,13 @@
-import { EventHandlerCollection } from "mml-web";
-import { Camera, Spherical, Vector3 } from "three";
+import { EventHandlerCollection, Vect3 } from "mml-web";
+import * as playcanvas from "playcanvas";
 
-import { ThreeJSControls } from "./ThreeJSControls";
+import { PlayCanvasControls } from "./PlayCanvasControls";
 
-const tempSpherical = new Spherical();
-
-export class ThreeJSOrbitCameraControls implements ThreeJSControls {
+export class PlayCanvasOrbitCameraControls implements PlayCanvasControls {
   public readonly type = "orbit";
 
   private enabled = false;
 
-  private camera: Camera;
-  private domElement: HTMLElement;
-
-  private distance: number;
   private degreesPerSecond = 10;
   private yaw = 0;
   private pitch = Math.PI * 0.4;
@@ -27,13 +21,14 @@ export class ThreeJSOrbitCameraControls implements ThreeJSControls {
 
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
   private mouseDown = false;
-  private cameraLookAt: Vector3 = new Vector3();
+  private cameraLookAt: Vect3 = new Vect3();
 
-  constructor(camera: Camera, domElement: HTMLElement, distance = 15.0) {
-    this.camera = camera;
-    this.domElement = domElement;
+  constructor(
+    private camera: playcanvas.Entity,
+    private domElement: HTMLElement,
+    private distance = 15.0,
+  ) {
     this.domElement.style.userSelect = "none";
-    this.distance = distance;
   }
 
   public enable() {
@@ -73,9 +68,18 @@ export class ThreeJSOrbitCameraControls implements ThreeJSControls {
     const baseYaw = this.getBaseYaw();
     const yaw = baseYaw + this.yaw;
 
-    tempSpherical.set(this.distance, this.pitch, yaw);
-    this.camera.position.setFromSpherical(tempSpherical);
-    this.camera.position.add(this.cameraLookAt);
+    const radius = this.distance;
+    const phi = this.pitch;
+    const theta = yaw;
+
+    const sinPhiRadius = Math.sin(phi) * radius;
+
+    const x = sinPhiRadius * Math.sin(theta);
+    const y = Math.cos(phi) * radius;
+    const z = sinPhiRadius * Math.cos(theta);
+
+    this.camera.setPosition(x, y, z);
+    this.camera.translate(this.cameraLookAt.x, this.cameraLookAt.y, this.cameraLookAt.z);
 
     this.camera.lookAt(this.cameraLookAt.x, this.cameraLookAt.y, this.cameraLookAt.z);
   }

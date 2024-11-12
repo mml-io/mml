@@ -13,7 +13,19 @@ import twgslWasmJs from "base64:./wasm/twgsl.js";
 import { Interaction, Matr4, MMLGraphicsInterface, TransformableElement, Vect3 } from "mml-web";
 import * as playcanvas from "playcanvas";
 
+import { PlayCanvasOrbitCameraControls } from "./controls";
+import { PlayCanvasControls } from "./controls/PlayCanvasControls";
 import { PlayCanvasDragFlyCameraControls } from "./controls/PlayCanvasDragFlyCameraControls";
+
+export enum StandalonePlayCanvasAdapterControlsType {
+  None,
+  DragFly,
+  Orbit,
+}
+
+export type StandalonePlayCanvasAdapterOptions = {
+  controlsType?: StandalonePlayCanvasAdapterControlsType;
+};
 
 export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
   containerType: playcanvas.Entity;
@@ -21,13 +33,16 @@ export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
 
   private playcanvasApp: playcanvas.AppBase;
 
-  private controls: PlayCanvasDragFlyCameraControls;
+  public controls: PlayCanvasControls | null = null;
   private camera: playcanvas.Entity;
   private canvas: HTMLCanvasElement | null = null;
 
   private clickTrigger: PlayCanvasClickTrigger;
 
-  private constructor(private element: HTMLElement) {}
+  private constructor(
+    private element: HTMLElement,
+    private options: StandalonePlayCanvasAdapterOptions,
+  ) {}
 
   getPlayCanvasApp(): playcanvas.AppBase {
     return this.playcanvasApp;
@@ -41,8 +56,11 @@ export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
     return PlayCanvasGraphicsInterface as MMLGraphicsInterface<this>;
   }
 
-  public static async create(element: HTMLElement): Promise<StandalonePlayCanvasAdapter> {
-    const adapter = new StandalonePlayCanvasAdapter(element);
+  public static async create(
+    element: HTMLElement,
+    options: StandalonePlayCanvasAdapterOptions,
+  ): Promise<StandalonePlayCanvasAdapter> {
+    const adapter = new StandalonePlayCanvasAdapter(element, options);
     await adapter.init();
     return adapter;
   }
@@ -123,15 +141,12 @@ export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
     this.camera.addComponent("audiolistener");
     this.camera.addComponent("camera", {
       fov: 75,
-      clearColor: new playcanvas.Color(1, 1, 1, 0),
+      clearColor: new playcanvas.Color(1, 1, 1, 1),
     } as playcanvas.CameraComponent);
     this.camera.setPosition(0, 5, 10);
     this.playcanvasApp.root.addChild(this.camera);
 
-    this.controls = new PlayCanvasDragFlyCameraControls(this.camera, this.element);
-    if (this.controls) {
-      this.controls.enable();
-    }
+    this.setControlsType(this.options.controlsType);
 
     this.clickTrigger = PlayCanvasClickTrigger.init(this.playcanvasApp, this.element, this.camera);
 
@@ -142,6 +157,38 @@ export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
     });
 
     this.playcanvasApp.start();
+  }
+
+  public setControlsType(type?: StandalonePlayCanvasAdapterControlsType) {
+    console.log("setControlsType", type);
+    if (this.controls) {
+      this.controls.dispose();
+      this.controls = null;
+    }
+    switch (type) {
+      case StandalonePlayCanvasAdapterControlsType.None:
+        break;
+      case StandalonePlayCanvasAdapterControlsType.Orbit:
+        this.controls = new PlayCanvasOrbitCameraControls(this.camera, this.element);
+        break;
+      case StandalonePlayCanvasAdapterControlsType.DragFly:
+      default:
+        this.controls = new PlayCanvasDragFlyCameraControls(this.camera, this.element);
+        break;
+    }
+    if (this.controls) {
+      console.log("Controls type set to", this.controls.type);
+      this.controls.enable();
+    }
+  }
+
+  public setCameraFOV(fov: number) {
+    const cameraComponent = this.camera.camera;
+    if (!cameraComponent) {
+      console.error("Camera component not found");
+      return null;
+    }
+    cameraComponent.fov = fov;
   }
 
   start() {}
@@ -174,7 +221,9 @@ export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
       this.canvas.remove();
       this.canvas = null;
     }
-    this.controls.dispose();
+    if (this.controls) {
+      this.controls.dispose();
+    }
     this.clickTrigger.dispose();
   }
 

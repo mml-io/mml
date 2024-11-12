@@ -1,4 +1,9 @@
-import { StandalonePlayCanvasAdapter } from "@mml-io/mml-web-playcanvas-client";
+import {
+  PlayCanvasDragFlyCameraControls,
+  PlayCanvasOrbitCameraControls,
+  StandalonePlayCanvasAdapter,
+  StandalonePlayCanvasAdapterControlsType,
+} from "@mml-io/mml-web-playcanvas-client";
 import { parseColorAttribute } from "mml-web";
 import * as playcanvas from "playcanvas";
 
@@ -10,10 +15,18 @@ import { createFullscreenDiv } from "./CreateFullscreenDiv";
 import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
 import { MMLSource } from "./MMLSource";
+import { parseXYZ } from "./parseXYZ";
 import {
   ambientLightColorField,
   ambientLightField,
   backgroundColorField,
+  cameraFovField,
+  cameraLookAtField,
+  cameraModeField,
+  cameraOrbitDistanceField,
+  cameraOrbitPitchField,
+  cameraOrbitSpeedField,
+  cameraPositionField,
   environmentMapField,
 } from "./ui/fields";
 
@@ -37,7 +50,9 @@ export class PlayCanvasModeInternal {
   }
 
   private async init() {
-    this.graphicsAdapter = await StandalonePlayCanvasAdapter.create(this.element);
+    this.graphicsAdapter = await StandalonePlayCanvasAdapter.create(this.element, {
+      controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
+    });
 
     if (this.disposed) {
       this.dispose();
@@ -66,6 +81,8 @@ export class PlayCanvasModeInternal {
     this.setBackgroundColor(formIteration, cameraComponent);
     this.setAmbientLight(formIteration, playcanvasScene);
     this.setEnvironmentMap(formIteration, this.graphicsAdapter.getPlayCanvasApp(), playcanvasScene);
+
+    this.setCameraMode(formIteration, this.graphicsAdapter);
 
     formIteration.completed();
   }
@@ -149,12 +166,64 @@ export class PlayCanvasModeInternal {
       return;
     }
     const color = parseColorAttribute(backgroundColor, {
-      r: 255,
-      g: 255,
-      b: 255,
+      r: 0,
+      g: 0,
+      b: 0,
       a: 0,
     });
     cameraComponent.clearColor = new playcanvas.Color(color.r, color.g, color.b, color.a);
+  }
+
+  private setCameraMode(
+    formIteration: FormIteration,
+    graphicsAdapter: StandalonePlayCanvasAdapter,
+  ) {
+    let cameraFOV = parseFloat(formIteration.getFieldValue(cameraFovField));
+    if (isNaN(cameraFOV)) {
+      cameraFOV = 75;
+    }
+    graphicsAdapter.setCameraFOV(cameraFOV);
+
+    const cameraMode = formIteration.getFieldValue(cameraModeField);
+    if (cameraMode === "orbit") {
+      if (graphicsAdapter.controls?.type !== "orbit") {
+        graphicsAdapter.setControlsType(StandalonePlayCanvasAdapterControlsType.Orbit);
+      }
+      const controls = graphicsAdapter.controls as PlayCanvasOrbitCameraControls;
+      let orbitSpeed = parseFloat(formIteration.getFieldValue(cameraOrbitSpeedField));
+      if (isNaN(orbitSpeed)) {
+        orbitSpeed = 0;
+      }
+      controls.setDegreesPerSecond(orbitSpeed);
+
+      let orbitDistance = parseFloat(formIteration.getFieldValue(cameraOrbitDistanceField));
+      if (isNaN(orbitDistance)) {
+        orbitDistance = 1;
+      }
+      controls.setDistance(orbitDistance);
+
+      let orbitPitch = parseFloat(formIteration.getFieldValue(cameraOrbitPitchField));
+      if (isNaN(orbitPitch)) {
+        orbitPitch = 0;
+      }
+      controls.setPitchDegrees(orbitPitch);
+
+      const lookAt = parseXYZ(formIteration.getFieldValue(cameraLookAtField));
+      controls.setLookAt(lookAt[0], lookAt[1], lookAt[2]);
+    } else if (cameraMode === "drag-fly") {
+      if (graphicsAdapter.controls?.type !== "drag-fly") {
+        graphicsAdapter.setControlsType(StandalonePlayCanvasAdapterControlsType.DragFly);
+      }
+      const controls = graphicsAdapter.controls as PlayCanvasDragFlyCameraControls;
+
+      const cameraPosition = parseXYZ(formIteration.getFieldValue(cameraPositionField));
+      controls.setCameraPosition(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+
+      const lookAt = parseXYZ(formIteration.getFieldValue(cameraLookAtField));
+      controls.setLookAt(lookAt[0], lookAt[1], lookAt[2]);
+    } else if (cameraMode === "none" && graphicsAdapter.controls !== null) {
+      graphicsAdapter.setControlsType(StandalonePlayCanvasAdapterControlsType.None);
+    }
   }
 
   dispose() {

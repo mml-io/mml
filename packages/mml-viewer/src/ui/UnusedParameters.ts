@@ -26,7 +26,7 @@ export class UnusedParameters {
     warningIcon.append(warningIconText);
     const warningTooltip = document.createElement("span");
     warningTooltip.className = tooltipStyles.tooltipItem;
-    warningTooltip.textContent = "These parameters are not used by the viewer";
+    warningTooltip.textContent = "These parameters are not used by the viewer in the current mode";
     warningIcon.append(warningTooltip);
     this.header.append(warningIcon);
 

@@ -7,7 +7,7 @@ import {
 import { Interaction, MElement, MMLGraphicsInterface, radToDeg } from "mml-web";
 import * as THREE from "three";
 
-import { Controls } from "./controls/Controls";
+import { ThreeJSControls } from "./controls/ThreeJSControls";
 import { ThreeJSDragFlyCameraControls } from "./controls/ThreeJSDragFlyCameraControls";
 import { ThreeJSOrbitCameraControls } from "./controls/ThreeJSOrbitCameraControls";
 import { ThreeJSPointerLockFlyCameraControls } from "./controls/ThreeJSPointerLockFlyCameraControls";
@@ -35,7 +35,7 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter {
   private animationFrameCallback: () => void;
   private animationFrameRequest: number;
   private clickTrigger: ThreeJSClickTrigger;
-  public controls: Controls | null = null;
+  public controls: ThreeJSControls | null = null;
 
   private constructor(
     private element: HTMLElement,
@@ -124,7 +124,6 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter {
   }
 
   public setControlsType(type?: StandaloneThreeJSAdapterControlsType) {
-    console.log("setControlsType", type);
     if (this.controls) {
       this.controls.dispose();
       this.controls = null;
@@ -144,7 +143,6 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter {
         break;
     }
     if (this.controls) {
-      console.log("Controls type set to", this.controls.type);
       this.controls.enable();
     }
   }

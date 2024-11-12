@@ -1,4 +1,4 @@
-import { EventHandlerCollection, Quat } from "mml-web";
+import { EventHandlerCollection, Matr4, Quat } from "mml-web";
 import * as playcanvas from "playcanvas";
 
 const up = { x: 0, y: 1, z: 0 };
@@ -9,6 +9,8 @@ const qYaw = new Quat();
 
 // Creates a set of 5DOF flight controls that requires dragging the mouse to move the rotation and position of the camera
 export class PlayCanvasDragFlyCameraControls {
+  public readonly type = "drag-fly";
+
   private enabled = false;
 
   private camera: playcanvas.Entity;
@@ -69,6 +71,18 @@ export class PlayCanvasDragFlyCameraControls {
 
   public dispose() {
     this.disable();
+  }
+
+  public setCameraPosition(x: number, y: number, z: number) {
+    this.camera.setLocalPosition(x, y, z);
+  }
+
+  public setLookAt(x: number, y: number, z: number) {
+    this.camera.lookAt(x, y, z);
+    const q1 = new Quat().setFromEulerXYZ(this.camera.getRotation());
+    const { yaw, pitch } = getYawPitchFromQuaternion(q1);
+    this.yaw = yaw;
+    this.pitch = pitch;
   }
 
   public update(dt: number) {
@@ -198,4 +212,24 @@ export class PlayCanvasDragFlyCameraControls {
     // restrict to a reasonable min and max
     this.speed = Math.max(5, Math.min(this.speed, 1000));
   }
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getYawPitchFromQuaternion(quaternion: Quat) {
+  const matr4 = new Matr4();
+  matr4.setRotationFromQuaternion(quaternion);
+
+  const d = matr4.data;
+  const m11 = d[0];
+  const m13 = d[8];
+  const m23 = d[9];
+  const m31 = d[2];
+  const m33 = d[10];
+
+  const yaw = Math.abs(m23) < 0.9999999 ? Math.atan2(m13, m33) : Math.atan2(-m31, m11);
+  const pitch = Math.asin(-clamp(m23, -1, 1));
+  return { yaw, pitch };
 }

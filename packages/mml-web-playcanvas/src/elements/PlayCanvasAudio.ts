@@ -140,6 +140,29 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
       } else {
         currentTime = (this.audio.props.startTime ? this.audio.props.startTime : 0) / 1000;
       }
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const asset = slot._assets.get(slot.asset)!;
+      const assetDuration: number | null = asset?.resource.duration || null;
+      let targetDuration: number | null = assetDuration;
+      if (this.audio.props.loopDuration !== null && this.audio.props.loop) {
+        const loopDuration = this.audio.props.loopDuration / 1000;
+        if (assetDuration !== null && loopDuration > assetDuration) {
+          asset.resource.buffer = extendAudioToDuration(
+            this.getAudioContext(),
+            asset.resource.buffer,
+            loopDuration,
+          );
+          slot.pause();
+          slot.duration = loopDuration;
+        }
+        targetDuration = loopDuration;
+      }
+      if (targetDuration !== null && slot.duration !== targetDuration) {
+        slot.pause();
+        slot.duration = targetDuration;
+      }
+
       let desiredAudioTime;
       if (currentTime < 0) {
         // The audio should not start yet
@@ -166,13 +189,11 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
         // playing
       }
 
-      if (!slot.isPlaying) {
+      if (slot.isLoaded && (slot.isPaused || slot.isStopped)) {
         slot.play();
       }
+
       const soundInstance = slot.instances[0];
-
-      // TODO - handle loop-duration
-
       let delta = desiredAudioTime - soundInstance.currentTime;
       if (this.audio.props.loop) {
         // Check if the delta wrapping around is smaller (i.e. the desired and current are closer together if we wrap around)
@@ -199,6 +220,15 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
         }
       }
     }
+  }
+
+  private getAudioContext(): AudioContext {
+    const playcanvasApp = this.getPlayCanvasApp();
+    const soundSystem = playcanvasApp.systems.sound;
+    if (!soundSystem) {
+      throw new Error("Playcanvas sound system not enabled");
+    }
+    return soundSystem.context;
   }
 
   enable(): void {
@@ -259,4 +289,22 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
     const audioEntity = this.audio.getContainer() as playcanvas.Entity;
     audioEntity.removeComponent("sound");
   }
+}
+
+function extendAudioToDuration(
+  context: AudioContext,
+  buffer: AudioBuffer,
+  seconds: number,
+): AudioBuffer {
+  const updatedBuffer = context.createBuffer(
+    buffer.numberOfChannels,
+    Math.ceil(seconds * buffer.sampleRate),
+    buffer.sampleRate,
+  );
+  for (let channelNumber = 0; channelNumber < buffer.numberOfChannels; channelNumber++) {
+    const channelData = buffer.getChannelData(channelNumber);
+    const updatedChannelData = updatedBuffer.getChannelData(channelNumber);
+    updatedChannelData.set(channelData, 0);
+  }
+  return updatedBuffer;
 }

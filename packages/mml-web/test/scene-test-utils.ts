@@ -1,5 +1,8 @@
 import { PlayCanvasGraphicsAdapter } from "@mml-io/mml-web-playcanvas";
-import { StandalonePlayCanvasAdapter } from "@mml-io/mml-web-playcanvas-client";
+import {
+  StandalonePlayCanvasAdapter,
+  StandalonePlayCanvasAdapterControlsType,
+} from "@mml-io/mml-web-playcanvas-client";
 import { ThreeJSGraphicsAdapter } from "@mml-io/mml-web-three";
 import {
   StandaloneThreeJSAdapter,
@@ -40,7 +43,9 @@ export async function createTestScene(documentAddress?: string): Promise<{
       controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
     });
   } else {
-    graphicsAdapter = await StandalonePlayCanvasAdapter.create(element);
+    graphicsAdapter = await StandalonePlayCanvasAdapter.create(element, {
+      controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
+    });
   }
   const scene = new FullScreenMMLScene<typeof graphicsAdapter>(element);
   const remoteDocument = document.createElement("m-remote-document") as RemoteDocument<
