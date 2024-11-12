@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../src/env-maps/index.ts"],
-  "sourcesContent": ["type EnvMap = {\n  name: string;\n  url: string;\n};\n\nimport puresky from \"./puresky_2k.jpg\";\n\nexport const envMaps: {\n  [key: string]: EnvMap;\n} = {\n  puresky: {\n    name: \"Pure Sky\",\n    url: puresky,\n  },\n};\n"],
-  "mappings": ";;;;AAOO,IAAM,UAET;AAAA,EACF,SAAS;AAAA,IACP,MAAM;AAAA,IACN,KAAK;AAAA,EACP;AACF;",
-  "names": []
-}

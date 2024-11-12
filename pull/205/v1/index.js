@@ -7,7 +7,7 @@ import {
   registerCustomElementsToWindow,
   rendererField,
   urlField
-} from "./chunk-63H67EAJ.js";
+} from "./chunk-CNLM5BYA.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -270,7 +270,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-QDKVQKDY.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-DHX2CIB3.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -395,7 +395,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-2Q5CINU3.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-GUIVAIT5.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -503,7 +503,7 @@ var UnusedParameters = class {
     warningIcon.append(warningIconText);
     const warningTooltip = document.createElement("span");
     warningTooltip.className = tooltip_default.tooltipItem;
-    warningTooltip.textContent = "These parameters are not used by the viewer";
+    warningTooltip.textContent = "These parameters are not used by the viewer in the current mode";
     warningIcon.append(warningTooltip);
     this.header.append(warningIcon);
     this.paramsHolder = document.createElement("div");
