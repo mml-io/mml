@@ -138,11 +138,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.registeredParentAttachment = null;
     }
 
-    const contentSrc = this.model.contentSrcToContentAddress(anim);
-    const animPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
+    const animSrc = this.model.contentSrcToContentAddress(anim);
+    const animPromise = this.asyncLoadSourceAsset(animSrc, (loaded, total) => {
       this.animLoadingInstanceManager.setProgress(loaded / total);
     });
-    this.animLoadingInstanceManager.start(this.model.getLoadingProgressManager(), contentSrc);
+    this.animLoadingInstanceManager.start(this.model.getLoadingProgressManager(), animSrc);
     this.latestAnimPromise = animPromise;
     animPromise
       .then((result) => {

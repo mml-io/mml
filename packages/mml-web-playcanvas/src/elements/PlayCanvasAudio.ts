@@ -14,6 +14,7 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
   protected loadedState: AudioLoadedState | null = null;
   private delayedStartTimer: NodeJS.Timeout | null = null;
   private delayedPauseTimer: NodeJS.Timeout | null = null;
+  private static dataAudioFileCount: number = 0;
 
   constructor(private audio: Audio<PlayCanvasGraphicsAdapter>) {
     super(audio);
@@ -41,9 +42,13 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
     }
 
     const contentSrc = this.audio.contentSrcToContentAddress(src);
-    const srcAudioPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
-      this.srcLoadingInstanceManager.setProgress(loaded / total);
-    });
+    const srcAudioPromise = this.asyncLoadSourceAsset(
+      contentSrc,
+      this.getAudioContext(),
+      (loaded, total) => {
+        this.srcLoadingInstanceManager.setProgress(loaded / total);
+      },
+    );
     this.srcLoadingInstanceManager.start(this.audio.getLoadingProgressManager(), contentSrc);
     this.latestSrcAudioPromise = srcAudioPromise;
     srcAudioPromise
@@ -258,11 +263,53 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
 
   private async asyncLoadSourceAsset(
     url: string,
+    audioContext: AudioContext,
     // TODO - report progress
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onProgress: (loaded: number, total: number) => void,
   ): Promise<playcanvas.Asset> {
     return new Promise<playcanvas.Asset>((resolve, reject) => {
+      if (url.startsWith("data:")) {
+        // Construct an AudioBuffer from the data URL
+        const base64 = url.split(",", 2)[1];
+        if (!base64) {
+          reject(new Error("Invalid data URL"));
+          return;
+        }
+        let arrayBuffer;
+
+        try {
+          const binary = atob(base64);
+          const uint8Array = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            uint8Array[i] = binary.charCodeAt(i);
+          }
+          arrayBuffer = uint8Array.buffer;
+        } catch (e) {
+          console.error("Failed to decode base64 data URL", e);
+          return;
+        }
+        audioContext
+          .decodeAudioData(arrayBuffer)
+          .then((audioBuffer) => {
+            const soundComp = new playcanvas.Sound(audioBuffer);
+            const asset = new playcanvas.Asset(
+              "dataAudioFile-" + PlayCanvasAudio.dataAudioFileCount++,
+              "audio",
+              { url },
+              base64,
+            );
+            asset.resource = soundComp;
+            asset.loaded = true;
+            this.getPlayCanvasApp().assets.add(asset);
+            resolve(asset);
+          })
+          .catch((e) => {
+            console.error("Failed to decode data URI audio data", e);
+          });
+        return;
+      }
+
       const asset = new playcanvas.Asset(url, "audio", { url });
       this.getPlayCanvasApp().assets.add(asset);
       this.getPlayCanvasApp().assets.load(asset);

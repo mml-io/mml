@@ -150,7 +150,8 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       }
       return;
     }
-    const animPromise = this.asyncLoadAnimAsset(anim, (loaded, total) => {
+    const animSrc = this.model.contentSrcToContentAddress(anim);
+    const animPromise = this.asyncLoadAnimAsset(animSrc, (loaded, total) => {
       this.animLoadingInstanceManager.setProgress(loaded / total);
     });
     this.animLoadingInstanceManager.start(this.model.getLoadingProgressManager(), anim);
