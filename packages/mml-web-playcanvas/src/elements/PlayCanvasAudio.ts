@@ -121,6 +121,10 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
         return;
       }
 
+      if (slot.loop !== this.audio.props.loop) {
+        slot.loop = this.audio.props.loop;
+      }
+
       const documentTime = this.audio.getDocumentTime();
 
       if (this.audio.props.pauseTime !== null) {
@@ -243,7 +247,7 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
     // TODO
   }
   setLoop(): void {
-    // TODO
+    this.syncAudioTime();
   }
   setEnabled(): void {
     // TODO

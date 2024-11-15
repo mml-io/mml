@@ -194,7 +194,12 @@ export class ThreeJSAudio extends AudioGraphics<ThreeJSGraphicsAdapter> {
     const playbackLength = loopDurationSeconds ? loopDurationSeconds : audioDuration;
 
     if (currentSource) {
-      if (
+      if (currentSource.sourceNode.loop !== this.audio.props.loop) {
+        // The loop setting has changed - remove the existing audio source and a new one will be created
+        currentSource.sourceNode.stop();
+        loadedAudio.currentSource = null;
+        currentSource = null;
+      } else if (
         loopDurationSeconds !== null &&
         loopDurationLongerThanAudioDuration &&
         (!loadedAudio.paddedBuffer || loadedAudio.paddedBuffer.totalDuration < loopDurationSeconds)
