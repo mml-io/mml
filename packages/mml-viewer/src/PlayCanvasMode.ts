@@ -1,6 +1,6 @@
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
-import { MMLSourceDefinition } from "./MMLSourceDefinition";
+import { MMLSourceDefinition } from "./MMLSource";
 
 export class PlayCanvasMode implements GraphicsMode {
   private disposed = false;
