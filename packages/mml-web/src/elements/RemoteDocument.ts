@@ -104,9 +104,9 @@ export class RemoteDocument<G extends GraphicsAdapter = GraphicsAdapter> extends
     return this.documentAddress;
   }
 
-  public getMMLScene(): IMMLScene<G> {
+  public getMMLScene(): IMMLScene<G> | null {
     if (!this.scene) {
-      throw new Error("Scene not set");
+      return null;
     }
     return this.scene;
   }

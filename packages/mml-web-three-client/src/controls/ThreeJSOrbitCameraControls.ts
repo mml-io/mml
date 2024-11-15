@@ -1,5 +1,5 @@
-import { EventHandlerCollection } from "mml-web";
-import { Camera, Spherical, Vector3 } from "three";
+import { EventHandlerCollection, IVect3 } from "mml-web";
+import { PerspectiveCamera, Spherical, Vector3 } from "three";
 
 import { ThreeJSControls } from "./ThreeJSControls";
 
@@ -10,10 +10,6 @@ export class ThreeJSOrbitCameraControls implements ThreeJSControls {
 
   private enabled = false;
 
-  private camera: Camera;
-  private domElement: HTMLElement;
-
-  private distance: number;
   private degreesPerSecond = 10;
   private yaw = 0;
   private pitch = Math.PI * 0.4;
@@ -22,18 +18,36 @@ export class ThreeJSOrbitCameraControls implements ThreeJSControls {
   private minPolarAngle = -89.9999 * (Math.PI / 180);
   private maxPolarAngle = 89.9999 * (Math.PI / 180);
 
-  // This is an addition to the original PointerLockControls class
   private invertedMouseY = false;
 
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
   private mouseDown = false;
   private cameraLookAt: Vector3 = new Vector3();
 
-  constructor(camera: Camera, domElement: HTMLElement, distance = 15.0) {
-    this.camera = camera;
-    this.domElement = domElement;
+  constructor(
+    private camera: PerspectiveCamera,
+    private domElement: HTMLElement,
+    private distance = 15.0,
+  ) {
     this.domElement.style.userSelect = "none";
-    this.distance = distance;
+  }
+
+  public fitContent(boundingBox: { min: IVect3; max: IVect3 }) {
+    const center = {
+      x: (boundingBox.min.x + boundingBox.max.x) / 2,
+      y: (boundingBox.min.y + boundingBox.max.y) / 2,
+      z: (boundingBox.min.z + boundingBox.max.z) / 2,
+    };
+    const size = {
+      x: boundingBox.max.x - boundingBox.min.x,
+      y: boundingBox.max.y - boundingBox.min.y,
+      z: boundingBox.max.z - boundingBox.min.z,
+    };
+    const fov = this.camera.fov || 1;
+    const maximumDimension = Math.max(size.x, size.y, size.z);
+    this.distance = Math.abs(maximumDimension / 4 / Math.tan(fov / 2));
+    this.setLookAt(center.x, center.y, center.z);
+    this.update();
   }
 
   public enable() {
@@ -56,7 +70,6 @@ export class ThreeJSOrbitCameraControls implements ThreeJSControls {
     this.enabled = false;
   }
 
-  // This is an addition to the original PointerLockControls class
   public setInvert(invert: boolean) {
     this.invertedMouseY = invert;
   }

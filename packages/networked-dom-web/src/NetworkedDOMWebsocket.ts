@@ -450,7 +450,6 @@ export class NetworkedDOMWebsocket {
       let filteredTag = tag;
       if (this.options.tagPrefix) {
         if (!tag.toLowerCase().startsWith(this.options.tagPrefix.toLowerCase())) {
-          console.log(`Tag does not start with prefix: ${tag}`);
           filteredTag = this.options.replacementTagPrefix
             ? this.options.replacementTagPrefix + tag
             : `x-${tag}`;

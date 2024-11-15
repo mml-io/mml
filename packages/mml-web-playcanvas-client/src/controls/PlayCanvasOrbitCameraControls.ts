@@ -1,4 +1,4 @@
-import { EventHandlerCollection, Vect3 } from "mml-web";
+import { EventHandlerCollection, IVect3, Vect3 } from "mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasControls } from "./PlayCanvasControls";
@@ -16,7 +16,6 @@ export class PlayCanvasOrbitCameraControls implements PlayCanvasControls {
   private minPolarAngle = -89.9999 * (Math.PI / 180);
   private maxPolarAngle = 89.9999 * (Math.PI / 180);
 
-  // This is an addition to the original PointerLockControls class
   private invertedMouseY = false;
 
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
@@ -29,6 +28,24 @@ export class PlayCanvasOrbitCameraControls implements PlayCanvasControls {
     private distance = 15.0,
   ) {
     this.domElement.style.userSelect = "none";
+  }
+
+  public fitContent(boundingBox: { min: IVect3; max: IVect3 }) {
+    const center = {
+      x: (boundingBox.min.x + boundingBox.max.x) / 2,
+      y: (boundingBox.min.y + boundingBox.max.y) / 2,
+      z: (boundingBox.min.z + boundingBox.max.z) / 2,
+    };
+    const size = {
+      x: boundingBox.max.x - boundingBox.min.x,
+      y: boundingBox.max.y - boundingBox.min.y,
+      z: boundingBox.max.z - boundingBox.min.z,
+    };
+    const fov = this.camera?.camera?.fov || 1;
+    const maximumDimension = Math.max(size.x, size.y, size.z);
+    this.distance = Math.abs(maximumDimension / 4 / Math.tan(fov / 2));
+    this.setLookAt(center.x, center.y, center.z);
+    this.update();
   }
 
   public enable() {
@@ -51,7 +68,6 @@ export class PlayCanvasOrbitCameraControls implements PlayCanvasControls {
     this.enabled = false;
   }
 
-  // This is an addition to the original PointerLockControls class
   public setInvert(invert: boolean) {
     this.invertedMouseY = invert;
   }
@@ -67,16 +83,10 @@ export class PlayCanvasOrbitCameraControls implements PlayCanvasControls {
   public update() {
     const baseYaw = this.getBaseYaw();
     const yaw = baseYaw + this.yaw;
-
-    const radius = this.distance;
-    const phi = this.pitch;
-    const theta = yaw;
-
-    const sinPhiRadius = Math.sin(phi) * radius;
-
-    const x = sinPhiRadius * Math.sin(theta);
-    const y = Math.cos(phi) * radius;
-    const z = sinPhiRadius * Math.cos(theta);
+    const sinPhiRadius = Math.sin(this.pitch) * this.distance;
+    const x = sinPhiRadius * Math.sin(yaw);
+    const y = Math.cos(this.pitch) * this.distance;
+    const z = sinPhiRadius * Math.cos(yaw);
 
     this.camera.setPosition(x, y, z);
     this.camera.translate(this.cameraLookAt.x, this.cameraLookAt.y, this.cameraLookAt.z);

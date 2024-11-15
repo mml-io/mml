@@ -39,7 +39,8 @@ export class ViewerUI {
     this.contents.append(this.hideUISection.element);
 
     const menuIcon = document.createElement("button");
-    menuIcon.className = styles.menuButton;
+    menuIcon.classList.add(styles.menuButton, "no-copy");
+    menuIcon.textContent = "≡";
     menuIcon.addEventListener("click", () => {
       this.contents.style.display = this.contents.style.display === "none" ? "block" : "none";
     });

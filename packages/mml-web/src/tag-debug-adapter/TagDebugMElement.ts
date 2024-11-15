@@ -6,6 +6,8 @@ import { TagDebugGraphicsAdapter } from "./StandaloneTagDebugAdapter";
 import { TagAdapterThemeColors } from "./TagAdapterThemeColors";
 import { TagDebugAttribute } from "./TagDebugAttribute";
 
+const ignoredAttributes = new Set(["style"]);
+
 export class TagDebugMElement implements MElementGraphics<TagDebugGraphicsAdapter> {
   private container: HTMLElement;
   private mutationObserver: MutationObserver;
@@ -19,7 +21,6 @@ export class TagDebugMElement implements MElementGraphics<TagDebugGraphicsAdapte
   private observedAttributes = new Set<string>();
 
   constructor(private mElement: MElement<TagDebugGraphicsAdapter>) {
-    // TODO - generalise from standalone
     // @ts-expect-error - accessing __proto__ is not type safe
     const observedAttributesArray = mElement.__proto__?.constructor?.observedAttributes ?? [];
     this.observedAttributes = new Set([...observedAttributesArray, "id", "class"]);
@@ -99,6 +100,9 @@ export class TagDebugMElement implements MElementGraphics<TagDebugGraphicsAdapte
           // attributeName is always set for attributes
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const attributeName = mutation.attributeName!;
+          if (ignoredAttributes.has(attributeName)) {
+            return;
+          }
           const attributeValue = this.mElement.getAttribute(attributeName);
           const existingAttribute = this.attributes[attributeName];
           if (attributeValue === null) {
@@ -124,6 +128,9 @@ export class TagDebugMElement implements MElementGraphics<TagDebugGraphicsAdapte
     // Add existing attributes
     for (let i = 0; i < mElement.attributes.length; i++) {
       const attribute = mElement.attributes[i];
+      if (ignoredAttributes.has(attribute.name)) {
+        continue;
+      }
       this.createAttributeElement(attribute.name, attribute.value);
     }
 

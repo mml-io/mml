@@ -1,4 +1,4 @@
-import { EventHandlerCollection, Matr4, Quat } from "mml-web";
+import { EventHandlerCollection, IVect3, Matr4, Quat } from "mml-web";
 import * as playcanvas from "playcanvas";
 
 const up = { x: 0, y: 1, z: 0 };
@@ -43,6 +43,30 @@ export class PlayCanvasDragFlyCameraControls {
     this.speed = speed;
   }
 
+  public fitContent(boundingBox: { min: IVect3; max: IVect3 }) {
+    const center = {
+      x: (boundingBox.min.x + boundingBox.max.x) / 2,
+      y: (boundingBox.min.y + boundingBox.max.y) / 2,
+      z: (boundingBox.min.z + boundingBox.max.z) / 2,
+    };
+    const size = {
+      x: boundingBox.max.x - boundingBox.min.x,
+      y: boundingBox.max.y - boundingBox.min.y,
+      z: boundingBox.max.z - boundingBox.min.z,
+    };
+    const fov = this.camera?.camera?.fov || 1;
+    const maximumDimension = Math.max(size.x, size.y, size.z);
+    const distance = Math.abs(maximumDimension / 4 / Math.tan(fov / 2));
+    const currentCameraRay = this.camera.forward.clone().normalize();
+    currentCameraRay.mulScalar(-distance);
+    this.camera.setLocalPosition(
+      center.x + currentCameraRay.x,
+      center.y + currentCameraRay.y,
+      center.z + currentCameraRay.z,
+    );
+    this.setLookAt(center.x, center.y, center.z);
+  }
+
   public enable() {
     if (this.enabled) {
       return;
@@ -79,10 +103,10 @@ export class PlayCanvasDragFlyCameraControls {
 
   public setLookAt(x: number, y: number, z: number) {
     this.camera.lookAt(x, y, z);
-    const q1 = new Quat().setFromEulerXYZ(this.camera.getRotation());
-    const { yaw, pitch } = getYawPitchFromQuaternion(q1);
+    const { yaw, pitch } = getYawPitchFromQuaternion(this.camera.getRotation());
     this.yaw = yaw;
     this.pitch = pitch;
+    this.updateCameraFromYawAndPitch();
   }
 
   public update(dt: number) {
@@ -182,6 +206,10 @@ export class PlayCanvasDragFlyCameraControls {
 
     this.yaw += movementX * -0.002;
     this.pitch += movementY * -0.002;
+    this.updateCameraFromYawAndPitch();
+  }
+
+  private updateCameraFromYawAndPitch() {
     this.yaw = this.yaw % (Math.PI * 2);
     this.pitch = this.pitch % (Math.PI * 2);
     this.pitch = Math.max(
@@ -218,7 +246,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function getYawPitchFromQuaternion(quaternion: Quat) {
+function getYawPitchFromQuaternion(quaternion: { x: number; y: number; z: number; w: number }) {
   const matr4 = new Matr4();
   matr4.setRotationFromQuaternion(quaternion);
 

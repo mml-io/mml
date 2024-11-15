@@ -106,7 +106,7 @@ export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter>
   }
 
   private getDocumentHost(): string {
-    const remoteDocument = this.targetForWrapper.getRemoteDocument();
+    const remoteDocument = this.targetForWrapper.getInitiatedRemoteDocument();
     if (remoteDocument) {
       const remoteDocumentAddress = remoteDocument.getDocumentAddress();
       if (remoteDocumentAddress) {

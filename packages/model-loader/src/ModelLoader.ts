@@ -96,7 +96,7 @@ export class ModelLoader {
       */
       resolveURL: (url: string) => {
         if (url === "draco_wasm_wrapper.js") {
-          return "data:text/javascript;base64," + btoa(DRACO_WASM_WRAPPER);
+          return "data:text/javascript;base64," + DRACO_WASM_WRAPPER;
         } else if (url === "draco_decoder.wasm") {
           return "data:application/wasm;base64," + DRACO_DECODER_WASM;
         }

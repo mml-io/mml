@@ -10,13 +10,11 @@ import * as THREE from "three";
 import { ThreeJSControls } from "./controls/ThreeJSControls";
 import { ThreeJSDragFlyCameraControls } from "./controls/ThreeJSDragFlyCameraControls";
 import { ThreeJSOrbitCameraControls } from "./controls/ThreeJSOrbitCameraControls";
-import { ThreeJSPointerLockFlyCameraControls } from "./controls/ThreeJSPointerLockFlyCameraControls";
 
 export enum StandaloneThreeJSAdapterControlsType {
   None,
   DragFly,
   Orbit,
-  PointerLockFly,
 }
 
 export type StandaloneThreeJSAdapterOptions = {
@@ -130,9 +128,6 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter {
     }
     switch (type) {
       case StandaloneThreeJSAdapterControlsType.None:
-        break;
-      case StandaloneThreeJSAdapterControlsType.PointerLockFly:
-        this.controls = new ThreeJSPointerLockFlyCameraControls(this.camera, this.element);
         break;
       case StandaloneThreeJSAdapterControlsType.Orbit:
         this.controls = new ThreeJSOrbitCameraControls(this.camera, this.element);

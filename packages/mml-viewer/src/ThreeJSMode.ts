@@ -1,6 +1,6 @@
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
-import { MMLSource } from "./MMLSource";
+import { MMLSourceDefinition } from "./MMLSourceDefinition";
 
 export class ThreeJSMode implements GraphicsMode {
   private disposed = false;
@@ -11,7 +11,7 @@ export class ThreeJSMode implements GraphicsMode {
   constructor(
     private windowTarget: Window,
     private targetForWrappers: HTMLElement,
-    private mmlSource: MMLSource,
+    private mmlSource: MMLSourceDefinition,
     private formIteration: FormIteration,
   ) {
     this.init();

@@ -1,5 +1,5 @@
-import { EventHandlerCollection, Matr4, Quat } from "mml-web";
-import { Camera, Vector3 } from "three";
+import { EventHandlerCollection, IVect3, Matr4, Quat } from "mml-web";
+import { PerspectiveCamera, Vector3 } from "three";
 
 import { ThreeJSControls } from "./ThreeJSControls";
 
@@ -17,10 +17,6 @@ export class ThreeJSDragFlyCameraControls implements ThreeJSControls {
 
   private enabled = false;
 
-  private camera: Camera;
-  private domElement: HTMLElement;
-
-  private speed: number;
   private yaw = 0;
   private pitch = 0;
 
@@ -35,17 +31,41 @@ export class ThreeJSDragFlyCameraControls implements ThreeJSControls {
   private minPolarAngle = 0 * (Math.PI / 180);
   private maxPolarAngle = 180 * (Math.PI / 180);
 
-  // This is an addition to the original PointerLockControls class
   private invertedMouseY = false;
 
   private eventHandlerCollection: EventHandlerCollection = new EventHandlerCollection();
   private mouseDown = false;
 
-  constructor(camera: Camera, domElement: HTMLElement, speed = 15.0) {
-    this.camera = camera;
-    this.domElement = domElement;
+  constructor(
+    private camera: PerspectiveCamera,
+    private domElement: HTMLElement,
+    private speed = 15.0,
+  ) {
     this.domElement.style.userSelect = "none";
-    this.speed = speed;
+  }
+
+  public fitContent(boundingBox: { min: IVect3; max: IVect3 }) {
+    const center = {
+      x: (boundingBox.min.x + boundingBox.max.x) / 2,
+      y: (boundingBox.min.y + boundingBox.max.y) / 2,
+      z: (boundingBox.min.z + boundingBox.max.z) / 2,
+    };
+    const size = {
+      x: boundingBox.max.x - boundingBox.min.x,
+      y: boundingBox.max.y - boundingBox.min.y,
+      z: boundingBox.max.z - boundingBox.min.z,
+    };
+    const fov = this.camera.fov;
+    const maximumDimension = Math.max(size.x, size.y, size.z);
+    const distance = Math.abs(maximumDimension / 4 / Math.tan(fov / 2));
+    const currentCameraRay = this.camera.getWorldDirection(new Vector3()).normalize();
+    currentCameraRay.multiplyScalar(-distance);
+    this.camera.position.set(
+      center.x + currentCameraRay.x,
+      center.y + currentCameraRay.y,
+      center.z + currentCameraRay.z,
+    );
+    this.setLookAt(center.x, center.y, center.z);
   }
 
   public enable() {
@@ -70,7 +90,6 @@ export class ThreeJSDragFlyCameraControls implements ThreeJSControls {
     this.enabled = false;
   }
 
-  // This is an addition to the original PointerLockControls class
   public setInvert(invert: boolean) {
     this.invertedMouseY = invert;
   }
@@ -175,6 +194,7 @@ export class ThreeJSDragFlyCameraControls implements ThreeJSControls {
     const { yaw, pitch } = getYawPitchFromQuaternion(q1);
     this.yaw = yaw;
     this.pitch = pitch;
+    this.updateCameraFromYawAndPitch();
   }
 
   private onMouseMove(event: MouseEvent) {
@@ -190,6 +210,11 @@ export class ThreeJSDragFlyCameraControls implements ThreeJSControls {
 
     this.yaw += movementX * -0.002;
     this.pitch += movementY * -0.002;
+
+    this.updateCameraFromYawAndPitch();
+  }
+
+  private updateCameraFromYawAndPitch() {
     this.yaw = this.yaw % (Math.PI * 2);
     this.pitch = this.pitch % (Math.PI * 2);
     this.pitch = Math.max(
@@ -206,6 +231,7 @@ export class ThreeJSDragFlyCameraControls implements ThreeJSControls {
 
     this.camera.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
   }
+
   private onMouseUp() {
     this.mouseDown = false;
   }

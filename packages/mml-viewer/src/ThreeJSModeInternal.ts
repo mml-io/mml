@@ -5,22 +5,21 @@ import {
   ThreeJSOrbitCameraControls,
 } from "@mml-io/mml-web-three-client";
 import { HDRJPGLoader } from "@monogrid/gainmap-js";
-import { parseColorAttribute } from "mml-web";
+import { FullScreenMMLScene, parseColorAttribute } from "mml-web";
 import * as THREE from "three";
 
-import {
-  connectGraphicsAdapterToFullScreenScene,
-  FullScreenState,
-} from "./ConnectGraphicsAdapterToFullScreenScene";
+import { calculateContentBounds } from "./calculateContentBounds";
 import { createFullscreenDiv } from "./CreateFullscreenDiv";
 import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
-import { MMLSource } from "./MMLSource";
+import { MMLSource, MMLSourceDefinition } from "./MMLSource";
 import { parseXYZ } from "./parseXYZ";
+import { StatusElement } from "./StatusElement";
 import {
   ambientLightColorField,
   ambientLightField,
   backgroundColorField,
+  cameraFitContents,
   cameraFovField,
   cameraLookAtField,
   cameraModeField,
@@ -34,8 +33,13 @@ import {
 export class ThreeJSModeInternal {
   private disposed = false;
   private element: HTMLDivElement;
-  private graphicsAdapter: StandaloneThreeJSAdapter | null = null;
-  private fullScreen: FullScreenState | null = null;
+
+  private loadedState: {
+    mmlSource: MMLSource;
+    graphicsAdapter: StandaloneThreeJSAdapter;
+    fullScreenMMLScene: FullScreenMMLScene<StandaloneThreeJSAdapter>;
+    statusElement: StatusElement;
+  } | null = null;
 
   private ambientLight: THREE.AmbientLight | null = null;
 
@@ -45,7 +49,7 @@ export class ThreeJSModeInternal {
   constructor(
     private windowTarget: Window,
     private targetForWrappers: HTMLElement,
-    private mmlSource: MMLSource,
+    private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
   ) {
     this.element = createFullscreenDiv();
@@ -53,39 +57,61 @@ export class ThreeJSModeInternal {
   }
 
   private async init() {
-    this.graphicsAdapter = await StandaloneThreeJSAdapter.create(this.element, {
+    const graphicsAdapter = await StandaloneThreeJSAdapter.create(this.element, {
       controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
     });
     if (this.disposed) {
-      this.dispose();
+      graphicsAdapter.dispose();
       return;
     }
 
-    this.fullScreen = connectGraphicsAdapterToFullScreenScene({
-      element: this.element,
-      graphicsAdapter: this.graphicsAdapter,
-      source: this.mmlSource,
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>(this.element);
+    fullScreenMMLScene.init(graphicsAdapter);
+    const statusElement = new StatusElement();
+    const mmlSource = MMLSource.create({
+      fullScreenMMLScene,
+      statusElement,
+      source: this.mmlSourceDefinition,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
     });
+    const loadingCallback = () => {
+      const [, completedLoading] = fullScreenMMLScene.getLoadingProgressManager().toRatio();
+      if (completedLoading) {
+        fullScreenMMLScene.getLoadingProgressManager().removeProgressCallback(loadingCallback);
+
+        const fitContent = this.formIteration.getFieldValue(cameraFitContents);
+        if (fitContent === "true") {
+          graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
+        }
+      }
+    };
+    fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
+    this.loadedState = {
+      mmlSource,
+      graphicsAdapter,
+      fullScreenMMLScene,
+      statusElement,
+    };
     this.update(this.formIteration);
   }
 
   update(formIteration: FormIteration) {
     this.formIteration = formIteration;
-    if (!this.graphicsAdapter) {
+    if (!this.loadedState) {
       return;
     }
 
-    const threeScene = this.graphicsAdapter.getThreeScene();
-    const threeRenderer = this.graphicsAdapter.getRenderer();
+    const graphicsAdapter = this.loadedState.graphicsAdapter;
+    const threeScene = graphicsAdapter.getThreeScene();
+    const threeRenderer = graphicsAdapter.getRenderer();
 
     this.setBackgroundColor(formIteration, threeRenderer);
     this.setAmbientLight(formIteration, threeScene);
     this.setAmbientLightColor(formIteration);
     this.setEnvironmentMap(formIteration, threeRenderer, threeScene);
 
-    this.setCameraMode(formIteration, this.graphicsAdapter);
+    this.setCameraMode(formIteration, graphicsAdapter);
 
     formIteration.completed();
   }
@@ -172,13 +198,12 @@ export class ThreeJSModeInternal {
 
   dispose() {
     this.disposed = true;
-    if (this.fullScreen) {
-      this.fullScreen.dispose();
-      this.fullScreen = null;
-    }
-    if (this.graphicsAdapter) {
-      this.graphicsAdapter.dispose();
-      this.graphicsAdapter = null;
+    if (this.loadedState) {
+      this.loadedState.mmlSource.dispose();
+      this.loadedState.graphicsAdapter.dispose();
+      this.loadedState.fullScreenMMLScene.dispose();
+      this.loadedState.statusElement.dispose();
+      this.loadedState = null;
     }
     this.element.remove();
   }
@@ -202,20 +227,26 @@ export class ThreeJSModeInternal {
       }
       controls.setDegreesPerSecond(orbitSpeed);
 
-      let orbitDistance = parseFloat(formIteration.getFieldValue(cameraOrbitDistanceField));
-      if (isNaN(orbitDistance)) {
-        orbitDistance = 1;
-      }
-      controls.setDistance(orbitDistance);
-
       let orbitPitch = parseFloat(formIteration.getFieldValue(cameraOrbitPitchField));
+
       if (isNaN(orbitPitch)) {
         orbitPitch = 0;
       }
       controls.setPitchDegrees(orbitPitch);
 
-      const lookAt = parseXYZ(formIteration.getFieldValue(cameraLookAtField));
-      controls.setLookAt(lookAt[0], lookAt[1], lookAt[2]);
+      const fitContent = formIteration.getFieldValue(cameraFitContents);
+      if (fitContent === "true") {
+        controls.fitContent(calculateContentBounds(this.targetForWrappers));
+      } else {
+        const lookAt = parseXYZ(formIteration.getFieldValue(cameraLookAtField));
+        controls.setLookAt(lookAt[0], lookAt[1], lookAt[2]);
+
+        let orbitDistance = parseFloat(formIteration.getFieldValue(cameraOrbitDistanceField));
+        if (isNaN(orbitDistance)) {
+          orbitDistance = 1;
+        }
+        controls.setDistance(orbitDistance);
+      }
     } else if (cameraMode === "drag-fly") {
       if (graphicsAdapter.controls?.type !== "drag-fly") {
         graphicsAdapter.setControlsType(StandaloneThreeJSAdapterControlsType.DragFly);
@@ -227,6 +258,11 @@ export class ThreeJSModeInternal {
 
       const lookAt = parseXYZ(formIteration.getFieldValue(cameraLookAtField));
       controls.setLookAt(lookAt[0], lookAt[1], lookAt[2]);
+
+      const fitContent = formIteration.getFieldValue(cameraFitContents);
+      if (fitContent === "true") {
+        controls.fitContent(calculateContentBounds(this.targetForWrappers));
+      }
     } else if (cameraMode === "none" && graphicsAdapter.controls !== null) {
       graphicsAdapter.setControlsType(StandaloneThreeJSAdapterControlsType.None);
     }

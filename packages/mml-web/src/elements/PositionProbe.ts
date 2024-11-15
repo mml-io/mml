@@ -158,7 +158,7 @@ export class PositionProbe<
       };
 
       let documentRoot: MElement<G> | null = null;
-      const remoteDocument = this.getRemoteDocument();
+      const remoteDocument = this.getInitiatedRemoteDocument();
       if (remoteDocument) {
         documentRoot = remoteDocument;
       }

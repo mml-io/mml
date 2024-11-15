@@ -5,7 +5,7 @@ import { GraphicsAdapter } from "../GraphicsAdapter";
 import { LoadingProgressManager } from "../loading/LoadingProgressManager";
 import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
 import { IMMLScene, PositionAndRotation } from "../MMLScene";
-import { RemoteDocument } from "./RemoteDocument";
+import type { RemoteDocument } from "./RemoteDocument";
 
 export const MELEMENT_PROPERTY_NAME = "m-element-property";
 
@@ -49,9 +49,10 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   }
 
   public getScene(): IMMLScene<G> {
-    const remoteDocumentElement = this.getRemoteDocument();
+    const remoteDocumentElement = this.getInitiatedRemoteDocument();
     if (remoteDocumentElement) {
-      return (remoteDocumentElement as RemoteDocument<G>).getMMLScene();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return (remoteDocumentElement as RemoteDocument<G>).getMMLScene()!;
     }
     const globalScene = getGlobalMMLScene() as IMMLScene<G>;
     if (!globalScene) {
@@ -60,8 +61,18 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
     return globalScene;
   }
 
-  public getRemoteDocument(): RemoteDocument<G> | null {
-    return this.closest("m-remote-document") || null;
+  public getInitiatedRemoteDocument(): RemoteDocument<G> | null {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    for (let parentNode: ParentNode | null = this; parentNode; parentNode = parentNode.parentNode) {
+      if (
+        parentNode.nodeName === "M-REMOTE-DOCUMENT" &&
+        (parentNode as RemoteDocument<G>).getMMLScene()
+      ) {
+        // Return the first remote document that has an explicit scene set
+        return parentNode as RemoteDocument<G>;
+      }
+    }
+    return null;
   }
 
   public contentSrcToContentAddress(src: string): string {
@@ -97,7 +108,7 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   }
 
   private getDocumentHost(): URL | Location {
-    const remoteDocument = this.getRemoteDocument();
+    const remoteDocument = this.getInitiatedRemoteDocument();
     if (remoteDocument) {
       const remoteDocumentAddress = remoteDocument.getDocumentAddress();
       if (remoteDocumentAddress) {
@@ -135,7 +146,7 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   }
 
   protected getDocumentTimeManager(): MMLDocumentTimeManager | null {
-    const remoteDocument = this.getRemoteDocument();
+    const remoteDocument = this.getInitiatedRemoteDocument();
     if (remoteDocument) {
       return remoteDocument.getDocumentTimeManager();
     }
@@ -205,7 +216,7 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   }
 
   dispatchEvent(event: Event): boolean {
-    const remoteDocument = this.getRemoteDocument();
+    const remoteDocument = this.getInitiatedRemoteDocument();
     if (remoteDocument) {
       remoteDocument.dispatchEvent(
         new CustomEvent(consumeEventEventName, {

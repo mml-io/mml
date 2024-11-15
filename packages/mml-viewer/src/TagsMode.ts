@@ -1,59 +1,68 @@
-import { StandaloneTagDebugAdapter } from "mml-web";
+import { FullScreenMMLScene, StandaloneTagDebugAdapter } from "mml-web";
 
-import {
-  connectGraphicsAdapterToFullScreenScene,
-  FullScreenState,
-} from "./ConnectGraphicsAdapterToFullScreenScene";
 import { createFullscreenDiv } from "./CreateFullscreenDiv";
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
-import { MMLSource } from "./MMLSource";
+import { MMLSource, MMLSourceDefinition } from "./MMLSource";
+import { StatusElement } from "./StatusElement";
 
 export class TagsMode implements GraphicsMode {
   private element: HTMLDivElement;
   private disposed = false;
-  private graphicsAdapter: StandaloneTagDebugAdapter | null = null;
-  private fullScreen: FullScreenState | null = null;
+
+  private loadedState: {
+    mmlSource: MMLSource;
+    graphicsAdapter: StandaloneTagDebugAdapter;
+    fullScreenMMLScene: FullScreenMMLScene<StandaloneTagDebugAdapter>;
+    statusElement: StatusElement;
+  } | null = null;
 
   constructor(
     private windowTarget: Window,
     private targetForWrappers: HTMLElement,
-    mmlSource: MMLSource,
+    private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
   ) {
     this.element = createFullscreenDiv();
-    this.init(mmlSource);
-    // TODO - handle formIteration
+    this.init();
   }
 
   public readonly type = "tags";
 
-  private async init(mmlSource: MMLSource) {
-    this.graphicsAdapter = await StandaloneTagDebugAdapter.create(this.element);
+  private async init() {
+    const graphicsAdapter = await StandaloneTagDebugAdapter.create(this.element);
     if (this.disposed) {
-      this.dispose();
+      graphicsAdapter.dispose();
       return;
     }
 
-    this.fullScreen = connectGraphicsAdapterToFullScreenScene({
-      element: this.element,
-      graphicsAdapter: this.graphicsAdapter,
-      source: mmlSource,
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>(this.element);
+    fullScreenMMLScene.init(graphicsAdapter);
+    const statusElement = new StatusElement();
+    const mmlSource = MMLSource.create({
+      fullScreenMMLScene,
+      statusElement,
+      source: this.mmlSourceDefinition,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
     });
+    this.loadedState = {
+      mmlSource,
+      graphicsAdapter,
+      fullScreenMMLScene,
+      statusElement,
+    };
     this.update(this.formIteration);
   }
 
   dispose() {
     this.disposed = true;
-    if (this.fullScreen) {
-      this.fullScreen.dispose();
-      this.fullScreen = null;
-    }
-    if (this.graphicsAdapter) {
-      this.graphicsAdapter.dispose();
-      this.graphicsAdapter = null;
+    if (this.loadedState) {
+      this.loadedState.mmlSource.dispose();
+      this.loadedState.graphicsAdapter.dispose();
+      this.loadedState.fullScreenMMLScene.dispose();
+      this.loadedState.statusElement.dispose();
+      this.loadedState = null;
     }
     this.element.remove();
   }

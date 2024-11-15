@@ -20,7 +20,7 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "mml-web": "^0.18.0"
+    "@mml-io/mml-web": "^0.18.1"
   },
   "peerDependencies": {
     "playcanvas": "*"

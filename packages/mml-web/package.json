@@ -1,5 +1,5 @@
 {
-  "name": "mml-web",
+  "name": "@mml-io/mml-web",
   "version": "0.18.1",
   "publishConfig": {
     "access": "public"
@@ -20,7 +20,6 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/model-loader": "^0.18.1",
     "@mml-io/networked-dom-web": "^0.18.1"
   },
   "devDependencies": {

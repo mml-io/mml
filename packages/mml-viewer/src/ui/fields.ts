@@ -63,6 +63,15 @@ export const cameraOrbitPitchField: FieldDefinition = {
   groupDefinition: cameraGroup,
 };
 
+export const cameraFitContents: FieldDefinition = {
+  name: "cameraFitContents",
+  label: "Camera Fit Contents",
+  type: "string",
+  options: ["true", "false"],
+  defaultValue: "false",
+  groupDefinition: cameraGroup,
+};
+
 export const cameraLookAtField: FieldDefinition = {
   name: "cameraLookAt",
   label: "Camera Look At",

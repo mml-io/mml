@@ -2,7 +2,7 @@ import { parseBoolAttribute } from "mml-web";
 
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
-import { MMLSource } from "./MMLSource";
+import { MMLSourceDefinition } from "./MMLSource";
 import { PlayCanvasMode } from "./PlayCanvasMode";
 import { QueryParamState } from "./QueryParamState";
 import { TagsMode } from "./TagsMode";
@@ -14,7 +14,7 @@ export class StandaloneViewer {
   private viewerUI = new ViewerUI();
   private graphicsMode: GraphicsMode | null = null;
   private formIteration: FormIteration | null = null;
-  private source: MMLSource | null = null;
+  private source: MMLSourceDefinition | null = null;
 
   constructor(
     private windowTarget: Window,
@@ -40,7 +40,7 @@ export class StandaloneViewer {
       this.viewerUI.show();
     }
 
-    let source: MMLSource;
+    let source: MMLSourceDefinition;
     if (url) {
       source = { url };
       if (this.source && this.source.url !== url) {

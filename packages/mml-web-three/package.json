@@ -20,17 +20,13 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "mml-web": "^0.18.0"
+    "@mml-io/mml-web": "^0.18.1",
+    "@mml-io/model-loader": "^0.18.1"
   },
   "peerDependencies": {
     "three": "*"
   },
   "devDependencies": {
-    "jest-canvas-mock": "2.5.2",
-    "jest-environment-jsdom": "29.7.0",
-    "jest-expect-message": "1.1.3",
-    "jest-fetch-mock": "3.0.3",
-    "resize-observer-polyfill": "1.5.1",
     "three": "0.163.0",
     "@types/three": "0.163.0"
   },
