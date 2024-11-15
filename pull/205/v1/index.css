@@ -191,9 +191,14 @@
 }
 .ViewerUI-module__menu-button_ne7v1W__0181 {
   z-index: 1000;
+  cursor: pointer;
   color: #fff;
   pointer-events: auto;
+  user-select: none;
   background-color: #00000080;
+  border: 0;
+  width: 40px;
+  height: 40px;
   padding: 10px;
   position: fixed;
   top: 0;

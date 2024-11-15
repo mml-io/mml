@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../src/env-maps/index.ts", "../src/parseXYZ.ts"],
-  "sourcesContent": ["type EnvMap = {\n  name: string;\n  url: string;\n};\n\nimport puresky from \"./puresky_2k.jpg\";\n\nexport const envMaps: {\n  [key: string]: EnvMap;\n} = {\n  puresky: {\n    name: \"Pure Sky\",\n    url: puresky,\n  },\n};\n", "export function parseXYZ(str: string): [number, number, number] {\n  const asNumbers = str\n    .split(\",\")\n    .slice(0, 3)\n    .map(parseFloat)\n    .map((v) => (isNaN(v) ? 0 : v)) as [number, number, number];\n  return [asNumbers[0] || 0, asNumbers[1] || 0, asNumbers[2] || 0];\n}\n"],
-  "mappings": ";;;;AAOO,IAAM,UAET;AAAA,EACF,SAAS;AAAA,IACP,MAAM;AAAA,IACN,KAAK;AAAA,EACP;AACF;;;ACdO,SAAS,SAAS,KAAuC;AAC9D,QAAM,YAAY,IACf,MAAM,GAAG,EACT,MAAM,GAAG,CAAC,EACV,IAAI,UAAU,EACd,IAAI,CAAC,MAAO,MAAM,CAAC,IAAI,IAAI,CAAE;AAChC,SAAO,CAAC,UAAU,CAAC,KAAK,GAAG,UAAU,CAAC,KAAK,GAAG,UAAU,CAAC,KAAK,CAAC;AACjE;",
-  "names": []
-}

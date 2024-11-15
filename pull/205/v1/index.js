@@ -1,13 +1,15 @@
 import {
+  FullScreenMMLScene,
   IframeWrapper,
+  MMLSource,
   StandaloneTagDebugAdapter,
-  connectGraphicsAdapterToFullScreenScene,
+  StatusElement,
   createFullscreenDiv,
   parseBoolAttribute,
   registerCustomElementsToWindow,
   rendererField,
   urlField
-} from "./chunk-CNLM5BYA.js";
+} from "./chunk-K52IE2F4.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -270,7 +272,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-DHX2CIB3.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-DPFJCYHK.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -338,41 +340,49 @@ var QueryParamState = class _QueryParamState {
 
 // src/TagsMode.ts
 var TagsMode = class {
-  constructor(windowTarget, targetForWrappers, mmlSource, formIteration) {
+  constructor(windowTarget, targetForWrappers, mmlSourceDefinition, formIteration) {
     this.windowTarget = windowTarget;
     this.targetForWrappers = targetForWrappers;
+    this.mmlSourceDefinition = mmlSourceDefinition;
     this.formIteration = formIteration;
     this.disposed = false;
-    this.graphicsAdapter = null;
-    this.fullScreen = null;
+    this.loadedState = null;
     this.type = "tags";
     this.element = createFullscreenDiv();
-    this.init(mmlSource);
+    this.init();
   }
-  async init(mmlSource) {
-    this.graphicsAdapter = await StandaloneTagDebugAdapter.create(this.element);
+  async init() {
+    const graphicsAdapter = await StandaloneTagDebugAdapter.create(this.element);
     if (this.disposed) {
-      this.dispose();
+      graphicsAdapter.dispose();
       return;
     }
-    this.fullScreen = connectGraphicsAdapterToFullScreenScene({
-      element: this.element,
-      graphicsAdapter: this.graphicsAdapter,
-      source: mmlSource,
+    const fullScreenMMLScene = new FullScreenMMLScene(this.element);
+    fullScreenMMLScene.init(graphicsAdapter);
+    const statusElement = new StatusElement();
+    const mmlSource = MMLSource.create({
+      fullScreenMMLScene,
+      statusElement,
+      source: this.mmlSourceDefinition,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers
     });
+    this.loadedState = {
+      mmlSource,
+      graphicsAdapter,
+      fullScreenMMLScene,
+      statusElement
+    };
     this.update(this.formIteration);
   }
   dispose() {
     this.disposed = true;
-    if (this.fullScreen) {
-      this.fullScreen.dispose();
-      this.fullScreen = null;
-    }
-    if (this.graphicsAdapter) {
-      this.graphicsAdapter.dispose();
-      this.graphicsAdapter = null;
+    if (this.loadedState) {
+      this.loadedState.mmlSource.dispose();
+      this.loadedState.graphicsAdapter.dispose();
+      this.loadedState.fullScreenMMLScene.dispose();
+      this.loadedState.statusElement.dispose();
+      this.loadedState = null;
     }
     this.element.remove();
   }
@@ -395,7 +405,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-GUIVAIT5.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-UJH5L4W4.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -565,7 +575,8 @@ var ViewerUI = class {
     this.hideUISection = new HideUISection();
     this.contents.append(this.hideUISection.element);
     const menuIcon = document.createElement("button");
-    menuIcon.className = ViewerUI_default.menuButton;
+    menuIcon.classList.add(ViewerUI_default.menuButton, "no-copy");
+    menuIcon.textContent = "\u2261";
     menuIcon.addEventListener("click", () => {
       this.contents.style.display = this.contents.style.display === "none" ? "block" : "none";
     });
@@ -683,6 +694,16 @@ window.addEventListener("load", () => {
     const windowTarget = iframeWindow;
     const targetForWrappers = iframeBody;
     registerCustomElementsToWindow(windowTarget);
+    const transparentPixel = document.createElement("div");
+    transparentPixel.style.width = "1px";
+    transparentPixel.style.height = "1px";
+    transparentPixel.style.position = "absolute";
+    transparentPixel.style.top = "1px";
+    transparentPixel.style.left = "1px";
+    transparentPixel.style.userSelect = "none";
+    transparentPixel.style.pointerEvents = "none";
+    transparentPixel.style.backdropFilter = "blur(1px)";
+    document.body.append(transparentPixel);
     const standaloneViewer = new StandaloneViewer(windowTarget, targetForWrappers);
     window["mml-viewer"] = standaloneViewer;
   })();
