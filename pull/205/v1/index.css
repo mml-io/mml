@@ -7,19 +7,54 @@
   display: flex;
 }
 .shared-styles-module__button_Y_AOrq__0181 {
+  appearance: none;
+  box-sizing: border-box;
+  color: #24292e;
   cursor: pointer;
-  color: #fff;
-  background-color: #444;
-  border: 1px solid #0000;
+  user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+  white-space: nowrap;
+  word-wrap: break-word;
+  background-color: #fafbfc;
+  border: 1px solid #1b1f2326;
   border-radius: 4px;
-  justify-content: center;
-  align-items: center;
-  transition: all .1s;
-  display: flex;
-  overflow: hidden;
+  padding: 3px 8px;
+  font-family:
+    -apple-system,
+    system-ui,
+    Segoe UI,
+    Helvetica,
+    Arial,
+    sans-serif,
+    Apple Color Emoji,
+    Segoe UI Emoji;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 20px;
+  list-style: none;
+  display: inline-block;
+  position: relative;
+  box-shadow: 0 1px #1b1f230a, inset 0 1px #ffffff40;
 }
 .shared-styles-module__button_Y_AOrq__0181:hover {
-  background-color: #555;
+  background-color: #e4e4e4;
+  text-decoration: none;
+  transition-duration: .1s;
+}
+.shared-styles-module__button_Y_AOrq__0181:disabled {
+  color: #3c3d42;
+  cursor: default;
+  background-color: #fafbfc;
+  border-color: #1b1f2326;
+}
+.shared-styles-module__button_Y_AOrq__0181:active {
+  background-color: #fff;
+  transition: none;
+  box-shadow: inset 0 1px #f3f3f333;
+}
+.shared-styles-module__button_Y_AOrq__0181:focus {
+  outline: 1px #0000;
 }
 
 /* esbuild-css-modules-plugin-ns-css:src/ui/UIField.module.css */
@@ -69,10 +104,12 @@
   width: 100%;
   margin-left: 4px;
   margin-right: 4px;
+  padding: 2px;
   display: block;
 }
 .UIField-module__submit-button_lh-KDa__0181 {
-  font-size: 14px;
+  margin-right: 2px;
+  font-size: 11px;
 }
 
 /* esbuild-css-modules-plugin-ns-css:src/ui/UIGroup.module.css */
@@ -197,12 +234,16 @@
   user-select: none;
   background-color: #00000080;
   border: 0;
+  border-bottom-left-radius: 4px;
   width: 40px;
   height: 40px;
   padding: 10px;
   position: fixed;
   top: 0;
   right: 0;
+}
+.ViewerUI-module__menu-button_ne7v1W__0181:hover {
+  background-color: #000c;
 }
 .ViewerUI-module__empty-state_ne7v1W__0181 .ViewerUI-module__menu-button_ne7v1W__0181 {
   display: none;
@@ -217,6 +258,7 @@
   backdrop-filter: blur(10px);
   pointer-events: auto;
   background-color: #121212cc;
+  border-bottom-left-radius: 4px;
   width: 300px;
   max-height: 100%;
   font-family: Arial, sans-serif;
@@ -227,7 +269,7 @@
   transform: translate(0);
 }
 .ViewerUI-module__empty-state_ne7v1W__0181 .ViewerUI-module__contents_ne7v1W__0181 {
-  border-radius: 16px;
+  border-radius: 4px;
   max-width: 100%;
   top: 50%;
   right: 50%;

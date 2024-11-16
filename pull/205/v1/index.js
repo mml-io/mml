@@ -4,12 +4,14 @@ import {
   MMLSource,
   StandaloneTagDebugAdapter,
   StatusElement,
+  allFields,
+  allGroups,
   createFullscreenDiv,
   parseBoolAttribute,
   registerCustomElementsToWindow,
   rendererField,
   urlField
-} from "./chunk-K52IE2F4.js";
+} from "./chunk-TMFEZHOA.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -161,39 +163,48 @@ var UIGroup_default = {
 };
 
 // src/ui/UIGroup.ts
-var UIGroup = class {
+var UIGroup = class extends UIElement {
   constructor(groupDefinition) {
+    super();
     this.groupDefinition = groupDefinition;
-    this.element = document.createElement("div");
-    this.elements = new Array();
+    this.fields = new Array();
     this.element.className = UIGroup_default.uiGroup;
     this.header = document.createElement("div");
     this.header.className = shared_styles_default.header;
     this.header.textContent = groupDefinition.label;
     this.element.append(this.header);
+    this.contents = document.createElement("div");
+    this.contents.className = UIGroup_default.contents;
+    this.element.append(this.contents);
   }
-  addElement(element) {
-    if (this.elements.includes(element)) {
+  addField(uiField) {
+    if (this.fields.includes(uiField)) {
       return;
     }
-    this.elements.push(element);
-    this.element.append(element.element);
-  }
-  removeElement(element) {
-    const index = this.elements.indexOf(element);
-    if (index === -1) {
-      return;
+    this.fields.push(uiField);
+    this.fields.sort(
+      (a, b) => allFields.indexOf(a.fieldDefinition) - allFields.indexOf(b.fieldDefinition)
+    );
+    const index = this.fields.indexOf(uiField);
+    if (index === this.fields.length - 1) {
+      this.contents.append(uiField.element);
+    } else {
+      const nextGroup = this.fields[index + 1];
+      this.contents.insertBefore(uiField.element, nextGroup.element);
     }
-    this.elements.splice(index, 1);
+  }
+  removeField(uiField) {
+    this.fields = this.fields.filter((f) => f !== uiField);
+    this.contents.removeChild(uiField.element);
   }
   dispose() {
-    for (const element of this.elements) {
+    for (const element of this.fields) {
       element.dispose();
     }
-    this.elements = [];
+    this.fields = [];
   }
   isEmpty() {
-    return this.elements.length === 0;
+    return this.fields.length === 0;
   }
 };
 
@@ -227,7 +238,7 @@ var FormIteration = class {
         this.viewerUI.addGroup(uiGroup);
       }
       field = new UIField(fieldDefinition, uiGroup);
-      uiGroup.addElement(field);
+      uiGroup.addField(field);
       this.fields.set(fieldDefinition, field);
     }
     const readValue = this.queryParamState.read(fieldDefinition.name);
@@ -239,10 +250,9 @@ var FormIteration = class {
   }
   clearUnmatchedFields() {
     for (const field of this.unmatchedFields.values()) {
-      field.dispose();
-      field.element.remove();
       const group = field.group;
-      group.removeElement(field);
+      group.removeField(field);
+      field.dispose();
       if (group.isEmpty()) {
         group.dispose();
         this.viewerUI.removeGroup(group);
@@ -272,7 +282,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-YBM7FUVF.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-65VQIPVH.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -405,7 +415,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-MEZQM5AB.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-HSNTEJHJ.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -556,6 +566,7 @@ var ViewerUI_default = {
 // src/ui/ViewerUI.ts
 var ViewerUI = class {
   constructor() {
+    this.groups = [];
     this.element = document.createElement("div");
     this.element.className = ViewerUI_default.viewerUi;
     this.element.addEventListener("wheel", (e) => e.stopPropagation());
@@ -583,7 +594,17 @@ var ViewerUI = class {
     this.element.append(menuIcon);
   }
   addGroup(uiGroup) {
-    this.groupHolder.append(uiGroup.element);
+    this.groups.push(uiGroup);
+    this.groups.sort(
+      (a, b) => allGroups.indexOf(a.groupDefinition) - allGroups.indexOf(b.groupDefinition)
+    );
+    const index = this.groups.indexOf(uiGroup);
+    if (index === this.groups.length - 1) {
+      this.groupHolder.append(uiGroup.element);
+    } else {
+      const nextGroup = this.groups[index + 1];
+      this.groupHolder.insertBefore(uiGroup.element, nextGroup.element);
+    }
   }
   showUnusedParams(params) {
     this.unusedParameters.setParams(params);
@@ -599,6 +620,7 @@ var ViewerUI = class {
   }
   removeGroup(group) {
     this.groupHolder.removeChild(group.element);
+    this.groups = this.groups.filter((g) => g !== group);
   }
   show() {
     this.element.style.display = "block";
