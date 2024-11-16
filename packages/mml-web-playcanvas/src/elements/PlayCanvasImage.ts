@@ -162,7 +162,6 @@ export class PlayCanvasImage extends ImageGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   setCastShadows(castShadows: boolean): void {
-    // TODO - not casting shadows?
     this.modelComponent.castShadows = castShadows;
   }
 

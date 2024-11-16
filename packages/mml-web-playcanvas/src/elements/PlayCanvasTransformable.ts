@@ -41,7 +41,6 @@ export class PlayCanvasTransformable extends TransformableGraphics<PlayCanvasGra
   }
 
   getWorldMatrix(): Matr4 {
-    // TODO - clean up types
     return new Matr4(this.getPlayCanvasEntity().getWorldTransform().data);
   }
 

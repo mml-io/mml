@@ -9,6 +9,8 @@ export async function fetchRemoteStaticMML(address: string): Promise<HTMLElement
     domParser = new DOMParser();
   }
   const remoteDocumentAsHTMLNode = domParser.parseFromString(text, "text/html");
-  DOMSanitizer.sanitise(remoteDocumentAsHTMLNode.body);
-  return remoteDocumentAsHTMLNode.body;
+  return DOMSanitizer.sanitise(remoteDocumentAsHTMLNode.body, {
+    tagPrefix: "m-",
+    replacementTagPrefix: "x-",
+  });
 }

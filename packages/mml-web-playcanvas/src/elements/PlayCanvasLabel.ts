@@ -78,8 +78,20 @@ export class PlayCanvasLabel extends LabelGraphics<PlayCanvasGraphicsAdapter> {
   public setFontColor(): void {
     this.redrawText();
   }
+
   public setEmissive(): void {
-    // TODO
+    this.updateMaterialEmissiveIntensity();
+  }
+
+  private updateMaterialEmissiveIntensity() {
+    if (this.label.props.emissive) {
+      this.material.emissiveMap = this.material.diffuseMap;
+      this.material.emissiveIntensity = this.label.props.emissive;
+    } else {
+      this.material.emissiveMap = null;
+      this.material.emissiveIntensity = 0;
+    }
+    this.material.update();
   }
 
   private redrawText() {
@@ -119,6 +131,7 @@ export class PlayCanvasLabel extends LabelGraphics<PlayCanvasGraphicsAdapter> {
     texture.setSource(canvas);
     this.material.diffuseMap = texture;
     this.material.update();
+    this.updateMaterialEmissiveIntensity();
     texture.destroy();
   }
 
