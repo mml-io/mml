@@ -5,11 +5,6 @@ export const sourceGroup: GroupDefinition = {
   label: "Source",
 };
 
-export const uiGroup: GroupDefinition = {
-  name: "ui",
-  label: "UI",
-};
-
 export const rendererGroup: GroupDefinition = {
   name: "renderer",
   label: "Renderer",
@@ -29,6 +24,8 @@ export const lightGroup: GroupDefinition = {
   name: "light",
   label: "Light",
 };
+
+export const allGroups = [sourceGroup, rendererGroup, cameraGroup, lightGroup, environmentGroup];
 
 export const cameraModeField: FieldDefinition = {
   name: "cameraMode",
@@ -147,4 +144,19 @@ export const ambientLightColorField: FieldDefinition = {
   groupDefinition: lightGroup,
 };
 
-export const allFields = [ambientLightField, cameraFovField];
+export const allFields = [
+  cameraModeField,
+  cameraFitContents,
+  cameraLookAtField,
+  cameraOrbitDistanceField,
+  cameraOrbitPitchField,
+  cameraOrbitSpeedField,
+  cameraPositionField,
+  cameraFovField,
+  environmentMapField,
+  urlField,
+  rendererField,
+  backgroundColorField,
+  ambientLightField,
+  ambientLightColorField,
+];

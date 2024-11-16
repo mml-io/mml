@@ -1,3 +1,4 @@
+import { allGroups } from "./fields";
 import { HideUISection } from "./HideUISection";
 import { UIGroup } from "./UIGroup";
 import { UnusedParameters } from "./UnusedParameters";
@@ -8,6 +9,7 @@ export class ViewerUI {
   private contents: HTMLDivElement;
 
   private header: HTMLDivElement;
+  private groups: Array<UIGroup> = [];
   private groupHolder: HTMLDivElement;
 
   private unusedParameters: UnusedParameters;
@@ -48,7 +50,17 @@ export class ViewerUI {
   }
 
   addGroup(uiGroup: UIGroup) {
-    this.groupHolder.append(uiGroup.element);
+    this.groups.push(uiGroup);
+    this.groups.sort(
+      (a, b) => allGroups.indexOf(a.groupDefinition) - allGroups.indexOf(b.groupDefinition),
+    );
+    const index = this.groups.indexOf(uiGroup);
+    if (index === this.groups.length - 1) {
+      this.groupHolder.append(uiGroup.element);
+    } else {
+      const nextGroup = this.groups[index + 1];
+      this.groupHolder.insertBefore(uiGroup.element, nextGroup.element);
+    }
   }
 
   showUnusedParams(params: string[]) {
@@ -68,6 +80,7 @@ export class ViewerUI {
 
   removeGroup(group: UIGroup) {
     this.groupHolder.removeChild(group.element);
+    this.groups = this.groups.filter((g) => g !== group);
   }
 
   show() {

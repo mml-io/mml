@@ -5,7 +5,7 @@ import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 
-const lightIntensityFactor = 1 / 400;
+const lightIntensityFactor = 0.333;
 
 export class PlayCanvasLight extends LightGraphics<PlayCanvasGraphicsAdapter> {
   private lightComponent: playcanvas.LightComponent;
@@ -21,7 +21,6 @@ export class PlayCanvasLight extends LightGraphics<PlayCanvasGraphicsAdapter> {
       lightEntity.removeComponent("light");
     }
 
-    // TODO - light color
     const { r, g, b } = this.light.props.color;
 
     if (this.light.props.type === "spotlight") {
@@ -61,8 +60,8 @@ export class PlayCanvasLight extends LightGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   setCastShadows(castShadows: boolean) {
-    // TODO
     this.lightComponent.castShadows = castShadows;
+    this.lightComponent.refreshProperties();
   }
 
   setAngle(angle: number) {
@@ -71,14 +70,17 @@ export class PlayCanvasLight extends LightGraphics<PlayCanvasGraphicsAdapter> {
     }
     this.lightComponent.innerConeAngle = angle;
     this.lightComponent.outerConeAngle = angle;
+    this.lightComponent.refreshProperties();
   }
 
   setIntensity(intensity: number) {
     this.lightComponent.intensity = intensity * lightIntensityFactor;
+    this.lightComponent.refreshProperties();
   }
 
   setDistance(distance: number | null) {
     this.lightComponent.range = distance ?? 100;
+    this.lightComponent.refreshProperties();
   }
 
   setType(): void {

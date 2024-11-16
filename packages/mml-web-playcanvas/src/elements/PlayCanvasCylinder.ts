@@ -50,9 +50,13 @@ export class PlayCanvasCylinder extends CylinderGraphics<PlayCanvasGraphicsAdapt
   }
 
   private updateSize(mCylinderProps: MCylinderProps): void {
-    this.entity.setLocalScale(mCylinderProps.radius, mCylinderProps.height, mCylinderProps.radius);
+    this.entity.setLocalScale(
+      mCylinderProps.radius * 2,
+      mCylinderProps.height,
+      mCylinderProps.radius * 2,
+    );
     if (this.entity.collision) {
-      this.entity.collision.radius = mCylinderProps.radius / 2;
+      this.entity.collision.radius = mCylinderProps.radius;
       this.entity.collision.height = mCylinderProps.height;
       // @ts-expect-error - accessing onSetHalfExtents private method
       this.entity.collision.onSetHalfExtents();

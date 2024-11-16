@@ -3,13 +3,13 @@ type EnvMap = {
   url: string;
 };
 
-import puresky from "./puresky_2k.jpg";
+import cloudysky from "./cloudysky_2k.jpg";
 
 export const envMaps: {
   [key: string]: EnvMap;
 } = {
-  puresky: {
-    name: "Pure Sky",
-    url: puresky,
+  cloudysky: {
+    name: "Cloudy Sky",
+    url: cloudysky,
   },
 };

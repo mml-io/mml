@@ -46,11 +46,13 @@
   text-align: left;
   background: rgb(128, 128, 128);
   border: none;
+  padding: 2px;
   margin-left: 4px;
   margin-right: 4px;
   border-radius: 4px;
 }
 
 .submit-button {
-  font-size: 14px;
+  font-size: 11px;
+  margin-right: 2px;
 }

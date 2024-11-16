@@ -160,7 +160,6 @@ export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
   }
 
   public setControlsType(type?: StandalonePlayCanvasAdapterControlsType) {
-    console.log("setControlsType", type);
     if (this.controls) {
       this.controls.dispose();
       this.controls = null;
@@ -177,7 +176,6 @@ export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
         break;
     }
     if (this.controls) {
-      console.log("Controls type set to", this.controls.type);
       this.controls.enable();
     }
   }

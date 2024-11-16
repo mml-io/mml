@@ -31,7 +31,6 @@ export class FormIteration {
     }
     let field = this.fields.get(fieldDefinition);
     if (!field) {
-      // Create a new field
       const groupDefinition = fieldDefinition.groupDefinition;
       let uiGroup = this.groups.get(groupDefinition);
       if (!uiGroup) {
@@ -40,7 +39,7 @@ export class FormIteration {
         this.viewerUI.addGroup(uiGroup);
       }
       field = new UIField(fieldDefinition, uiGroup);
-      uiGroup.addElement(field);
+      uiGroup.addField(field);
       this.fields.set(fieldDefinition, field);
     }
 
@@ -54,10 +53,9 @@ export class FormIteration {
 
   private clearUnmatchedFields() {
     for (const field of this.unmatchedFields.values()) {
-      field.dispose();
-      field.element.remove();
       const group = field.group;
-      group.removeElement(field);
+      group.removeField(field);
+      field.dispose();
       if (group.isEmpty()) {
         group.dispose();
         this.viewerUI.removeGroup(group);

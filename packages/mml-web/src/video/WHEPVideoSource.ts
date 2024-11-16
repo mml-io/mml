@@ -46,7 +46,7 @@ export class WHEPVideoSource implements VideoSource {
           this.stream.addTrack(track);
           break;
         default:
-          console.log("got unknown track " + track);
+          console.warn("got unknown track " + track);
       }
     };
 

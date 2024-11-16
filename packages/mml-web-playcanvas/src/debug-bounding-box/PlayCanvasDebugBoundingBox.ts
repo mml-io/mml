@@ -6,10 +6,7 @@ export function createPlayCanvasDebugBoundingBox(
   graphicsAdapter: PlayCanvasGraphicsAdapter,
   material: playcanvas.Material,
 ): playcanvas.Entity {
-  const entity = new playcanvas.Entity(
-    "position-probe-internal",
-    graphicsAdapter.getPlayCanvasApp(),
-  );
+  const entity = new playcanvas.Entity("bounding-box", graphicsAdapter.getPlayCanvasApp());
   entity.addComponent("model", {
     type: "box",
     material,

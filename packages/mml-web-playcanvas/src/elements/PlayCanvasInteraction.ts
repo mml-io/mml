@@ -58,7 +58,7 @@ export class PlayCanvasInteraction extends InteractionGraphics<PlayCanvasGraphic
     } else {
       if (this.positionProbe.isConnected && !this.entity) {
         this.entity = new playcanvas.Entity(
-          "position-probe-internal",
+          "interaction-internal",
           this.positionProbe.getScene().getGraphicsAdapter().getPlayCanvasApp(),
         );
         if (!this.debugMaterial) {
