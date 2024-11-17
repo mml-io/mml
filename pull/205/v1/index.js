@@ -1,17 +1,17 @@
 import {
   FullScreenMMLScene,
   IframeWrapper,
-  MMLSource,
+  MMLNetworkSource,
+  NetworkedDOMWebsocketStatus,
   StandaloneTagDebugAdapter,
-  StatusElement,
+  StatusUI,
   allFields,
   allGroups,
-  createFullscreenDiv,
   parseBoolAttribute,
   registerCustomElementsToWindow,
   rendererField,
   urlField
-} from "./chunk-TMFEZHOA.js";
+} from "./chunk-5LQ2TQWT.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -282,7 +282,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-65VQIPVH.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-E3P6HAB2.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -358,43 +358,48 @@ var TagsMode = class {
     this.disposed = false;
     this.loadedState = null;
     this.type = "tags";
-    this.element = createFullscreenDiv();
     this.init();
   }
   async init() {
-    const graphicsAdapter = await StandaloneTagDebugAdapter.create(this.element);
+    const fullScreenMMLScene = new FullScreenMMLScene();
+    document.body.append(fullScreenMMLScene.element);
+    const graphicsAdapter = await StandaloneTagDebugAdapter.create(fullScreenMMLScene.element);
     if (this.disposed) {
       graphicsAdapter.dispose();
       return;
     }
-    const fullScreenMMLScene = new FullScreenMMLScene(this.element);
     fullScreenMMLScene.init(graphicsAdapter);
-    const statusElement = new StatusElement();
-    const mmlSource = MMLSource.create({
-      fullScreenMMLScene,
-      statusElement,
-      source: this.mmlSourceDefinition,
+    const statusUI = new StatusUI();
+    const networkMMLSource = MMLNetworkSource.create({
+      mmlScene: fullScreenMMLScene,
+      statusUpdated: (status) => {
+        if (status === NetworkedDOMWebsocketStatus.Connected) {
+          statusUI.setNoStatus();
+        } else {
+          statusUI.setStatus(NetworkedDOMWebsocketStatus[status]);
+        }
+      },
+      url: this.mmlSourceDefinition.url,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers
     });
     this.loadedState = {
-      mmlSource,
+      networkMMLSource,
       graphicsAdapter,
       fullScreenMMLScene,
-      statusElement
+      statusUI
     };
     this.update(this.formIteration);
   }
   dispose() {
     this.disposed = true;
     if (this.loadedState) {
-      this.loadedState.mmlSource.dispose();
+      this.loadedState.networkMMLSource.dispose();
       this.loadedState.graphicsAdapter.dispose();
       this.loadedState.fullScreenMMLScene.dispose();
-      this.loadedState.statusElement.dispose();
+      this.loadedState.statusUI.dispose();
       this.loadedState = null;
     }
-    this.element.remove();
   }
   update(formIteration) {
     formIteration.completed();
@@ -415,7 +420,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-HSNTEJHJ.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-N2SNQ4TU.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
