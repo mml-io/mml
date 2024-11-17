@@ -1,5 +1,5 @@
-import { MElement, MELEMENT_PROPERTY_NAME } from "mml-web";
-import { MElementGraphics } from "mml-web";
+import { MElement, MELEMENT_PROPERTY_NAME } from "@mml-io/mml-web";
+import { MElementGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

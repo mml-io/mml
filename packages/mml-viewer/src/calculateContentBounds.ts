@@ -1,4 +1,4 @@
-import { IVect3, TransformableElement } from "mml-web";
+import { IVect3, TransformableElement } from "@mml-io/mml-web";
 
 export function calculateContentBounds(rootElement: Element): { min: IVect3; max: IVect3 } {
   let minX: number | null = null;

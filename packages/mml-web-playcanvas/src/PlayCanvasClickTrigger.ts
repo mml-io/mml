@@ -3,7 +3,7 @@ import {
   getRelativePositionAndRotationRelativeToObject,
   MElement,
   TransformableElement,
-} from "mml-web";
+} from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 const mouseMovePixelsThreshold = 10;

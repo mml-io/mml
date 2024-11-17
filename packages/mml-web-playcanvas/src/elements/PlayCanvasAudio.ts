@@ -1,4 +1,4 @@
-import { Audio, AudioGraphics, LoadingInstanceManager } from "mml-web";
+import { Audio, AudioGraphics, LoadingInstanceManager } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

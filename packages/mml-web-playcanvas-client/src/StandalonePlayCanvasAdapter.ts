@@ -10,7 +10,7 @@ import dracoWasmJs from "base64:./wasm/draco.wasm.js";
 import dracoWasmWasm from "base64:./wasm/draco.wasm.wasm";
 import glslangWasmJs from "base64:./wasm/glslang.js";
 import twgslWasmJs from "base64:./wasm/twgsl.js";
-import { Interaction, Matr4, MMLGraphicsInterface, TransformableElement, Vect3 } from "mml-web";
+import { Interaction, Matr4, MMLGraphicsInterface, TransformableElement, Vect3 } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasOrbitCameraControls } from "./controls";

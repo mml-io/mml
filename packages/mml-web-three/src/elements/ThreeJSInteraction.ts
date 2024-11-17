@@ -1,5 +1,5 @@
-import { Interaction } from "mml-web";
-import { InteractionGraphics } from "mml-web";
+import { Interaction } from "@mml-io/mml-web";
+import { InteractionGraphics } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

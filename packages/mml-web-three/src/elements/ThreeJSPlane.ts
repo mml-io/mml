@@ -1,6 +1,6 @@
-import { Plane } from "mml-web";
-import { MMLColor } from "mml-web";
-import { PlaneGraphics } from "mml-web";
+import { Plane } from "@mml-io/mml-web";
+import { MMLColor } from "@mml-io/mml-web";
+import { PlaneGraphics } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

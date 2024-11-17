@@ -6,7 +6,7 @@ import { NetworkedDOM } from "@mml-io/networked-dom-document";
 import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import ws from "ws";
 
 const dirname = url.fileURLToPath(new URL(".", import.meta.url));

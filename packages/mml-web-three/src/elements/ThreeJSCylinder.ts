@@ -1,4 +1,4 @@
-import { Cylinder, CylinderGraphics, MMLColor } from "mml-web";
+import { Cylinder, CylinderGraphics, MMLColor } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

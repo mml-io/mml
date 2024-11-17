@@ -1,4 +1,4 @@
-import { IVect3 } from "mml-web";
+import { IVect3 } from "@mml-io/mml-web";
 
 export interface ThreeJSControls {
   type: string;

@@ -1,10 +1,10 @@
+import { Interaction, MElement, MMLGraphicsInterface, radToDeg } from "@mml-io/mml-web";
 import {
   ThreeJSClickTrigger,
   ThreeJSGraphicsAdapter,
   ThreeJSGraphicsInterface,
   ThreeJSInteractionAdapter,
 } from "@mml-io/mml-web-three";
-import { Interaction, MElement, MMLGraphicsInterface, radToDeg } from "mml-web";
 import * as THREE from "three";
 
 import { ThreeJSControls } from "./controls/ThreeJSControls";

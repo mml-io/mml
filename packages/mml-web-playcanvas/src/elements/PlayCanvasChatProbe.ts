@@ -1,4 +1,4 @@
-import { ChatProbe, ChatProbeGraphics } from "mml-web";
+import { ChatProbe, ChatProbeGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

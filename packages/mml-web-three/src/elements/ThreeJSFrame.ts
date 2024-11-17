@@ -1,5 +1,5 @@
-import { Frame } from "mml-web";
-import { FrameGraphics } from "mml-web";
+import { Frame } from "@mml-io/mml-web";
+import { FrameGraphics } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

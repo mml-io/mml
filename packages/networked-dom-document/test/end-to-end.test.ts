@@ -1,4 +1,4 @@
-import { LocalObservableDOMFactory } from "networked-dom-server";
+import { LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 
 import { EditableNetworkedDOM } from "../src";
 import { MockWebsocket } from "./mock.websocket";

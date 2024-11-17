@@ -1,4 +1,4 @@
-import { FullScreenMMLScene, StandaloneTagDebugAdapter } from "mml-web";
+import { FullScreenMMLScene, StandaloneTagDebugAdapter } from "@mml-io/mml-web";
 
 import { createFullscreenDiv } from "./CreateFullscreenDiv";
 import { FormIteration } from "./FormIteration";

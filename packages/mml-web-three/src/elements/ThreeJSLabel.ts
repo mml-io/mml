@@ -1,4 +1,4 @@
-import { CanvasText, Label, LabelGraphics } from "mml-web";
+import { CanvasText, Label, LabelGraphics } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

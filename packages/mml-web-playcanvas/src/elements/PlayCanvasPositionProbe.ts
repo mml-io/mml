@@ -1,5 +1,5 @@
-import { PositionProbe } from "mml-web";
-import { PositionProbeGraphics } from "mml-web";
+import { PositionProbe } from "@mml-io/mml-web";
+import { PositionProbeGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

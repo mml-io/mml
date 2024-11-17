@@ -1,6 +1,6 @@
-import { MELEMENT_PROPERTY_NAME, MPlaneProps, Plane } from "mml-web";
-import { MMLColor } from "mml-web";
-import { PlaneGraphics } from "mml-web";
+import { MELEMENT_PROPERTY_NAME, MPlaneProps, Plane } from "@mml-io/mml-web";
+import { MMLColor } from "@mml-io/mml-web";
+import { PlaneGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

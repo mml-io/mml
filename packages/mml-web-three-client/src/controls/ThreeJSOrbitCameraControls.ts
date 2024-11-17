@@ -1,4 +1,4 @@
-import { EventHandlerCollection, IVect3 } from "mml-web";
+import { EventHandlerCollection, IVect3 } from "@mml-io/mml-web";
 import { PerspectiveCamera, Spherical, Vector3 } from "three";
 
 import { ThreeJSControls } from "./ThreeJSControls";

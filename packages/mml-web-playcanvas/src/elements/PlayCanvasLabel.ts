@@ -1,4 +1,4 @@
-import { CanvasText, Label, LabelGraphics, MELEMENT_PROPERTY_NAME, MLabelProps } from "mml-web";
+import { CanvasText, Label, LabelGraphics, MELEMENT_PROPERTY_NAME, MLabelProps } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

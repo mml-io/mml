@@ -1,6 +1,6 @@
-import { Light } from "mml-web";
-import { LightGraphics } from "mml-web";
-import { MMLColor } from "mml-web";
+import { Light } from "@mml-io/mml-web";
+import { LightGraphics } from "@mml-io/mml-web";
+import { MMLColor } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

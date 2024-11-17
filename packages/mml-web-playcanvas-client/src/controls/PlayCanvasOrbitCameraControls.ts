@@ -1,4 +1,4 @@
-import { EventHandlerCollection, IVect3, Vect3 } from "mml-web";
+import { EventHandlerCollection, IVect3, Vect3 } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasControls } from "./PlayCanvasControls";

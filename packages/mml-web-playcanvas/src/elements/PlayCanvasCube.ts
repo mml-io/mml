@@ -1,6 +1,6 @@
-import { Cube, MCubeProps, MELEMENT_PROPERTY_NAME } from "mml-web";
-import { CubeGraphics } from "mml-web";
-import { MMLColor } from "mml-web";
+import { Cube, MCubeProps, MELEMENT_PROPERTY_NAME } from "@mml-io/mml-web";
+import { CubeGraphics } from "@mml-io/mml-web";
+import { MMLColor } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

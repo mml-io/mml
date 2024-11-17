@@ -1,4 +1,4 @@
-import { CanvasText } from "mml-web";
+import { CanvasText } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 function createReconnectingStatus(playCanvasApp: playcanvas.AppBase): PlayCanvasReconnectingStatus {

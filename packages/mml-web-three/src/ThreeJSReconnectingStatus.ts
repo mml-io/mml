@@ -1,4 +1,4 @@
-import { CanvasText } from "mml-web";
+import { CanvasText } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 function createReconnectingStatus() {

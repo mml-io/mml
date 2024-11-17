@@ -1,4 +1,4 @@
-import { parseBoolAttribute } from "mml-web";
+import { parseBoolAttribute } from "@mml-io/mml-web";
 
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";

@@ -1,6 +1,6 @@
-import { Audio, MAudioProps } from "mml-web";
-import { AudioGraphics } from "mml-web";
-import { LoadingInstanceManager } from "mml-web";
+import { Audio, MAudioProps } from "@mml-io/mml-web";
+import { AudioGraphics } from "@mml-io/mml-web";
+import { LoadingInstanceManager } from "@mml-io/mml-web";
 import * as THREE from "three";
 import { PositionalAudioHelper } from "three/addons/helpers/PositionalAudioHelper.js";
 

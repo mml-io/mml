@@ -4,7 +4,7 @@ import {
   StandalonePlayCanvasAdapter,
   StandalonePlayCanvasAdapterControlsType,
 } from "@mml-io/mml-web-playcanvas-client";
-import { FullScreenMMLScene, parseColorAttribute } from "mml-web";
+import { FullScreenMMLScene, parseColorAttribute } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { calculateContentBounds } from "./calculateContentBounds";

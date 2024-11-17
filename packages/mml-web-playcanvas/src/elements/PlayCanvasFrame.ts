@@ -1,4 +1,4 @@
-import { Frame, FrameGraphics } from "mml-web";
+import { Frame, FrameGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { createPlayCanvasDebugBoundingBox } from "../debug-bounding-box/PlayCanvasDebugBoundingBox";

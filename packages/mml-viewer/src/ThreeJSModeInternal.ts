@@ -5,7 +5,7 @@ import {
   ThreeJSOrbitCameraControls,
 } from "@mml-io/mml-web-three-client";
 import { HDRJPGLoader } from "@monogrid/gainmap-js";
-import { FullScreenMMLScene, parseColorAttribute } from "mml-web";
+import { FullScreenMMLScene, parseColorAttribute } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { calculateContentBounds } from "./calculateContentBounds";

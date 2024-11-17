@@ -1,5 +1,5 @@
-import { ChatProbe } from "mml-web";
-import { ChatProbeGraphics } from "mml-web";
+import { ChatProbe } from "@mml-io/mml-web";
+import { ChatProbeGraphics } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

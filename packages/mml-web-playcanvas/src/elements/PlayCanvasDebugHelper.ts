@@ -1,4 +1,4 @@
-import { DebugHelper, DebugHelperGraphics } from "mml-web";
+import { DebugHelper, DebugHelperGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { createPlayCanvasDebugBoundingBox } from "../debug-bounding-box/PlayCanvasDebugBoundingBox";

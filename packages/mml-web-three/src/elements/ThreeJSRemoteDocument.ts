@@ -1,4 +1,4 @@
-import { RemoteDocument, RemoteDocumentGraphics } from "mml-web";
+import { RemoteDocument, RemoteDocumentGraphics } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

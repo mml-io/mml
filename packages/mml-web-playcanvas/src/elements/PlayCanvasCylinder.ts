@@ -1,6 +1,6 @@
-import { Cylinder, MCylinderProps, MELEMENT_PROPERTY_NAME } from "mml-web";
-import { CylinderGraphics } from "mml-web";
-import { MMLColor } from "mml-web";
+import { Cylinder, MCylinderProps, MELEMENT_PROPERTY_NAME } from "@mml-io/mml-web";
+import { CylinderGraphics } from "@mml-io/mml-web";
+import { MMLColor } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

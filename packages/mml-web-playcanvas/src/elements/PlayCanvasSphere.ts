@@ -1,6 +1,6 @@
-import { MELEMENT_PROPERTY_NAME, MSphereProps, Sphere } from "mml-web";
-import { MMLColor } from "mml-web";
-import { SphereGraphics } from "mml-web";
+import { MELEMENT_PROPERTY_NAME, MSphereProps, Sphere } from "@mml-io/mml-web";
+import { MMLColor } from "@mml-io/mml-web";
+import { SphereGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

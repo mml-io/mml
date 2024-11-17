@@ -1,5 +1,5 @@
-import { Prompt } from "mml-web";
-import { PromptGraphics } from "mml-web";
+import { Prompt } from "@mml-io/mml-web";
+import { PromptGraphics } from "@mml-io/mml-web";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
 

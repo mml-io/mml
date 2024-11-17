@@ -1,4 +1,4 @@
-import { calculateContentSize, Image, ImageGraphics, LoadingInstanceManager } from "mml-web";
+import { calculateContentSize, Image, ImageGraphics, LoadingInstanceManager } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

@@ -1,4 +1,4 @@
-import { Interaction } from "mml-web";
+import { Interaction } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "./PlayCanvasGraphicsAdapter";

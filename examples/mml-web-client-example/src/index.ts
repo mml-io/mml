@@ -3,7 +3,7 @@ import * as chokidar from "chokidar";
 import express, { Request, static as expressStatic } from "express";
 import enableWs from "express-ws";
 import * as fs from "fs";
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import * as path from "path";
 import * as url from "url";
 import ws from "ws";
@@ -47,7 +47,7 @@ app.use((req, res, next) => {
 // Serve mml-web-client
 app.use(
   "/client/",
-  expressStatic(path.resolve(dirname, "../../../node_modules/mml-web-client/build/")),
+  expressStatic(path.resolve(dirname, "../../../node_modules/@mml-io/mml-web-client/build/")),
 );
 
 app.get("/", (req, res) => {

@@ -1,4 +1,4 @@
-import { GraphicsAdapter } from "mml-web";
+import { GraphicsAdapter } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 export type PlayCanvasGraphicsAdapter = GraphicsAdapter<

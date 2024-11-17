@@ -1,4 +1,4 @@
-import { RemoteDocument, RemoteDocumentGraphics } from "mml-web";
+import { RemoteDocument, RemoteDocumentGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

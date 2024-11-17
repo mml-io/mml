@@ -1,4 +1,4 @@
-import { MMLGraphicsInterface } from "mml-web";
+import { MMLGraphicsInterface } from "@mml-io/mml-web";
 
 import * as PlayCanvasElements from "./elements";
 import { PlayCanvasGraphicsAdapter } from "./PlayCanvasGraphicsAdapter";

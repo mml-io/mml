@@ -1,4 +1,4 @@
-import { IframeWrapper, registerCustomElementsToWindow } from "mml-web";
+import { IframeWrapper, registerCustomElementsToWindow } from "@mml-io/mml-web";
 
 import { StandaloneViewer } from "./StandaloneViewer";
 

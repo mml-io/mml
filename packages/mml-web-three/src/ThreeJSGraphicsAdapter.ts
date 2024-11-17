@@ -1,4 +1,4 @@
-import { GraphicsAdapter } from "mml-web";
+import { GraphicsAdapter } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 export type ThreeJSGraphicsAdapter = GraphicsAdapter<

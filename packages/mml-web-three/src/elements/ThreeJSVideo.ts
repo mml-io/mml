@@ -5,7 +5,7 @@ import {
   VideoGraphics,
   VideoSource,
   WHEPVideoSource,
-} from "mml-web";
+} from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

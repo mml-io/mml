@@ -4,7 +4,7 @@ import {
   TransformableElement,
   TransformableElementProps,
   TransformableGraphics,
-} from "mml-web";
+} from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";

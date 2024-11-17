@@ -1,5 +1,5 @@
 {
-  "name": "mml-web-client",
+  "name": "@mml-io/mml-web-client",
   "version": "0.18.1",
   "publishConfig": {
     "access": "public"

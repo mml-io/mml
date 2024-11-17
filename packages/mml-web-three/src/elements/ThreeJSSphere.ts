@@ -1,6 +1,6 @@
-import { Sphere } from "mml-web";
-import { MMLColor } from "mml-web";
-import { SphereGraphics } from "mml-web";
+import { Sphere } from "@mml-io/mml-web";
+import { MMLColor } from "@mml-io/mml-web";
+import { SphereGraphics } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

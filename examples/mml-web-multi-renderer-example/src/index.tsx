@@ -12,13 +12,13 @@ import {
   registerCustomElementsToWindow,
   StandaloneGraphicsAdapter,
   StandaloneTagDebugAdapter,
-} from "mml-web";
+} from "@mml-io/mml-web";
 import {
   EditableNetworkedDOM,
   IframeObservableDOMFactory,
   MMLWebRunnerClient,
   NetworkedDOM,
-} from "mml-web-runner";
+} from "@mml-io/mml-web-runner";
 
 const startingContent = `
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>

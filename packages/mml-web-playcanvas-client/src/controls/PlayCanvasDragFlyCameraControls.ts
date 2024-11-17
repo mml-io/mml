@@ -1,4 +1,4 @@
-import { EventHandlerCollection, IVect3, Matr4, Quat } from "mml-web";
+import { EventHandlerCollection, IVect3, Matr4, Quat } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 const up = { x: 0, y: 1, z: 0 };

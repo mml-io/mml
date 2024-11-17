@@ -1,12 +1,4 @@
 import {
-  StandalonePlayCanvasAdapter,
-  StandalonePlayCanvasAdapterControlsType,
-} from "@mml-io/mml-web-playcanvas-client";
-import {
-  StandaloneThreeJSAdapter,
-  StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
-import {
   configureWindowForMML,
   FullScreenMMLScene,
   IframeWrapper,
@@ -17,7 +9,15 @@ import {
   RemoteDocumentWrapper,
   StandaloneGraphicsAdapter,
   StandaloneTagDebugAdapter,
-} from "mml-web";
+} from "@mml-io/mml-web";
+import {
+  StandalonePlayCanvasAdapter,
+  StandalonePlayCanvasAdapterControlsType,
+} from "@mml-io/mml-web-playcanvas-client";
+import {
+  StandaloneThreeJSAdapter,
+  StandaloneThreeJSAdapterControlsType,
+} from "@mml-io/mml-web-three-client";
 
 const thisScript = document.currentScript as HTMLScriptElement;
 const scriptUrl = new URL(thisScript.src);

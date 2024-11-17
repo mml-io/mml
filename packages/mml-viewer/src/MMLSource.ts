@@ -5,7 +5,7 @@ import {
   NetworkedDOMWebsocketStatus,
   RemoteDocumentWrapper,
   StandaloneGraphicsAdapter,
-} from "mml-web";
+} from "@mml-io/mml-web";
 
 import { StatusElement } from "./StatusElement";
 
