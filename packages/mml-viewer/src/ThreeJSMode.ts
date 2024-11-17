@@ -1,6 +1,6 @@
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
-import { MMLSourceDefinition } from "./MMLSource";
+import { MMLSourceDefinition } from "./MMLSourceDefinition";
 
 export class ThreeJSMode implements GraphicsMode {
   private disposed = false;
@@ -33,7 +33,7 @@ export class ThreeJSMode implements GraphicsMode {
     }
   }
 
-  dispose() {
+  public dispose() {
     this.disposed = true;
     if (this.internalMode) {
       this.internalMode.dispose();

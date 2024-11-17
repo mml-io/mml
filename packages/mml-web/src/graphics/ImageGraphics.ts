@@ -1,5 +1,5 @@
 import { Image, MImageProps } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class ImageGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -2,7 +2,7 @@ import { parseBoolAttribute } from "@mml-io/mml-web";
 
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
-import { MMLSourceDefinition } from "./MMLSource";
+import { MMLSourceDefinition } from "./MMLSourceDefinition";
 import { PlayCanvasMode } from "./PlayCanvasMode";
 import { QueryParamState } from "./QueryParamState";
 import { TagsMode } from "./TagsMode";

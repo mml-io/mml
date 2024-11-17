@@ -1,12 +1,4 @@
 import {
-  StandalonePlayCanvasAdapter,
-  StandalonePlayCanvasAdapterControlsType,
-} from "@mml-io/mml-web-playcanvas-client";
-import {
-  StandaloneThreeJSAdapter,
-  StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
-import {
   IframeWrapper,
   MMLScene,
   registerCustomElementsToWindow,
@@ -14,11 +6,19 @@ import {
   StandaloneTagDebugAdapter,
 } from "@mml-io/mml-web";
 import {
+  StandalonePlayCanvasAdapter,
+  StandalonePlayCanvasAdapterControlsType,
+} from "@mml-io/mml-web-playcanvas-client";
+import {
   EditableNetworkedDOM,
   IframeObservableDOMFactory,
   MMLWebRunnerClient,
   NetworkedDOM,
 } from "@mml-io/mml-web-runner";
+import {
+  StandaloneThreeJSAdapter,
+  StandaloneThreeJSAdapterControlsType,
+} from "@mml-io/mml-web-three-client";
 
 const startingContent = `
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>

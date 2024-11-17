@@ -1,5 +1,5 @@
-import { Matr4 } from "../math/Matr4";
-import { MMLGraphicsInterface } from "../MMLScene";
+import { Matr4 } from "../math";
+import { MMLGraphicsInterface } from "../scene";
 import { TagDebugGraphicsAdapter } from "./StandaloneTagDebugAdapter";
 import { TagDebugAdapterDebugHelper } from "./TagDebugAdapterDebugHelper";
 import { TagDebugAdapterElement } from "./TagDebugAdapterElement";

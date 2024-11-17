@@ -1,36 +1,27 @@
-import {
-  fetchRemoteStaticMML,
-  FullScreenMMLScene,
-  NetworkedDOMWebsocket,
-  NetworkedDOMWebsocketStatus,
-  RemoteDocumentWrapper,
-  StandaloneGraphicsAdapter,
-} from "@mml-io/mml-web";
+import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 
-import { StatusElement } from "./StatusElement";
+import { LoadingProgressManager } from "../loading";
+import { fetchRemoteStaticMML, RemoteDocumentWrapper } from "../remote-document";
+import { IMMLScene } from "../scene";
 
-export type MMLSourceDefinition = {
+export type MMLNetworkSourceOptions = {
   url: string;
-};
-
-export type MMLSourceOptions = {
-  fullScreenMMLScene: FullScreenMMLScene<StandaloneGraphicsAdapter>;
-  statusElement: StatusElement;
-  source: MMLSourceDefinition;
+  mmlScene: IMMLScene;
+  statusUpdated: (status: NetworkedDOMWebsocketStatus) => void;
   windowTarget: Window;
   targetForWrappers: HTMLElement;
 };
 
-export class MMLSource {
+export class MMLNetworkSource {
   private websocket: NetworkedDOMWebsocket | null = null;
-  private remoteDocumentWrapper: RemoteDocumentWrapper;
+  public remoteDocumentWrapper: RemoteDocumentWrapper;
 
-  private constructor(private options: MMLSourceOptions) {}
+  private constructor(private options: MMLNetworkSourceOptions) {}
 
-  static create(options: MMLSourceOptions) {
-    const mmlSource = new MMLSource(options);
-    mmlSource.init();
-    return mmlSource;
+  static create(options: MMLNetworkSourceOptions) {
+    const mmlNetworkSource = new MMLNetworkSource(options);
+    mmlNetworkSource.init();
+    return mmlNetworkSource;
   }
 
   private init() {
@@ -42,18 +33,23 @@ export class MMLSource {
       overriddenHandler(element, event);
     };
 
-    const src = this.options.source.url;
+    const src = this.options.url;
     this.remoteDocumentWrapper = new RemoteDocumentWrapper(
       src,
       this.options.windowTarget,
-      this.options.fullScreenMMLScene,
+      this.options.mmlScene,
       eventHandler,
     );
     this.options.targetForWrappers.append(this.remoteDocumentWrapper.remoteDocument);
+    let loadingProgressManager: LoadingProgressManager | null;
+    if (this.options.mmlScene.getLoadingProgressManager) {
+      loadingProgressManager = this.options.mmlScene.getLoadingProgressManager();
+    }
+
     const isWebsocket = src.startsWith("ws://") || src.startsWith("wss://");
     if (isWebsocket) {
       const websocket = new NetworkedDOMWebsocket(
-        this.options.source.url,
+        this.options.url,
         NetworkedDOMWebsocket.createWebSocket,
         this.remoteDocumentWrapper.remoteDocument,
         (time: number) => {
@@ -61,11 +57,9 @@ export class MMLSource {
         },
         (status: NetworkedDOMWebsocketStatus) => {
           if (status === NetworkedDOMWebsocketStatus.Connected) {
-            this.options.statusElement.setNoStatus();
-            this.options.fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
-          } else {
-            this.options.statusElement.setStatus(NetworkedDOMWebsocketStatus[status]);
+            loadingProgressManager?.setInitialLoad(true);
           }
+          this.options.statusUpdated(status);
         },
         {
           tagPrefix: "m-",
@@ -76,13 +70,13 @@ export class MMLSource {
         websocket.handleEvent(element, event);
       };
     } else {
-      fetchRemoteStaticMML(this.options.source.url)
+      fetchRemoteStaticMML(this.options.url)
         .then((remoteDocumentBody) => {
           this.remoteDocumentWrapper.remoteDocument.append(remoteDocumentBody);
-          this.options.fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
+          loadingProgressManager?.setInitialLoad(true);
         })
         .catch((err) => {
-          this.options.fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(err);
+          loadingProgressManager?.setInitialLoad(err);
         });
       overriddenHandler = () => {
         // Do nothing
@@ -96,6 +90,5 @@ export class MMLSource {
       this.websocket = null;
     }
     this.remoteDocumentWrapper.remoteDocument.remove();
-    this.options.fullScreenMMLScene.dispose();
   }
 }

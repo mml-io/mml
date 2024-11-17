@@ -1,11 +1,7 @@
 import { MElement, TransformableElement } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { EulXYZ } from "../math/EulXYZ";
-import { Matr4 } from "../math/Matr4";
-import { Quat } from "../math/Quat";
-import { degToRad, radToDeg } from "../math/radToDeg";
-import { Vect3 } from "../math/Vect3";
-import { PositionAndRotation } from "../MMLScene";
+import { GraphicsAdapter } from "../graphics";
+import { degToRad, EulXYZ, Matr4, Quat, radToDeg, Vect3 } from "../math";
+import { PositionAndRotation } from "../scene";
 
 const tempContainerMatrix = new Matr4();
 const tempTargetMatrix = new Matr4();

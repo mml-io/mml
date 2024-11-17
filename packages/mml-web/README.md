@@ -30,22 +30,53 @@ The following Graphics Adapters are available:
 ## Usage
 
 ```typescript
+import {
+  FullScreenMMLScene,
+  IframeWrapper,
+  MMLNetworkSource,
+  NetworkedDOMWebsocketStatus,
+  registerCustomElementsToWindow,
+} from "@mml-io/mml-web";
+import {
+  StandaloneThreeJSAdapter,
+  StandaloneThreeJSAdapterControlsType,
+} from "@mml-io/mml-web-three-client";
 
-async function createFullScreenThreeJSMML(documentAddress: string) {
-  const element = document.createElement("div");
-  element.style.width = "100%";
-  element.style.height = "100%";
-  element.style.position = "relative";
-  document.body.append(element);
-  const graphicsAdapter = await StandaloneThreeJSAdapter.create(element, {
+async function createFullScreenThreeJSMML(url: string) {
+  // Create an iframe to hold the elements from the MML document
+  const { iframeWindow, iframeBody } = await IframeWrapper.create();
+  const windowTarget = iframeWindow;
+  const targetForWrappers = iframeBody;
+
+  // Register the implementations of custom elements (e.g. m-cube) to the iframe window
+  registerCustomElementsToWindow(iframeWindow);
+
+  // Create a full-screen MML scene
+  const mmlScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>();
+  document.body.append(mmlScene.element);
+
+  // Create a standalone ThreeJS adapter with drag-fly controls
+  const graphicsAdapter = await StandaloneThreeJSAdapter.create(mmlScene.element, {
     controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
   });
-  const scene = new FullScreenMMLScene<StandaloneThreeJSAdapter>(element);
-  scene.init(graphicsAdapter);
-  const remoteDocument = document.createElement("m-remote-document") as RemoteDocument<
-    ThreeJSGraphicsAdapter | PlayCanvasGraphicsAdapter
-  >;
-  remoteDocument.init(scene, documentAddress);
-  document.body.append(remoteDocument);
+
+  // Initialize the MML scene with the graphics adapter
+  mmlScene.init(graphicsAdapter);
+
+  /*
+   Create a network source for the MML document which will:
+   - Create a holder in the iframe for the elements from the MML document
+   - Configure the MML scene to display the elements from the holder
+   - Connect to the document from the specified address and load the elements into the holder
+  */
+  MMLNetworkSource.create({
+    url,
+    mmlScene,
+    windowTarget,
+    targetForWrappers,
+    statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
+      console.log("Status updated", status);
+    },
+  });
 }
 ```

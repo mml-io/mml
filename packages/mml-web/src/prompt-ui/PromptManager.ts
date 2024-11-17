@@ -1,4 +1,4 @@
-import { LinkProps, PromptProps } from "../MMLScene";
+import { LinkProps, PromptProps } from "../scene";
 import { ConfirmModal } from "./ConfirmModal";
 import { Modal } from "./Modal";
 import { PromptModal } from "./PromptModal";

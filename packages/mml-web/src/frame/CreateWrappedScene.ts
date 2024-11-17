@@ -1,8 +1,7 @@
-import { Interaction, MElement } from "../../elements";
-import { ChatProbe } from "../../elements/ChatProbe";
-import { GraphicsAdapter } from "../../GraphicsAdapter";
-import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
-import { IMMLScene, LinkProps, PromptProps } from "../../MMLScene";
+import { ChatProbe, Interaction, MElement } from "../elements";
+import { GraphicsAdapter } from "../graphics";
+import { LoadingProgressManager } from "../loading";
+import { IMMLScene, LinkProps, PromptProps } from "../scene";
 
 export function createWrappedScene<G extends GraphicsAdapter = GraphicsAdapter>(
   scene: IMMLScene<G>,

@@ -1,4 +1,4 @@
-import { MMLColor } from "../graphics/MMLColor";
+import { MMLColor } from "../color";
 import { TagAdapterThemeColors } from "./TagAdapterThemeColors";
 
 export class TagDebugAttribute {

@@ -1,15 +1,10 @@
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { StaticHTMLFrameInstance, WebSocketFrameInstance } from "../frame";
+import { GraphicsAdapter } from "../graphics";
 import { FrameGraphics } from "../graphics/FrameGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
 import { Vect3 } from "../math/Vect3";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { StaticHTMLFrameInstance } from "../utils/frame/StaticHTMLFrameInstance";
-import { WebSocketFrameInstance } from "../utils/frame/WebSocketFrameInstance";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
+import { getRelativePositionAndRotationRelativeToObject } from "../position";
 import { TransformableElement } from "./TransformableElement";
 
 const defaultUnloadRange = 1;

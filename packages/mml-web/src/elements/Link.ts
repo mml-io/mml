@@ -1,6 +1,6 @@
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { AttributeHandler } from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AttributeHandler } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter } from "../graphics";
 import { TransformableElement } from "./TransformableElement";
 
 export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {

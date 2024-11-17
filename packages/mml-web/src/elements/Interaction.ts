@@ -1,14 +1,9 @@
-import { InteractionGraphics } from "../graphics/InteractionGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { Vect3 } from "../math/Vect3";
-import { IMMLScene } from "../MMLScene";
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimatedAttributeHelper } from "../attribute-animation";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter, InteractionGraphics } from "../graphics";
+import { Vect3 } from "../math";
+import { IMMLScene } from "../scene";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";

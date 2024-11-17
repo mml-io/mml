@@ -1,19 +1,23 @@
 import {
+  FullScreenMMLScene,
+  MMLNetworkSource,
+  NetworkedDOMWebsocketStatus,
+  parseColorAttribute,
+} from "@mml-io/mml-web";
+import { StatusUI } from "@mml-io/mml-web";
+import {
   PlayCanvasDragFlyCameraControls,
   PlayCanvasOrbitCameraControls,
   StandalonePlayCanvasAdapter,
   StandalonePlayCanvasAdapterControlsType,
 } from "@mml-io/mml-web-playcanvas-client";
-import { FullScreenMMLScene, parseColorAttribute } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { calculateContentBounds } from "./calculateContentBounds";
-import { createFullscreenDiv } from "./CreateFullscreenDiv";
 import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
-import { MMLSource, MMLSourceDefinition } from "./MMLSource";
+import { MMLSourceDefinition } from "./MMLSourceDefinition";
 import { parseXYZ } from "./parseXYZ";
-import { StatusElement } from "./StatusElement";
 import {
   ambientLightColorField,
   ambientLightField,
@@ -31,15 +35,14 @@ import {
 
 export class PlayCanvasModeInternal {
   private disposed = false;
-  private element: HTMLDivElement;
   public readonly type = "playcanvas";
   private environmentMap: string | null = null;
 
   private loadedState: {
-    mmlSource: MMLSource;
+    mmlNetworkSource: MMLNetworkSource;
     graphicsAdapter: StandalonePlayCanvasAdapter;
     fullScreenMMLScene: FullScreenMMLScene<StandalonePlayCanvasAdapter>;
-    statusElement: StatusElement;
+    statusUI: StatusUI;
   } | null = null;
 
   constructor(
@@ -48,12 +51,13 @@ export class PlayCanvasModeInternal {
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
   ) {
-    this.element = createFullscreenDiv();
     this.init();
   }
 
   private async init() {
-    const graphicsAdapter = await StandalonePlayCanvasAdapter.create(this.element, {
+    const fullScreenMMLScene = new FullScreenMMLScene<StandalonePlayCanvasAdapter>();
+    document.body.append(fullScreenMMLScene.element);
+    const graphicsAdapter = await StandalonePlayCanvasAdapter.create(fullScreenMMLScene.element, {
       controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
     });
 
@@ -62,13 +66,18 @@ export class PlayCanvasModeInternal {
       return;
     }
 
-    const fullScreenMMLScene = new FullScreenMMLScene<StandalonePlayCanvasAdapter>(this.element);
     fullScreenMMLScene.init(graphicsAdapter);
-    const statusElement = new StatusElement();
-    const mmlSource = MMLSource.create({
-      fullScreenMMLScene,
-      statusElement,
-      source: this.mmlSourceDefinition,
+    const statusUI = new StatusUI();
+    const mmlNetworkSource = MMLNetworkSource.create({
+      mmlScene: fullScreenMMLScene,
+      statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
+        if (status === NetworkedDOMWebsocketStatus.Connected) {
+          statusUI.setNoStatus();
+        } else {
+          statusUI.setStatus(NetworkedDOMWebsocketStatus[status]);
+        }
+      },
+      url: this.mmlSourceDefinition.url,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
     });
@@ -85,10 +94,10 @@ export class PlayCanvasModeInternal {
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
     this.loadedState = {
-      mmlSource,
+      mmlNetworkSource,
       graphicsAdapter,
       fullScreenMMLScene,
-      statusElement,
+      statusUI,
     };
     this.update(this.formIteration);
   }
@@ -261,15 +270,14 @@ export class PlayCanvasModeInternal {
     }
   }
 
-  dispose() {
+  public dispose() {
     this.disposed = true;
     if (this.loadedState) {
-      this.loadedState.mmlSource.dispose();
+      this.loadedState.mmlNetworkSource.dispose();
       this.loadedState.graphicsAdapter.dispose();
       this.loadedState.fullScreenMMLScene.dispose();
-      this.loadedState.statusElement.dispose();
+      this.loadedState.statusUI.dispose();
       this.loadedState = null;
     }
-    this.element.remove();
   }
 }

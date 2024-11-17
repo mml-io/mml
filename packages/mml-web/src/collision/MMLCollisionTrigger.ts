@@ -1,5 +1,5 @@
-import { MElement } from "./elements";
-import { GraphicsAdapter } from "./GraphicsAdapter";
+import { MElement } from "../elements";
+import { GraphicsAdapter } from "../graphics";
 
 export type CollisionData = {
   position: { x: number; y: number; z: number };

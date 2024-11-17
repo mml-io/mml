@@ -1,9 +1,8 @@
-import { lerpHSL } from "../color-utils";
-import { MMLColor } from "../graphics/MMLColor";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { AttributeHandler, parseFloatAttribute } from "../utils/attribute-handling";
-import { easingsByName } from "../utils/easings";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { easingsByName } from "../attribute-animation";
+import { AttributeHandler, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { lerpHSL, MMLColor } from "../color";
+import { GraphicsAdapter } from "../graphics";
 import { MElement } from "./MElement";
 
 const defaultAttribute: string = "all";

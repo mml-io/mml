@@ -1,6 +1,6 @@
+import { MMLColor } from "../color";
 import { Cube, MCubeProps } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { MMLColor } from "./MMLColor";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class CubeGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

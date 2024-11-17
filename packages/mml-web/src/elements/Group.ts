@@ -1,5 +1,5 @@
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter } from "../graphics";
 import { TransformableElement } from "./TransformableElement";
 
 export class Group<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {

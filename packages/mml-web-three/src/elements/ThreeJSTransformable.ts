@@ -1,4 +1,10 @@
-import { Matr4, Matr4Data, Model, TransformableElement, TransformableGraphics } from "@mml-io/mml-web";
+import {
+  Matr4,
+  Matr4Data,
+  Model,
+  TransformableElement,
+  TransformableGraphics,
+} from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

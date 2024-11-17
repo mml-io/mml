@@ -1,18 +1,18 @@
-import { lerpHSL } from "../color-utils";
-import { MMLColor } from "../graphics/MMLColor";
-import { GraphicsAdapter } from "../GraphicsAdapter";
 import {
   EndOfAnimationSymbol,
   getEasedRatioForTime,
   StartOfAnimationSymbol,
-} from "../utils/animation-timings";
+} from "../attribute-animation";
 import {
   AttributeHandler,
   parseBoolAttribute,
   parseColorAttribute,
   parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+} from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { lerpHSL } from "../color";
+import { MMLColor } from "../color";
+import { GraphicsAdapter } from "../graphics";
 import { MElement } from "./MElement";
 
 const defaultAttribute: string | null = null;

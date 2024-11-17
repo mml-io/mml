@@ -1,4 +1,4 @@
-import { MMLColor } from "./graphics/MMLColor";
+import { MMLColor } from "./MMLColor";
 
 export function lerpHSL(colorA: MMLColor, colorB: MMLColor, alpha: number): MMLColor {
   const hslA = getHSL(colorA);

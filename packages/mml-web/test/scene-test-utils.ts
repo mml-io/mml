@@ -32,22 +32,18 @@ export async function createTestScene(documentAddress?: string): Promise<{
   scene: FullScreenMMLScene<StandaloneThreeJSAdapter | StandalonePlayCanvasAdapter>;
   remoteDocument: RemoteDocument;
 }> {
-  const element = document.createElement("div");
-  element.style.width = "100%";
-  element.style.height = "100%";
-  element.style.position = "relative";
-  document.body.append(element);
+  const scene = new FullScreenMMLScene<typeof graphicsAdapter>();
+  document.body.append(scene.element);
   let graphicsAdapter: StandaloneThreeJSAdapter | StandalonePlayCanvasAdapter;
   if (useThree) {
-    graphicsAdapter = await StandaloneThreeJSAdapter.create(element, {
+    graphicsAdapter = await StandaloneThreeJSAdapter.create(scene.element, {
       controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
     });
   } else {
-    graphicsAdapter = await StandalonePlayCanvasAdapter.create(element, {
+    graphicsAdapter = await StandalonePlayCanvasAdapter.create(scene.element, {
       controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
     });
   }
-  const scene = new FullScreenMMLScene<typeof graphicsAdapter>(element);
   const remoteDocument = document.createElement("m-remote-document") as RemoteDocument<
     ThreeJSGraphicsAdapter | PlayCanvasGraphicsAdapter
   >;

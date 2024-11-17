@@ -1,7 +1,7 @@
-import { Interaction } from "../elements/Interaction";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { InteractionListener } from "../MMLScene";
-import { EventHandlerCollection } from "../utils/events/EventHandlerCollection";
+import { Interaction } from "../elements";
+import { GraphicsAdapter } from "../graphics";
+import { InteractionListener } from "../scene";
+import { EventHandlerCollection } from "../utils/EventHandlerCollection";
 
 type InteractionState = {
   interaction: Interaction<GraphicsAdapter>;

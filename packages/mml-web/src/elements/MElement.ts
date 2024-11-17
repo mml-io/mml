@@ -1,13 +1,13 @@
-import { consumeEventEventName } from "../common";
 import { getGlobalDocumentTimeManager, getGlobalMMLScene } from "../global";
-import { MElementGraphics } from "../graphics/MElementGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { LoadingProgressManager } from "../loading/LoadingProgressManager";
-import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
-import { IMMLScene, PositionAndRotation } from "../MMLScene";
+import { GraphicsAdapter } from "../graphics";
+import { MElementGraphics } from "../graphics";
+import { LoadingProgressManager } from "../loading";
+import { IMMLScene, PositionAndRotation } from "../scene";
+import { MMLDocumentTimeManager } from "../time";
 import type { RemoteDocument } from "./RemoteDocument";
 
 export const MELEMENT_PROPERTY_NAME = "m-element-property";
+export const consumeEventEventName = "consume-event";
 
 export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> extends HTMLElement {
   // This allows switching which document this HTMLElement subclass extends so that it can be placed into iframes

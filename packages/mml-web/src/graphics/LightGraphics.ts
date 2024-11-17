@@ -1,6 +1,6 @@
+import { MMLColor } from "../color";
 import { Light, LightTypes, MLightProps } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { MMLColor } from "./MMLColor";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class LightGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,7 +1,3 @@
-import {
-  StandaloneThreeJSAdapter,
-  StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
 import { IframeWrapper, MMLScene, registerCustomElementsToWindow } from "@mml-io/mml-web";
 import {
   EditableNetworkedDOM,
@@ -9,6 +5,10 @@ import {
   MMLWebRunnerClient,
   NetworkedDOM,
 } from "@mml-io/mml-web-runner";
+import {
+  StandaloneThreeJSAdapter,
+  StandaloneThreeJSAdapterControlsType,
+} from "@mml-io/mml-web-three-client";
 
 const startingContent = `
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>

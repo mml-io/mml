@@ -1,4 +1,4 @@
-export class StatusElement {
+export class StatusUI {
   private element: HTMLDivElement;
 
   constructor() {

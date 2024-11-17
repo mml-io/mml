@@ -1,16 +1,9 @@
-import { DebugHelper } from "../debug-helper/DebugHelper";
-import { TransformableGraphics } from "../graphics/TransformableGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { Matr4 } from "../math/Matr4";
-import { Quat } from "../math/Quat";
-import { degToRad } from "../math/radToDeg";
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimatedAttributeHelper } from "../attribute-animation";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { DebugHelper } from "../debug-helper";
+import { GraphicsAdapter, TransformableGraphics } from "../graphics";
+import { degToRad, Matr4, Quat } from "../math";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 

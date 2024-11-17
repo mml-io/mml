@@ -1,20 +1,23 @@
-import { FullScreenMMLScene, StandaloneTagDebugAdapter } from "@mml-io/mml-web";
+import {
+  FullScreenMMLScene,
+  MMLNetworkSource,
+  NetworkedDOMWebsocketStatus,
+  StandaloneTagDebugAdapter,
+} from "@mml-io/mml-web";
+import { StatusUI } from "@mml-io/mml-web";
 
-import { createFullscreenDiv } from "./CreateFullscreenDiv";
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
-import { MMLSource, MMLSourceDefinition } from "./MMLSource";
-import { StatusElement } from "./StatusElement";
+import { MMLSourceDefinition } from "./MMLSourceDefinition";
 
 export class TagsMode implements GraphicsMode {
-  private element: HTMLDivElement;
   private disposed = false;
 
   private loadedState: {
-    mmlSource: MMLSource;
+    networkMMLSource: MMLNetworkSource;
     graphicsAdapter: StandaloneTagDebugAdapter;
     fullScreenMMLScene: FullScreenMMLScene<StandaloneTagDebugAdapter>;
-    statusElement: StatusElement;
+    statusUI: StatusUI;
   } | null = null;
 
   constructor(
@@ -23,48 +26,53 @@ export class TagsMode implements GraphicsMode {
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
   ) {
-    this.element = createFullscreenDiv();
     this.init();
   }
 
   public readonly type = "tags";
 
   private async init() {
-    const graphicsAdapter = await StandaloneTagDebugAdapter.create(this.element);
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>();
+    document.body.append(fullScreenMMLScene.element);
+    const graphicsAdapter = await StandaloneTagDebugAdapter.create(fullScreenMMLScene.element);
     if (this.disposed) {
       graphicsAdapter.dispose();
       return;
     }
 
-    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>(this.element);
     fullScreenMMLScene.init(graphicsAdapter);
-    const statusElement = new StatusElement();
-    const mmlSource = MMLSource.create({
-      fullScreenMMLScene,
-      statusElement,
-      source: this.mmlSourceDefinition,
+    const statusUI = new StatusUI();
+    const networkMMLSource = MMLNetworkSource.create({
+      mmlScene: fullScreenMMLScene,
+      statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
+        if (status === NetworkedDOMWebsocketStatus.Connected) {
+          statusUI.setNoStatus();
+        } else {
+          statusUI.setStatus(NetworkedDOMWebsocketStatus[status]);
+        }
+      },
+      url: this.mmlSourceDefinition.url,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
     });
     this.loadedState = {
-      mmlSource,
+      networkMMLSource,
       graphicsAdapter,
       fullScreenMMLScene,
-      statusElement,
+      statusUI,
     };
     this.update(this.formIteration);
   }
 
-  dispose() {
+  public dispose() {
     this.disposed = true;
     if (this.loadedState) {
-      this.loadedState.mmlSource.dispose();
+      this.loadedState.networkMMLSource.dispose();
       this.loadedState.graphicsAdapter.dispose();
       this.loadedState.fullScreenMMLScene.dispose();
-      this.loadedState.statusElement.dispose();
+      this.loadedState.statusUI.dispose();
       this.loadedState = null;
     }
-    this.element.remove();
   }
 
   update(formIteration: FormIteration) {

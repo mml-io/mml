@@ -1,12 +1,8 @@
+import { AnimatedAttributeHelper } from "../attribute-animation";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter } from "../graphics";
 import { AudioGraphics } from "../graphics/AudioGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";

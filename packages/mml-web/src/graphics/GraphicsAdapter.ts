@@ -1,5 +1,5 @@
-import { Interaction } from "./elements";
-import { MMLGraphicsInterface, PositionAndRotation } from "./MMLScene";
+import { Interaction } from "../elements";
+import { MMLGraphicsInterface, PositionAndRotation } from "../scene";
 
 export interface GraphicsAdapter<C = unknown, M = unknown, R = unknown> {
   containerType: C;

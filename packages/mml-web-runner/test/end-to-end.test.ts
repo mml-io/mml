@@ -1,11 +1,11 @@
 import { jest } from "@jest/globals";
+import { MMLScene, registerCustomElementsToWindow } from "@mml-io/mml-web";
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
 } from "@mml-io/mml-web-three-client";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { IframeObservableDOMFactory } from "@mml-io/networked-dom-web-runner";
-import { MMLScene, registerCustomElementsToWindow } from "@mml-io/mml-web";
 
 import { MMLWebRunnerClient } from "../build/index";
 import { waitFor } from "./test-util";

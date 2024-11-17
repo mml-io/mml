@@ -1,6 +1,4 @@
-import { hslToRGB } from "../color-utils";
-import { MMLColor } from "../graphics/MMLColor";
-import { colors } from "./colors";
+import { colors, hslToRGB, MMLColor } from "../color";
 
 export type AttributeHandlerMap<T> = {
   [key: string]: (instance: T, newValue: string | null) => void;

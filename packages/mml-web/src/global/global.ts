@@ -1,6 +1,6 @@
-import { GraphicsAdapter } from "./GraphicsAdapter";
-import { MMLDocumentTimeManager } from "./MMLDocumentTimeManager";
-import { IMMLScene } from "./MMLScene";
+import { GraphicsAdapter } from "../graphics";
+import { IMMLScene } from "../scene";
+import { MMLDocumentTimeManager } from "../time";
 
 let scene: IMMLScene<GraphicsAdapter> | null = null;
 let documentTimeManager: MMLDocumentTimeManager | null = null;

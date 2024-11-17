@@ -1,8 +1,8 @@
+import { MMLColor } from "../color";
 import { AnimationType, AttributeAnimation } from "../elements/AttributeAnimation";
 import { AttributeLerp } from "../elements/AttributeLerp";
 import { MElement } from "../elements/MElement";
-import { MMLColor } from "../graphics/MMLColor";
-import { GraphicsAdapter } from "../GraphicsAdapter";
+import { GraphicsAdapter } from "../graphics";
 
 type AttributeTuple<T extends AnimationType> = T extends AnimationType.Number
   ? [

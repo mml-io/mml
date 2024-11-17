@@ -1,7 +1,6 @@
+import { parseBoolAttribute } from "../attributes";
 import { MElement } from "../elements";
-import { DebugHelperGraphics } from "../graphics/DebugHelperGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { parseBoolAttribute } from "../utils/attribute-handling";
+import { DebugHelperGraphics, GraphicsAdapter } from "../graphics";
 
 const debugAttributeName = "debug";
 

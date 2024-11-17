@@ -1,14 +1,9 @@
-import { PositionProbeGraphics } from "../graphics/PositionProbeGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { Vect3 } from "../math/Vect3";
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
+import { AnimatedAttributeHelper } from "../attribute-animation";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter, PositionProbeGraphics } from "../graphics";
+import { Vect3 } from "../math";
+import { getRelativePositionAndRotationRelativeToObject } from "../position";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";

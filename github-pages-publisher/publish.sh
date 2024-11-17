@@ -6,6 +6,9 @@ set -ex
 # Set the working directory to the location of this script
 cd "$(dirname "$0")"
 
+# Remove the build directory if it exists
+rm -rf ./build
+
 # Create the build directory
 mkdir -p ./build
 

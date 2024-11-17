@@ -1,6 +1,6 @@
 import { TransformableElement, TransformableElementProps } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
 import { Matr4 } from "../math/Matr4";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class TransformableGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

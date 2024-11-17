@@ -25,7 +25,7 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter {
   collisionType: THREE.Object3D;
   containerType: THREE.Object3D;
 
-  private rootContainer: THREE.Group<THREE.Object3DEventMap>;
+  private rootContainer: THREE.Object3D<THREE.Object3DEventMap>;
   private threeScene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;

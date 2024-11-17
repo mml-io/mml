@@ -4,13 +4,13 @@ const thisScript = document.currentScript as HTMLScriptElement;
 const scriptUrl = new URL(thisScript.src);
 
 (function () {
-  const websocketUrl = scriptUrl.searchParams.get("websocketUrl");
-  if (!websocketUrl) {
-    console.error("websocketUrl not set");
+  const url = scriptUrl.searchParams.get("url");
+  if (!url) {
+    console.error("url not set");
     return;
   }
   window.addEventListener("load", () => {
-    const documentWebsocketUrls = websocketUrl.split(",");
+    const documentWebsocketUrls = url.split(",");
 
     for (const documentWebsocketUrl of documentWebsocketUrls) {
       let overriddenHandler: ((element: HTMLElement, event: CustomEvent) => void) | null = null;

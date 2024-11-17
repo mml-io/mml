@@ -1,6 +1,6 @@
 import { Interaction } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { MMLGraphicsInterface } from "../MMLScene";
+import { GraphicsAdapter } from "../graphics";
+import { MMLGraphicsInterface } from "../scene";
 import { tagAdapterDefaultTheme, TagAdapterThemeColors } from "./TagAdapterThemeColors";
 import { TagDebugAdapterGraphicsInterface } from "./TagDebugAdapterGraphicsInterface";
 import { TagDebugMElement } from "./TagDebugMElement";

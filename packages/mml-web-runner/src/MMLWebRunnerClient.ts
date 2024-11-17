@@ -1,6 +1,6 @@
+import { GraphicsAdapter, IMMLScene, RemoteDocumentWrapper } from "@mml-io/mml-web";
 import { EditableNetworkedDOM, NetworkedDOM } from "@mml-io/networked-dom-document";
 import { NetworkedDOMWebRunnerClient } from "@mml-io/networked-dom-web-runner";
-import { GraphicsAdapter, IMMLScene, RemoteDocumentWrapper } from "@mml-io/mml-web";
 
 /**
  * The MMLWebRunnerClient class can be used to view and interact with a NetworkedDOM document instance that is available

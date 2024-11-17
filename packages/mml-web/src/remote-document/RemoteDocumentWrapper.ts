@@ -1,7 +1,7 @@
-import { consumeEventEventName } from "../common";
-import { RemoteDocument } from "../elements/RemoteDocument";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { IMMLScene } from "../MMLScene";
+import { consumeEventEventName } from "../elements";
+import { RemoteDocument } from "../elements";
+import { GraphicsAdapter } from "../graphics";
+import { IMMLScene } from "../scene";
 
 /**
  * The RemoteDocumentWrapper class creates an m-remote-document (RemoteDocument) element and initialises it with the

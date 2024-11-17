@@ -1,15 +1,11 @@
+import { AnimatedAttributeHelper } from "../attribute-animation";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter } from "../graphics";
 import { ChatProbeGraphics } from "../graphics/ChatProbeGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
 import { Vect3 } from "../math/Vect3";
-import { IMMLScene } from "../MMLScene";
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { getRelativePositionAndRotationRelativeToObject } from "../utils/position-utils";
+import { getRelativePositionAndRotationRelativeToObject } from "../position";
+import { IMMLScene } from "../scene";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";

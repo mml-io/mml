@@ -1,9 +1,8 @@
-import { MElement } from "../../elements/MElement";
-import { GraphicsAdapter } from "../../GraphicsAdapter";
-import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
-import { IMMLScene } from "../../MMLScene";
-import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
-import { fetchRemoteStaticMML } from "../fetchRemoteStaticMML";
+import { MElement } from "../elements";
+import { GraphicsAdapter } from "../graphics";
+import { LoadingProgressManager } from "../loading";
+import { fetchRemoteStaticMML, RemoteDocumentWrapper } from "../remote-document";
+import { IMMLScene } from "../scene";
 import { createWrappedScene } from "./CreateWrappedScene";
 
 export class StaticHTMLFrameInstance<G extends GraphicsAdapter = GraphicsAdapter> {

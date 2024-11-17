@@ -1,20 +1,24 @@
 import {
+  FullScreenMMLScene,
+  MMLNetworkSource,
+  NetworkedDOMWebsocketStatus,
+  parseColorAttribute,
+} from "@mml-io/mml-web";
+import { StatusUI } from "@mml-io/mml-web";
+import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
   ThreeJSDragFlyCameraControls,
   ThreeJSOrbitCameraControls,
 } from "@mml-io/mml-web-three-client";
 import { HDRJPGLoader } from "@monogrid/gainmap-js";
-import { FullScreenMMLScene, parseColorAttribute } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { calculateContentBounds } from "./calculateContentBounds";
-import { createFullscreenDiv } from "./CreateFullscreenDiv";
 import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
-import { MMLSource, MMLSourceDefinition } from "./MMLSource";
+import { MMLSourceDefinition } from "./MMLSourceDefinition";
 import { parseXYZ } from "./parseXYZ";
-import { StatusElement } from "./StatusElement";
 import {
   ambientLightColorField,
   ambientLightField,
@@ -32,13 +36,12 @@ import {
 
 export class ThreeJSModeInternal {
   private disposed = false;
-  private element: HTMLDivElement;
 
   private loadedState: {
-    mmlSource: MMLSource;
+    networkMMLSource: MMLNetworkSource;
     graphicsAdapter: StandaloneThreeJSAdapter;
     fullScreenMMLScene: FullScreenMMLScene<StandaloneThreeJSAdapter>;
-    statusElement: StatusElement;
+    statusUI: StatusUI;
   } | null = null;
 
   private ambientLight: THREE.AmbientLight | null = null;
@@ -52,12 +55,13 @@ export class ThreeJSModeInternal {
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
   ) {
-    this.element = createFullscreenDiv();
     this.init();
   }
 
   private async init() {
-    const graphicsAdapter = await StandaloneThreeJSAdapter.create(this.element, {
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>();
+    document.body.append(fullScreenMMLScene.element);
+    const graphicsAdapter = await StandaloneThreeJSAdapter.create(fullScreenMMLScene.element, {
       controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
     });
     if (this.disposed) {
@@ -65,13 +69,18 @@ export class ThreeJSModeInternal {
       return;
     }
 
-    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>(this.element);
     fullScreenMMLScene.init(graphicsAdapter);
-    const statusElement = new StatusElement();
-    const mmlSource = MMLSource.create({
-      fullScreenMMLScene,
-      statusElement,
-      source: this.mmlSourceDefinition,
+    const statusUI = new StatusUI();
+    const networkMMLSource = MMLNetworkSource.create({
+      mmlScene: fullScreenMMLScene,
+      statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
+        if (status === NetworkedDOMWebsocketStatus.Connected) {
+          statusUI.setNoStatus();
+        } else {
+          statusUI.setStatus(NetworkedDOMWebsocketStatus[status]);
+        }
+      },
+      url: this.mmlSourceDefinition.url,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
     });
@@ -88,10 +97,10 @@ export class ThreeJSModeInternal {
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
     this.loadedState = {
-      mmlSource,
+      networkMMLSource,
       graphicsAdapter,
       fullScreenMMLScene,
-      statusElement,
+      statusUI,
     };
     this.update(this.formIteration);
   }
@@ -196,16 +205,15 @@ export class ThreeJSModeInternal {
     threeRenderer.setClearColor(new THREE.Color(color.r, color.g, color.b), color.a);
   }
 
-  dispose() {
+  public dispose() {
     this.disposed = true;
     if (this.loadedState) {
-      this.loadedState.mmlSource.dispose();
+      this.loadedState.networkMMLSource.dispose();
       this.loadedState.graphicsAdapter.dispose();
       this.loadedState.fullScreenMMLScene.dispose();
-      this.loadedState.statusElement.dispose();
+      this.loadedState.statusUI.dispose();
       this.loadedState = null;
     }
-    this.element.remove();
   }
 
   private setCameraMode(formIteration: FormIteration, graphicsAdapter: StandaloneThreeJSAdapter) {

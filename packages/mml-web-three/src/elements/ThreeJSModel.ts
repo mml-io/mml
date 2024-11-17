@@ -1,8 +1,8 @@
-import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
 import { MElement, Model, TransformableElement } from "@mml-io/mml-web";
 import { ModelGraphics } from "@mml-io/mml-web";
 import { LoadingInstanceManager } from "@mml-io/mml-web";
 import { IVect3 } from "@mml-io/mml-web";
+import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";

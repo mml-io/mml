@@ -1,5 +1,5 @@
-import { DebugHelper } from "../debug-helper/DebugHelper";
-import { DebugHelperGraphics } from "../graphics/DebugHelperGraphics";
+import { DebugHelper } from "../debug-helper";
+import { DebugHelperGraphics } from "../graphics";
 import { TagDebugGraphicsAdapter } from "./StandaloneTagDebugAdapter";
 
 export class TagDebugAdapterDebugHelper implements DebugHelperGraphics<TagDebugGraphicsAdapter> {

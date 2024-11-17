@@ -1,6 +1,6 @@
 import { MModelProps, Model } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
 import { IVect3 } from "../math/Vect3";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class ModelGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

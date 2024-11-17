@@ -1,11 +1,10 @@
 import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 
-import { consumeEventEventName } from "../../common";
-import { MElement } from "../../elements/MElement";
-import { GraphicsAdapter } from "../../GraphicsAdapter";
-import { LoadingProgressManager } from "../../loading/LoadingProgressManager";
-import { IMMLScene } from "../../MMLScene";
-import { RemoteDocumentWrapper } from "../../websocket/RemoteDocumentWrapper";
+import { consumeEventEventName, MElement } from "../elements";
+import { GraphicsAdapter } from "../graphics";
+import { LoadingProgressManager } from "../loading";
+import { RemoteDocumentWrapper } from "../remote-document";
+import { IMMLScene } from "../scene";
 import { createWrappedScene } from "./CreateWrappedScene";
 
 export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter> {

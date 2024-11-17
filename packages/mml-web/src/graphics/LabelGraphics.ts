@@ -1,6 +1,6 @@
+import { MMLColor } from "../color";
 import { Label, MLabelAlignment, MLabelProps } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { MMLColor } from "./MMLColor";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class LabelGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

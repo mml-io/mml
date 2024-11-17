@@ -1,12 +1,7 @@
-import { ModelGraphics } from "../graphics/ModelGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { CollideableHelper } from "../utils/CollideableHelper";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { CollideableHelper } from "../collision";
+import { GraphicsAdapter, ModelGraphics } from "../graphics";
 import { TransformableElement } from "./TransformableElement";
 
 const defaultModelSrc = null;

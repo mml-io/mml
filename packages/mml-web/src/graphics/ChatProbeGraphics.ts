@@ -1,5 +1,5 @@
 import { ChatProbe, MChatProbeProps } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class ChatProbeGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,4 +1,4 @@
-import { DebugHelper } from "./debug-helper/DebugHelper";
+import { DebugHelper } from "../debug-helper";
 import {
   Audio,
   ChatProbe,
@@ -18,30 +18,32 @@ import {
   Sphere,
   TransformableElement,
   Video,
-} from "./elements";
-import { AudioGraphics } from "./graphics/AudioGraphics";
-import { ChatProbeGraphics } from "./graphics/ChatProbeGraphics";
-import { CubeGraphics } from "./graphics/CubeGraphics";
-import { CylinderGraphics } from "./graphics/CylinderGraphics";
-import { DebugHelperGraphics } from "./graphics/DebugHelperGraphics";
-import { FrameGraphics } from "./graphics/FrameGraphics";
-import { ImageGraphics } from "./graphics/ImageGraphics";
-import { InteractionGraphics } from "./graphics/InteractionGraphics";
-import { LabelGraphics } from "./graphics/LabelGraphics";
-import { LightGraphics } from "./graphics/LightGraphics";
-import { MElementGraphics } from "./graphics/MElementGraphics";
-import { ModelGraphics } from "./graphics/ModelGraphics";
-import { PlaneGraphics } from "./graphics/PlaneGraphics";
-import { PositionProbeGraphics } from "./graphics/PositionProbeGraphics";
-import { PromptGraphics } from "./graphics/PromptGraphics";
-import { RemoteDocumentGraphics } from "./graphics/RemoteDocumentGraphics";
-import { SphereGraphics } from "./graphics/SphereGraphics";
-import { TransformableGraphics } from "./graphics/TransformableGraphics";
-import { VideoGraphics } from "./graphics/VideoGraphics";
-import { GraphicsAdapter, StandaloneGraphicsAdapter } from "./GraphicsAdapter";
-import { InteractionManager } from "./interaction-ui";
-import { LoadingProgressManager } from "./loading/LoadingProgressManager";
-import { PromptManager } from "./prompt-ui";
+} from "../elements";
+import {
+  AudioGraphics,
+  ChatProbeGraphics,
+  CubeGraphics,
+  CylinderGraphics,
+  DebugHelperGraphics,
+  FrameGraphics,
+  ImageGraphics,
+  InteractionGraphics,
+  LabelGraphics,
+  LightGraphics,
+  MElementGraphics,
+  ModelGraphics,
+  PlaneGraphics,
+  PositionProbeGraphics,
+  PromptGraphics,
+  RemoteDocumentGraphics,
+  SphereGraphics,
+  TransformableGraphics,
+  VideoGraphics,
+} from "../graphics";
+import { GraphicsAdapter, StandaloneGraphicsAdapter } from "../graphics";
+import { InteractionManager } from "../interaction-ui";
+import { LoadingProgressManager } from "../loading";
+import { PromptManager } from "../prompt-ui";
 
 export interface MMLGraphicsInterface<C extends GraphicsAdapter> {
   MMLDebugHelperGraphicsInterface<G extends C>(debugHelper: DebugHelper<G>): DebugHelperGraphics<G>;
@@ -166,7 +168,7 @@ export class MMLScene<G extends StandaloneGraphicsAdapter<any, any, any>> implem
 
   private graphicsAdapter: G | null = null;
 
-  constructor(private element: HTMLElement) {
+  constructor(public element: HTMLElement) {
     this.loadingProgressManager = new LoadingProgressManager();
   }
 

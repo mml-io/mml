@@ -1,7 +1,6 @@
-import { PromptGraphics } from "../graphics/PromptGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { AttributeHandler } from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AttributeHandler } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter, PromptGraphics } from "../graphics";
 import { TransformableElement } from "./TransformableElement";
 
 export type MPromptProps = {

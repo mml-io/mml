@@ -1,9 +1,9 @@
 import { NetworkedDOM } from "@mml-io/networked-dom-document";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import * as chokidar from "chokidar";
 import express, { Request, static as expressStatic } from "express";
 import enableWs from "express-ws";
 import * as fs from "fs";
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import * as path from "path";
 import * as url from "url";
 import ws from "ws";
@@ -69,9 +69,7 @@ app.ws("/mml-websocket", (ws: ws.WebSocket) => {
   });
 });
 app.get("/websocket-example/", (req, res) => {
-  res.send(
-    `<html><script src="/client/index.js?websocketUrl=${getWebsocketUrl(req)}"></script></html>`,
-  );
+  res.send(`<html><script src="/client/index.js?url=${getWebsocketUrl(req)}"></script></html>`);
 });
 
 console.log("Serving on port:", port);

@@ -1,16 +1,15 @@
-import { MMLColor } from "../graphics/MMLColor";
-import { PlaneGraphics } from "../graphics/PlaneGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { Vect3 } from "../math/Vect3";
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
+import { AnimatedAttributeHelper } from "../attribute-animation";
 import {
   AttributeHandler,
   parseBoolAttribute,
   parseColorAttribute,
   parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { CollideableHelper } from "../utils/CollideableHelper";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+} from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { CollideableHelper } from "../collision";
+import { MMLColor } from "../color";
+import { GraphicsAdapter, PlaneGraphics } from "../graphics";
+import { Vect3 } from "../math";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";

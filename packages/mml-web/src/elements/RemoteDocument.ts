@@ -1,10 +1,9 @@
-import { consumeEventEventName } from "../common";
-import { RemoteDocumentGraphics } from "../graphics/RemoteDocumentGraphics";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
-import { IMMLScene } from "../MMLScene";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { MElement } from "./MElement";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter } from "../graphics";
+import { RemoteDocumentGraphics } from "../graphics";
+import { IMMLScene } from "../scene";
+import { MMLDocumentTimeManager } from "../time";
+import { consumeEventEventName, MElement } from "./MElement";
 
 export class RemoteDocument<G extends GraphicsAdapter = GraphicsAdapter> extends MElement<G> {
   static tagName = "m-remote-document";

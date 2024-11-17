@@ -1,4 +1,4 @@
-import { GraphicsAdapter } from "../GraphicsAdapter";
+import { GraphicsAdapter } from "../graphics";
 import { Model } from "./Model";
 
 export class Character<G extends GraphicsAdapter = GraphicsAdapter> extends Model<G> {

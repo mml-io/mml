@@ -1,5 +1,5 @@
 import { MPositionProbeProps, PositionProbe } from "../elements";
-import { GraphicsAdapter } from "../GraphicsAdapter";
+import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class PositionProbeGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

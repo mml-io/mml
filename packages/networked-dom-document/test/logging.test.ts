@@ -1,5 +1,5 @@
-import { LogMessage } from "@mml-io/observable-dom-common";
 import { LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
+import { LogMessage } from "@mml-io/observable-dom-common";
 
 import { EditableNetworkedDOM } from "../src";
 

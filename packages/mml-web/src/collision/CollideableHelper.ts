@@ -1,7 +1,7 @@
-import { MElement } from "../elements/MElement";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { IMMLScene } from "../MMLScene";
-import { AttributeHandler, parseBoolAttribute } from "./attribute-handling";
+import { AttributeHandler, parseBoolAttribute } from "../attributes";
+import { MElement } from "../elements";
+import { GraphicsAdapter } from "../graphics";
+import { IMMLScene } from "../scene";
 
 const collideAttributeName = "collide";
 const collisionIntervalAttributeName = "collision-interval";

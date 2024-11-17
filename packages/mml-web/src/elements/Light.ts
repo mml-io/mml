@@ -1,15 +1,14 @@
-import { LightGraphics } from "../graphics/LightGraphics";
-import { MMLColor } from "../graphics/MMLColor";
-import { GraphicsAdapter } from "../GraphicsAdapter";
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
+import { AnimatedAttributeHelper } from "../attribute-animation";
 import {
   AttributeHandler,
   parseBoolAttribute,
   parseColorAttribute,
   parseEnumAttribute,
   parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+} from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { MMLColor } from "../color";
+import { GraphicsAdapter, LightGraphics } from "../graphics";
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
