@@ -1,4 +1,4 @@
-import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-three-client";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
 import { registerCustomElementsToWindow } from "../build/index";

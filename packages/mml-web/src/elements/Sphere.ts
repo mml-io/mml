@@ -152,10 +152,10 @@ export class Sphere<G extends GraphicsAdapter = GraphicsAdapter> extends Transfo
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.sphereGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.sphereGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.sphereGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

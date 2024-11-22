@@ -59,10 +59,10 @@ export class RemoteDocument<G extends GraphicsAdapter = GraphicsAdapter> extends
 
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.remoteDocumentGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.remoteDocumentGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.remoteDocumentGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

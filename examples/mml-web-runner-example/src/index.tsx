@@ -8,7 +8,7 @@ import {
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
+} from "@mml-io/mml-web-threejs-standalone";
 
 const startingContent = `
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>

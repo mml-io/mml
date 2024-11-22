@@ -201,10 +201,10 @@ export class PositionProbe<
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.positionProbeGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.positionProbeGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.positionProbeGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

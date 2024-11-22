@@ -10,32 +10,28 @@ const scriptUrl = new URL(thisScript.src);
     return;
   }
   window.addEventListener("load", () => {
-    const documentWebsocketUrls = url.split(",");
+    let overriddenHandler: ((element: HTMLElement, event: CustomEvent) => void) | null = null;
+    const eventHandler = (element: HTMLElement, event: CustomEvent) => {
+      if (!overriddenHandler) {
+        throw new Error("overriddenHandler not set");
+      }
+      overriddenHandler(element, event);
+    };
+    const remoteDocumentHolder = document.createElement("div");
+    document.body.append(remoteDocumentHolder);
 
-    for (const documentWebsocketUrl of documentWebsocketUrls) {
-      let overriddenHandler: ((element: HTMLElement, event: CustomEvent) => void) | null = null;
-      const eventHandler = (element: HTMLElement, event: CustomEvent) => {
-        if (!overriddenHandler) {
-          throw new Error("overriddenHandler not set");
-        }
-        overriddenHandler(element, event);
-      };
-      const remoteDocumentHolder = document.createElement("div");
-      document.body.append(remoteDocumentHolder);
+    remoteDocumentHolder.addEventListener("click", (event: Event) => {
+      eventHandler(event.target as HTMLElement, event as CustomEvent);
+      return false;
+    });
 
-      remoteDocumentHolder.addEventListener("click", (event: Event) => {
-        eventHandler(event.target as HTMLElement, event as CustomEvent);
-        return false;
-      });
-
-      const websocket = new NetworkedDOMWebsocket(
-        documentWebsocketUrl,
-        NetworkedDOMWebsocket.createWebSocket,
-        remoteDocumentHolder,
-      );
-      overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
-        websocket.handleEvent(element, event);
-      };
-    }
+    const websocket = new NetworkedDOMWebsocket(
+      url,
+      NetworkedDOMWebsocket.createWebSocket,
+      remoteDocumentHolder,
+    );
+    overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
+      websocket.handleEvent(element, event);
+    };
   });
 })();

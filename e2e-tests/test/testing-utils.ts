@@ -13,9 +13,9 @@ declare global {
           } | null;
         };
       };
-      remoteDocuments: Array<{
+      remoteDocumentWrapper: {
         overrideDocumentTime(documentTime: number): void;
-      }>;
+      };
     };
   }
 }
@@ -40,10 +40,8 @@ export async function clickElement(
 
 export async function setDocumentTime(page: puppeteer.Page, documentTime: number) {
   await page.evaluate(async (documentTime: number) => {
-    const { remoteDocuments } = window["mml-web-client"];
-    for (const remoteDocument of remoteDocuments) {
-      remoteDocument.overrideDocumentTime(documentTime);
-    }
+    const { remoteDocumentWrapper } = window["mml-web-client"];
+    remoteDocumentWrapper.overrideDocumentTime(documentTime);
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => {
         resolve();

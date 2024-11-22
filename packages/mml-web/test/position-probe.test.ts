@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-three-client";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 
 import { EulXYZ, PositionProbe, registerCustomElementsToWindow, Vect3 } from "../build/index";
 import { createSceneAttachedElement } from "./scene-test-utils";

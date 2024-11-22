@@ -30,11 +30,11 @@
 
     <m-cylinder x="-0.35" height="0.1" radius="0.25" color="#A22">
       <m-attr-anim attr="ry" start="0" end="360" duration="10000"></m-attr-anim>
-      <m-attr-anim attr="height" start="0.1" end="1" duration="20000" ping-pong="true"></m-attr-anim>
-      <m-attr-anim attr="y" start="0.1" end="0.5" duration="20000" ping-pong="true"></m-attr-anim>
+      <m-attr-anim attr="height" easing="easeInOutCubic" start="0.1" end="1" duration="20000" ping-pong="true"></m-attr-anim>
+      <m-attr-anim attr="y" easing="easeInOutCubic" start="0.1" end="0.5" duration="20000" ping-pong="true"></m-attr-anim>
 
       <m-model id="duck" src="https://public.mml.io/duck.glb" sx="0.3" sy="0.3" sz="0.3">
-        <m-attr-anim attr="y" start="0" end="0.45" duration="20000" ping-pong="true"></m-attr-anim>
+        <m-attr-anim attr="y" easing="easeInOutCubic" start="0" end="0.45" duration="20000" ping-pong="true"></m-attr-anim>
       </m-model>
     </m-cylinder>
   </m-cylinder>

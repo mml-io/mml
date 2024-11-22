@@ -194,10 +194,10 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.lightGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.lightGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.lightGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

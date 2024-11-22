@@ -11,18 +11,18 @@ It supports
 
 The library handles parsing the attributes and the interaction of elements with each other such as `m-attr-anim` affecting the attributes of other elements.
 
-This internal representation of the MML document can then be rendered to the screen using a *Graphics Adapter*. 
+This internal representation of the MML document can then be rendered to the screen using a *Graphics Adapter*. Graphics Adapters are provided as separate packages due to the dependencies on external libraries such as ThreeJS and PlayCanvas.
 
 The library is instantiated with a Graphics Adapter as a way to expose the element states to a renderer (e.g. ThreeJS or PlayCanvas).
 
 The following Graphics Adapters are available:
-* `@mml-io/mml-web-three`
+* `@mml-io/mml-web-threejs`
   * A Graphics Adapter for ThreeJS that allows attaching MML elements to a ThreeJS scene.
-* `@mml-io/mml-web-three-client`
+* `@mml-io/mml-web-threejs-standalone`
   * A standalone ThreeJS client for rendering MML elements.
 * `@mml-io/mml-web-playcanvas`
   * A Graphics Adapter for PlayCanvas that allows attaching MML elements to a PlayCanvas app.
-* `@mml-io/mml-web-playcanvas-client`
+* `@mml-io/mml-web-playcanvas-standalone`
   * A standalone PlayCanvas client for rendering MML elements.
 * `StandaloneTagDebugAdapter` in this package.
   * A standalone Graphics Adapter that renders MML elements as HTML tags in a code view.
@@ -40,7 +40,7 @@ import {
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
+} from "@mml-io/mml-web-threejs-standalone";
 
 async function createFullScreenThreeJSMML(url: string) {
   // Create an iframe to hold the elements from the MML document

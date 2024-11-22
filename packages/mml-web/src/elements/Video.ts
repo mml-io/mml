@@ -194,10 +194,10 @@ export class Video<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.videoGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.videoGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.videoGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

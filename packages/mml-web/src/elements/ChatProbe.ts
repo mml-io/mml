@@ -139,10 +139,10 @@ export class ChatProbe<
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.chatProbeGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.chatProbeGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.chatProbeGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

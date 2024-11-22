@@ -53,6 +53,9 @@ export function createWrappedScene<G extends GraphicsAdapter = GraphicsAdapter>(
         scene.removeChatProbe(chatProbe);
       }
     },
+    hasGraphicsAdapter() {
+      return scene.hasGraphicsAdapter();
+    },
     getGraphicsAdapter() {
       return scene.getGraphicsAdapter();
     },

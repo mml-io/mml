@@ -131,10 +131,10 @@ export class Interaction<
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.interactionGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.interactionGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.interactionGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

@@ -10,7 +10,7 @@ import {
   PlayCanvasOrbitCameraControls,
   StandalonePlayCanvasAdapter,
   StandalonePlayCanvasAdapterControlsType,
-} from "@mml-io/mml-web-playcanvas-client";
+} from "@mml-io/mml-web-playcanvas-standalone";
 import * as playcanvas from "playcanvas";
 
 import { calculateContentBounds } from "./calculateContentBounds";
@@ -18,6 +18,7 @@ import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
 import { parseXYZ } from "./parseXYZ";
+import { setDebugGlobals } from "./setDebugGlobals";
 import {
   ambientLightColorField,
   ambientLightField,
@@ -80,6 +81,10 @@ export class PlayCanvasModeInternal {
       url: this.mmlSourceDefinition.url,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
+    });
+    setDebugGlobals({
+      mmlScene: fullScreenMMLScene,
+      remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper,
     });
     const loadingCallback = () => {
       const [, completedLoading] = fullScreenMMLScene.getLoadingProgressManager().toRatio();

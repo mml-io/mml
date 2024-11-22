@@ -3,7 +3,7 @@ import { MMLScene, registerCustomElementsToWindow } from "@mml-io/mml-web";
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
+} from "@mml-io/mml-web-threejs-standalone";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { IframeObservableDOMFactory } from "@mml-io/networked-dom-web-runner";
 

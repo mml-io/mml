@@ -1,7 +1,7 @@
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
+} from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
 import { configureWindowForMML, Cube, getGlobalMMLScene, Group } from "../build/index";

@@ -22,8 +22,8 @@
     "@mml-io/mml-web": "^0.18.1",
     "three": "0.163.0",
     "playcanvas": "1.73.5",
-    "@mml-io/mml-web-playcanvas-client": "^0.18.1",
-    "@mml-io/mml-web-three-client": "^0.18.1"
+    "@mml-io/mml-web-playcanvas-standalone": "^0.18.1",
+    "@mml-io/mml-web-threejs-standalone": "^0.18.1"
   },
   "devDependencies": {
     "@types/three": "0.163.0"

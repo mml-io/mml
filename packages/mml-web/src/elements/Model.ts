@@ -138,10 +138,10 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter: G | null = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.modelGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.modelGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.modelGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

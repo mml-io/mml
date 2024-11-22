@@ -281,10 +281,10 @@ export class Frame<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.frameGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.frameGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.startEmitting();
     this.syncLoadState();

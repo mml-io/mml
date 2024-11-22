@@ -87,10 +87,10 @@ export abstract class TransformableElement<
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.transformableElementGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.transformableElementGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.transformableElementGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

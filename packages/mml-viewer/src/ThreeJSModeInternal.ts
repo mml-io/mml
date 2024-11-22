@@ -10,7 +10,7 @@ import {
   StandaloneThreeJSAdapterControlsType,
   ThreeJSDragFlyCameraControls,
   ThreeJSOrbitCameraControls,
-} from "@mml-io/mml-web-three-client";
+} from "@mml-io/mml-web-threejs-standalone";
 import { HDRJPGLoader } from "@monogrid/gainmap-js";
 import * as THREE from "three";
 
@@ -19,6 +19,7 @@ import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
 import { parseXYZ } from "./parseXYZ";
+import { setDebugGlobals } from "./setDebugGlobals";
 import {
   ambientLightColorField,
   ambientLightField,
@@ -38,7 +39,7 @@ export class ThreeJSModeInternal {
   private disposed = false;
 
   private loadedState: {
-    networkMMLSource: MMLNetworkSource;
+    mmlNetworkSource: MMLNetworkSource;
     graphicsAdapter: StandaloneThreeJSAdapter;
     fullScreenMMLScene: FullScreenMMLScene<StandaloneThreeJSAdapter>;
     statusUI: StatusUI;
@@ -71,7 +72,7 @@ export class ThreeJSModeInternal {
 
     fullScreenMMLScene.init(graphicsAdapter);
     const statusUI = new StatusUI();
-    const networkMMLSource = MMLNetworkSource.create({
+    const mmlNetworkSource = MMLNetworkSource.create({
       mmlScene: fullScreenMMLScene,
       statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
         if (status === NetworkedDOMWebsocketStatus.Connected) {
@@ -83,6 +84,10 @@ export class ThreeJSModeInternal {
       url: this.mmlSourceDefinition.url,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
+    });
+    setDebugGlobals({
+      mmlScene: fullScreenMMLScene,
+      remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper,
     });
     const loadingCallback = () => {
       const [, completedLoading] = fullScreenMMLScene.getLoadingProgressManager().toRatio();
@@ -97,7 +102,7 @@ export class ThreeJSModeInternal {
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
     this.loadedState = {
-      networkMMLSource,
+      mmlNetworkSource,
       graphicsAdapter,
       fullScreenMMLScene,
       statusUI,
@@ -208,7 +213,7 @@ export class ThreeJSModeInternal {
   public dispose() {
     this.disposed = true;
     if (this.loadedState) {
-      this.loadedState.networkMMLSource.dispose();
+      this.loadedState.mmlNetworkSource.dispose();
       this.loadedState.graphicsAdapter.dispose();
       this.loadedState.fullScreenMMLScene.dispose();
       this.loadedState.statusUI.dispose();

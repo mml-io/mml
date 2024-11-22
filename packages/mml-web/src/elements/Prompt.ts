@@ -97,10 +97,10 @@ export class Prompt<G extends GraphicsAdapter = GraphicsAdapter> extends Transfo
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.promptGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.promptGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.promptGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

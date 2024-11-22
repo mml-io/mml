@@ -191,10 +191,10 @@ export class Cube<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.cubeGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.cubeGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.cubeGraphics = graphicsAdapter.getGraphicsAdapterFactory().MMLCubeGraphicsInterface(this);
 

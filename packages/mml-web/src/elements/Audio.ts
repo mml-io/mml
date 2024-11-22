@@ -187,10 +187,10 @@ export class Audio<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.audioGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.audioGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.audioGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

@@ -42,6 +42,10 @@ export class Group<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   connectedCallback() {
     super.connectedCallback();
 
+    if (!this.getScene().hasGraphicsAdapter()) {
+      return;
+    }
+
     for (const name of Group.observedAttributes) {
       const value = this.getAttribute(name);
       if (value !== null) {

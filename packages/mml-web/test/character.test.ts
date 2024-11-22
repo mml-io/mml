@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
-import { ThreeJSModel } from "@mml-io/mml-web-three";
-import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-three-client";
+import { ThreeJSModel } from "@mml-io/mml-web-threejs";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
 import { Character } from "../build/index";

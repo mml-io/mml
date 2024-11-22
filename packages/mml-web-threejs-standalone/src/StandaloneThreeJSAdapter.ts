@@ -4,7 +4,7 @@ import {
   ThreeJSGraphicsAdapter,
   ThreeJSGraphicsInterface,
   ThreeJSInteractionAdapter,
-} from "@mml-io/mml-web-three";
+} from "@mml-io/mml-web-threejs";
 import * as THREE from "three";
 
 import { ThreeJSControls } from "./controls/ThreeJSControls";

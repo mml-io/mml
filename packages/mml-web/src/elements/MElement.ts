@@ -249,10 +249,10 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   }
 
   public connectedCallback(): void {
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.mElementGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.mElementGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.mElementGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

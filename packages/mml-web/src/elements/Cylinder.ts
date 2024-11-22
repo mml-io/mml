@@ -172,10 +172,10 @@ export class Cylinder<G extends GraphicsAdapter = GraphicsAdapter> extends Trans
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.cylinderGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.cylinderGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.cylinderGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

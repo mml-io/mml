@@ -9,12 +9,13 @@ import { StatusUI } from "@mml-io/mml-web";
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
+import { setDebugGlobals } from "./setDebugGlobals";
 
 export class TagsMode implements GraphicsMode {
   private disposed = false;
 
   private loadedState: {
-    networkMMLSource: MMLNetworkSource;
+    mmlNetworkSource: MMLNetworkSource;
     graphicsAdapter: StandaloneTagDebugAdapter;
     fullScreenMMLScene: FullScreenMMLScene<StandaloneTagDebugAdapter>;
     statusUI: StatusUI;
@@ -42,7 +43,7 @@ export class TagsMode implements GraphicsMode {
 
     fullScreenMMLScene.init(graphicsAdapter);
     const statusUI = new StatusUI();
-    const networkMMLSource = MMLNetworkSource.create({
+    const mmlNetworkSource = MMLNetworkSource.create({
       mmlScene: fullScreenMMLScene,
       statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
         if (status === NetworkedDOMWebsocketStatus.Connected) {
@@ -55,8 +56,12 @@ export class TagsMode implements GraphicsMode {
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
     });
+    setDebugGlobals({
+      mmlScene: fullScreenMMLScene,
+      remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper,
+    });
     this.loadedState = {
-      networkMMLSource,
+      mmlNetworkSource,
       graphicsAdapter,
       fullScreenMMLScene,
       statusUI,
@@ -67,7 +72,7 @@ export class TagsMode implements GraphicsMode {
   public dispose() {
     this.disposed = true;
     if (this.loadedState) {
-      this.loadedState.networkMMLSource.dispose();
+      this.loadedState.mmlNetworkSource.dispose();
       this.loadedState.graphicsAdapter.dispose();
       this.loadedState.fullScreenMMLScene.dispose();
       this.loadedState.statusUI.dispose();

@@ -2,12 +2,12 @@ import { PlayCanvasGraphicsAdapter } from "@mml-io/mml-web-playcanvas";
 import {
   StandalonePlayCanvasAdapter,
   StandalonePlayCanvasAdapterControlsType,
-} from "@mml-io/mml-web-playcanvas-client";
-import { ThreeJSGraphicsAdapter } from "@mml-io/mml-web-three";
+} from "@mml-io/mml-web-playcanvas-standalone";
+import { ThreeJSGraphicsAdapter } from "@mml-io/mml-web-threejs";
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
+} from "@mml-io/mml-web-threejs-standalone";
 
 import { FullScreenMMLScene, RemoteDocument } from "../build/index";
 

@@ -171,10 +171,10 @@ export class Image<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.imageGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.imageGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.imageGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

@@ -171,10 +171,10 @@ export class Plane<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.planeGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.planeGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.planeGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

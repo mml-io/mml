@@ -76,6 +76,9 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (!this.transformableElementGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Link.attributeHandler.handle(this, name, newValue);
   }

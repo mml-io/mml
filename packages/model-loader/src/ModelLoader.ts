@@ -169,7 +169,7 @@ export class ModelLoader {
     });
   }
 
-  static extractUrlBase(url: string): string {
+  private static extractUrlBase(url: string): string {
     const index = url.lastIndexOf("/");
 
     if (index === -1) {

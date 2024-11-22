@@ -15,11 +15,11 @@ import {
 import {
   StandalonePlayCanvasAdapter,
   StandalonePlayCanvasAdapterControlsType,
-} from "@mml-io/mml-web-playcanvas-client";
+} from "@mml-io/mml-web-playcanvas-standalone";
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
-} from "@mml-io/mml-web-three-client";
+} from "@mml-io/mml-web-threejs-standalone";
 
 const thisScript = document.currentScript as HTMLScriptElement;
 const scriptUrl = new URL(thisScript.src);
@@ -28,7 +28,7 @@ declare global {
   interface Window {
     "mml-web-client": {
       mmlScene: MMLScene<StandaloneGraphicsAdapter>;
-      remoteDocuments: RemoteDocumentWrapper<GraphicsAdapter>[];
+      remoteDocumentWrapper: RemoteDocumentWrapper<GraphicsAdapter>;
     };
   }
 }
@@ -101,7 +101,7 @@ declare global {
       // Define the global mml-web-client object on the window for testing purposes
       window["mml-web-client"] = {
         mmlScene: fullScreenMMLScene,
-        remoteDocuments: [mmlNetworkSource.remoteDocumentWrapper],
+        remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper,
       };
     }
   });

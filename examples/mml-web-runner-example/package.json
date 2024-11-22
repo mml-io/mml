@@ -13,6 +13,6 @@
   "dependencies": {
     "@mml-io/mml-web": "^0.18.1",
     "@mml-io/mml-web-runner": "^0.18.1",
-    "@mml-io/mml-web-three-client": "0.18.1"
+    "@mml-io/mml-web-threejs-standalone": "0.18.1"
   }
 }

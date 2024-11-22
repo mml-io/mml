@@ -113,6 +113,7 @@ export type LinkProps = {
  */
 export type IMMLScene<G extends GraphicsAdapter = GraphicsAdapter> = {
   getGraphicsAdapter: () => G;
+  hasGraphicsAdapter: () => boolean;
 
   getRootContainer: () => ReturnType<G["getRootContainer"]>;
 
@@ -195,6 +196,10 @@ export class MMLScene<G extends StandaloneGraphicsAdapter<any, any, any>> implem
     window.addEventListener("resize", this.resizeListener, false);
 
     this.fitContainer();
+  }
+
+  public hasGraphicsAdapter(): boolean {
+    return this.graphicsAdapter !== null;
   }
 
   public getGraphicsAdapter(): G {

@@ -234,10 +234,10 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   public connectedCallback(): void {
     super.connectedCallback();
 
-    const graphicsAdapter = this.getScene().getGraphicsAdapter();
-    if (!graphicsAdapter || this.labelGraphics) {
+    if (!this.getScene().hasGraphicsAdapter() || this.labelGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
     this.labelGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()

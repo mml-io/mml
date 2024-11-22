@@ -32,6 +32,8 @@ export function configureWindowForMML(
     };
     traverse(window.document);
 
+    fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
+
     const tick = () => {
       mmlDocumentTimeManager.tick();
       window.requestAnimationFrame(tick);

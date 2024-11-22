@@ -1,5 +1,5 @@
 {
-  "name": "@mml-io/mml-web-three-client",
+  "name": "@mml-io/mml-web-threejs-standalone",
   "version": "0.18.1",
   "publishConfig": {
     "access": "public"
@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@mml-io/mml-web": "^0.18.1",
-    "@mml-io/mml-web-three": "^0.18.1"
+    "@mml-io/mml-web-threejs": "^0.18.1"
   },
   "peerDependencies": {
     "three": "*"
