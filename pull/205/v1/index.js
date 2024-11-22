@@ -10,8 +10,9 @@ import {
   parseBoolAttribute,
   registerCustomElementsToWindow,
   rendererField,
+  setDebugGlobals,
   urlField
-} from "./chunk-5LQ2TQWT.js";
+} from "./chunk-6SSQCGZS.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -282,7 +283,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-E3P6HAB2.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-CW2XLO3N.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -370,7 +371,7 @@ var TagsMode = class {
     }
     fullScreenMMLScene.init(graphicsAdapter);
     const statusUI = new StatusUI();
-    const networkMMLSource = MMLNetworkSource.create({
+    const mmlNetworkSource = MMLNetworkSource.create({
       mmlScene: fullScreenMMLScene,
       statusUpdated: (status) => {
         if (status === NetworkedDOMWebsocketStatus.Connected) {
@@ -383,8 +384,12 @@ var TagsMode = class {
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers
     });
+    setDebugGlobals({
+      mmlScene: fullScreenMMLScene,
+      remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper
+    });
     this.loadedState = {
-      networkMMLSource,
+      mmlNetworkSource,
       graphicsAdapter,
       fullScreenMMLScene,
       statusUI
@@ -394,7 +399,7 @@ var TagsMode = class {
   dispose() {
     this.disposed = true;
     if (this.loadedState) {
-      this.loadedState.networkMMLSource.dispose();
+      this.loadedState.mmlNetworkSource.dispose();
       this.loadedState.graphicsAdapter.dispose();
       this.loadedState.fullScreenMMLScene.dispose();
       this.loadedState.statusUI.dispose();
@@ -420,7 +425,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-N2SNQ4TU.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-JKTCJAJ5.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
