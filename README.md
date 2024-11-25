@@ -66,7 +66,7 @@ MML is a set of HTML elements and attributes that can be used to describe 3D obj
 These elements and attributes can be used without networking. However, when a HTML document including MML tags is run on a server and exposed via a websocket multiple users can interact with the same instance of the document at the same time.
 
 * [./packages/mml-web](./packages/mml-web) - MML Library that handles MML elements and attributes
-* [./packages/mml-web-client](./packages/mml-web-client) - Web THREE.js MML Client
+* [./packages/mml-web-client](./packages/mml-web-client) - Web MML Client (standalone script / example)
 * [./packages/schema](./packages/schema) - MML Schema in XML Schema Definition Language (XSD)
 * [./packages/schema-validator](./packages/schema-validator) - A package for validating MML document using the MML Schema
 
@@ -77,8 +77,9 @@ The server and network components necessary to support the multi-user mode are i
 
 * Networked DOM
   * [./packages/mml-web-runner](./packages/mml-web-runner) - Web Runner (for running MML documents in a web browser rather than a server)
-  * [./packages/networked-dom-web](./packages/networked-dom-web) - Web Networked DOM Library
-  * [./packages/networked-dom-web-client](./packages/networked-dom-web-client) - Web Networked DOM Client
+  * [./packages/networked-dom-server](./packages/networked-dom-server) - Networked DOM Library for running documents on a Node.JS server
+  * [./packages/networked-dom-web](./packages/networked-dom-web) - Web Networked DOM Library (WebSocket client for Networked DOM)
+  * [./packages/networked-dom-web-client](./packages/networked-dom-web-client) - Web Networked DOM Client (Standalone script / example)
   * [./packages/networked-dom-web-runner](./packages/networked-dom-web-runner) - Web Networked DOM Runner (for running Networked DOM documents in a web browser rather than a server)
   * [./packages/networked-dom-protocol](./packages/networked-dom-protocol) - Networked DOM WebSocket Protocol TypeScript Definition
   * [./packages/observable-dom-common](./packages/observable-dom-common) - Observable DOM Common

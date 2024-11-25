@@ -91,13 +91,13 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
         r: this.label.props.fontColor.r * 255,
         g: this.label.props.fontColor.g * 255,
         b: this.label.props.fontColor.b * 255,
-        a: 1.0,
+        a: this.label.props.fontColor.a ?? 1,
       },
       backgroundColorRGB255A1: {
         r: this.label.props.color.r * 255,
         g: this.label.props.color.g * 255,
         b: this.label.props.color.b * 255,
-        a: 1.0,
+        a: this.label.props.color.a ?? 1,
       },
       dimensions: {
         width: this.label.props.width * 200,
@@ -106,14 +106,8 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
       alignment: this.label.props.alignment,
     });
 
-    const texture = new THREE.Texture(canvas);
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.format = THREE.RGBAFormat;
-    texture.needsUpdate = true;
-
-    this.material.map = texture;
-    this.material.needsUpdate = true;
+    this.material.map = new THREE.CanvasTexture(canvas);
+    this.material.transparent = (this.label.props.color.a ?? 1) < 1;
     this.updateMaterialEmissiveIntensity();
   }
 

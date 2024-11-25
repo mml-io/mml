@@ -5,7 +5,8 @@ import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 
-const lightIntensityFactor = 0.333;
+const lightIntensityFactor = 1 / 100;
+const lightLuminanceFactor = 4000;
 
 export class PlayCanvasLight extends LightGraphics<PlayCanvasGraphicsAdapter> {
   private lightComponent: playcanvas.LightComponent;
@@ -26,26 +27,30 @@ export class PlayCanvasLight extends LightGraphics<PlayCanvasGraphicsAdapter> {
     if (this.light.props.type === "spotlight") {
       this.lightComponent = lightEntity.addComponent("light", {
         type: "spot",
+        luminance: this.light.props.intensity * lightLuminanceFactor,
         intensity: this.light.props.intensity * lightIntensityFactor,
         castShadows: this.light.props.castShadows,
         color: new playcanvas.Color(r, g, b),
-        shadowBias: 0.1,
-        normalOffsetBias: 0.1,
+        shadowBias: 0.001,
+        normalOffsetBias: 0.001,
         shape: playcanvas.LIGHTSHAPE_DISK,
         innerConeAngle: this.light.props.angleDeg,
         outerConeAngle: this.light.props.angleDeg,
         range: this.light.props.distance ?? 100,
+        falloffMode: playcanvas.LIGHTFALLOFF_INVERSESQUARED,
         enabled: this.light.props.enabled,
       } as playcanvas.LightComponent) as playcanvas.LightComponent;
     } else {
       this.lightComponent = lightEntity.addComponent("light", {
         type: "point",
+        luminance: this.light.props.intensity * lightLuminanceFactor,
         intensity: this.light.props.intensity * lightIntensityFactor,
         castShadows: this.light.props.castShadows,
         color: new playcanvas.Color(r, g, b),
-        shadowBias: 0.1,
-        normalOffsetBias: 0.1,
+        shadowBias: 0.001,
+        normalOffsetBias: 0.001,
         range: this.light.props.distance ?? 100,
+        falloffMode: playcanvas.LIGHTFALLOFF_INVERSESQUARED,
         enabled: this.light.props.enabled,
       } as playcanvas.LightComponent) as playcanvas.LightComponent;
     }
@@ -74,6 +79,7 @@ export class PlayCanvasLight extends LightGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   setIntensity(intensity: number) {
+    this.lightComponent.luminance = intensity * lightLuminanceFactor;
     this.lightComponent.intensity = intensity * lightIntensityFactor;
     this.lightComponent.refreshProperties();
   }

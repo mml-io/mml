@@ -7,7 +7,7 @@ import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 
 export class PlayCanvasPlane extends PlaneGraphics<PlayCanvasGraphicsAdapter> {
   private entity: playcanvas.Entity;
-  private renderComponennt: playcanvas.RenderComponent;
+  private renderComponent: playcanvas.RenderComponent;
   private material: playcanvas.StandardMaterial = new playcanvas.StandardMaterial();
 
   constructor(private plane: Plane<PlayCanvasGraphicsAdapter>) {
@@ -22,7 +22,7 @@ export class PlayCanvasPlane extends PlaneGraphics<PlayCanvasGraphicsAdapter> {
       plane.getScene().getGraphicsAdapter().getPlayCanvasApp(),
     );
     (this.entity as any)[MELEMENT_PROPERTY_NAME] = plane;
-    this.renderComponennt = this.entity.addComponent("render", {
+    this.renderComponent = this.entity.addComponent("render", {
       type: "plane",
       material: this.material,
     }) as playcanvas.RenderComponent;
@@ -44,8 +44,6 @@ export class PlayCanvasPlane extends PlaneGraphics<PlayCanvasGraphicsAdapter> {
 
   setColor(color: MMLColor): void {
     this.material.diffuse.set(color.r, color.g, color.b);
-    this.material.metalness = 0;
-    this.material.useMetalness = true;
     this.material.update();
   }
 
@@ -68,7 +66,7 @@ export class PlayCanvasPlane extends PlaneGraphics<PlayCanvasGraphicsAdapter> {
 
   setCastShadows(castShadows: boolean): void {
     // TODO - not casting shadows?
-    this.renderComponennt.castShadows = castShadows;
+    this.renderComponent.castShadows = castShadows;
   }
 
   setOpacity(opacity: number): void {

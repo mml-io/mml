@@ -136,7 +136,7 @@ export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
       playcanvas.AnimationHandler,
     ];
     this.playcanvasApp.init(createOptions);
-
+    this.playcanvasApp.scene.physicalUnits = true;
     this.playcanvasApp.setCanvasFillMode(playcanvas.FILLMODE_NONE);
     this.playcanvasApp.setCanvasResolution(playcanvas.RESOLUTION_FIXED);
 

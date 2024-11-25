@@ -112,13 +112,13 @@ export class PlayCanvasLabel extends LabelGraphics<PlayCanvasGraphicsAdapter> {
         r: this.label.props.fontColor.r * 255,
         g: this.label.props.fontColor.g * 255,
         b: this.label.props.fontColor.b * 255,
-        a: 1.0,
+        a: this.label.props.fontColor.a ?? 1,
       },
       backgroundColorRGB255A1: {
         r: this.label.props.color.r * 255,
         g: this.label.props.color.g * 255,
         b: this.label.props.color.b * 255,
-        a: 1.0,
+        a: this.label.props.color.a ?? 1,
       },
       dimensions: {
         width: this.label.props.width * 200,
@@ -136,6 +136,13 @@ export class PlayCanvasLabel extends LabelGraphics<PlayCanvasGraphicsAdapter> {
     );
     texture.setSource(canvas);
     this.material.diffuseMap = texture;
+    if ((this.label.props.color.a ?? 1) < 1) {
+      this.material.blendType = playcanvas.BLEND_NORMAL;
+      this.material.opacityMap = texture;
+    } else {
+      this.material.blendType = playcanvas.BLEND_NONE;
+      this.material.opacityMap = null;
+    }
     this.material.update();
     this.updateMaterialEmissiveIntensity();
     texture.destroy();
