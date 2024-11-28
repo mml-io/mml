@@ -122,6 +122,13 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
     },
     {},
   ),
+  MMLLinkGraphicsInterface: TagDebugAdapterElement(
+    {
+      setHref: "href",
+      setTarget: "target",
+    },
+    {},
+  ),
   MMLModelGraphicsInterface: TagDebugAdapterElement(
     {
       setSrc: "src",
