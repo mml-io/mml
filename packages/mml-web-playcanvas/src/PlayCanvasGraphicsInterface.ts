@@ -18,6 +18,7 @@ export const PlayCanvasGraphicsInterface: MMLGraphicsInterface<PlayCanvasGraphic
     new PlayCanvasElements.PlayCanvasInteraction(element),
   MMLLabelGraphicsInterface: (element) => new PlayCanvasElements.PlayCanvasLabel(element),
   MMLLightGraphicsInterface: (element) => new PlayCanvasElements.PlayCanvasLight(element),
+  MMLLinkGraphicsInterface: (element) => new PlayCanvasElements.PlayCanvasLink(element),
   MMLModelGraphicsInterface: (element, updateMeshCallback: () => void) =>
     new PlayCanvasElements.PlayCanvasModel(element, updateMeshCallback),
   MMLPlaneGraphicsInterface: (element) => new PlayCanvasElements.PlayCanvasPlane(element),

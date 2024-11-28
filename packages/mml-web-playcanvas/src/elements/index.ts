@@ -8,6 +8,7 @@ export * from "./PlayCanvasImage";
 export * from "./PlayCanvasInteraction";
 export * from "./PlayCanvasLabel";
 export * from "./PlayCanvasLight";
+export * from "./PlayCanvasLink";
 export * from "./PlayCanvasMElement";
 export * from "./PlayCanvasModel";
 export * from "./PlayCanvasPlane";

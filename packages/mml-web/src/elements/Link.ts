@@ -1,24 +1,31 @@
 import { AttributeHandler } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
-import { GraphicsAdapter } from "../graphics";
+import { GraphicsAdapter, LinkGraphics } from "../graphics";
 import { TransformableElement } from "./TransformableElement";
+
+export type MLinkProps = {
+  href: string | null;
+  target: string | null;
+};
 
 export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-link";
+  private linkGraphics: LinkGraphics<G> | null;
 
   private abortController: AbortController | null = null;
 
-  private props = {
-    href: undefined as string | undefined,
-    target: undefined as string | undefined,
+  public props: MLinkProps = {
+    href: null,
+    target: null,
   };
 
   private static attributeHandler = new AttributeHandler<Link<GraphicsAdapter>>({
     href: (instance, newValue) => {
-      instance.props.href = newValue !== null ? newValue : undefined;
+      console.log("Setting href", newValue);
+      instance.props.href = newValue !== null ? newValue : null;
     },
     target: (instance, newValue) => {
-      instance.props.target = newValue !== null ? newValue : undefined;
+      instance.props.target = newValue !== null ? newValue : null;
     },
   });
 
@@ -42,6 +49,7 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
     super();
 
     this.addEventListener("click", () => {
+      console.log("Link clicked", this.props.href);
       if (this.props.href) {
         const href = this.props.href;
         if (!Link.isAcceptableHref(href)) {
@@ -56,8 +64,9 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
           this.abortController = null;
         }
         this.abortController = new AbortController();
+        console.log("Navigating to", href);
         this.getScene().link(
-          { href, target: this.props.target, popup: false },
+          { href, target: this.props.target ?? undefined, popup: false },
           this.abortController.signal,
           () => {
             this.abortController = null;
@@ -75,7 +84,7 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     if (!this.transformableElementGraphics) {
       return;
     }
@@ -93,5 +102,29 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
 
   public getContentBounds(): OrientedBoundingBox | null {
     return null;
+  }
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+
+    if (!this.getScene().hasGraphicsAdapter() || this.linkGraphics) {
+      return;
+    }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+
+    this.linkGraphics = graphicsAdapter.getGraphicsAdapterFactory().MMLLinkGraphicsInterface(this);
+
+    for (const name of Link.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+  }
+
+  public disconnectedCallback(): void {
+    this.linkGraphics?.dispose();
+    this.linkGraphics = null;
+    super.disconnectedCallback();
   }
 }

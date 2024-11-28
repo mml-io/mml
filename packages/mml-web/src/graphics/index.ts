@@ -9,6 +9,7 @@ export * from "./ImageGraphics";
 export * from "./InteractionGraphics";
 export * from "./LabelGraphics";
 export * from "./LightGraphics";
+export * from "./LinkGraphics";
 export * from "./MElementGraphics";
 export * from "./ModelGraphics";
 export * from "./PlaneGraphics";

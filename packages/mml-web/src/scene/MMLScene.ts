@@ -9,6 +9,7 @@ import {
   Interaction,
   Label,
   Light,
+  Link,
   MElement,
   Model,
   Plane,
@@ -30,6 +31,7 @@ import {
   InteractionGraphics,
   LabelGraphics,
   LightGraphics,
+  LinkGraphics,
   MElementGraphics,
   ModelGraphics,
   PlaneGraphics,
@@ -61,6 +63,7 @@ export interface MMLGraphicsInterface<C extends GraphicsAdapter> {
   MMLAudioGraphicsInterface: (element: Audio<C>) => AudioGraphics<C>;
   MMLCubeGraphicsInterface: (element: Cube<C>) => CubeGraphics<C>;
   MMLLabelGraphicsInterface: (element: Label<C>) => LabelGraphics<C>;
+  MMLLinkGraphicsInterface: (element: Link<C>) => LinkGraphics<C>;
   MMLPlaneGraphicsInterface: (element: Plane<C>) => PlaneGraphics<C>;
   MMLPromptGraphicsInterface: (element: Prompt<C>) => PromptGraphics<C>;
   MMLInteractionGraphicsInterface: (element: Interaction<C>) => InteractionGraphics<C>;
