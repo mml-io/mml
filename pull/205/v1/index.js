@@ -283,7 +283,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-CW2XLO3N.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-NSYWTFOA.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -425,7 +425,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-JKTCJAJ5.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-KWFBG2JH.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
