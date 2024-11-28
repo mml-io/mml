@@ -159,6 +159,7 @@ export class PlayCanvasModeInternal {
       lighting.destroy();
       playcanvasScene.envAtlas = envAtlas;
       playcanvasScene.skybox = skybox;
+      playcanvasScene.skyboxLuminance = 50000;
     };
 
     if (envMapAsset.loaded) {
@@ -186,11 +187,11 @@ export class PlayCanvasModeInternal {
         g: 1,
         b: 1,
       });
-      playcanvasScene.ambientLuminance = ambientLightIntensity;
+      playcanvasScene.ambientLuminance = ambientLightIntensity * 20;
       playcanvasScene.ambientLight = new playcanvas.Color(
-        color.r * ambientLightIntensity,
-        color.g * ambientLightIntensity,
-        color.b * ambientLightIntensity,
+        color.r * ambientLightIntensity * 20,
+        color.g * ambientLightIntensity * 20,
+        color.b * ambientLightIntensity * 20,
       );
     }
   }
