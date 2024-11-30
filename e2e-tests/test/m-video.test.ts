@@ -21,6 +21,9 @@ describe("m-video", () => {
 
     await setDocumentTime(page, 10000);
 
+    // Allow time for the next frame to render
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     await takeAndCompareScreenshot(page, 0.02);
 
     await page.close();
