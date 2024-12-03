@@ -3,7 +3,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@mml-io/mml-web-threejs-standalone.svg?style=flat)](https://www.npmjs.com/package/@mml-io/mml-web-threejs-standalone)
 
-This package contains a class, `ModelLoader`, that supports loading
+This package contains a class, `StandaloneThreeJSAdapter`, that is a ThreeJS-backed Graphics Adapter implementation for `@mml-io/mml-web` that creates:
 * A ThreeJS App instance
 * Orbit and drag-fly controls
 * A factory for MML element graphics instances from the `@mml-io/mml-web-threejs` package.
