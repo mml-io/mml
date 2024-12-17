@@ -12,6 +12,7 @@ import { ThreeJSModel } from "./ThreeJSModel";
 
 export class ThreeJSTransformable extends TransformableGraphics<ThreeJSGraphicsAdapter> {
   private socketName: string | null = null;
+  private registeredSocketParent: ThreeJSModel | null = null;
 
   constructor(private transformableElement: TransformableElement<ThreeJSGraphicsAdapter>) {
     super(transformableElement);
@@ -30,8 +31,11 @@ export class ThreeJSTransformable extends TransformableGraphics<ThreeJSGraphicsA
 
   setSocket(socketName: string | null): void {
     if (this.socketName !== socketName) {
-      if (this.socketName !== null) {
-        this.unregisterFromParentModel(this.socketName);
+      if (this.socketName !== null && this.registeredSocketParent) {
+        this.registeredSocketParent.unregisterSocketChild(
+          this.transformableElement,
+          this.socketName,
+        );
       }
       this.socketName = socketName;
       if (socketName !== null) {
@@ -48,23 +52,8 @@ export class ThreeJSTransformable extends TransformableGraphics<ThreeJSGraphicsA
         ?.isModel
     ) {
       const parentModel = this.transformableElement.parentElement as Model<ThreeJSGraphicsAdapter>;
-      (parentModel.modelGraphics as ThreeJSModel).registerSocketChild(
-        this.transformableElement,
-        socketName,
-      );
-    }
-  }
-
-  private unregisterFromParentModel(socketName: string): void {
-    if (
-      (this.transformableElement.parentElement as Model<ThreeJSGraphicsAdapter> | undefined)
-        ?.isModel
-    ) {
-      const parentModel = this.transformableElement.parentElement as Model<ThreeJSGraphicsAdapter>;
-      (parentModel.modelGraphics as ThreeJSModel).unregisterSocketChild(
-        this.transformableElement,
-        socketName,
-      );
+      this.registeredSocketParent = parentModel.modelGraphics as ThreeJSModel;
+      this.registeredSocketParent.registerSocketChild(this.transformableElement, socketName);
     }
   }
 
@@ -108,5 +97,13 @@ export class ThreeJSTransformable extends TransformableGraphics<ThreeJSGraphicsA
     this.getContainer().scale.z = scaleZ;
   }
 
-  dispose() {}
+  dispose() {
+    if (this.socketName && this.registeredSocketParent !== null) {
+      this.registeredSocketParent.unregisterSocketChild(
+        this.transformableElement,
+        this.socketName,
+        false,
+      );
+    }
+  }
 }

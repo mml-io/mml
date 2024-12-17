@@ -201,11 +201,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
     if (!src) {
       this.srcLoadingInstanceManager.abortIfLoading();
-      // this.socketChildrenByBone.forEach((children) => {
-      //   children.forEach((child) => {
-      //     this.getContainer().addChild(child.getContainer());
-      //   });
-      // });
+      this.socketChildrenByBone.forEach((children) => {
+        children.forEach((child) => {
+          this.model.getContainer().add(child.getContainer());
+        });
+      });
       this.updateMeshCallback();
       this.updateDebugVisualisation();
       return;
@@ -274,7 +274,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         if (this.animState) {
           this.playAnimation(this.animState.currentAnimationClip);
         }
-        this.onModelLoadComplete();
         this.srcLoadingInstanceManager.finish();
 
         this.updateDebugVisualisation();
@@ -353,14 +352,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     return await ThreeJSModel.modelLoader.load(url, onProgress);
   }
 
-  private onModelLoadComplete(): void {
-    // this.socketChildrenByBone.forEach((children, boneName) => {
-    //   children.forEach((child) => {
-    //     this.registerSocketChild(child as TransformableElement, boneName);
-    //   });
-    // });
-  }
-
   private resetAnimationMixer() {
     if (this.documentTimeTickListener) {
       this.documentTimeTickListener.remove();
@@ -399,11 +390,14 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   public unregisterSocketChild(
     child: TransformableElement<ThreeJSGraphicsAdapter>,
     socketName: string,
+    addToRoot: boolean = true,
   ): void {
     const socketChildren = this.socketChildrenByBone.get(socketName);
     if (socketChildren) {
       socketChildren.delete(child);
-      this.model.getContainer().add(child.getContainer());
+      if (addToRoot) {
+        this.model.getContainer().add(child.getContainer());
+      }
       if (socketChildren.size === 0) {
         this.socketChildrenByBone.delete(socketName);
       }

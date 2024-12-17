@@ -35,6 +35,7 @@ function xyzDegreesToQuaternion(x: number, y: number, z: number): [number, numbe
 
 export class PlayCanvasTransformable extends TransformableGraphics<PlayCanvasGraphicsAdapter> {
   private socketName: string | null = null;
+  private registeredSocketParent: PlayCanvasModel | null = null;
 
   constructor(private transformableElement: TransformableElement<PlayCanvasGraphicsAdapter>) {
     super(transformableElement);
@@ -46,8 +47,11 @@ export class PlayCanvasTransformable extends TransformableGraphics<PlayCanvasGra
 
   setSocket(socketName: string | null): void {
     if (this.socketName !== socketName) {
-      if (this.socketName !== null) {
-        this.unregisterFromParentModel(this.socketName);
+      if (this.socketName !== null && this.registeredSocketParent) {
+        this.registeredSocketParent.unregisterSocketChild(
+          this.transformableElement,
+          this.socketName,
+        );
       }
       this.socketName = socketName;
       if (socketName !== null) {
@@ -65,24 +69,8 @@ export class PlayCanvasTransformable extends TransformableGraphics<PlayCanvasGra
     ) {
       const parentModel = this.transformableElement
         .parentElement as Model<PlayCanvasGraphicsAdapter>;
-      (parentModel.modelGraphics as PlayCanvasModel).registerSocketChild(
-        this.transformableElement,
-        socketName,
-      );
-    }
-  }
-
-  private unregisterFromParentModel(socketName: string): void {
-    if (
-      (this.transformableElement.parentElement as Model<PlayCanvasGraphicsAdapter> | undefined)
-        ?.isModel
-    ) {
-      const parentModel = this.transformableElement
-        .parentElement as Model<PlayCanvasGraphicsAdapter>;
-      (parentModel.modelGraphics as PlayCanvasModel).unregisterSocketChild(
-        this.transformableElement,
-        socketName,
-      );
+      this.registeredSocketParent = parentModel.modelGraphics as PlayCanvasModel;
+      this.registeredSocketParent.registerSocketChild(this.transformableElement, socketName);
     }
   }
 
@@ -178,5 +166,13 @@ export class PlayCanvasTransformable extends TransformableGraphics<PlayCanvasGra
     );
   }
 
-  dispose() {}
+  dispose() {
+    if (this.socketName && this.registeredSocketParent !== null) {
+      this.registeredSocketParent.unregisterSocketChild(
+        this.transformableElement,
+        this.socketName,
+        false,
+      );
+    }
+  }
 }

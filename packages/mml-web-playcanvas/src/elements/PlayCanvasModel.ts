@@ -233,11 +233,14 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   public unregisterSocketChild(
     child: TransformableElement<PlayCanvasGraphicsAdapter>,
     socketName: string,
+    addToRoot: boolean = true,
   ): void {
     const socketChildren = this.socketChildrenByBone.get(socketName);
     if (socketChildren) {
       socketChildren.delete(child);
-      this.model.getContainer().addChild(child.getContainer());
+      if (addToRoot) {
+        this.model.getContainer().addChild(child.getContainer());
+      }
       if (socketChildren.size === 0) {
         this.socketChildrenByBone.delete(socketName);
       }
@@ -314,6 +317,11 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     }
     if (!src) {
       this.srcLoadingInstanceManager.abortIfLoading();
+      this.socketChildrenByBone.forEach((children) => {
+        children.forEach((child) => {
+          this.model.getContainer().addChild(child.getContainer());
+        });
+      });
       this.updateMeshCallback();
       this.updateDebugVisualisation();
       return;
@@ -394,7 +402,6 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
           }
         }
 
-        this.onModelLoadComplete();
         this.srcLoadingInstanceManager.finish();
 
         this.updateDebugVisualisation();
@@ -487,14 +494,6 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     });
   }
 
-  private onModelLoadComplete(): void {
-    // this.socketChildrenByBone.forEach((children, boneName) => {
-    //   children.forEach((child) => {
-    //     this.registerSocketChild(child as TransformableElement, boneName);
-    //   });
-    // });
-  }
-
   dispose() {
     if (this.documentTimeTickListener) {
       this.documentTimeTickListener.remove();
@@ -527,44 +526,41 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   private updateAnimation(docTimeMs: number) {
-    if (this.loadedState) {
-      const animComponent = this.animState?.animComponent;
-      if (animComponent) {
-        if (!this.model.props.animEnabled) {
-          animComponent.playing = false;
-          this.triggerSocketedChildrenTransformed();
-        } else {
-          let animationTimeMs = docTimeMs - this.model.props.animStartTime;
-          if (docTimeMs < this.model.props.animStartTime) {
-            animationTimeMs = 0;
-          } else if (this.model.props.animPauseTime !== null) {
-            if (docTimeMs > this.model.props.animPauseTime) {
-              animationTimeMs = this.model.props.animPauseTime - this.model.props.animStartTime;
-            }
-          }
+    let animationTimeMs = docTimeMs - this.model.props.animStartTime;
+    if (docTimeMs < this.model.props.animStartTime) {
+      animationTimeMs = 0;
+    } else if (this.model.props.animPauseTime !== null) {
+      if (docTimeMs > this.model.props.animPauseTime) {
+        animationTimeMs = this.model.props.animPauseTime - this.model.props.animStartTime;
+      }
+    }
 
-          animComponent.playing = true;
-          // @ts-expect-error - accessing _controller private property
-          const clip = animComponent.baseLayer._controller._animEvaluator.clips[0];
-          if (clip) {
-            clip.time = animationTimeMs / 1000;
-          }
-
-          for (const [model, animState] of this.attachments) {
-            if (animState) {
-              animState.animComponent.playing = animComponent.playing;
-              // @ts-expect-error - accessing _controller private property
-              const clip = animState.animComponent.baseLayer._controller._animEvaluator.clips[0];
-              if (clip) {
-                clip.time = animationTimeMs / 1000;
-                (model.modelGraphics as PlayCanvasModel).triggerSocketedChildrenTransformed();
-              }
-            }
-          }
-
-          this.triggerSocketedChildrenTransformed();
+    const animComponent = this.animState?.animComponent;
+    if (animComponent) {
+      if (!this.model.props.animEnabled) {
+        animComponent.playing = false;
+        this.triggerSocketedChildrenTransformed();
+      } else {
+        animComponent.playing = true;
+        // @ts-expect-error - accessing _controller private property
+        const clip = animComponent.baseLayer._controller._animEvaluator.clips[0];
+        if (clip) {
+          clip.time = animationTimeMs / 1000;
         }
       }
     }
+
+    for (const [model, animState] of this.attachments) {
+      if (animState) {
+        animState.animComponent.playing = this.model.props.animEnabled;
+        // @ts-expect-error - accessing _controller private property
+        const clip = animState.animComponent.baseLayer._controller._animEvaluator.clips[0];
+        if (clip) {
+          clip.time = animationTimeMs / 1000;
+          (model.modelGraphics as PlayCanvasModel).triggerSocketedChildrenTransformed();
+        }
+      }
+    }
+    this.triggerSocketedChildrenTransformed();
   }
 }
