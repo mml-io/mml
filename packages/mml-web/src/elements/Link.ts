@@ -21,7 +21,6 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
 
   private static attributeHandler = new AttributeHandler<Link<GraphicsAdapter>>({
     href: (instance, newValue) => {
-      console.log("Setting href", newValue);
       instance.props.href = newValue !== null ? newValue : null;
     },
     target: (instance, newValue) => {
@@ -49,7 +48,6 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
     super();
 
     this.addEventListener("click", () => {
-      console.log("Link clicked", this.props.href);
       if (this.props.href) {
         const href = this.props.href;
         if (!Link.isAcceptableHref(href)) {
@@ -64,7 +62,6 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
           this.abortController = null;
         }
         this.abortController = new AbortController();
-        console.log("Navigating to", href);
         this.getScene().link(
           { href, target: this.props.target ?? undefined, popup: false },
           this.abortController.signal,

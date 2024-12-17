@@ -134,7 +134,6 @@ export class NetworkedDOMWebsocket {
             console.warn("Ignoring websocket close event because it is no longer current");
             return;
           }
-          console.log("NetworkedDOMWebsocket close", e);
           onWebsocketClose();
         });
         websocket.addEventListener("error", (e) => {
@@ -242,10 +241,6 @@ export class NetworkedDOMWebsocket {
     if (nodeId === undefined || nodeId === null) {
       throw new Error("Element not found");
     }
-
-    console.log(
-      `Sending event to websocket: "${event.type}" on node: ${nodeId} type: ${element.tagName}`,
-    );
 
     const detailWithoutElement: Partial<typeof event.detail> = {
       ...event.detail,
