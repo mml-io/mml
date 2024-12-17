@@ -13,6 +13,7 @@ if (process.env.HEADLESS === "true") {
 
 module.exports = async function () {
   const browser = await puppeteer.launch({
+    args: ["--no-sandbox"],
     headless: headless ? "shell" : false,
   });
   // store the browser instance so we can teardown it later

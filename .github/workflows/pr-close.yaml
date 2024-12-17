@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   delete_preview:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       PR_PATH: pull/${{github.event.number}}
     steps:
