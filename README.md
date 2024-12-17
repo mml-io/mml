@@ -73,14 +73,14 @@ MML can be used in a web browser to create 3D web experiences. Networking is opt
 * [./packages/mml-web](./packages/mml-web) - `@mml-io/mml-web` - MML Library that handles MML elements and attributes
 * [./packages/mml-web-client](./packages/mml-web-client) - `@mml-io/mml-web-client` - Web MML Client (standalone script / example)
 * [./packages/mml-web-threejs](./packages/mml-web-threejs) - `@mml-io/mml-web-threejs` - Graphics Adapter for MML to THREE.js
-* [./packages/mml-web-threejs-standalone](./packages/mml-web-threejs-standalone) - `@mml-io/mml-web-threejs-standalone` - Three.js app for viewing MML documents in a web browser
+* [./packages/mml-web-threejs-standalone](./packages/mml-web-threejs-standalone) - `@mml-io/mml-web-threejs-standalone` - THREE.js app for viewing MML documents in a web browser
 * [./packages/mml-web-playcanvas](./packages/mml-web-playcanvas) - `@mml-io/mml-web-playcanvas` - Graphics Adapter for MML to PlayCanvas
 * [./packages/mml-web-playcanvas-standalone](./packages/mml-web-playcanvas-standalone) - `@mml-io/mml-web-playcanvas-standalone` - PlayCanvas app for viewing MML documents in a web browser
 
 ## Networking (Networked DOM)
 MML is based on a set of libraries (built expressly for MML) called "Networked DOM".
 
-Networked DOM allows running a HTML document including script tags on a server and exposed via a websocket which allows multiple users to interact with the same instance of the document at the same time.
+Networked DOM allows running a HTML document including script tags on a server and exposing it via a websocket which allows multiple users to interact with the same instance of the document at the same time.
 
 The server and network components necessary to support the multi-user mode are independent of the MML additions to HTML (and can be used with regular 2D HTML).
 
@@ -97,6 +97,8 @@ The server and network components necessary to support the multi-user mode are i
 
 ## MML Viewer
 MML Viewer is a standalone app that can be used to view MML documents in a web browser.
+
+It is available at [https://viewer.mml.io/main/v1/](https://viewer.mml.io/main/v1/).
 
 * [./packages/mml-viewer](./packages/mml-viewer) - `@mml-io/mml-viewer` - MML Viewer
 

@@ -10,3 +10,7 @@ It is intended to be used with the following packages:
   * provides the MML element handling and parsing
 * `@mml-io/mml-web-playcanvas-standalone`
   * creates a standalone PlayCanvas client for rendering MML elements on a webpage
+
+## Known Issues / Limitations
+* [ ] `m-audio` directional audio
+* [ ] `m-audio` `loop-duration` attribute
