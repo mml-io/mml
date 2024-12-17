@@ -28,8 +28,36 @@
 }
 
 .header {
+  padding: 8px 8px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
   font-size: 20px;
-  padding: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 30px;
+  margin-right: 5px;
+}
+
+.github-link {
+  font-size: 11px;
+  color: white;
+  flex-direction: column;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.github-logo {
+  height: 30px;
+  width: 30px;
 }
 
 .contents {

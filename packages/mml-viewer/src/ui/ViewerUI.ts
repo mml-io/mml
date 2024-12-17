@@ -1,4 +1,6 @@
+import MMLLogoSVG from "../../../../branding/src/svg/logotype/mml-logotype-white.svg";
 import { allGroups } from "./fields";
+import GitHubLogoSVG from "./github-mark-white.svg";
 import { HideUISection } from "./HideUISection";
 import { UIGroup } from "./UIGroup";
 import { UnusedParameters } from "./UnusedParameters";
@@ -28,7 +30,37 @@ export class ViewerUI {
 
     this.header = document.createElement("div");
     this.header.className = styles.header;
-    this.header.textContent = "MML Viewer (Alpha)";
+
+    const title = document.createElement("div");
+    title.className = styles.title;
+    const logoLink = document.createElement("a");
+    logoLink.target = "_blank";
+    logoLink.href = "https://mml.io";
+    const logo = document.createElement("img");
+    logo.classList.add(styles.logo);
+    logo.src = MMLLogoSVG;
+    logo.alt = "MML";
+    logoLink.append(logo);
+    title.append(logoLink);
+    const span = document.createElement("span");
+    span.textContent = " Viewer (Alpha)";
+    title.append(span);
+    this.header.append(title);
+
+    const githubLink = document.createElement("a");
+    githubLink.target = "_blank";
+    githubLink.className = styles.githubLink;
+    githubLink.href = "https://github.com/mml-io/mml/tree/main/packages/mml-viewer";
+    const githubLogo = document.createElement("img");
+    githubLogo.classList.add(styles.githubLogo);
+    githubLogo.src = GitHubLogoSVG;
+    githubLogo.alt = "GitHub";
+    githubLink.append(githubLogo);
+    const githubSpan = document.createElement("span");
+    githubSpan.textContent = "View Source";
+    githubLink.append(githubSpan);
+    this.header.append(githubLink);
+
     this.contents.append(this.header);
 
     this.groupHolder = document.createElement("div");
