@@ -129,7 +129,7 @@ export class NetworkedDOMWebsocket {
           this.startWebSocketConnectionAttempt();
         };
 
-        websocket.addEventListener("close", (e) => {
+        websocket.addEventListener("close", () => {
           if (websocket !== this.websocket) {
             console.warn("Ignoring websocket close event because it is no longer current");
             return;
