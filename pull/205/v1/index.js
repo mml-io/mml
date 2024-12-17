@@ -12,7 +12,7 @@ import {
   rendererField,
   setDebugGlobals,
   urlField
-} from "./chunk-JSPFOSGY.js";
+} from "./chunk-IQY6AKGZ.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -283,7 +283,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-J7GHAF4Y.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-ZSX2XQNA.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -425,7 +425,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-UOFTF7WW.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-7NMXLZRP.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -452,6 +452,12 @@ var ThreeJSMode = class {
     this.internalMode.update(formIteration);
   }
 };
+
+// ../../branding/src/svg/logotype/mml-logotype-white.svg
+var mml_logotype_white_default = "./mml-logotype-white-YIZ3ZTFD.svg";
+
+// src/ui/github-mark-white.svg
+var github_mark_white_default = "./github-mark-white-DC6LPEI2.svg";
 
 // src/ui/HideUISection.module.css
 var HideUISection_default = {
@@ -568,8 +574,12 @@ var UnusedParameters = class {
 var ViewerUI_default = {
   "contents": "ViewerUI-module__contents_ne7v1W__0181",
   "emptyState": "ViewerUI-module__empty-state_ne7v1W__0181",
+  "githubLink": "ViewerUI-module__github-link_ne7v1W__0181",
+  "githubLogo": "ViewerUI-module__github-logo_ne7v1W__0181",
   "header": "ViewerUI-module__header_ne7v1W__0181",
+  "logo": "ViewerUI-module__logo_ne7v1W__0181",
   "menuButton": "ViewerUI-module__menu-button_ne7v1W__0181",
+  "title": "ViewerUI-module__title_ne7v1W__0181",
   "viewerUi": "ViewerUI-module__viewer-ui_ne7v1W__0181"
 };
 
@@ -587,7 +597,34 @@ var ViewerUI = class {
     this.element.append(this.contents);
     this.header = document.createElement("div");
     this.header.className = ViewerUI_default.header;
-    this.header.textContent = "MML Viewer (Alpha)";
+    const title = document.createElement("div");
+    title.className = ViewerUI_default.title;
+    const logoLink = document.createElement("a");
+    logoLink.target = "_blank";
+    logoLink.href = "https://mml.io";
+    const logo = document.createElement("img");
+    logo.classList.add(ViewerUI_default.logo);
+    logo.src = mml_logotype_white_default;
+    logo.alt = "MML";
+    logoLink.append(logo);
+    title.append(logoLink);
+    const span = document.createElement("span");
+    span.textContent = " Viewer (Alpha)";
+    title.append(span);
+    this.header.append(title);
+    const githubLink = document.createElement("a");
+    githubLink.target = "_blank";
+    githubLink.className = ViewerUI_default.githubLink;
+    githubLink.href = "https://github.com/mml-io/mml/tree/main/packages/mml-viewer";
+    const githubLogo = document.createElement("img");
+    githubLogo.classList.add(ViewerUI_default.githubLogo);
+    githubLogo.src = github_mark_white_default;
+    githubLogo.alt = "GitHub";
+    githubLink.append(githubLogo);
+    const githubSpan = document.createElement("span");
+    githubSpan.textContent = "View Source";
+    githubLink.append(githubSpan);
+    this.header.append(githubLink);
     this.contents.append(this.header);
     this.groupHolder = document.createElement("div");
     this.contents.append(this.groupHolder);
