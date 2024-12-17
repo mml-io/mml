@@ -1,41 +1,12 @@
-<m-group>
+<m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
+<m-light type="spotlight" intensity="900" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+<m-cube y="2" id="my-cube" color="red"></m-cube>
 
-  <m-image y="2.5" z="-0.99" src="https://public.mml.io/test-image.jpg"></m-image>
-
-  <m-group>
-    <m-attr-anim attr="ry" start="360" end="0" duration="10000"></m-attr-anim>
-
-    <m-cylinder x="0.9" height="2" y="2.1" radius="0.02"></m-cylinder>
-
-    <m-cylinder height="0.05" y="1.075" radius="0.75"></m-cylinder>
-    <m-cube x="0.85" height="0.05" width="0.25" depth="0.15" y="1.075"></m-cube>
-
-    <m-cylinder x="0.8" height="0.1" y="3.05" radius="0.02"></m-cylinder>
-    <m-cube x="0.85" height="0.025" width="0.15" depth="0.05" y="3.1"></m-cube>
-
-    <m-sphere x="0.8" y="3" cast-shadows="false" radius="0.05" color="yellow"></m-sphere>
-    <m-light x="0.8" y="3" type="point" intensity="5"></m-light>
-  </m-group>
-
-  <m-group y="3" ry="30"></m-group>
-
-  <m-cube y="1" width="2" depth="2" height="0.1" color="#999"></m-cube>
-  <m-cube z="-1.05" y="2" width="2" depth="0.1" height="2.1" color="#999"></m-cube>
-
-  <m-cylinder height="0.05" y="1.125" radius="0.75" color="#282">
-    <m-attr-anim attr="ry" start="0" end="360" duration="10000"></m-attr-anim>
-
-    <!-- Battle Damaged Sci-fi Helmet - PBR by theblueturtle_ https://sketchfab.com/models/b81008d513954189a063ff901f7abfe4 -->
-    <m-model x="0.35" y="0.3" src="https://public.mml.io/damaged-helmet.glb" sx="0.3" sy="0.3" sz="0.3"></m-model>
-
-    <m-cylinder x="-0.35" height="0.1" radius="0.25" color="#A22">
-      <m-attr-anim attr="ry" start="0" end="360" duration="10000"></m-attr-anim>
-      <m-attr-anim attr="height" easing="easeInOutCubic" start="0.1" end="1" duration="20000" ping-pong="true"></m-attr-anim>
-      <m-attr-anim attr="y" easing="easeInOutCubic" start="0.1" end="0.5" duration="20000" ping-pong="true"></m-attr-anim>
-
-      <m-model id="duck" src="https://public.mml.io/duck.glb" sx="0.3" sy="0.3" sz="0.3">
-        <m-attr-anim attr="y" easing="easeInOutCubic" start="0" end="0.45" duration="20000" ping-pong="true"></m-attr-anim>
-      </m-model>
-    </m-cylinder>
-  </m-cylinder>
-</m-group>
+<script>
+  let toggle = false;
+  const myCube = document.getElementById("my-cube");
+  myCube.addEventListener("click", () => {
+    toggle = !toggle;
+    myCube.setAttribute("color", toggle ? "green" : "red");
+  });
+</script>
