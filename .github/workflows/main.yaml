@@ -123,6 +123,28 @@ jobs:
           echo "Lint: ${{ needs.lint.result }}"
           echo "End-to-end Test: ${{ needs.e2e-test.result }}"
 
+  publish-gh-pages:
+    name: Publish GitHub Pages
+    needs: [summary]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+          persist-credentials: false
+
+      - name: "Retrieve Dependencies and Build Artifacts"
+        id: retrieve-deps-and-build
+        uses: ./.github/actions/retrieve-deps-and-build
+
+      - name: Deploy the build to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./github-pages-publisher/build
+          destination_dir: main
+
   publish-experimental-packages:
     name: Publish Experimental Packages
     environment: experimental-package-release
