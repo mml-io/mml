@@ -122,7 +122,9 @@ export class ThreeJSVideo extends VideoGraphics<ThreeJSGraphicsAdapter> {
   }
 
   public setVolume(): void {
-    this.updateVideo();
+    if (this.loadedVideoState) {
+      this.loadedVideoState.audio.setVolume(this.video.props.volume);
+    }
   }
 
   public setEmissive(): void {

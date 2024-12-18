@@ -30,6 +30,7 @@ export class PlayCanvasVideo extends VideoGraphics<PlayCanvasGraphicsAdapter> {
     videoLoadEventCollection: EventHandlerCollection;
     videoTexture: playcanvas.Texture | null;
     audio: {
+      gainNode: GainNode;
       audioNode: AudioNode;
       panner: PannerNode;
     } | null;
@@ -153,7 +154,9 @@ export class PlayCanvasVideo extends VideoGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   public setVolume(): void {
-    this.updateVideo();
+    if (this.loadedVideoState?.audio) {
+      this.loadedVideoState.audio.gainNode.gain.value = this.video.props.volume;
+    }
   }
 
   public setEmissive(): void {
@@ -257,6 +260,7 @@ export class PlayCanvasVideo extends VideoGraphics<PlayCanvasGraphicsAdapter> {
           });
 
           const gainNode = audioContext.createGain();
+          gainNode.gain.value = this.video.props.volume;
           const stereoPanner = new StereoPannerNode(audioContext, { pan: 0 });
           const audioNode = audioContext.createMediaElementSource(video);
           audioNode
@@ -264,7 +268,8 @@ export class PlayCanvasVideo extends VideoGraphics<PlayCanvasGraphicsAdapter> {
             .connect(stereoPanner)
             .connect(panner)
             .connect(audioContext.destination);
-          this.loadedVideoState.audio = { audioNode, panner };
+
+          this.loadedVideoState.audio = { gainNode, audioNode, panner };
         });
       }
     }
