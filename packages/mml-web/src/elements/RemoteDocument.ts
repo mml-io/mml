@@ -1,19 +1,30 @@
-import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
-import { IMMLScene } from "../MMLScene";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
-import { MElement } from "./MElement";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter } from "../graphics";
+import { RemoteDocumentGraphics } from "../graphics";
+import { IMMLScene } from "../scene";
+import { MMLDocumentTimeManager } from "../time";
+import { consumeEventEventName, MElement } from "./MElement";
 
-export class RemoteDocument extends MElement {
+export class RemoteDocument<G extends GraphicsAdapter = GraphicsAdapter> extends MElement<G> {
   static tagName = "m-remote-document";
 
-  private scene: IMMLScene | null = null;
+  private scene: IMMLScene<G> | null = null;
   private documentAddress: string | null = null;
   private documentTimeManager: MMLDocumentTimeManager;
   private animationFrameCallback: number | null = null;
+  private remoteDocumentGraphics: RemoteDocumentGraphics<G> | null;
 
   constructor() {
     super();
     this.documentTimeManager = new MMLDocumentTimeManager();
+
+    this.addEventListener(consumeEventEventName, (wrappedEvent: CustomEvent) => {
+      wrappedEvent.stopPropagation();
+    });
+  }
+
+  public showError(showError: boolean) {
+    this.remoteDocumentGraphics?.showError(showError);
   }
 
   protected enable() {
@@ -24,7 +35,7 @@ export class RemoteDocument extends MElement {
     // no-op
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
+  public getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 
@@ -36,19 +47,42 @@ export class RemoteDocument extends MElement {
     return false;
   }
 
-  getDocumentTimeManager(): MMLDocumentTimeManager {
+  public getDocumentTimeManager(): MMLDocumentTimeManager {
     return this.documentTimeManager;
   }
 
-  connectedCallback() {
+  public connectedCallback(): void {
     this.style.display = "none";
+    if (!this.isConnected) {
+      return;
+    }
+
+    super.connectedCallback();
+
+    if (!this.getScene().hasGraphicsAdapter() || this.remoteDocumentGraphics) {
+      return;
+    }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+
+    this.remoteDocumentGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .RemoteDocumentGraphicsInterface(this);
     this.animationFrameCallback = window.requestAnimationFrame(() => {
       this.tick();
     });
-    super.connectedCallback();
   }
 
-  dispatchEvent(event: CustomEvent): boolean {
+  public disconnectedCallback() {
+    if (this.animationFrameCallback) {
+      window.cancelAnimationFrame(this.animationFrameCallback);
+      this.animationFrameCallback = null;
+    }
+    this.remoteDocumentGraphics?.dispose();
+    this.remoteDocumentGraphics = null;
+    super.disconnectedCallback();
+  }
+
+  public dispatchEvent(event: CustomEvent): boolean {
     if (this.contains(event.detail.element)) {
       return HTMLElement.prototype.dispatchEvent.call(this, event);
     } else {
@@ -56,30 +90,22 @@ export class RemoteDocument extends MElement {
     }
   }
 
-  disconnectedCallback() {
-    if (this.animationFrameCallback) {
-      window.cancelAnimationFrame(this.animationFrameCallback);
-      this.animationFrameCallback = null;
-    }
-    super.disconnectedCallback();
-  }
-
-  init(mmlScene: IMMLScene, documentAddress: string) {
+  public init(mmlScene: IMMLScene<G>, documentAddress: string) {
     if (this.scene) {
       throw new Error("Scene already set");
     }
     this.scene = mmlScene;
     this.documentAddress = documentAddress;
-    this.scene.getRootContainer().add(this.container);
+    this.connectedCallback();
   }
 
   public getDocumentAddress(): string | null {
     return this.documentAddress;
   }
 
-  getMMLScene(): IMMLScene {
+  public getMMLScene(): IMMLScene<G> | null {
     if (!this.scene) {
-      throw new Error("Scene not set");
+      return null;
     }
     return this.scene;
   }

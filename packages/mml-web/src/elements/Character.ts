@@ -1,8 +1,7 @@
-import * as THREE from "three";
-
+import { GraphicsAdapter } from "../graphics";
 import { Model } from "./Model";
 
-export class Character extends Model {
+export class Character<G extends GraphicsAdapter = GraphicsAdapter> extends Model<G> {
   static tagName = "m-character";
 
   static get observedAttributes(): Array<string> {
@@ -13,10 +12,6 @@ export class Character extends Model {
     super();
   }
 
-  public getCharacter(): THREE.Object3D | null {
-    return this.loadedState?.group || null;
-  }
-
   public parentTransformed(): void {
     // no-op
   }
@@ -25,7 +20,7 @@ export class Character extends Model {
     return true;
   }
 
-  connectedCallback() {
+  public connectedCallback() {
     super.connectedCallback();
   }
 

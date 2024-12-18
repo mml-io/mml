@@ -15,7 +15,7 @@
     "chokidar": "4.0.1",
     "express": "4.21.0",
     "express-ws": "5.0.2",
-    "networked-dom-server": "^0.18.1",
+    "@mml-io/networked-dom-server": "^0.18.1",
     "ws": "8.18.0"
   },
   "devDependencies": {

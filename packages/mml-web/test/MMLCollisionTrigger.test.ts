@@ -1,9 +1,9 @@
 import { jest } from "@jest/globals";
 import * as THREE from "three";
 
-import { MElement, MMLCollisionTrigger } from "../src";
-import { Cube } from "../src/elements/Cube";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { MElement, MMLCollisionTrigger } from "../build/index";
+import { Cube } from "../build/index";
+import { registerCustomElementsToWindow } from "../build/index";
 import { createTestScene } from "./scene-test-utils";
 
 beforeAll(() => {
@@ -11,21 +11,19 @@ beforeAll(() => {
 });
 
 describe("MMLCollisionTrigger", () => {
-  test("cube - send start, move, end", () => {
-    const { scene, remoteDocument } = createTestScene();
+  test("cube - send start, move, end", async () => {
+    const { scene, remoteDocument } = await createTestScene();
     const mockPerformanceNow = jest.fn();
     window.performance.now = mockPerformanceNow as () => DOMHighResTimeStamp;
     mockPerformanceNow.mockReturnValue(1000);
 
     const mmlCollisionTrigger = MMLCollisionTrigger.init();
 
-    jest
-      .spyOn(scene, "addCollider")
-      .mockImplementation((collider: THREE.Object3D, element: MElement) => {
-        mmlCollisionTrigger.addCollider(collider, element);
-      });
+    jest.spyOn(scene, "addCollider").mockImplementation((collider: unknown, element: MElement) => {
+      mmlCollisionTrigger.addCollider(collider, element);
+    });
 
-    jest.spyOn(scene, "removeCollider").mockImplementation((collider: THREE.Object3D) => {
+    jest.spyOn(scene, "removeCollider").mockImplementation((collider: unknown) => {
       mmlCollisionTrigger.removeCollider(collider);
     });
 
@@ -46,10 +44,12 @@ describe("MMLCollisionTrigger", () => {
       endEventFn(event);
     });
 
+    const cubeMesh = (element.getContainer() as THREE.Object3D).children[0];
+
     mmlCollisionTrigger.setCurrentCollisions(
       new Map([
         [
-          element.getCube()!,
+          cubeMesh,
           {
             position: new THREE.Vector3(1, 2, 3),
           },
@@ -69,7 +69,7 @@ describe("MMLCollisionTrigger", () => {
     mmlCollisionTrigger.setCurrentCollisions(
       new Map([
         [
-          element.getCube()!,
+          cubeMesh,
           {
             position: new THREE.Vector3(2, 4, 6),
           },

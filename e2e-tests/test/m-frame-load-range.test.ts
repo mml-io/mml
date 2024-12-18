@@ -22,7 +22,10 @@ describe("m-frame", () => {
       // Wait for the m-image inside the static content to load
       await page.waitForFunction(
         () => {
-          return (document.querySelector("m-image") as any)?.getImageMesh().scale.y > 3;
+          return (
+            (document.querySelectorAll("m-image")[0] as any)?.imageGraphics!.getWidthAndHeight()
+              .height > 3
+          );
         },
         { timeout: 10000, polling: 100 },
       );

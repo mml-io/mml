@@ -14,7 +14,7 @@ describe("m-model", () => {
     await page.waitForFunction(
       () => {
         const model = document.querySelector("m-model");
-        return (model as any).getModel() !== null;
+        return (model as any).modelGraphics.getBoundingBox() !== null;
       },
       { timeout: 30000, polling: 100 },
     );

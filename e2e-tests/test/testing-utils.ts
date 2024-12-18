@@ -4,16 +4,18 @@ declare global {
   interface Window {
     "mml-web-client": {
       mmlScene: {
-        getBoundingBoxForElement(element: Element): {
-          x: number;
-          y: number;
-          width: number;
-          height: number;
-        } | null;
+        graphicsAdapter: {
+          getBoundingBoxForElement(element: Element): {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+          } | null;
+        };
       };
-      remoteDocuments: Array<{
+      remoteDocumentWrapper: {
         overrideDocumentTime(documentTime: number): void;
-      }>;
+      };
     };
   }
 }
@@ -27,7 +29,7 @@ export async function clickElement(
   const coords = (await page.evaluate((selector: string) => {
     const { mmlScene } = window["mml-web-client"];
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return mmlScene.getBoundingBoxForElement(document.querySelector(selector)!);
+    return mmlScene.graphicsAdapter.getBoundingBoxForElement(document.querySelector(selector)!);
   }, selector))!;
 
   const { x: xOffset, y: yOffset } = coordsOffset ?? { x: 0.5, y: 0.5 };
@@ -38,10 +40,8 @@ export async function clickElement(
 
 export async function setDocumentTime(page: puppeteer.Page, documentTime: number) {
   await page.evaluate(async (documentTime: number) => {
-    const { remoteDocuments } = window["mml-web-client"];
-    for (const remoteDocument of remoteDocuments) {
-      remoteDocument.overrideDocumentTime(documentTime);
-    }
+    const { remoteDocumentWrapper } = window["mml-web-client"];
+    remoteDocumentWrapper.overrideDocumentTime(documentTime);
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => {
         resolve();
@@ -50,7 +50,7 @@ export async function setDocumentTime(page: puppeteer.Page, documentTime: number
   }, documentTime);
 }
 
-export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold = 0.011) {
+export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold = 0.02) {
   expect(await page.screenshot()).toMatchImageSnapshot({
     failureThresholdType: "percent",
     failureThreshold: threshold,

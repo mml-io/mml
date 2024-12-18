@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 
-import { LoadingProgressManager } from "../src/loading/LoadingProgressManager";
+import { LoadingProgressManager } from "../build/index";
 
 describe("LoadingProgressManager", () => {
   test("empty", () => {

@@ -1,15 +1,15 @@
-import * as THREE from "three";
-
-import { consumeEventEventName } from "../common";
 import { getGlobalDocumentTimeManager, getGlobalMMLScene } from "../global";
-import { LoadingProgressManager } from "../loading/LoadingProgressManager";
-import { MMLDocumentTimeManager } from "../MMLDocumentTimeManager";
-import { IMMLScene, PositionAndRotation } from "../MMLScene";
-import { RemoteDocument } from "./RemoteDocument";
+import { GraphicsAdapter } from "../graphics";
+import { MElementGraphics } from "../graphics";
+import { LoadingProgressManager } from "../loading";
+import { IMMLScene, PositionAndRotation } from "../scene";
+import { MMLDocumentTimeManager } from "../time";
+import type { RemoteDocument } from "./RemoteDocument";
 
-const MELEMENT_PROPERTY_NAME = "m-element-property";
+export const MELEMENT_PROPERTY_NAME = "m-element-property";
+export const consumeEventEventName = "consume-event";
 
-export abstract class MElement extends HTMLElement {
+export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> extends HTMLElement {
   // This allows switching which document this HTMLElement subclass extends so that it can be placed into iframes
   static overwriteSuperclass(newSuperclass: typeof HTMLElement) {
     (MElement as any).__proto__ = newSuperclass;
@@ -19,17 +19,13 @@ export abstract class MElement extends HTMLElement {
     return [];
   }
 
-  protected container: THREE.Group;
-  private currentParentContainer: THREE.Object3D | null = null;
+  private mElementGraphics: MElementGraphics<G> | null = null;
 
   constructor() {
     super();
-    this.container = new THREE.Group();
-    this.container.name = this.constructor.name;
-    (this.container as any)[MELEMENT_PROPERTY_NAME] = this;
   }
 
-  static getMElementFromObject(object: THREE.Object3D): MElement | null {
+  static getMElementFromObject(object: unknown): MElement<GraphicsAdapter> | null {
     return (object as any)[MELEMENT_PROPERTY_NAME] || null;
   }
 
@@ -38,34 +34,45 @@ export abstract class MElement extends HTMLElement {
   public abstract parentTransformed(): void;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<G>): void {
     // no-op
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<G>): void {
     // no-op
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     // no-op
   }
 
-  public getScene(): IMMLScene {
-    const remoteDocumentElement = this.getRemoteDocument();
+  public getScene(): IMMLScene<G> {
+    const remoteDocumentElement = this.getInitiatedRemoteDocument();
     if (remoteDocumentElement) {
-      return (remoteDocumentElement as RemoteDocument).getMMLScene();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return (remoteDocumentElement as RemoteDocument<G>).getMMLScene()!;
     }
-    const globalScene = getGlobalMMLScene();
+    const globalScene = getGlobalMMLScene() as IMMLScene<G>;
     if (!globalScene) {
       throw new Error("No scene attachment found and no global scene found");
     }
     return globalScene;
   }
 
-  public getRemoteDocument(): RemoteDocument | null {
-    return this.closest("m-remote-document") || null;
+  public getInitiatedRemoteDocument(): RemoteDocument<G> | null {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    for (let parentNode: ParentNode | null = this; parentNode; parentNode = parentNode.parentNode) {
+      if (
+        parentNode.nodeName === "M-REMOTE-DOCUMENT" &&
+        (parentNode as RemoteDocument<G>).getMMLScene()
+      ) {
+        // Return the first remote document that has an explicit scene set
+        return parentNode as RemoteDocument<G>;
+      }
+    }
+    return null;
   }
 
   public contentSrcToContentAddress(src: string): string {
@@ -76,8 +83,7 @@ export abstract class MElement extends HTMLElement {
       // Check if the src is a valid URL - if so then it's already absolute
       const url = new URL(src);
       return url.toString();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
+    } catch {
       // Do nothing
     }
     let protocol = documentLocation.protocol;
@@ -102,7 +108,7 @@ export abstract class MElement extends HTMLElement {
   }
 
   private getDocumentHost(): URL | Location {
-    const remoteDocument = this.getRemoteDocument();
+    const remoteDocument = this.getInitiatedRemoteDocument();
     if (remoteDocument) {
       const remoteDocumentAddress = remoteDocument.getDocumentAddress();
       if (remoteDocumentAddress) {
@@ -113,12 +119,13 @@ export abstract class MElement extends HTMLElement {
     return window.location;
   }
 
-  public getDocumentTime(): number | null {
+  public getDocumentTime(): number {
     const documentTimeContextProvider = this.getDocumentTimeManager();
     if (documentTimeContextProvider) {
       return documentTimeContextProvider.getDocumentTime();
     }
-    return null;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return Number(document.timeline.currentTime!);
   }
 
   public getWindowTime(): number {
@@ -130,7 +137,7 @@ export abstract class MElement extends HTMLElement {
     return Number(document.timeline.currentTime!);
   }
 
-  protected getLoadingProgressManager(): LoadingProgressManager | null {
+  public getLoadingProgressManager(): LoadingProgressManager | null {
     const scene = this.getScene();
     if (scene) {
       return scene.getLoadingProgressManager?.() || null;
@@ -139,7 +146,7 @@ export abstract class MElement extends HTMLElement {
   }
 
   protected getDocumentTimeManager(): MMLDocumentTimeManager | null {
-    const remoteDocument = this.getRemoteDocument();
+    const remoteDocument = this.getInitiatedRemoteDocument();
     if (remoteDocument) {
       return remoteDocument.getDocumentTimeManager();
     }
@@ -192,13 +199,12 @@ export abstract class MElement extends HTMLElement {
     }
   }
 
-  getContainer(): THREE.Group {
-    return this.container;
-  }
-
-  getCamera(): THREE.Camera {
-    const remoteDocument = this.getScene();
-    return remoteDocument.getCamera();
+  getContainer(): G["containerType"] {
+    const container = this.mElementGraphics?.getContainer();
+    if (!container) {
+      throw new Error("No container found");
+    }
+    return container;
   }
 
   getUserPositionAndRotation(): PositionAndRotation {
@@ -209,13 +215,8 @@ export abstract class MElement extends HTMLElement {
     return remoteDocument.getUserPositionAndRotation();
   }
 
-  getAudioListener(): THREE.AudioListener {
-    const remoteDocument = this.getScene();
-    return remoteDocument.getAudioListener();
-  }
-
   dispatchEvent(event: Event): boolean {
-    const remoteDocument = this.getRemoteDocument();
+    const remoteDocument = this.getInitiatedRemoteDocument();
     if (remoteDocument) {
       remoteDocument.dispatchEvent(
         new CustomEvent(consumeEventEventName, {
@@ -236,7 +237,7 @@ export abstract class MElement extends HTMLElement {
     }
   }
 
-  private getMElementParent(): MElement | null {
+  public getMElementParent(): MElement<G> | null {
     let parentNode = this.parentNode;
     while (parentNode != null) {
       if (parentNode instanceof MElement) {
@@ -247,31 +248,19 @@ export abstract class MElement extends HTMLElement {
     return null;
   }
 
-  connectedCallback() {
-    if (this.currentParentContainer !== null) {
-      throw new Error("Already connected to a parent");
-    }
-
-    const mElementParent = this.getMElementParent();
-    if (mElementParent) {
-      this.currentParentContainer = mElementParent.container;
-      this.currentParentContainer.add(this.container);
+  public connectedCallback(): void {
+    if (!this.getScene().hasGraphicsAdapter() || this.mElementGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
-    // If none of the ancestors are MElements then this element may be directly connected to the body (without a wrapper).
-    // Attempt to use a global scene that has been configured to attach this element to.
-    const scene = this.getScene();
-    this.currentParentContainer = scene.getRootContainer();
-    this.currentParentContainer.add(this.container);
+    this.mElementGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MElementGraphicsInterface(this);
   }
 
   disconnectedCallback() {
-    if (this.currentParentContainer === null) {
-      throw new Error("Was not connected to a parent");
-    }
-
-    this.currentParentContainer.remove(this.container);
-    this.currentParentContainer = null;
+    this.mElementGraphics?.dispose();
+    this.mElementGraphics = null;
   }
 }

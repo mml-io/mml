@@ -11,13 +11,18 @@ describe("m-video", () => {
     // Wait for the m-video content to load
     await page.waitForFunction(
       () => {
-        const videoMesh = (document.querySelector("m-video") as any).getVideoMesh();
-        return videoMesh.scale.y > 3 && videoMesh.scale.x > 3;
+        const { height, width } = (
+          document.querySelector("m-video") as any
+        ).videoGraphics!.getWidthAndHeight();
+        return width > 3 && height > 3;
       },
       { timeout: 30000, polling: 100 },
     );
 
     await setDocumentTime(page, 10000);
+
+    // Allow time for the next frame to render
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     await takeAndCompareScreenshot(page, 0.02);
 

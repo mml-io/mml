@@ -9,6 +9,7 @@
     "allowJs": true,
     "types": ["node", "jest"],
     "strictNullChecks": true,
+    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "esModuleInterop": true,

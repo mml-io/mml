@@ -1,7 +1,8 @@
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter } from "../graphics";
 import { TransformableElement } from "./TransformableElement";
 
-export class Group extends TransformableElement {
+export class Group<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-group";
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes];
@@ -19,7 +20,7 @@ export class Group extends TransformableElement {
     super();
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
+  public getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 
@@ -31,7 +32,25 @@ export class Group extends TransformableElement {
     return true;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.transformableElementGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+
+    if (!this.getScene().hasGraphicsAdapter()) {
+      return;
+    }
+
+    for (const name of Group.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
   }
 }

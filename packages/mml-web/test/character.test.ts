@@ -1,11 +1,11 @@
 import { jest } from "@jest/globals";
+import { ThreeJSModel } from "@mml-io/mml-web-threejs";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
-import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
-import { Character } from "../src/elements/Character";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { Character } from "../build/index";
+import { registerCustomElementsToWindow } from "../build/index";
+import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
@@ -13,14 +13,18 @@ beforeAll(() => {
 });
 
 describe("m-character", () => {
-  test("attachment to scene", async () => {
-    const scene = new FullScreenMMLScene();
-    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
-    remoteDocument.init(scene, "ws://localhost:8080");
-    document.body.append(remoteDocument);
-    const element = document.createElement("m-character") as Character;
-    remoteDocument.append(element);
-    expect(scene.getThreeScene()).toMatchObject({
+  test("test attachment to scene", async () => {
+    const { scene, element } = await createSceneAttachedElement<Character>(
+      "m-character",
+      "ws://localhost:8080",
+    );
+
+    const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+      .children[0 /* root container */].children[0 /* attachment container */]
+      .children[0 /* element container */];
+    expect(element.getContainer()).toBe(container);
+
+    expect((scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()).toMatchObject({
       // Scene
       children: [
         // Scene Root Container
@@ -40,30 +44,31 @@ describe("m-character", () => {
         },
       ],
     });
-    // Setting scale attribute - should affect the container of the element, but not the model root itself
-    expect(element.getContainer().scale.x).toBe(1);
+
+    // Setting scale attribute - should affect the container of the element, but not the mesh itself
+    expect((element.getContainer() as THREE.Object3D).scale.x).toBe(1);
     element.setAttribute("sx", "5");
-    expect(element.getContainer().scale.x).toBe(5);
+    expect((element.getContainer() as THREE.Object3D).scale.x).toBe(5);
 
     const testNode = new THREE.Group();
     testNode.name = "MY_LOADED_ASSET";
 
     // mock the loader to return a specific THREE node
     const mockGLTFLoad = jest
-      .spyOn(Character.prototype, "asyncLoadSourceAsset")
-      .mockImplementation(() => {
-        return Promise.resolve({
-          group: testNode,
-          animations: [],
-        });
+      .spyOn(ThreeJSModel.prototype, "asyncLoadSourceAsset")
+      .mockResolvedValue({
+        animations: [],
+        group: testNode,
       });
 
     element.setAttribute("src", "some_asset_path");
     expect(mockGLTFLoad).toBeCalledTimes(1);
-    const loadModelPromise: Promise<GLTF> = (element as any).latestSrcModelPromise;
-    expect(loadModelPromise).toBeTruthy();
-    await loadModelPromise;
-    expect(element.getCharacter()!.name).toBe(testNode.name);
+    expect((element as any).modelGraphics.latestSrcModelPromise).toBeTruthy();
+    await (element as any).modelGraphics.latestSrcModelPromise;
+
+    const modelContainer = element.getContainer() as THREE.Object3D;
+    const loadedModel = modelContainer.children[0];
+    expect(loadedModel.name).toBe(testNode.name);
 
     mockGLTFLoad.mockRestore();
   });

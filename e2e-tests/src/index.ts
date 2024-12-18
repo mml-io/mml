@@ -1,10 +1,11 @@
 import { Stats } from "node:fs";
+import * as QueryString from "node:querystring";
 
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import * as chokidar from "chokidar";
 import express, { Request, static as expressStatic } from "express";
 import enableWs from "express-ws";
 import * as fs from "fs";
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
 import * as path from "path";
 import * as url from "url";
 
@@ -102,14 +103,14 @@ app.ws("/:pathName", (ws, req) => {
 app.get("/:documentPath/", (req, res) => {
   const html = `<html><script src="${req.secure ? "https" : "http"}://${req.get(
     "host",
-  )}/client/index.js?defineGlobals=true&websocketUrl=${getWebsocketUrl(req)}"></script></html>`;
+  )}/client/index.js?defineGlobals=true&url=${getWebsocketUrl(req)}"></script></html>`;
 
   res.send(html);
 });
 
 app.use(
   "/client/",
-  expressStatic(path.resolve(dirname, "../../node_modules/mml-web-client/build/")),
+  expressStatic(path.resolve(dirname, "../../node_modules/@mml-io/mml-web-client/build/")),
 );
 
 app.get("/:documentPath/reset", (req, res) => {
@@ -122,8 +123,10 @@ app.get("/:documentPath/reset", (req, res) => {
     return;
   }
 
+  const queryString = QueryString.encode(req.query as QueryString.ParsedUrlQueryInput);
+
   currentDocument.reload();
-  res.redirect("/" + documentPath);
+  res.redirect("/" + documentPath + "?" + queryString);
 });
 
 console.log("Serving on port:", port);

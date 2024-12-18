@@ -1,7 +1,6 @@
 import { jest } from "@jest/globals";
 
-import { LoadingInstanceManager } from "../src/loading/LoadingInstanceManager";
-import { LoadingProgressManager } from "../src/loading/LoadingProgressManager";
+import { LoadingInstanceManager, LoadingProgressManager } from "../build/index";
 
 describe("LoadingInstanceManager", () => {
   test("simple load", () => {

@@ -36,7 +36,7 @@ describe("m-interaction", () => {
 
     await page.click("button[data-test-id='interaction-Change Floor']");
 
-    await page.waitForSelector("m-plane[color='orange']");
+    await page.waitForSelector("m-plane[color='blue']");
 
     await takeAndCompareScreenshot(page);
 

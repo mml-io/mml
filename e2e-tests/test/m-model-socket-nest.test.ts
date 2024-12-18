@@ -15,8 +15,8 @@ describe("m-element-socket", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).getCharacter() !== null &&
-          (character as any).getCurrentAnimation() !== null
+          (character as any).modelGraphics.hasLoadedModel() !== null &&
+          (character as any).modelGraphics.hasLoadedAnimation() !== null
         );
       },
       { timeout: 10000, polling: 100 },
@@ -32,7 +32,7 @@ describe("m-element-socket", () => {
     await page.waitForFunction(
       () => {
         const firstModel = document.getElementById("sub-character");
-        return firstModel && (firstModel as any).getModel() !== null;
+        return firstModel && (firstModel as any).modelGraphics.getBoundingBox() !== null;
       },
       { timeout: 15000, polling: 100 },
     );
@@ -45,7 +45,7 @@ describe("m-element-socket", () => {
     await page.waitForFunction(
       () => {
         const secondModel = document.getElementById("sub-sub-character");
-        return secondModel && (secondModel as any).getModel() !== null;
+        return secondModel && (secondModel as any).modelGraphics.getBoundingBox() !== null;
       },
       { timeout: 15000, polling: 100 },
     );

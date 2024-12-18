@@ -1,12 +1,19 @@
+import {
+  StandaloneThreeJSAdapter,
+  StandaloneThreeJSAdapterControlsType,
+} from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
-import { configureWindowForMML } from "../src";
-import { Cube } from "../src/elements/Cube";
-import { Group } from "../src/elements/Group";
+import { configureWindowForMML, Cube, getGlobalMMLScene, Group } from "../build/index";
 
 describe("m-element direct page attachment", () => {
   beforeAll(() => {
-    configureWindowForMML(window);
+    function getGraphicsAdapter(element: HTMLElement) {
+      return StandaloneThreeJSAdapter.create(element, {
+        controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
+      });
+    }
+    configureWindowForMML(window, getGraphicsAdapter);
   });
   afterEach(() => {
     document.body.innerHTML = "";
@@ -21,10 +28,37 @@ describe("m-element direct page attachment", () => {
     const cube = document.createElement("m-cube") as Cube;
     div.append(cube);
 
-    // The div should be skipped in the threejs scene
-    expect(group.getContainer().children[0].children[0]).toBe(cube.getCube());
+    const groupContainer = group.getContainer() as THREE.Object3D;
+    let cubeContainer = cube.getContainer() as THREE.Object3D;
+    let cubeMesh = cubeContainer.children[0];
 
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    // The div should be skipped in the threejs scene
+    expect(groupContainer.children[0].children[0]).toBe(cubeMesh);
+
+    const scene = (
+      getGlobalMMLScene().getGraphicsAdapter() as StandaloneThreeJSAdapter
+    ).getThreeScene();
+    expect(scene).toMatchObject({
+      // Scene
+      children: [
+        // Scene Root Container
+        {
+          children: [
+            // Group Container
+            {
+              children: [
+                // Element Container
+                {
+                  children: expect.arrayContaining([cubeMesh]),
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(cubeMesh!.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 0,
       y: 0,
       z: 0,
@@ -34,7 +68,7 @@ describe("m-element direct page attachment", () => {
     cube.setAttribute("y", "2");
     cube.setAttribute("z", "3");
 
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cubeMesh!.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 1,
       y: 2,
       z: 3,
@@ -44,7 +78,7 @@ describe("m-element direct page attachment", () => {
     group.setAttribute("x", "10");
     group.setAttribute("y", "20");
     group.setAttribute("z", "30");
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cubeMesh!.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 11,
       y: 22,
       z: 33,
@@ -58,8 +92,12 @@ describe("m-element direct page attachment", () => {
     secondGroup.setAttribute("z", "300");
     secondGroup.append(div);
 
+    // Get new references as the instances have been removed and recreated
+    cubeContainer = cube.getContainer() as THREE.Object3D;
+    cubeMesh = cubeContainer.children[0];
+
     // The cube should now have the world position from the second group
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cubeMesh!.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 101,
       y: 202,
       z: 303,
@@ -67,6 +105,6 @@ describe("m-element direct page attachment", () => {
 
     // Remove the div from the group and it should also remove the cube from the scene
     secondGroup.removeChild(div);
-    expect(cube.getContainer().parent).toBeNull();
+    expect(cubeContainer.parent).toBeNull();
   });
 });

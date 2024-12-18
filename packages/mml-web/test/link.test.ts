@@ -1,7 +1,8 @@
-import { Link } from "../src/elements/Link";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { jest } from "@jest/globals";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
+
+import { Link, registerCustomElementsToWindow } from "../build/index";
+import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
@@ -9,16 +10,36 @@ beforeAll(() => {
 });
 
 describe("m-link", () => {
-  test("test attachment to scene", () => {
-    const scene = new FullScreenMMLScene();
-    const sceneAttachment = document.createElement("m-remote-document") as RemoteDocument;
-    sceneAttachment.init(scene, "ws://localhost:8080");
-    document.body.append(sceneAttachment);
+  test("test attachment to scene", async () => {
+    const { scene } = await createSceneAttachedElement<Link>("m-link");
+    const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+      .children[0 /* root container */].children[0 /* attachment container */]
+      .children[0 /* element container */];
+    expect(container).toBeDefined();
+  });
 
-    const element = document.createElement("m-link") as Link;
-    sceneAttachment.append(element);
-
-    expect(scene.getThreeScene().children[0].children[0].children[0]).toBe(element.getContainer());
+  test("clicking child element should trigger link", async () => {
+    const { element, scene } = await createSceneAttachedElement<Link>("m-link");
+    element.setAttribute("href", "http://example.com");
+    const child = document.createElement("m-cube");
+    element.append(child);
+    const linkSpy = jest.spyOn(scene, "link");
+    child.dispatchEvent(
+      new MouseEvent("click", {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    expect(linkSpy).toHaveBeenCalledWith(
+      {
+        href: "http://example.com",
+        target: undefined,
+        popup: false,
+      },
+      expect.any(AbortSignal),
+      expect.any(Function),
+    );
   });
 
   test("observes the schema-specified attributes", () => {

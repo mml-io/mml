@@ -19,7 +19,10 @@ describe("m-frame", () => {
     // Wait for the m-image inside the static content to load
     await page.waitForFunction(
       () => {
-        return (document.querySelector("m-image") as any).getImageMesh().scale.y > 3;
+        const { height } = (
+          document.querySelectorAll("m-image")[0] as any
+        ).imageGraphics!.getWidthAndHeight();
+        return height > 3;
       },
       { timeout: 30000, polling: 100 },
     );

@@ -1,7 +1,11 @@
 import { jest } from "@jest/globals";
+import { MMLScene, registerCustomElementsToWindow } from "@mml-io/mml-web";
+import {
+  StandaloneThreeJSAdapter,
+  StandaloneThreeJSAdapterControlsType,
+} from "@mml-io/mml-web-threejs-standalone";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { IframeObservableDOMFactory } from "@mml-io/networked-dom-web-runner";
-import { MMLScene, registerCustomElementsToWindow } from "mml-web";
 
 import { MMLWebRunnerClient } from "../build/index";
 import { waitFor } from "./test-util";
@@ -38,9 +42,18 @@ test("mml-web-runner end-to-end", async () => {
   const windowTarget = window;
   registerCustomElementsToWindow(windowTarget);
 
-  const mmlScene = new MMLScene();
+  const element = document.createElement("div");
+  element.style.width = "100%";
+  element.style.height = "100%";
+
+  const mmlScene = new MMLScene(element);
+  mmlScene.init(
+    await StandaloneThreeJSAdapter.create(element, {
+      controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
+    }),
+  );
   const client = new MMLWebRunnerClient(windowTarget, clientsHolder, mmlScene);
-  clientsHolder.append(mmlScene.element);
+  clientsHolder.append(element);
   client.connect(networkedDOMDocument);
   mmlScene.fitContainer();
 

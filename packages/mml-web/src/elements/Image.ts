@@ -1,27 +1,41 @@
-import * as THREE from "three";
-
-import { LoadingInstanceManager } from "../loading/LoadingInstanceManager";
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { CollideableHelper } from "../utils/CollideableHelper";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimatedAttributeHelper } from "../attribute-animation";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { CollideableHelper } from "../collision";
+import { GraphicsAdapter } from "../graphics";
+import { ImageGraphics } from "../graphics/ImageGraphics";
+import { Vect3 } from "../math/Vect3";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 
-const defaultImageSrc = "";
+const defaultImageSrc = null;
 const defaultImageWidth = null;
 const defaultImageHeight = null;
 const defaultImageOpacity = 1;
 const defaultImageCastShadows = true;
-const defaultEmissive = 0;
+const defaultImageEmissive = 0;
 
-export class Image extends TransformableElement {
+export type MImageProps = {
+  src: string | null;
+  width: number | null;
+  height: number | null;
+  opacity: number;
+  castShadows: boolean;
+  emissive: number;
+};
+
+export class Image<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-image";
+
+  public props: MImageProps = {
+    src: defaultImageSrc,
+    width: defaultImageWidth,
+    height: defaultImageHeight,
+    opacity: defaultImageOpacity,
+    castShadows: defaultImageCastShadows,
+    emissive: defaultImageEmissive as number,
+  };
 
   private imageAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     width: [
@@ -29,7 +43,7 @@ export class Image extends TransformableElement {
       defaultImageWidth,
       (newValue: number) => {
         this.props.width = newValue;
-        this.updateHeightAndWidth();
+        this.imageGraphics?.setWidth(newValue, this.props);
       },
     ],
     height: [
@@ -37,7 +51,7 @@ export class Image extends TransformableElement {
       defaultImageHeight,
       (newValue: number) => {
         this.props.height = newValue;
-        this.updateHeightAndWidth();
+        this.imageGraphics?.setHeight(newValue, this.props);
       },
     ],
     opacity: [
@@ -45,41 +59,22 @@ export class Image extends TransformableElement {
       defaultImageOpacity,
       (newValue: number) => {
         this.props.opacity = newValue;
-        if (this.material) {
-          this.material.transparent = this.props.opacity !== 1 || this.loadedImageHasTransparency;
-          this.material.opacity = newValue;
-          this.material.needsUpdate = true;
-        }
+        this.imageGraphics?.setOpacity(newValue, this.props);
+      },
+    ],
+    emissive: [
+      AnimationType.Number,
+      defaultImageEmissive,
+      (newValue: number) => {
+        this.props.emissive = newValue;
+        this.imageGraphics?.setEmissive(newValue, this.props);
       },
     ],
   });
 
-  private static imageLoader = new THREE.ImageLoader();
-  private static planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-
-  private props = {
-    src: defaultImageSrc,
-    width: defaultImageWidth as number | null,
-    height: defaultImageHeight as number | null,
-    opacity: defaultImageOpacity,
-    castShadows: defaultImageCastShadows,
-    emissive: defaultEmissive as number,
-  };
-
-  private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
-  private material: THREE.MeshStandardMaterial | null = null;
-
-  private srcApplyPromise: Promise<HTMLImageElement> | null = null;
-
   private collideableHelper = new CollideableHelper(this);
-  private loadedImage: HTMLImageElement | null;
-  private loadedImageHasTransparency = false;
 
-  private srcLoadingInstanceManager = new LoadingInstanceManager(
-    `${(this.constructor as typeof Image).tagName}.src`,
-  );
-
-  private static attributeHandler = new AttributeHandler<Image>({
+  private static attributeHandler = new AttributeHandler<Image<GraphicsAdapter>>({
     width: (instance, newValue) => {
       instance.imageAnimatedAttributeHelper.elementSetAttribute(
         "width",
@@ -93,7 +88,8 @@ export class Image extends TransformableElement {
       );
     },
     src: (instance, newValue) => {
-      instance.setSrc(newValue);
+      instance.props.src = newValue;
+      instance.imageGraphics?.setSrc(newValue, instance.props);
     },
     opacity: (instance, newValue) => {
       instance.imageAnimatedAttributeHelper.elementSetAttribute(
@@ -101,15 +97,18 @@ export class Image extends TransformableElement {
         parseFloatAttribute(newValue, defaultImageOpacity),
       );
     },
+    emissive: (instance, newValue) => {
+      instance.imageAnimatedAttributeHelper.elementSetAttribute(
+        "emissive",
+        parseFloatAttribute(newValue, defaultImageEmissive),
+      );
+    },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultImageCastShadows);
-      instance.mesh.castShadow = instance.props.castShadows;
-    },
-    emissive: (instance, newValue) => {
-      instance.props.emissive = parseFloatAttribute(newValue, defaultEmissive);
-      instance.updateMaterialEmissiveIntensity();
+      instance.imageGraphics?.setCastShadows(instance.props.castShadows, instance.props);
     },
   });
+  private imageGraphics: ImageGraphics<G> | null;
 
   protected enable() {
     this.collideableHelper.enable();
@@ -129,141 +128,27 @@ export class Image extends TransformableElement {
 
   constructor() {
     super();
-    this.mesh = new THREE.Mesh(Image.planeGeometry);
-    this.mesh.castShadow = this.props.castShadows;
-    this.mesh.receiveShadow = true;
-    this.container.add(this.mesh);
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromSizeAndMatrixWorldProvider(
-      new THREE.Vector3(this.mesh.scale.x, this.mesh.scale.y, 0),
-      this.container,
+  public getContentBounds(): OrientedBoundingBox | null {
+    if (!this.transformableElementGraphics) {
+      return null;
+    }
+    const { width, height } = this.imageGraphics?.getWidthAndHeight() || { width: 0, height: 0 };
+    return OrientedBoundingBox.fromSizeAndMatrixWorld(
+      new Vect3(width, height, 0),
+      this.transformableElementGraphics.getWorldMatrix(),
     );
   }
 
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<G>): void {
     this.imageAnimatedAttributeHelper.addSideEffectChild(child);
-
     super.addSideEffectChild(child);
   }
 
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<G>): void {
     this.imageAnimatedAttributeHelper.removeSideEffectChild(child);
-
     super.removeSideEffectChild(child);
-  }
-
-  private updateMaterialEmissiveIntensity() {
-    if (this.material) {
-      const map = this.material.map as THREE.Texture;
-      if (this.props.emissive > 0) {
-        this.material.emissive = new THREE.Color(0xffffff);
-        this.material.emissiveMap = map;
-        this.material.emissiveIntensity = this.props.emissive;
-        this.material.needsUpdate = true;
-      } else {
-        this.material.emissive = new THREE.Color(0x000000);
-        this.material.emissiveMap = null;
-        this.material.emissiveIntensity = 1;
-        this.material.needsUpdate = true;
-      }
-    }
-  }
-
-  private clearImage() {
-    this.loadedImage = null;
-    this.srcApplyPromise = null;
-    if (this.material) {
-      if (this.material.map) {
-        this.material.map.dispose();
-        this.material.map = null;
-      }
-      if (this.material.emissiveMap) {
-        this.material.emissiveMap.dispose();
-        this.material.emissiveMap = null;
-      }
-    }
-  }
-
-  private setSrc(newValue: string | null) {
-    this.props.src = (newValue || "").trim();
-    const isDataUri = this.props.src.startsWith("data:image/");
-    if (this.loadedImage !== null && !isDataUri) {
-      // if the image has already been loaded, remove the image data from the THREE material
-      this.clearImage();
-    }
-    if (!this.props.src) {
-      // if the src attribute is empty, reset the dimensions and return
-      this.updateHeightAndWidth();
-      this.srcLoadingInstanceManager.abortIfLoading();
-      return;
-    }
-    if (!this.material) {
-      // if the element is not yet connected, return
-      return;
-    }
-
-    if (isDataUri) {
-      // if the src is a data url, load it directly rather than using the loader - this avoids a potential frame skip
-      const image = document.createElement("img");
-      image.src = this.props.src;
-      this.applyImage(image);
-      this.srcLoadingInstanceManager.abortIfLoading();
-      return;
-    }
-
-    const contentSrc = this.contentSrcToContentAddress(this.props.src);
-    const srcApplyPromise = loadImageAsPromise(Image.imageLoader, contentSrc, (loaded, total) => {
-      this.srcLoadingInstanceManager.setProgress(loaded / total);
-    });
-    this.srcLoadingInstanceManager.start(this.getLoadingProgressManager(), contentSrc);
-    this.srcApplyPromise = srcApplyPromise;
-    srcApplyPromise
-      .then((image: HTMLImageElement) => {
-        if (this.srcApplyPromise !== srcApplyPromise || !this.material) {
-          // If we've loaded a different image since, or we're no longer connected, ignore this image
-          return;
-        }
-        this.applyImage(image);
-        this.srcLoadingInstanceManager.finish();
-      })
-      .catch((error) => {
-        console.error("Error loading image:", newValue, error);
-        this.updateHeightAndWidth();
-        this.srcLoadingInstanceManager.error(error);
-      });
-  }
-
-  private applyImage(image: HTMLImageElement) {
-    this.loadedImage = image;
-    if (!image.complete) {
-      // Wait for the image to be fully loaded (most likely a data uri that has not yet been decoded)
-      image.addEventListener("load", () => {
-        if (this.loadedImage !== image) {
-          // if the image has changed since we started loading, ignore this image
-          return;
-        }
-        this.applyImage(image);
-      });
-      return;
-    }
-    this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
-    if (!this.material) {
-      return;
-    }
-    if (this.loadedImageHasTransparency) {
-      this.material.alphaMap = new THREE.CanvasTexture(this.loadedImage);
-      this.material.alphaTest = 0.01;
-    } else {
-      this.material.alphaMap = null;
-      this.material.alphaTest = 0;
-    }
-    this.material.transparent = this.props.opacity !== 1 || this.loadedImageHasTransparency;
-    this.material.map = new THREE.CanvasTexture(this.loadedImage);
-    this.material.needsUpdate = true;
-    this.updateMaterialEmissiveIntensity();
-    this.updateHeightAndWidth();
   }
 
   public parentTransformed(): void {
@@ -274,7 +159,10 @@ export class Image extends TransformableElement {
     return true;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.imageGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Image.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
@@ -282,118 +170,34 @@ export class Image extends TransformableElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    this.material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      transparent: this.props.opacity !== 1 || this.loadedImageHasTransparency,
-      opacity: this.props.opacity,
-      side: THREE.DoubleSide,
-    });
-    this.mesh.material = this.material;
-    if (this.props.src) {
-      this.setSrc(this.props.src);
+
+    if (!this.getScene().hasGraphicsAdapter() || this.imageGraphics) {
+      return;
     }
-    this.applyBounds();
-    this.collideableHelper.updateCollider(this.mesh);
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
+
+    this.imageGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLImageGraphicsInterface(this, () => {
+        this.applyBounds();
+        this.collideableHelper.updateCollider(this.imageGraphics?.getCollisionElement());
+      });
+
+    for (const name of Image.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
+
+    this.collideableHelper.updateCollider(this.imageGraphics?.getCollisionElement());
   }
 
   disconnectedCallback() {
-    this.collideableHelper.removeColliders();
-    if (this.material) {
-      if (this.material.map) {
-        this.material.map.dispose();
-      }
-      if (this.material.emissiveMap) {
-        this.material.emissiveMap.dispose();
-      }
-      this.material.dispose();
-      this.mesh.material = [];
-      this.material = null;
-    }
-    this.loadedImage = null;
-    this.srcLoadingInstanceManager.dispose();
+    this.imageAnimatedAttributeHelper.reset();
+    this.imageGraphics?.dispose();
+    this.imageGraphics = null;
     super.disconnectedCallback();
+    this.collideableHelper.removeColliders();
   }
-
-  public getImageMesh(): THREE.Mesh<
-    THREE.PlaneGeometry,
-    THREE.Material | Array<THREE.Material>
-  > | null {
-    return this.mesh;
-  }
-
-  private updateHeightAndWidth() {
-    const mesh = this.mesh;
-    if (this.loadedImage) {
-      const height = this.props.height;
-      const width = this.props.width;
-      const loadedWidth = Math.max(this.loadedImage.width, 1);
-      const loadedHeight = Math.max(this.loadedImage.height, 1);
-
-      if (height && width) {
-        mesh.scale.x = width;
-        mesh.scale.y = height;
-      } else if (height && !width) {
-        mesh.scale.y = height;
-        // compute width
-        mesh.scale.x = (mesh.scale.y * loadedWidth) / loadedHeight;
-      } else if (!height && width) {
-        mesh.scale.x = width;
-        // compute height
-        mesh.scale.y = (mesh.scale.x * loadedHeight) / loadedWidth;
-      } else {
-        mesh.scale.x = 1;
-        // compute height
-        mesh.scale.y = loadedHeight / loadedWidth;
-      }
-    } else {
-      mesh.scale.x = this.props.width !== null ? this.props.width : 1;
-      mesh.scale.y = this.props.height !== null ? this.props.height : 1;
-    }
-    this.applyBounds();
-    this.collideableHelper.updateCollider(mesh);
-  }
-}
-
-export function loadImageAsPromise(
-  imageLoader: THREE.ImageLoader,
-  path: string,
-  onProgress?: (loaded: number, total: number) => void,
-): Promise<HTMLImageElement> {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    imageLoader.load(
-      path,
-      (image: HTMLImageElement) => {
-        resolve(image);
-      },
-      (xhr: ProgressEvent) => {
-        if (onProgress) {
-          onProgress(xhr.loaded, xhr.total);
-        }
-      },
-      (error: ErrorEvent) => {
-        reject(error);
-      },
-    );
-  });
-}
-
-function hasTransparency(image: HTMLImageElement) {
-  if (image.width === 0 || image.height === 0) {
-    return false;
-  }
-  const canvas = document.createElement("canvas");
-  canvas.width = image.width;
-  canvas.height = image.height;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(image, 0, 0);
-
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-
-  for (let i = 3, n = imageData.length; i < n; i += 4) {
-    if (imageData[i] < 255) {
-      return true;
-    }
-  }
-  return false;
 }

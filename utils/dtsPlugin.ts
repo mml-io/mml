@@ -1,10 +1,9 @@
 // Originally from Floffah https://github.com/Floffah/esbuild-plugin-d.ts/blob/master/LICENSE
 
+import { LogLevel, OnLoadArgs, Plugin } from "esbuild";
 import { existsSync, lstatSync, readFileSync } from "fs";
-import { basename, dirname, resolve } from "path";
-
-import { LogLevel, Plugin } from "esbuild";
 import jju from "jju";
+import { basename, dirname, resolve } from "path";
 import tmp from "tmp";
 import ts from "typescript";
 
@@ -109,7 +108,7 @@ export const dtsPlugin = (opts: DTSPluginOpts = {}) =>
       const files: string[] = [];
 
       // get all ts files
-      build.onLoad({ filter: /(\.tsx|\.ts)$/ }, (args) => {
+      build.onLoad({ filter: /(\.tsx|\.ts)$/ }, (args: OnLoadArgs) => {
         files.push(args.path);
 
         host.getSourceFile(
@@ -126,10 +125,10 @@ export const dtsPlugin = (opts: DTSPluginOpts = {}) =>
       build.onEnd(() => {
         const finalprogram = copts.incremental
           ? ts.createIncrementalProgram({
-            options: copts,
-            host,
-            rootNames: files,
-          })
+              options: copts,
+              host,
+              rootNames: files,
+            })
           : ts.createProgram(files, copts, host);
 
         const start = Date.now();

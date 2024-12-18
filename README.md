@@ -58,32 +58,49 @@ The Networked DOM server and MML client can then be used to allow multiple users
 * **Portability**: MML documents can run in any modern web browser, making them easy to share and view.
 * **Composability**: MML documents can be composed of multiple documents running on different servers, making it possible to create complex virtual world objects without having to provide all the compute power and technical capability on a single server.
 
-# High-Level Package Architecture
+# Packages
 
 ## Language (MML)
-MML is a set of HTML elements and attributes that can be used to describe 3D objects and experiences.
+MML is a set of HTML elements and attributes that can be used to describe 3D objects and experiences. The schema for these elements and attributes is defined in XML Schema Definition Language (XSD).
 
-These elements and attributes can be used without networking. However, when a HTML document including MML tags is run on a server and exposed via a websocket multiple users can interact with the same instance of the document at the same time.
+* [./packages/schema](./packages/schema) - `@mml-io/schema` - MML Schema in XML Schema Definition Language (XSD)
+* [./packages/schema-validator](./packages/schema-validator) - `@mml-io/schema-validator` - A package for validating MML document using the MML Schema
+* [./packages/mml-react-types](./packages/mml-react-types) - `@mml-io/mml-react-types` - TypeScript types for using MML components in React
 
-* [./packages/mml-web](./packages/mml-web) - Web THREE.js MML Library
-* [./packages/mml-web-client](./packages/mml-web-client) - Web THREE.js MML Client
-* [./packages/mml-web-runner](./packages/mml-web-runner) - Web Runner (for running MML documents in a web browser rather than a server)
-* [./packages/schema](./packages/schema) - MML Schema in XML Schema Definition Language (XSD)
-* [./packages/schema-validator](./packages/schema-validator) - A package for validating MML document using the MML Schema
+## Web Packages
+MML can be used in a web browser to create 3D web experiences. Networking is optional and different libraries can be used to provide the 3D graphics.
+
+* [./packages/mml-web](./packages/mml-web) - `@mml-io/mml-web` - MML Library that handles MML elements and attributes
+* [./packages/mml-web-client](./packages/mml-web-client) - `@mml-io/mml-web-client` - Web MML Client (standalone script / example)
+* [./packages/mml-web-threejs](./packages/mml-web-threejs) - `@mml-io/mml-web-threejs` - Graphics Adapter for MML to THREE.js
+* [./packages/mml-web-threejs-standalone](./packages/mml-web-threejs-standalone) - `@mml-io/mml-web-threejs-standalone` - THREE.js app for viewing MML documents in a web browser
+* [./packages/mml-web-playcanvas](./packages/mml-web-playcanvas) - `@mml-io/mml-web-playcanvas` - Graphics Adapter for MML to PlayCanvas
+* [./packages/mml-web-playcanvas-standalone](./packages/mml-web-playcanvas-standalone) - `@mml-io/mml-web-playcanvas-standalone` - PlayCanvas app for viewing MML documents in a web browser
 
 ## Networking (Networked DOM)
 MML is based on a set of libraries (built expressly for MML) called "Networked DOM".
 
+Networked DOM allows running a HTML document including script tags on a server and exposing it via a websocket which allows multiple users to interact with the same instance of the document at the same time.
+
 The server and network components necessary to support the multi-user mode are independent of the MML additions to HTML (and can be used with regular 2D HTML).
 
 * Networked DOM
-  * [./packages/networked-dom-web](./packages/networked-dom-web) - Web Networked DOM Library
-  * [./packages/networked-dom-web-client](./packages/networked-dom-web-client) - Web Networked DOM Client
-  * [./packages/networked-dom-web-runner](./packages/networked-dom-web-runner) - Web Networked DOM Runner (for running Networked DOM documents in a web browser rather than a server)
-  * [./packages/networked-dom-protocol](./packages/networked-dom-protocol) - Networked DOM WebSocket Protocol TypeScript Definition
-  * [./packages/observable-dom-common](./packages/observable-dom-common) - Observable DOM Common
-  * [./packages/observable-dom](./packages/observable-dom) - Observable DOM (JSDOM Execution) Library
-  * [./packages/networked-dom-document](./packages/networked-dom-document) - Networked DOM Document Library
+  * [./packages/mml-web-runner](./packages/mml-web-runner) - `@mml-io/mml-web-runner` - Web Runner (for running MML documents in a web browser rather than a server)
+  * [./packages/networked-dom-server](./packages/networked-dom-server) - `@mml-io/networked-dom-server` - Networked DOM Library for running documents on a Node.JS server
+  * [./packages/networked-dom-web](./packages/networked-dom-web) - `@mml-io/networked-dom-web` - Web Networked DOM Library (WebSocket client for Networked DOM)
+  * [./packages/networked-dom-web-client](./packages/networked-dom-web-client) - `@mml-io/networked-dom-web-client` - Web Networked DOM Client (Standalone script / example)
+  * [./packages/networked-dom-web-runner](./packages/networked-dom-web-runner) - `@mml-io/networked-dom-web-runner` - Web Networked DOM Runner (for running Networked DOM documents in a web browser rather than a server)
+  * [./packages/networked-dom-protocol](./packages/networked-dom-protocol) - `@mml-io/networked-dom-protocol` - Networked DOM WebSocket Protocol TypeScript Definition
+  * [./packages/observable-dom-common](./packages/observable-dom-common) - `@mml-io/observable-dom-common` - Observable DOM Common
+  * [./packages/observable-dom](./packages/observable-dom) - `@mml-io/observable-dom` - Observable DOM (JSDOM Execution) Library
+  * [./packages/networked-dom-document](./packages/networked-dom-document) - `@mml-io/networked-dom-document` - Networked DOM Document Library
+
+## MML Viewer
+MML Viewer is a standalone app that can be used to view MML documents in a web browser.
+
+It is available at [https://viewer.mml.io/main/v1/](https://viewer.mml.io/main/v1/).
+
+* [./packages/mml-viewer](./packages/mml-viewer) - `@mml-io/mml-viewer` - MML Viewer
 
 # Usage of this repo
 

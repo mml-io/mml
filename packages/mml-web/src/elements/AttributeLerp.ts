@@ -1,15 +1,15 @@
-import * as THREE from "three";
-
-import { AttributeHandler, parseFloatAttribute } from "../utils/attribute-handling";
-import { easingsByName } from "../utils/easings";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { easingsByName } from "../attribute-animation";
+import { AttributeHandler, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { lerpHSL, MMLColor } from "../color";
+import { GraphicsAdapter } from "../graphics";
 import { MElement } from "./MElement";
 
 const defaultAttribute: string = "all";
 const defaultEasing = "";
 const defaultLerpDuration = 1000;
 
-export class AttributeLerp extends MElement {
+export class AttributeLerp<G extends GraphicsAdapter = GraphicsAdapter> extends MElement<G> {
   static tagName = "m-attr-lerp";
 
   private props = {
@@ -18,9 +18,9 @@ export class AttributeLerp extends MElement {
     lerpDuration: defaultLerpDuration,
   };
 
-  private registeredParentAttachment: MElement | null = null;
+  private registeredParentAttachment: MElement<G> | null = null;
 
-  private static attributeHandler = new AttributeHandler<AttributeLerp>({
+  private static attributeHandler = new AttributeHandler<AttributeLerp<GraphicsAdapter>>({
     attr: (instance, newValue) => {
       if (instance.registeredParentAttachment) {
         instance.registeredParentAttachment.removeSideEffectChild(instance);
@@ -41,6 +41,7 @@ export class AttributeLerp extends MElement {
   static get observedAttributes(): Array<string> {
     return [...AttributeLerp.attributeHandler.getAttributes()];
   }
+
   constructor() {
     super();
   }
@@ -53,7 +54,7 @@ export class AttributeLerp extends MElement {
     // no-op
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
+  public getContentBounds(): OrientedBoundingBox | null {
     return null;
   }
 
@@ -69,12 +70,12 @@ export class AttributeLerp extends MElement {
     return false;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     AttributeLerp.attributeHandler.handle(this, name, newValue);
   }
 
-  connectedCallback(): void {
+  public connectedCallback(): void {
     super.connectedCallback();
     if (this.parentElement && this.parentElement instanceof MElement) {
       this.registeredParentAttachment = this.parentElement;
@@ -93,14 +94,14 @@ export class AttributeLerp extends MElement {
   public getColorValueForTime(
     windowTime: number,
     elementValueSetTime: number,
-    elementValue: THREE.Color,
-    previousValue: THREE.Color,
+    elementValue: MMLColor,
+    previousValue: MMLColor,
   ) {
     const ratio = this.getLerpRatio(windowTime, elementValueSetTime);
     if (ratio >= 1) {
       return elementValue;
     }
-    return new THREE.Color(previousValue).lerpHSL(elementValue, ratio);
+    return lerpHSL(previousValue, elementValue, ratio);
   }
 
   public getFloatValueForTime(

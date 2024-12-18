@@ -6,7 +6,7 @@ import { NetworkedDOM } from "@mml-io/networked-dom-document";
 import * as chokidar from "chokidar";
 import express, { Request } from "express";
 import enableWs from "express-ws";
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "networked-dom-server";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import ws from "ws";
 
 const dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -60,7 +60,7 @@ app.ws("/networked-dom-websocket", (ws: ws.WebSocket) => {
 });
 app.get("/websocket-example/", (req, res) => {
   res.send(
-    `<html><script src="http://localhost:28892/index.js?websocketUrl=${getWebsocketUrl(
+    `<html><script src="http://localhost:28892/index.js?url=${getWebsocketUrl(
       req,
     )}"></script></html>`,
   );

@@ -1,20 +1,18 @@
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
-import { Cube } from "../src/elements/Cube";
-import { Group } from "../src/elements/Group";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
+import { Cube } from "../build/index";
+import { Group } from "../build/index";
+import { registerCustomElementsToWindow } from "../build/index";
+import { createTestScene } from "./scene-test-utils";
 
 describe("m-element m-remote-document attachment", () => {
   beforeAll(() => {
     registerCustomElementsToWindow(window);
   });
-  test("test attachment via div", () => {
-    const scene = new FullScreenMMLScene();
-    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
-    remoteDocument.init(scene, "ws://localhost:8080");
-    document.body.append(remoteDocument);
+
+  test("test attachment via div", async () => {
+    const { scene, remoteDocument } = await createTestScene();
 
     const group = document.createElement("m-group") as Group;
     remoteDocument.append(group);
@@ -25,10 +23,14 @@ describe("m-element m-remote-document attachment", () => {
     const cube = document.createElement("m-cube") as Cube;
     div.append(cube);
 
-    // The div should be skipped in the threejs scene
-    expect(group.getContainer().children[0].children[0]).toBe(cube.getCube()!);
+    const groupContainer = group.getContainer() as THREE.Object3D;
+    let cubeContainer = cube.getContainer() as THREE.Object3D;
+    let cubeMesh = cubeContainer.children[0];
 
-    expect(scene.getThreeScene()).toMatchObject({
+    // The div should be skipped in the threejs scene
+    expect(groupContainer.children[0].children[0]).toBe(cubeMesh);
+
+    expect((scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()).toMatchObject({
       // Scene
       children: [
         // Scene Root Container
@@ -43,7 +45,7 @@ describe("m-element m-remote-document attachment", () => {
                   children: [
                     // Element Container
                     {
-                      children: expect.arrayContaining([cube.getCube()]),
+                      children: expect.arrayContaining([cubeMesh]),
                     },
                   ],
                 },
@@ -54,7 +56,7 @@ describe("m-element m-remote-document attachment", () => {
       ],
     });
 
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cubeMesh.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 0,
       y: 0,
       z: 0,
@@ -64,7 +66,7 @@ describe("m-element m-remote-document attachment", () => {
     cube.setAttribute("y", "2");
     cube.setAttribute("z", "3");
 
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cubeMesh.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 1,
       y: 2,
       z: 3,
@@ -74,7 +76,7 @@ describe("m-element m-remote-document attachment", () => {
     group.setAttribute("x", "10");
     group.setAttribute("y", "20");
     group.setAttribute("z", "30");
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cubeMesh.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 11,
       y: 22,
       z: 33,
@@ -88,8 +90,12 @@ describe("m-element m-remote-document attachment", () => {
     secondGroup.setAttribute("z", "300");
     secondGroup.append(div);
 
+    // Get new references as the instances have been removed and recreated
+    cubeContainer = cube.getContainer() as THREE.Object3D;
+    cubeMesh = cubeContainer.children[0];
+
     // The cube should now have the world position from the second group
-    expect(cube.getCube()!.getWorldPosition(new THREE.Vector3())).toMatchObject({
+    expect(cubeMesh.getWorldPosition(new THREE.Vector3())).toMatchObject({
       x: 101,
       y: 202,
       z: 303,
@@ -97,6 +103,6 @@ describe("m-element m-remote-document attachment", () => {
 
     // Remove the div from the group and it should also remove the cube from the scene
     secondGroup.removeChild(div);
-    expect(cube.getContainer().parent).toBeNull();
+    expect(cubeContainer.parent).toBeNull();
   });
 });

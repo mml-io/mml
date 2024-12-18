@@ -134,7 +134,6 @@ export class WebBrowserDOMRunner implements DOMRunnerInterface {
 
   dispose(): void {
     // TODO - handle dispose
-    console.log("WebBrowserDOMRunner.dispose");
   }
 
   getDocument(): Document {

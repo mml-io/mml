@@ -1,8 +1,7 @@
-import { TextDecoder, TextEncoder } from "util";
-
 import { jest } from "@jest/globals";
 import jestFetchMock from "jest-fetch-mock";
 import ResizeObserverPolyfill from "resize-observer-polyfill";
+import { TextDecoder, TextEncoder } from "util";
 
 import { MockAudioContext } from "./mocks/MockAudioContext";
 

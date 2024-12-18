@@ -1,8 +1,4 @@
-import {
-  EndOfAnimationSymbol,
-  getEasedRatioForTime,
-  StartOfAnimationSymbol,
-} from "../src/utils/animation-timings";
+import { EndOfAnimationSymbol, getEasedRatioForTime, StartOfAnimationSymbol } from "../build/index";
 
 const defaults = {
   startTime: 0,

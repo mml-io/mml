@@ -1,8 +1,7 @@
 import { jest } from "@jest/globals";
-import * as THREE from "three";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 
-import { PositionProbe } from "../src/elements/PositionProbe";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { EulXYZ, PositionProbe, registerCustomElementsToWindow, Vect3 } from "../build/index";
 import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
@@ -16,23 +15,24 @@ describe("m-position-probe", () => {
     expect(schema.name).toEqual(PositionProbe.tagName);
   });
 
-  test("test attachment to scene", () => {
-    const { scene, element } = createSceneAttachedElement<PositionProbe>("m-position-probe");
+  test("test attachment to scene", async () => {
+    const { scene, element } = await createSceneAttachedElement<PositionProbe>("m-position-probe");
     expect(
-      scene.getThreeScene().children[0 /* root container */].children[0 /* attachment container */]
+      (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+        .children[0 /* root container */].children[0 /* attachment container */]
         .children[0 /* element container */],
     ).toBe(element.getContainer());
   });
 
   test("position-probe - send position", async () => {
-    const { element, scene } = createSceneAttachedElement<PositionProbe>("m-position-probe");
+    const { element, scene } = await createSceneAttachedElement<PositionProbe>("m-position-probe");
     element.setAttribute("range", "10");
     element.setAttribute("interval", "100");
 
     const sendPositionSpy = jest.spyOn(scene, "getUserPositionAndRotation");
     sendPositionSpy.mockImplementation(() => ({
-      position: new THREE.Vector3(1, 2, 3),
-      rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(45), 0),
+      position: new Vect3(1, 2, 3),
+      rotation: new EulXYZ(0, 45, 0),
     }));
 
     const enterEvent = await new Promise<CustomEvent>((resolve) => {
@@ -54,8 +54,8 @@ describe("m-position-probe", () => {
 
     // Move the position
     sendPositionSpy.mockImplementation(() => ({
-      position: new THREE.Vector3(2, 4, 6),
-      rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(90), 0),
+      position: new Vect3(2, 4, 6),
+      rotation: new EulXYZ(0, 90, 0),
     }));
     const moveEvent = await new Promise<CustomEvent>((resolve) => {
       element.addEventListener("positionmove", (event: CustomEvent) => {
@@ -76,8 +76,8 @@ describe("m-position-probe", () => {
 
     // Move the position outside the probe range
     sendPositionSpy.mockImplementation(() => ({
-      position: new THREE.Vector3(20, 40, 60),
-      rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(135), 0),
+      position: new Vect3(20, 40, 60),
+      rotation: new EulXYZ(0, 135, 0),
     }));
     const leaveEvent = await new Promise<CustomEvent>((resolve) => {
       element.addEventListener("positionleave", (event: CustomEvent) => {
@@ -88,7 +88,7 @@ describe("m-position-probe", () => {
   });
 
   test("position-probe - send position - relative", async () => {
-    const { element: group, scene } = createSceneAttachedElement("m-group");
+    const { element: group, scene } = await createSceneAttachedElement("m-group");
 
     group.setAttribute("x", "10");
     group.setAttribute("y", "20");
@@ -98,12 +98,11 @@ describe("m-position-probe", () => {
     element.setAttribute("range", "10");
     element.setAttribute("interval", "100");
     group.append(element);
-    element.getContainer().updateWorldMatrix(true, false);
 
     const sendPositionSpy = jest.spyOn(scene, "getUserPositionAndRotation");
     sendPositionSpy.mockImplementation(() => ({
-      position: new THREE.Vector3(11, 22, 33),
-      rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(45), 0),
+      position: new Vect3(11, 22, 33),
+      rotation: new EulXYZ(0, 45, 0),
     }));
 
     const enterEvent = await new Promise<CustomEvent>((resolve) => {
@@ -125,8 +124,8 @@ describe("m-position-probe", () => {
 
     // Move the position
     sendPositionSpy.mockImplementation(() => ({
-      position: new THREE.Vector3(12, 24, 36),
-      rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(90), 0),
+      position: new Vect3(12, 24, 36),
+      rotation: new EulXYZ(0, 90, 0),
     }));
     const moveEvent = await new Promise<CustomEvent>((resolve) => {
       element.addEventListener("positionmove", (event: CustomEvent) => {
@@ -147,8 +146,8 @@ describe("m-position-probe", () => {
 
     // Move the position outside the probe range
     sendPositionSpy.mockImplementation(() => ({
-      position: new THREE.Vector3(20, 40, 60),
-      rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(135), 0),
+      position: new Vect3(20, 40, 60),
+      rotation: new EulXYZ(0, 135, 0),
     }));
     const leaveEvent = await new Promise<CustomEvent>((resolve) => {
       element.addEventListener("positionleave", (event: CustomEvent) => {

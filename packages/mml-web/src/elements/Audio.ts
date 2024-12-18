@@ -1,32 +1,14 @@
-import * as THREE from "three";
-import { PositionalAudioHelper } from "three/addons/helpers/PositionalAudioHelper.js";
-
-import { AnimatedAttributeHelper } from "../utils/AnimatedAttributeHelper";
-import {
-  AttributeHandler,
-  parseBoolAttribute,
-  parseFloatAttribute,
-} from "../utils/attribute-handling";
-import { OrientedBoundingBox } from "../utils/OrientedBoundingBox";
+import { AnimatedAttributeHelper } from "../attribute-animation";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
+import { OrientedBoundingBox } from "../bounding-box";
+import { GraphicsAdapter } from "../graphics";
+import { AudioGraphics } from "../graphics/AudioGraphics";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 
-const debugAudioSphereSize = 0.25;
-const debugAudioGeometry = new THREE.SphereGeometry(debugAudioSphereSize, 4, 2);
-const debugAudioMaterial = new THREE.MeshBasicMaterial({
-  wireframe: true,
-  fog: false,
-  toneMapped: false,
-  color: 0x00ff00,
-});
-
-const audioRefDistance = 1;
-const audioRolloffFactor = 1;
-
 const defaultAudioVolume = 1;
 const defaultAudioLoop = true;
-const defaultAudioLoopDuration = null;
 const defaultAudioEnabled = true;
 const defaultAudioStartTime = 0;
 const defaultAudioPauseTime = null;
@@ -39,26 +21,36 @@ function clampAudioConeAngle(angle: number) {
   return Math.max(Math.min(angle, 360), 0);
 }
 
-function extendAudioToDuration(
-  context: AudioContext,
-  buffer: AudioBuffer,
-  seconds: number,
-): AudioBuffer {
-  const updatedBuffer = context.createBuffer(
-    buffer.numberOfChannels,
-    Math.ceil(seconds * buffer.sampleRate),
-    buffer.sampleRate,
-  );
-  for (let channelNumber = 0; channelNumber < buffer.numberOfChannels; channelNumber++) {
-    const channelData = buffer.getChannelData(channelNumber);
-    const updatedChannelData = updatedBuffer.getChannelData(channelNumber);
-    updatedChannelData.set(channelData, 0);
-  }
-  return updatedBuffer;
-}
+export type MAudioProps = {
+  src: string | null;
+  startTime: number;
+  pauseTime: number | null;
+  loop: boolean;
+  loopDuration: number | null;
+  enabled: boolean;
+  volume: number;
+  coneAngle: number;
+  coneFalloffAngle: number | null;
+  debug: boolean;
+};
 
-export class Audio extends TransformableElement {
+export class Audio<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-audio";
+
+  public props: MAudioProps = {
+    src: defaultAudioSrc as string | null,
+    startTime: defaultAudioStartTime,
+    pauseTime: defaultAudioPauseTime as number | null,
+    loop: defaultAudioLoop,
+    loopDuration: null,
+    enabled: defaultAudioEnabled,
+    volume: defaultAudioVolume,
+    coneAngle: defaultAudioInnerConeAngle,
+    coneFalloffAngle: defaultAudioOuterConeAngle as number | null,
+    debug: false,
+  };
+
+  private audioGraphics: AudioGraphics<G> | null = null;
 
   private audioAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     volume: [
@@ -66,124 +58,58 @@ export class Audio extends TransformableElement {
       defaultAudioVolume,
       (newValue: number) => {
         this.props.volume = newValue;
-        if (this.positionalAudio) {
-          this.positionalAudio.setVolume(this.props.volume);
-        }
+        this.audioGraphics?.setVolume(newValue, this.props);
       },
     ],
     "cone-angle": [
       AnimationType.Number,
       defaultAudioInnerConeAngle,
       (newValue: number | null) => {
-        this.props.innerCone = newValue === null ? null : clampAudioConeAngle(newValue);
-
-        if (this.positionalAudio) {
-          this.positionalAudio.setDirectionalCone(
-            this.props.innerCone ?? defaultAudioInnerConeAngle,
-            this.props.outerCone ?? defaultAudioOuterConeAngle,
-            0,
-          );
-        }
-
-        this.updateDebugVisualisation();
+        this.props.coneAngle =
+          newValue === null ? defaultAudioInnerConeAngle : clampAudioConeAngle(newValue);
+        this.audioGraphics?.setConeAngle(this.props.coneAngle, this.props);
       },
     ],
     "cone-falloff-angle": [
       AnimationType.Number,
       defaultAudioOuterConeAngle,
       (newValue: number) => {
-        this.props.outerCone = clampAudioConeAngle(newValue);
-        if (this.positionalAudio) {
-          this.positionalAudio.setDirectionalCone(
-            this.props.innerCone ?? defaultAudioInnerConeAngle,
-            this.props.outerCone,
-            0,
-          );
-
-          this.updateDebugVisualisation();
-        }
+        this.props.coneFalloffAngle = clampAudioConeAngle(newValue);
+        this.audioGraphics?.setConeFalloffAngle(this.props.coneFalloffAngle, this.props);
       },
     ],
   });
 
   private documentTimeListener: { remove: () => void };
-  private delayedPauseTimer: NodeJS.Timeout | null = null;
-  private audioDebugHelper: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
-  private audioDebugConeX: PositionalAudioHelper | null;
-  private audioDebugConeY: PositionalAudioHelper | null;
-  private audioContextStateChangedListener = () => {
-    this.syncAudioTime();
-  };
 
   static get observedAttributes(): Array<string> {
     return [...TransformableElement.observedAttributes, ...Audio.attributeHandler.getAttributes()];
   }
 
-  private positionalAudio: THREE.PositionalAudio | null = null;
-
-  private loadedAudioState: {
-    loadedAudio:
-      | {
-          mode: "LOADED";
-          buffer: AudioBuffer;
-          currentSource: {
-            sourceNode: AudioBufferSourceNode;
-            contextStartTime: number;
-          } | null;
-          paddedBuffer?: {
-            buffer: AudioBuffer;
-            totalDuration: number;
-          };
-        }
-      | {
-          mode: "LOADING";
-          abortController: AbortController;
-        }
-      | null;
-    currentSrc: string;
-  } | null = null;
-
-  private props = {
-    startTime: defaultAudioStartTime,
-    pauseTime: defaultAudioPauseTime as number | null,
-    src: defaultAudioSrc as string | null,
-    loop: defaultAudioLoop,
-    loopDuration: defaultAudioLoopDuration as number | null,
-    enabled: defaultAudioEnabled,
-    volume: defaultAudioVolume,
-    innerCone: null as number | null,
-    outerCone: defaultAudioOuterConeAngle,
-    debug: false,
-  };
-
-  private static attributeHandler = new AttributeHandler<Audio>({
+  private static attributeHandler = new AttributeHandler<Audio<GraphicsAdapter>>({
     enabled: (instance, newValue) => {
       instance.props.enabled = parseBoolAttribute(newValue, defaultAudioEnabled);
-      instance.updateAudio();
+      instance.audioGraphics?.setEnabled(instance.props.enabled, instance.props);
     },
     loop: (instance, newValue) => {
       instance.props.loop = parseBoolAttribute(newValue, defaultAudioLoop);
-      instance.updateAudio();
+      instance.audioGraphics?.setLoop(instance.props.loop, instance.props);
     },
     "loop-duration": (instance, newValue) => {
       instance.props.loopDuration = parseFloatAttribute(newValue, null);
-      instance.updateAudio();
+      instance.audioGraphics?.setLoopDuration(instance.props.loopDuration, instance.props);
     },
     "start-time": (instance, newValue) => {
       instance.props.startTime = parseFloatAttribute(newValue, defaultAudioStartTime);
-      if (instance.loadedAudioState) {
-        instance.syncAudioTime();
-      }
+      instance.audioGraphics?.setStartTime(instance.props.startTime, instance.props);
     },
     "pause-time": (instance, newValue) => {
       instance.props.pauseTime = parseFloatAttribute(newValue, defaultAudioPauseTime);
-      if (instance.loadedAudioState) {
-        instance.syncAudioTime();
-      }
+      instance.audioGraphics?.setPauseTime(instance.props.pauseTime, instance.props);
     },
     src: (instance, newValue) => {
       instance.props.src = newValue;
-      instance.updateAudio();
+      instance.audioGraphics?.setSrc(newValue, instance.props);
     },
     volume: (instance, newValue) => {
       instance.audioAnimatedAttributeHelper.elementSetAttribute(
@@ -205,7 +131,7 @@ export class Audio extends TransformableElement {
     },
     debug: (instance, newValue) => {
       instance.props.debug = parseBoolAttribute(newValue, defaultAudioDebug);
-      instance.updateDebugVisualisation();
+      instance.audioGraphics?.setDebug(instance.props.debug, instance.props);
     },
   });
 
@@ -214,23 +140,26 @@ export class Audio extends TransformableElement {
   }
 
   protected enable() {
-    this.syncAudioTime();
+    this.audioGraphics?.syncAudioTime();
   }
 
   protected disable() {
-    this.syncAudioTime();
+    this.audioGraphics?.syncAudioTime();
   }
 
-  protected getContentBounds(): OrientedBoundingBox | null {
-    return OrientedBoundingBox.fromMatrixWorldProvider(this.container);
+  public getContentBounds(): OrientedBoundingBox | null {
+    if (!this.transformableElementGraphics) {
+      return null;
+    }
+    return OrientedBoundingBox.fromMatrixWorld(this.transformableElementGraphics.getWorldMatrix());
   }
 
-  public addSideEffectChild(child: MElement): void {
+  public addSideEffectChild(child: MElement<G>): void {
     this.audioAnimatedAttributeHelper.addSideEffectChild(child);
     super.addSideEffectChild(child);
   }
 
-  public removeSideEffectChild(child: MElement): void {
+  public removeSideEffectChild(child: MElement<G>): void {
     this.audioAnimatedAttributeHelper.removeSideEffectChild(child);
     super.removeSideEffectChild(child);
   }
@@ -243,446 +172,47 @@ export class Audio extends TransformableElement {
     return true;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.audioGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     Audio.attributeHandler.handle(this, name, newValue);
   }
 
-  private syncAudioTime() {
-    if (!this.positionalAudio) {
-      return;
-    }
-    const audioContext = this.positionalAudio.context;
-    if (audioContext.state !== "running") {
-      return;
-    }
-
-    if (this.delayedPauseTimer !== null) {
-      clearTimeout(this.delayedPauseTimer);
-      this.delayedPauseTimer = null;
-    }
-
-    if (
-      !this.loadedAudioState ||
-      !this.loadedAudioState.loadedAudio ||
-      this.loadedAudioState.loadedAudio.mode !== "LOADED"
-    ) {
-      return;
-    }
-
-    const loadedAudio = this.loadedAudioState.loadedAudio;
-    const audioBuffer = loadedAudio.buffer;
-    let currentSource = loadedAudio.currentSource;
-
-    if (!this.props.enabled) {
-      if (currentSource) {
-        currentSource.sourceNode.stop();
-        loadedAudio.currentSource = null;
-      }
-      return;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const documentTime = this.getDocumentTime()!;
-    if (this.props.pauseTime !== null) {
-      const timeUntilPause = this.props.pauseTime - documentTime;
-      if (timeUntilPause < 2) {
-        // The audio should be paused because the pauseTime is in the past or very close
-        if (currentSource) {
-          currentSource.sourceNode.stop();
-          loadedAudio.currentSource = null;
-        }
-        return;
-      } else {
-        // The pause time is in the future
-        const delayedPauseTimer = setTimeout(() => {
-          if (this.delayedPauseTimer === delayedPauseTimer) {
-            this.delayedPauseTimer = null;
-          }
-          this.syncAudioTime();
-        }, timeUntilPause);
-        this.delayedPauseTimer = delayedPauseTimer;
-      }
-    }
-
-    const currentTime = (documentTime - this.props.startTime) / 1000;
-    const audioDuration = audioBuffer.duration;
-
-    let loopDurationSeconds: number | null = null;
-    if (this.props.loopDuration !== null && this.props.loopDuration > 0) {
-      loopDurationSeconds = this.props.loopDuration / 1000;
-    }
-
-    let desiredAudioTime: number;
-    if (this.props.loop) {
-      if (currentTime < 0) {
-        desiredAudioTime = currentTime;
-      } else {
-        if (loopDurationSeconds === null) {
-          desiredAudioTime = currentTime % audioDuration;
-        } else {
-          desiredAudioTime = currentTime % loopDurationSeconds;
-        }
-      }
-    } else {
-      desiredAudioTime = currentTime;
-      if (desiredAudioTime > audioDuration) {
-        // The audio should stop because it has reached the end
-        if (currentSource) {
-          currentSource.sourceNode.stop();
-          loadedAudio.currentSource = null;
-        }
-        return;
-      }
-    }
-
-    const loopDurationLongerThanAudioDuration =
-      loopDurationSeconds && loopDurationSeconds > audioDuration;
-    const playbackLength = loopDurationSeconds ? loopDurationSeconds : audioDuration;
-
-    if (currentSource) {
-      if (
-        loopDurationSeconds !== null &&
-        loopDurationLongerThanAudioDuration &&
-        (!loadedAudio.paddedBuffer || loadedAudio.paddedBuffer.totalDuration < loopDurationSeconds)
-      ) {
-        /*
-         The loop duration is set, and it is longer than the audio file, and
-         either there is no existing padding, or the existing padding is too
-         short. Dispose of the existing audio source and create a new one.
-        */
-        currentSource.sourceNode.stop();
-        loadedAudio.currentSource = null;
-        currentSource = null;
-      } else {
-        if (this.props.startTime > documentTime) {
-          currentSource.sourceNode.stop();
-          loadedAudio.currentSource = null;
-          currentSource = null;
-        } else {
-          const unloopedCurrentAudioPoint =
-            (audioContext.currentTime - currentSource.contextStartTime) /
-            currentSource.sourceNode.playbackRate.value;
-
-          if (unloopedCurrentAudioPoint < 0) {
-            // Audio should not be playing yet, so stop it and it will be rescheduled
-            currentSource.sourceNode.stop();
-            loadedAudio.currentSource = null;
-            currentSource = null;
-          } else {
-            if (
-              loopDurationSeconds !== null &&
-              currentSource.sourceNode.loopEnd !== loopDurationSeconds
-            ) {
-              currentSource.sourceNode.loopEnd = loopDurationSeconds;
-            }
-
-            const currentAudioPoint = unloopedCurrentAudioPoint % playbackLength;
-
-            let delta = desiredAudioTime - currentAudioPoint;
-            if (this.props.loop) {
-              // Check if the delta wrapping around is smaller (i.e. the desired and current are closer together if we wrap around)
-              const loopedDelta = delta - playbackLength;
-              if (Math.abs(delta) > Math.abs(loopedDelta)) {
-                delta = loopedDelta;
-              }
-            }
-
-            if (Math.abs(delta) > 0.5) {
-              // We need to skip to the correct point as playback has drifted too far. Remove the audio source and a new one will be created
-              currentSource.sourceNode.stop();
-              loadedAudio.currentSource = null;
-              currentSource = null;
-            } else {
-              if (Math.abs(delta) < 0.1) {
-                // Do nothing - this is close enough - set the playback rate to 1
-                currentSource.sourceNode.playbackRate.value = 1;
-              } else {
-                if (delta > 0) {
-                  currentSource.sourceNode.playbackRate.value = 1.01;
-                } else {
-                  currentSource.sourceNode.playbackRate.value = 0.99;
-                }
-              }
-              // Calculate a start time that produces the current time as calculated time the next time it is checked
-              currentSource.contextStartTime =
-                audioContext.currentTime -
-                currentAudioPoint / currentSource.sourceNode.playbackRate.value;
-            }
-          }
-        }
-      }
-    }
-
-    if (!currentSource) {
-      // There is no current source (or it was removed) - create a new one
-      const currentSourceNode = this.positionalAudio.context.createBufferSource();
-
-      let buffer = audioBuffer;
-      if (loopDurationSeconds && loopDurationLongerThanAudioDuration) {
-        // The loop duration requires longer audio than the original audio - pad it with silence
-        if (
-          loadedAudio.paddedBuffer &&
-          loadedAudio.paddedBuffer.totalDuration === loopDurationSeconds
-        ) {
-          // The padding is already the correct length
-          buffer = loadedAudio.paddedBuffer.buffer;
-        } else {
-          const paddedBuffer = extendAudioToDuration(
-            this.positionalAudio.context,
-            audioBuffer,
-            loopDurationSeconds,
-          );
-          loadedAudio.paddedBuffer = {
-            buffer: paddedBuffer,
-            totalDuration: loopDurationSeconds,
-          };
-          buffer = paddedBuffer;
-        }
-      }
-
-      currentSourceNode.buffer = buffer;
-      currentSourceNode.loop = this.props.loop;
-      currentSourceNode.loopStart = 0;
-      if (loopDurationSeconds) {
-        currentSourceNode.loopEnd = loopDurationSeconds;
-      }
-      let contextStartTime;
-      if (desiredAudioTime < 0) {
-        // The audio should not have started yet - schedule it to start in the future
-        const timeFromNowToStart = -desiredAudioTime;
-        contextStartTime = audioContext.currentTime + timeFromNowToStart;
-        currentSourceNode.start(contextStartTime);
-      } else {
-        /*
-         The audio should have been playing already. Start playing from an
-         offset into the file and set the contextStartTime to when it should
-         have started
-        */
-        contextStartTime = audioContext.currentTime - desiredAudioTime;
-        currentSourceNode.start(0, desiredAudioTime);
-      }
-      loadedAudio.currentSource = {
-        sourceNode: currentSourceNode,
-        contextStartTime,
-      };
-      this.positionalAudio.setNodeSource(currentSourceNode);
-    }
-  }
-
   private documentTimeChanged() {
-    if (this.loadedAudioState) {
-      this.syncAudioTime();
-    }
+    this.audioGraphics?.syncAudioTime();
   }
 
-  private clearAudio() {
-    if (this.loadedAudioState) {
-      if (this.loadedAudioState.loadedAudio) {
-        if (this.loadedAudioState.loadedAudio.mode === "LOADING") {
-          this.loadedAudioState.loadedAudio.abortController.abort();
-        } else {
-          if (this.loadedAudioState.loadedAudio.currentSource?.sourceNode) {
-            this.loadedAudioState.loadedAudio.currentSource.sourceNode.stop();
-          }
-        }
-      }
-      this.loadedAudioState = null;
-    }
-  }
+  public connectedCallback(): void {
+    super.connectedCallback();
 
-  private updateAudio() {
-    if (!this.isConnected) {
+    if (!this.getScene().hasGraphicsAdapter() || this.audioGraphics) {
       return;
     }
+    const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
-    const audioListener = this.getAudioListener();
-    const audioContext = audioListener.context;
+    this.audioGraphics = graphicsAdapter
+      .getGraphicsAdapterFactory()
+      .MMLAudioGraphicsInterface(this);
 
-    if (!this.props.src) {
-      this.clearAudio();
-    } else {
-      const contentAddress = this.contentSrcToContentAddress(this.props.src);
-      if (this.loadedAudioState && this.loadedAudioState.currentSrc === contentAddress) {
-        // Already loaded this audio src
-      } else {
-        this.clearAudio();
-
-        const abortController = new AbortController();
-
-        this.loadedAudioState = {
-          loadedAudio: {
-            mode: "LOADING",
-            abortController,
-          },
-          currentSrc: contentAddress,
-        };
-
-        if (contentAddress.startsWith("data:")) {
-          // Construct an AudioBuffer from the data URL
-          const base64 = contentAddress.split(",", 2)[1];
-          if (!base64) {
-            return;
-          }
-          let arrayBuffer;
-
-          try {
-            const binary = atob(base64);
-            const uint8Array = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-              uint8Array[i] = binary.charCodeAt(i);
-            }
-            arrayBuffer = uint8Array.buffer;
-          } catch (e) {
-            console.error("Failed to decode base64 data URL", e);
-            return;
-          }
-          audioContext
-            .decodeAudioData(arrayBuffer)
-            .then((audioBuffer) => {
-              if (abortController.signal.aborted) {
-                return;
-              }
-              if (this.loadedAudioState && this.loadedAudioState.currentSrc === contentAddress) {
-                this.loadedAudioState.loadedAudio = {
-                  mode: "LOADED",
-                  buffer: audioBuffer,
-                  currentSource: null,
-                };
-                this.syncAudioTime();
-              }
-            })
-            .catch((e) => {
-              console.error("Failed to decode data URI audio data", e);
-            });
-          return;
-        }
-
-        fetch(contentAddress, {
-          signal: abortController.signal,
-        }).then((response) => {
-          if (response.ok) {
-            response
-              .arrayBuffer()
-              .then((buffer) => {
-                if (abortController.signal.aborted) {
-                  return;
-                }
-                audioContext.decodeAudioData(buffer).then((audioBuffer) => {
-                  if (abortController.signal.aborted) {
-                    return;
-                  }
-                  if (
-                    this.loadedAudioState &&
-                    this.loadedAudioState.currentSrc === contentAddress
-                  ) {
-                    this.loadedAudioState.loadedAudio = {
-                      mode: "LOADED",
-                      buffer: audioBuffer,
-                      currentSource: null,
-                    };
-                    this.syncAudioTime();
-                  }
-                });
-              })
-              .catch((e) => {
-                console.error("Failed to decode fetched audio data", e);
-              });
-          }
-        });
-      }
-    }
-
-    this.syncAudioTime();
-  }
-
-  connectedCallback(): void {
-    super.connectedCallback();
     this.documentTimeListener = this.addDocumentTimeListener(() => {
       this.documentTimeChanged();
     });
 
-    const audioListener = this.getAudioListener();
-    this.positionalAudio = new THREE.PositionalAudio(audioListener);
-    this.positionalAudio.context.addEventListener(
-      "statechange",
-      this.audioContextStateChangedListener,
-    );
-    this.positionalAudio.setVolume(this.props.volume);
-    this.positionalAudio.setDirectionalCone(
-      this.props.innerCone ?? defaultAudioInnerConeAngle,
-      this.props.outerCone,
-      0,
-    );
-    this.positionalAudio.setRefDistance(audioRefDistance);
-    this.positionalAudio.setRolloffFactor(audioRolloffFactor);
-    this.container.add(this.positionalAudio);
-
-    this.updateAudio();
-    this.updateDebugVisualisation();
+    for (const name of Audio.observedAttributes) {
+      const value = this.getAttribute(name);
+      if (value !== null) {
+        this.attributeChangedCallback(name, null, value);
+      }
+    }
   }
 
   disconnectedCallback() {
-    if (this.positionalAudio) {
-      this.positionalAudio.context.removeEventListener(
-        "statechange",
-        this.audioContextStateChangedListener,
-      );
-      this.positionalAudio.disconnect();
-      this.positionalAudio.removeFromParent();
-      this.positionalAudio = null;
-    }
-
-    this.clearAudio();
-
-    if (this.delayedPauseTimer) {
-      clearTimeout(this.delayedPauseTimer);
-      this.delayedPauseTimer = null;
-    }
+    this.audioAnimatedAttributeHelper.reset();
+    this.audioGraphics?.dispose();
+    this.audioGraphics = null;
     this.documentTimeListener.remove();
-    this.clearDebugVisualisation();
     super.disconnectedCallback();
-  }
-
-  private clearDebugVisualisation() {
-    if (this.audioDebugHelper) {
-      this.audioDebugHelper.removeFromParent();
-      this.audioDebugHelper = null;
-    }
-    if (this.audioDebugConeX) {
-      this.audioDebugConeX.removeFromParent();
-      this.audioDebugConeX = null;
-      this.audioDebugConeY?.removeFromParent();
-      this.audioDebugConeY = null;
-    }
-  }
-
-  private updateDebugVisualisation() {
-    if (!this.props.debug) {
-      this.clearDebugVisualisation();
-    } else {
-      if (!this.audioDebugHelper) {
-        this.audioDebugHelper = new THREE.Mesh(debugAudioGeometry, debugAudioMaterial);
-        this.container.add(this.audioDebugHelper);
-      }
-      const positionalAudio = this.positionalAudio;
-      if (positionalAudio) {
-        if (!this.audioDebugConeX && this.props.innerCone) {
-          this.audioDebugConeX = new PositionalAudioHelper(positionalAudio, 10);
-          positionalAudio.add(this.audioDebugConeX);
-          this.audioDebugConeY = new PositionalAudioHelper(positionalAudio, 10);
-          this.audioDebugConeY.rotation.z = Math.PI / 2;
-          positionalAudio.add(this.audioDebugConeY);
-        }
-      }
-      if (!this.props.innerCone && this.audioDebugConeX) {
-        this.audioDebugConeX.removeFromParent();
-        this.audioDebugConeX = null;
-        this.audioDebugConeY?.removeFromParent();
-        this.audioDebugConeY = null;
-      }
-    }
-    this.audioDebugConeX?.update();
-    this.audioDebugConeY?.update();
   }
 }

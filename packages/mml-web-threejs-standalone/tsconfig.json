@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "module": "esnext",
+    "target": "ES6",
+    "jsx": "react",
+    "lib": ["es2020", "dom"],
+    "sourceMap": true,
+    "allowJs": true,
+    "types": ["node", "jest"],
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "outDir": "./build",
+    "incremental": true
+  },
+  "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
+  "exclude": ["**/build/*", "types-src"],
+  "files": ["../../node_modules/jest-expect-message/types/index.d.ts"]
+}

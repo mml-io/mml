@@ -1,11 +1,10 @@
-import * as THREE from "three";
-
-import { Interaction } from "../elements/Interaction";
-import { InteractionListener } from "../MMLScene";
-import { EventHandlerCollection } from "../utils/events/EventHandlerCollection";
+import { Interaction } from "../elements";
+import { GraphicsAdapter } from "../graphics";
+import { InteractionListener } from "../scene";
+import { EventHandlerCollection } from "../utils/EventHandlerCollection";
 
 type InteractionState = {
-  interaction: Interaction;
+  interaction: Interaction<GraphicsAdapter>;
   distance?: number;
   button?: HTMLButtonElement;
 };
@@ -102,9 +101,6 @@ export class InteractionManager {
   private static pageLimit = 3;
   private pageOffset = 0;
 
-  private container: HTMLElement;
-  private camera: THREE.Camera;
-
   private eventCollection = new EventHandlerCollection();
 
   private interactionListElement: HTMLDivElement;
@@ -114,83 +110,22 @@ export class InteractionManager {
   private nextButton: HTMLButtonElement;
   private interactionPromptElement: HTMLDivElement;
 
-  private possibleActions = new Map<Interaction, InteractionState>();
+  private possibleActions = new Map<Interaction<GraphicsAdapter>, InteractionState>();
   private visibleActions = new Set<InteractionState>();
   private tickInterval: NodeJS.Timeout | null = null;
-  private threeJSScene: THREE.Scene;
   private sortedActions: InteractionState[] = [];
 
-  private static createButtonText(interaction: Interaction) {
+  private static createButtonText(interaction: Interaction<GraphicsAdapter>) {
     return `${interaction.props.prompt ?? "Interact"}`;
   }
 
-  private static worldPos = new THREE.Vector3();
-
-  private static matrix = new THREE.Matrix4();
-  private static frustum = new THREE.Frustum();
-
-  private static raycaster = new THREE.Raycaster();
-  private static intersections = new Array<THREE.Intersection<THREE.Object3D>>();
-  private static direction = new THREE.Vector3();
-
-  private static shouldShowInteraction(
-    interaction: Interaction,
-    camera: THREE.Camera,
-    scene: THREE.Scene,
-  ): number | null {
-    const worldPos = interaction.getContainer().getWorldPosition(InteractionManager.worldPos);
-
-    const cameraPos = camera.position;
-    const distance = cameraPos.distanceTo(worldPos);
-    if (distance > interaction.props.range) {
-      return null;
-    }
-
-    if (interaction.props.inFocus) {
-      InteractionManager.matrix.multiplyMatrices(
-        camera.projectionMatrix,
-        camera.matrixWorldInverse,
-      );
-      InteractionManager.frustum.setFromProjectionMatrix(InteractionManager.matrix);
-      if (!InteractionManager.frustum.containsPoint(worldPos)) {
-        return null;
-      }
-    }
-
-    if (interaction.props.lineOfSight) {
-      const raycastResults = InteractionManager.getRaycastResults(
-        cameraPos,
-        worldPos,
-        distance,
-        scene,
-      );
-      if (raycastResults.length > 0) {
-        for (const result of raycastResults) {
-          if (!InteractionManager.hasAncestor(result.object, interaction.getContainer())) {
-            return null;
-          }
-        }
-      }
-    }
-
-    return distance;
-  }
-
-  private static hasAncestor(object: THREE.Object3D, ancestor: THREE.Object3D): boolean {
-    let parent = object.parent;
-    while (parent !== null) {
-      if (parent === ancestor) {
-        return true;
-      }
-      parent = parent.parent;
-    }
-    return false;
-  }
-
-  private constructor(container: HTMLElement, camera: THREE.Camera, threeJSScene: THREE.Scene) {
+  private constructor(
+    private container: HTMLElement,
+    private interactionShouldShowDistance: (
+      interaction: Interaction<GraphicsAdapter>,
+    ) => number | null,
+  ) {
     this.container = container;
-    this.threeJSScene = threeJSScene;
-    this.camera = camera;
     const { holderElement, listElement, prevButton, statusHolder, nextButton } =
       createInteractionsHolder(
         () => {
@@ -231,14 +166,14 @@ export class InteractionManager {
     });
   }
 
-  private getInteractionListener(): InteractionListener {
+  private getInteractionListener(): InteractionListener<GraphicsAdapter> {
     return {
-      addInteraction: (interaction: Interaction) => {
+      addInteraction: (interaction: Interaction<GraphicsAdapter>) => {
         this.possibleActions.set(interaction, {
           interaction,
         });
       },
-      removeInteraction: (interaction: Interaction) => {
+      removeInteraction: (interaction: Interaction<GraphicsAdapter>) => {
         const interactionState = this.possibleActions.get(interaction);
         if (!interactionState) {
           console.warn("Interaction not found", interaction);
@@ -256,7 +191,7 @@ export class InteractionManager {
           }
         }
       },
-      updateInteraction: (interaction: Interaction) => {
+      updateInteraction: (interaction: Interaction<GraphicsAdapter>) => {
         const interactionState = this.possibleActions.get(interaction);
         if (!interactionState) {
           console.warn("Interaction not found", interaction);
@@ -269,34 +204,14 @@ export class InteractionManager {
     };
   }
 
-  private static getRaycastResults(
-    a: THREE.Vector3,
-    b: THREE.Vector3,
-    distance: number,
-    scene: THREE.Scene,
-  ) {
-    InteractionManager.direction.copy(b);
-    InteractionManager.direction.sub(a);
-    InteractionManager.direction.normalize();
-
-    InteractionManager.raycaster.set(a, InteractionManager.direction);
-    InteractionManager.raycaster.near = 0;
-    InteractionManager.raycaster.far = distance;
-
-    InteractionManager.intersections.length = 0;
-    InteractionManager.raycaster.intersectObject(scene, true, InteractionManager.intersections);
-    return InteractionManager.intersections;
-  }
-
   static init(
     container: HTMLElement,
-    camera: THREE.Camera,
-    threeJSScene: THREE.Scene,
+    interactionShouldShowDistance: (interaction: Interaction<GraphicsAdapter>) => number | null,
   ): {
     interactionManager: InteractionManager;
-    interactionListener: InteractionListener;
+    interactionListener: InteractionListener<GraphicsAdapter>;
   } {
-    const interactionManager = new InteractionManager(container, camera, threeJSScene);
+    const interactionManager = new InteractionManager(container, interactionShouldShowDistance);
     interactionManager.startTick();
     return { interactionManager, interactionListener: interactionManager.getInteractionListener() };
   }
@@ -314,11 +229,7 @@ export class InteractionManager {
   private startTick() {
     this.tickInterval = setInterval(() => {
       this.possibleActions.forEach((interactionState, interaction) => {
-        const showDistance = InteractionManager.shouldShowInteraction(
-          interaction,
-          this.camera,
-          this.threeJSScene,
-        );
+        const showDistance = this.interactionShouldShowDistance(interaction);
         if (showDistance !== null) {
           interactionState.distance = showDistance;
           this.visibleActions.add(interactionState);

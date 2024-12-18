@@ -1,5 +1,5 @@
-import { PromptProps } from "../MMLScene";
-import { EventHandlerCollection } from "../utils/events/EventHandlerCollection";
+import { PromptProps } from "../scene";
+import { EventHandlerCollection } from "../utils/EventHandlerCollection";
 import { Modal } from "./Modal";
 
 export class PromptModal extends Modal {

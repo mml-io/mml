@@ -1,6 +1,6 @@
+import { GraphicsAdapter, IMMLScene, RemoteDocumentWrapper } from "@mml-io/mml-web";
 import { EditableNetworkedDOM, NetworkedDOM } from "@mml-io/networked-dom-document";
 import { NetworkedDOMWebRunnerClient } from "@mml-io/networked-dom-web-runner";
-import { IMMLScene, RemoteDocumentWrapper } from "mml-web";
 
 /**
  * The MMLWebRunnerClient class can be used to view and interact with a NetworkedDOM document instance that is available
@@ -12,17 +12,26 @@ import { IMMLScene, RemoteDocumentWrapper } from "mml-web";
  * the page).
  */
 export class MMLWebRunnerClient {
-  private windowTarget: Window;
-  private mmlScene: IMMLScene;
-  private remoteHolderElement: HTMLElement;
-  private networkedDOMWebRunnerClient: NetworkedDOMWebRunnerClient;
-  private remoteDocumentWrapper: RemoteDocumentWrapper;
+  private connectedState: {
+    networkedDOMWebRunnerClient: NetworkedDOMWebRunnerClient;
+    remoteDocumentWrapper: RemoteDocumentWrapper<GraphicsAdapter>;
+  } | null = null;
 
-  constructor(windowTarget: Window, remoteHolderElement: HTMLElement, mmlScene: IMMLScene) {
-    this.windowTarget = windowTarget;
-    this.remoteHolderElement = remoteHolderElement;
-    this.mmlScene = mmlScene;
+  constructor(
+    private windowTarget: Window,
+    private remoteHolderElement: HTMLElement,
+    private mmlScene: IMMLScene<GraphicsAdapter>,
+  ) {}
 
+  public dispose() {
+    if (!this.connectedState) {
+      return;
+    }
+    this.connectedState.networkedDOMWebRunnerClient.dispose();
+    this.connectedState = null;
+  }
+
+  public connect(document: NetworkedDOM | EditableNetworkedDOM) {
     let overriddenHandler: ((element: HTMLElement, event: CustomEvent) => void) | null = null;
     const eventHandler = (element: HTMLElement, event: CustomEvent) => {
       if (!overriddenHandler) {
@@ -30,33 +39,30 @@ export class MMLWebRunnerClient {
       }
       overriddenHandler(element, event);
     };
-    this.remoteDocumentWrapper = new RemoteDocumentWrapper(
+    const remoteDocumentWrapper = new RemoteDocumentWrapper(
       window.location.href,
       this.windowTarget,
       this.mmlScene,
       eventHandler,
     );
-    this.remoteHolderElement.append(this.remoteDocumentWrapper.remoteDocument);
+    this.remoteHolderElement.append(remoteDocumentWrapper.remoteDocument);
     overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
-      if (!this.networkedDOMWebRunnerClient.connectedState) {
+      if (!networkedDOMWebRunnerClient.connectedState) {
         throw new Error("connectedState not set");
       }
-      this.networkedDOMWebRunnerClient.connectedState.domWebsocket.handleEvent(element, event);
+      networkedDOMWebRunnerClient.connectedState.domWebsocket.handleEvent(element, event);
     };
 
-    this.networkedDOMWebRunnerClient = new NetworkedDOMWebRunnerClient(
+    const networkedDOMWebRunnerClient = new NetworkedDOMWebRunnerClient(
       false,
-      this.remoteDocumentWrapper.remoteDocument,
+      remoteDocumentWrapper.remoteDocument,
     );
-  }
-
-  public dispose() {
-    this.networkedDOMWebRunnerClient.dispose();
-  }
-
-  public connect(document: NetworkedDOM | EditableNetworkedDOM) {
-    this.networkedDOMWebRunnerClient.connect(document, (time: number) => {
-      this.remoteDocumentWrapper.setDocumentTime(time);
+    networkedDOMWebRunnerClient.connect(document, (time: number) => {
+      remoteDocumentWrapper.setDocumentTime(time);
     });
+    this.connectedState = {
+      networkedDOMWebRunnerClient,
+      remoteDocumentWrapper,
+    };
   }
 }

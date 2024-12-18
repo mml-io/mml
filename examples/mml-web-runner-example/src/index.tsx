@@ -1,10 +1,14 @@
-import { IframeWrapper, MMLScene, registerCustomElementsToWindow } from "mml-web";
+import { IframeWrapper, MMLScene, registerCustomElementsToWindow } from "@mml-io/mml-web";
 import {
   EditableNetworkedDOM,
   IframeObservableDOMFactory,
   MMLWebRunnerClient,
   NetworkedDOM,
-} from "mml-web-runner";
+} from "@mml-io/mml-web-runner";
+import {
+  StandaloneThreeJSAdapter,
+  StandaloneThreeJSAdapterControlsType,
+} from "@mml-io/mml-web-threejs-standalone";
 
 const startingContent = `
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
@@ -41,9 +45,9 @@ function createCloseableClient(
   wrapperElement.style.border = "1px solid black";
   wrapperElement.style.flexShrink = "0";
   wrapperElement.style.flexGrow = "0";
-  const mmlScene = new MMLScene();
+
+  const mmlScene = new MMLScene(wrapperElement);
   const client = new MMLWebRunnerClient(windowTarget, iframeBody, mmlScene);
-  wrapperElement.append(mmlScene.element);
   const closeButton = document.createElement("button");
   closeButton.textContent = "Close";
   closeButton.style.position = "absolute";
@@ -56,8 +60,13 @@ function createCloseableClient(
   });
   wrapperElement.append(closeButton);
   clientsHolder.append(wrapperElement);
-  client.connect(networkedDOMDocument);
-  mmlScene.fitContainer();
+
+  StandaloneThreeJSAdapter.create(wrapperElement, {
+    controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
+  }).then((graphicsAdapter) => {
+    mmlScene.init(graphicsAdapter);
+    client.connect(networkedDOMDocument);
+  });
   return client;
 }
 

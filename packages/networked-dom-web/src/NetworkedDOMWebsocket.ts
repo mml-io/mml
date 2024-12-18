@@ -26,6 +26,11 @@ export enum NetworkedDOMWebsocketStatus {
   Disconnected,
 }
 
+export type NetworkedDOMWebsocketOptions = {
+  tagPrefix?: string; // e.g. "m-" to restrict to only custom elements with a tag name starting with "m-"
+  replacementTagPrefix?: string; // e.g. "x-" to replace non-prefixed tags with a new prefix (e.g. "div" -> "x-div")
+};
+
 /**
  * NetworkedDOMWebsocket is a client for a NetworkedDOMServer. It connects to a server on the provided url and receives
  * updates to the DOM. It also sends events to the server for interactions with the DOM.
@@ -38,11 +43,6 @@ export class NetworkedDOMWebsocket {
   private websocket: WebSocket | null = null;
   private currentRoot: HTMLElement | null = null;
 
-  private url: string;
-  private websocketFactory: NetworkedDOMWebsocketFactory;
-  private parentElement: HTMLElement;
-  private timeCallback: (time: number) => void;
-  private statusUpdateCallback: (status: NetworkedDOMWebsocketStatus) => void;
   private stopped = false;
   private backoffTime = startingBackoffTimeMilliseconds;
   private status: NetworkedDOMWebsocketStatus | null = null;
@@ -52,25 +52,13 @@ export class NetworkedDOMWebsocket {
   }
 
   constructor(
-    url: string,
-    websocketFactory: NetworkedDOMWebsocketFactory,
-    parentElement: HTMLElement,
-    timeCallback?: (time: number) => void,
-    statusUpdateCallback?: (status: NetworkedDOMWebsocketStatus) => void,
+    private url: string,
+    private websocketFactory: NetworkedDOMWebsocketFactory,
+    private parentElement: HTMLElement,
+    private timeCallback?: (time: number) => void,
+    private statusUpdateCallback?: (status: NetworkedDOMWebsocketStatus) => void,
+    private options: NetworkedDOMWebsocketOptions = {},
   ) {
-    this.url = url;
-    this.websocketFactory = websocketFactory;
-    this.parentElement = parentElement;
-    this.timeCallback =
-      timeCallback ||
-      (() => {
-        // no-op
-      });
-    this.statusUpdateCallback =
-      statusUpdateCallback ||
-      (() => {
-        // no-op
-      });
     this.setStatus(NetworkedDOMWebsocketStatus.Connecting);
     this.startWebSocketConnectionAttempt();
   }
@@ -78,7 +66,9 @@ export class NetworkedDOMWebsocket {
   private setStatus(status: NetworkedDOMWebsocketStatus) {
     if (this.status !== status) {
       this.status = status;
-      this.statusUpdateCallback(status);
+      if (this.statusUpdateCallback) {
+        this.statusUpdateCallback(status);
+      }
     }
   }
 
@@ -139,12 +129,11 @@ export class NetworkedDOMWebsocket {
           this.startWebSocketConnectionAttempt();
         };
 
-        websocket.addEventListener("close", (e) => {
+        websocket.addEventListener("close", () => {
           if (websocket !== this.websocket) {
             console.warn("Ignoring websocket close event because it is no longer current");
             return;
           }
-          console.log("NetworkedDOMWebsocket close", e);
           onWebsocketClose();
         });
         websocket.addEventListener("error", (e) => {
@@ -252,10 +241,6 @@ export class NetworkedDOMWebsocket {
     if (nodeId === undefined || nodeId === null) {
       throw new Error("Element not found");
     }
-
-    console.log(
-      `Sending event to websocket: "${event.type}" on node: ${nodeId} type: ${element.tagName}`,
-    );
 
     const detailWithoutElement: Partial<typeof event.detail> = {
       ...event.detail,
@@ -457,10 +442,18 @@ export class NetworkedDOMWebsocket {
 
     let element;
     try {
-      element = document.createElement(tag);
+      let filteredTag = tag;
+      if (this.options.tagPrefix) {
+        if (!tag.toLowerCase().startsWith(this.options.tagPrefix.toLowerCase())) {
+          filteredTag = this.options.replacementTagPrefix
+            ? this.options.replacementTagPrefix + tag
+            : `x-${tag}`;
+        }
+      }
+      element = document.createElement(filteredTag);
     } catch (e) {
       console.error(`Error creating element: (${tag})`, e);
-      element = document.createElement("div");
+      element = document.createElement("x-div");
     }
     this.idToElement.set(nodeId, element);
     this.elementToId.set(element, nodeId);

@@ -1,4 +1,7 @@
 # MML Schema Definition
+#### `@mml-io/schema`
+
+[![npm version](https://img.shields.io/npm/v/@mml-io/schema.svg?style=flat)](https://www.npmjs.com/package/@mml-io/schema)
 
 This directory contains the schema definition for the MML format. The schema for element definitions is written in [XML Schema Definition Language (XSD)](https://www.w3.org/TR/xmlschema11-1/) as this enables validation of the source XHTML format of MML Documents.
 

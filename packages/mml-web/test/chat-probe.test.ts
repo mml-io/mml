@@ -1,8 +1,9 @@
 import { jest } from "@jest/globals";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
-import { ChatProbe } from "../src/elements/ChatProbe";
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
+import { ChatProbe } from "../build/index";
+import { registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
@@ -16,16 +17,17 @@ describe("m-chat-probe", () => {
     expect(schema.name).toEqual(ChatProbe.tagName);
   });
 
-  test("test attachment to scene", () => {
-    const { scene, element } = createSceneAttachedElement<ChatProbe>("m-chat-probe");
+  test("test attachment to scene", async () => {
+    const { scene, element } = await createSceneAttachedElement<ChatProbe>("m-chat-probe");
     expect(
-      scene.getThreeScene().children[0 /* root container */].children[0 /* attachment container */]
+      (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+        .children[0 /* root container */].children[0 /* attachment container */]
         .children[0 /* element container */],
     ).toBe(element.getContainer());
   });
 
-  test("chat-probe - send message", () => {
-    const { element, scene } = createSceneAttachedElement<ChatProbe>("m-chat-probe");
+  test("chat-probe - send message", async () => {
+    const { element, scene } = await createSceneAttachedElement<ChatProbe>("m-chat-probe");
     element.setAttribute("range", "10");
     element.setAttribute("interval", "100");
 
@@ -58,8 +60,8 @@ describe("m-chat-probe", () => {
     expect(chatListener).toHaveBeenNthCalledWith(2, "Third");
   });
 
-  test("chatProbe - update", () => {
-    const { scene, remoteDocument } = createTestScene();
+  test("chatProbe - update", async () => {
+    const { scene, remoteDocument } = await createTestScene();
     const element = document.createElement("m-chat-probe") as ChatProbe;
     expect(Array.from((scene as any).chatProbes)).toEqual([]);
     const addChatProbeSpy = jest.spyOn(scene, "addChatProbe");
@@ -79,8 +81,8 @@ describe("m-chat-probe", () => {
     expect(Array.from((scene as any).chatProbes)).toEqual([element]);
   });
 
-  test("chatProbe - update from ancestor", () => {
-    const { element, scene } = createSceneAttachedElement<ChatProbe>("m-group");
+  test("chatProbe - update from ancestor", async () => {
+    const { element, scene } = await createSceneAttachedElement<ChatProbe>("m-group");
 
     const addChatProbeSpy = jest.spyOn(scene, "addChatProbe");
     const updateChatProbeSpy = jest.spyOn(scene, "updateChatProbe");
@@ -105,14 +107,14 @@ describe("m-chat-probe", () => {
     expect(updateChatProbeSpy).toHaveBeenCalledWith(mChatProbe);
     expect(addChatProbeSpy).toHaveBeenCalledTimes(1);
     const worldPos = new THREE.Vector3();
-    mChatProbe.getContainer().getWorldPosition(worldPos);
+    (mChatProbe.getContainer() as THREE.Object3D).getWorldPosition(worldPos);
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 3 });
 
     innerGroup.setAttribute("z", "1");
     expect(updateChatProbeSpy).toHaveBeenCalledTimes(2);
     expect(updateChatProbeSpy).toHaveBeenNthCalledWith(2, mChatProbe);
     expect(addChatProbeSpy).toHaveBeenCalledTimes(1);
-    mChatProbe.getContainer().getWorldPosition(worldPos);
+    (mChatProbe.getContainer() as THREE.Object3D).getWorldPosition(worldPos);
     // z should be increased by one due to the parent group - should now be 4
     expect(worldPos).toMatchObject({ x: 1, y: 3, z: 4 });
 

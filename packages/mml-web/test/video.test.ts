@@ -1,12 +1,12 @@
 import { jest } from "@jest/globals";
+import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
+import * as THREE from "three";
 
-import { registerCustomElementsToWindow } from "../src/elements/register-custom-elements";
-import { RemoteDocument } from "../src/elements/RemoteDocument";
-import { Video } from "../src/elements/Video";
-import { FullScreenMMLScene } from "../src/FullScreenMMLScene";
-import { createMockMediaStream } from "./mocks/MockMediaStream";
-import { createMockPeerConnection } from "./mocks/MockPeerConnection";
-import { createMockVideoElement } from "./mocks/MockVideoElement";
+import { createMockMediaStream } from "../../../test-utils/mocks/MockMediaStream";
+import { createMockPeerConnection } from "../../../test-utils/mocks/MockPeerConnection";
+import { createMockVideoElement } from "../../../test-utils/mocks/MockVideoElement";
+import { registerCustomElementsToWindow } from "../build/index";
+import { Video } from "../build/index";
 import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
@@ -20,20 +20,22 @@ beforeAll(() => {
 jest.useFakeTimers();
 
 describe("m-video", () => {
-  test("test attachment to scene", () => {
-    const scene = new FullScreenMMLScene();
-    const remoteDocument = document.createElement("m-remote-document") as RemoteDocument;
-    remoteDocument.init(scene, "ws://localhost:8080");
-    document.body.append(remoteDocument);
+  test("test attachment to scene", async () => {
+    const { scene, element } = await createSceneAttachedElement<Video>("m-video");
 
-    const element = document.createElement("m-video") as Video;
-    remoteDocument.append(element);
+    const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
+      .children[0 /* root container */].children[0 /* attachment container */]
+      .children[0 /* element container */];
+    const videoMesh = container.children[0 /* element mesh */] as THREE.Mesh;
+    expect(videoMesh).toBeDefined();
+    expect(element.getContainer()).toBe(container);
 
-    expect(scene.getThreeScene().children[0].children[0].children[0].children[0]).toBe(
-      element.getVideoMesh(),
-    );
+    expect(
+      (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene().children[0]
+        .children[0].children[0].children[0],
+    ).toBe(videoMesh);
 
-    expect(scene.getThreeScene()).toMatchObject({
+    expect((scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()).toMatchObject({
       // Scene
       children: [
         // Scene Root Container
@@ -44,7 +46,7 @@ describe("m-video", () => {
               children: [
                 // Element Container
                 {
-                  children: expect.arrayContaining([element.getVideoMesh()]),
+                  children: expect.arrayContaining([videoMesh]),
                 },
               ],
             },
@@ -54,14 +56,14 @@ describe("m-video", () => {
     });
 
     // Setting scale attribute - should affect the container of the element, but not the mesh itself
-    expect(element.getContainer().scale.x).toBe(1);
+    expect((element.getContainer() as THREE.Object3D).scale.x).toBe(1);
     element.setAttribute("sx", "5");
-    expect(element.getContainer().scale.x).toBe(5);
+    expect((element.getContainer() as THREE.Object3D).scale.x).toBe(5);
 
-    // Setting the width attribute affects the mesh directly
-    expect(element.getVideoMesh()!.scale.x).toBe(1);
+    // Setting the width attribute - should affect the mesh
+    expect(videoMesh.scale.x).toBe(1);
     element.setAttribute("width", "5");
-    expect(element.getVideoMesh()!.scale.x).toBe(5);
+    expect(videoMesh.scale.x).toBe(5);
   });
 
   test("observes the schema-specified attributes", () => {
@@ -69,7 +71,7 @@ describe("m-video", () => {
     expect(schema.name).toEqual(Video.tagName);
   });
 
-  test("static video file loads", () => {
+  test("static video file loads", async () => {
     const mockVideoElement = createMockVideoElement();
     createElementSpy.mockImplementation((tagName: string) => {
       if (tagName === "video") {
@@ -78,7 +80,7 @@ describe("m-video", () => {
       return originalCreateElement(tagName);
     });
 
-    const { element: mVideo, remoteDocument } = createSceneAttachedElement<Video>("m-video");
+    const { element: mVideo, remoteDocument } = await createSceneAttachedElement<Video>("m-video");
     // The internal video element should have been created
     expect(createElementSpy).toHaveBeenCalled();
 
@@ -100,8 +102,9 @@ describe("m-video", () => {
     mockVideoElement.eventEmitter.emit("loadeddata");
     expect(mockVideoElement.play).toHaveBeenCalledTimes(1);
 
-    expect(mVideo.getVideoMesh()!.scale.y).toBe(0.5);
-    expect(mVideo.getVideoMesh()!.scale.x).toBe(1);
+    const videoMesh = (mVideo.getContainer() as THREE.Object3D).children[0];
+    expect(videoMesh.scale.y).toBe(0.5);
+    expect(videoMesh.scale.x).toBe(1);
 
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(2500);
     expect(mockVideoElement.currentTime).toEqual(2.5);
@@ -152,7 +155,7 @@ describe("m-video", () => {
     mVideo.remove();
   });
 
-  test("whep video stream loads", () => {
+  test("whep video stream loads", async () => {
     const mockVideoElement = createMockVideoElement();
     createElementSpy.mockImplementation((tagName: string) => {
       if (tagName === "video") {
@@ -171,7 +174,7 @@ describe("m-video", () => {
       .fn()
       .mockImplementation(() => mockPeerConnection) as unknown as typeof RTCPeerConnection;
 
-    const { element: mVideo } = createSceneAttachedElement<Video>("m-video");
+    const { element: mVideo } = await createSceneAttachedElement<Video>("m-video");
     // The internal video element should have been created
     expect(createElementSpy).toHaveBeenCalled();
 
@@ -187,7 +190,7 @@ describe("m-video", () => {
     mockPeerConnection.connectionState = "connected";
     mockPeerConnection.eventEmitter.emit("connectionstatechange");
 
-    expect(mockVideoElement.srcObject).toBe((mVideo as any).videoSource.stream);
+    expect(mockVideoElement.srcObject).toBe((mVideo as any).videoGraphics.videoSource.stream);
 
     // Report that the video has loaded
     mockVideoElement.videoWidth = 200;
@@ -195,8 +198,9 @@ describe("m-video", () => {
     expect(mockVideoElement.eventEmitter.listeners("loadeddata")).toHaveLength(1);
     mockVideoElement.eventEmitter.emit("loadeddata");
 
-    expect(mVideo.getVideoMesh()!.scale.y).toBe(0.5);
-    expect(mVideo.getVideoMesh()!.scale.x).toBe(1);
+    const videoMesh = (mVideo.getContainer() as THREE.Object3D).children[0];
+    expect(videoMesh.scale.y).toBe(0.5);
+    expect(videoMesh.scale.x).toBe(1);
 
     mVideo.remove();
     expect(mockPeerConnection.close).toHaveBeenCalled();
