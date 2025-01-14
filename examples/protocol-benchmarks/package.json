@@ -1,0 +1,19 @@
+{
+  "name": "@mml-io/protocol-benchmarks",
+  "version": "0.18.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project ./tsconfig.json",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
+    "benchmark-encoding": "npm run build && node ./build/encoding.js",
+    "benchmark-decoding": "npm run build && node ./build/decoding.js"
+  },
+  "devDependencies": {
+    "@mml-io/networked-dom-protocol": "^0.18.1",
+    "benchmark": "2.1.4",
+    "@types/benchmark": "2.1.5"
+  }
+}

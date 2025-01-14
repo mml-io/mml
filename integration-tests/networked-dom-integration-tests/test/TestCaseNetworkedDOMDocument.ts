@@ -11,8 +11,8 @@ export class TestCaseNetworkedDOMDocument {
     this.doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
   }
 
-  createClient() {
-    const testClient = new TestCaseNetworkedDOMClient();
+  createClient(useV01 = false) {
+    const testClient = new TestCaseNetworkedDOMClient(useV01);
     this.doc.addWebSocket(testClient.fakeWebSocket.serverSideWebsocket as unknown as WebSocket);
     return testClient;
   }

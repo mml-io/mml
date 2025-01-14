@@ -2,9 +2,10 @@ import {
   FullScreenMMLScene,
   MMLNetworkSource,
   NetworkedDOMWebsocketStatus,
+  NetworkedDOMWebsocketStatusToString,
   StandaloneTagDebugAdapter,
+  StatusUI,
 } from "@mml-io/mml-web";
-import { StatusUI } from "@mml-io/mml-web";
 
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
@@ -49,7 +50,7 @@ export class TagsMode implements GraphicsMode {
         if (status === NetworkedDOMWebsocketStatus.Connected) {
           statusUI.setNoStatus();
         } else {
-          statusUI.setStatus(NetworkedDOMWebsocketStatus[status]);
+          statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
         }
       },
       url: this.mmlSourceDefinition.url,

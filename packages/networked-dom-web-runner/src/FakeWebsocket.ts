@@ -25,7 +25,9 @@ class WebsocketEnd extends EventTarget {
     options?: boolean | AddEventListenerOptions,
   ) {
     if (type === "open") {
-      listener.bind(this)(new Event("open"));
+      setTimeout(() => {
+        listener.bind(this)(new Event("open"));
+      }, 1);
       return;
     }
     super.addEventListener(type, listener, options);

@@ -1,13 +1,31 @@
 import { LogMessage, StaticVirtualDOMElement } from "@mml-io/observable-dom-common";
 
-import { VirtualDOMDiffStruct } from "./common";
+import { createNetworkedDOMConnectionForWebsocket } from "./createNetworkedDOMConnectionForWebsocket";
+import { VirtualDOMDiffStruct } from "./diffing/calculateStaticVirtualDOMDiff";
 import { NetworkedDOM, ObservableDOMFactory } from "./NetworkedDOM";
+import { NetworkedDOMV01Connection } from "./NetworkedDOMV01Connection";
+import { NetworkedDOMV02Connection } from "./NetworkedDOMV02Connection";
 
-type LoadedState = {
-  htmlContents: string;
-  networkedDOM: NetworkedDOM;
-  loaded: boolean;
-};
+enum NetworkedDOMState {
+  DocumentLoading,
+  DocumentLoaded,
+  BeforeDocumentLoaded,
+}
+
+type LoadedState =
+  | {
+      type: NetworkedDOMState.DocumentLoaded;
+      htmlContents: string;
+      networkedDOM: NetworkedDOM;
+    }
+  | {
+      type: NetworkedDOMState.DocumentLoading;
+      htmlContents: string;
+      networkedDOM: NetworkedDOM;
+    }
+  | {
+      type: NetworkedDOMState.BeforeDocumentLoaded;
+    };
 
 /**
  * EditableNetworkedDOM wraps NetworkedDOM instances and presents them as a single document that can iterate through
@@ -18,8 +36,10 @@ export class EditableNetworkedDOM {
   private htmlPath: string;
   private params: object = {};
 
-  private websockets = new Set<WebSocket>();
-  private loadedState: LoadedState | null = null;
+  private websockets = new Map<WebSocket, NetworkedDOMV01Connection | NetworkedDOMV02Connection>();
+  private loadedState: LoadedState = {
+    type: NetworkedDOMState.BeforeDocumentLoaded,
+  };
 
   private observableDOMFactory: ObservableDOMFactory;
   private ignoreTextNodes: boolean;
@@ -48,16 +68,16 @@ export class EditableNetworkedDOM {
     }
 
     let oldInstanceRoot: StaticVirtualDOMElement | null = null;
-    let existingWebsocketMap: Map<WebSocket, number> | null = null;
-    if (this.loadedState) {
+    if (
+      this.loadedState.type === NetworkedDOMState.DocumentLoaded ||
+      this.loadedState.type === NetworkedDOMState.DocumentLoading
+    ) {
       const oldInstance = this.loadedState.networkedDOM;
-      existingWebsocketMap = oldInstance.getWebsocketConnectionIdMap();
       oldInstance.dispose();
       oldInstanceRoot = oldInstance.getSnapshot();
     }
-    this.loadedState = null;
-
     let didLoad = false;
+    let hasSetLoading = false;
     const networkedDOM = new NetworkedDOM(
       this.observableDOMFactory,
       this.htmlPath,
@@ -65,28 +85,42 @@ export class EditableNetworkedDOM {
       oldInstanceRoot,
       (domDiff: VirtualDOMDiffStruct | null, networkedDOM: NetworkedDOM) => {
         didLoad = true;
-        if (this.loadedState) {
-          this.loadedState.loaded = true;
+        if (!hasSetLoading) {
+          hasSetLoading = true;
+          this.loadedState = {
+            type: NetworkedDOMState.DocumentLoaded,
+            htmlContents,
+            networkedDOM,
+          };
+        } else if (
+          this.loadedState &&
+          this.loadedState.type === NetworkedDOMState.DocumentLoading &&
+          this.loadedState.networkedDOM === networkedDOM
+        ) {
+          this.loadedState = {
+            type: NetworkedDOMState.DocumentLoaded,
+            htmlContents,
+            networkedDOM,
+          };
         }
-        networkedDOM.addExistingWebsockets(
-          Array.from(this.websockets),
-          existingWebsocketMap,
-          domDiff,
-        );
+        networkedDOM.addExistingNetworkedDOMConnections(new Set(this.websockets.values()), domDiff);
       },
       this.params,
       this.ignoreTextNodes,
       this.logCallback,
     );
-    this.loadedState = {
-      htmlContents,
-      networkedDOM,
-      loaded: didLoad,
-    };
+    hasSetLoading = true;
+    if (!didLoad) {
+      this.loadedState = {
+        type: NetworkedDOMState.DocumentLoading,
+        htmlContents,
+        networkedDOM,
+      };
+    }
   }
 
   public reload() {
-    if (this.loadedState) {
+    if (this.loadedState && this.loadedState.type === NetworkedDOMState.DocumentLoaded) {
       this.load(this.loadedState.htmlContents, this.params);
     } else {
       console.warn("EditableNetworkedDOM.reload called whilst not loaded");
@@ -94,27 +128,44 @@ export class EditableNetworkedDOM {
   }
 
   public dispose() {
-    for (const ws of this.websockets) {
+    for (const [ws, networkedDOMConnection] of this.websockets) {
+      networkedDOMConnection.dispose();
       ws.close();
     }
     this.websockets.clear();
-    if (this.loadedState) {
+    if (
+      this.loadedState.type === NetworkedDOMState.DocumentLoaded ||
+      this.loadedState.type === NetworkedDOMState.DocumentLoading
+    ) {
       this.loadedState.networkedDOM.dispose();
     }
-    this.loadedState = null;
+    this.loadedState = {
+      type: NetworkedDOMState.BeforeDocumentLoaded,
+    };
   }
 
   public addWebSocket(webSocket: WebSocket) {
-    this.websockets.add(webSocket);
-    if (this.loadedState && this.loadedState.loaded) {
-      this.loadedState.networkedDOM.addWebSocket(webSocket);
+    const networkedDOMConnection = createNetworkedDOMConnectionForWebsocket(webSocket);
+    if (networkedDOMConnection === null) {
+      // Error is handled in createNetworkedDOMConnectionForWebsocket
+      return;
+    }
+
+    this.websockets.set(webSocket, networkedDOMConnection);
+    if (this.loadedState.type === NetworkedDOMState.DocumentLoaded) {
+      this.loadedState.networkedDOM.addNetworkedDOMConnection(networkedDOMConnection);
     }
   }
 
   public removeWebSocket(webSocket: WebSocket) {
+    const networkedDOMConnection = this.websockets.get(webSocket);
+    if (networkedDOMConnection === undefined) {
+      throw new Error("Unknown websocket");
+    }
+    networkedDOMConnection.dispose();
     this.websockets.delete(webSocket);
-    if (this.loadedState && this.loadedState.loaded) {
-      this.loadedState.networkedDOM.removeWebSocket(webSocket);
+    if (this.loadedState.type === NetworkedDOMState.DocumentLoaded) {
+      this.loadedState.networkedDOM.removeNetworkedDOMConnection(networkedDOMConnection);
     }
   }
 }

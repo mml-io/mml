@@ -6,7 +6,7 @@ export function virtualDOMElementToStatic(el: LiveVirtualDOMElement): StaticVirt
   return {
     nodeId: el.nodeId,
     tag: el.tag,
-    attributes: el.attributes,
+    attributes: Object.assign({}, el.attributes), // Copy the attributes object - shallow copy is fine as the attributes are strings
     childNodes: el.childNodes.map((child) => virtualDOMElementToStatic(child)),
     textContent: el.textContent,
   };

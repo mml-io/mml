@@ -1,4 +1,5 @@
 import { EditableNetworkedDOM, NetworkedDOM } from "@mml-io/networked-dom-document";
+import { networkedDOMProtocolSubProtocol_v0_1 } from "@mml-io/networked-dom-protocol";
 import { NetworkedDOMWebsocket } from "@mml-io/networked-dom-web";
 
 import { FakeWebsocket } from "./FakeWebsocket";
@@ -49,7 +50,7 @@ export class NetworkedDOMWebRunnerClient {
     if (this.connectedState) {
       this.disconnect();
     }
-    const fakeWebsocket = new FakeWebsocket("networked-dom-v0.1");
+    const fakeWebsocket = new FakeWebsocket(networkedDOMProtocolSubProtocol_v0_1);
     let overriddenHandler: ((element: HTMLElement, event: CustomEvent) => void) | null = null;
     const eventHandler = (element: HTMLElement, event: CustomEvent) => {
       if (!overriddenHandler) {

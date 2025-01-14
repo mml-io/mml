@@ -1,14 +1,22 @@
-import { ClientMessage, ServerMessage } from "@mml-io/networked-dom-protocol";
+import {
+  networkedDOMProtocolSubProtocol_v0_1,
+  NetworkedDOMV01ClientMessage,
+  NetworkedDOMV01ServerMessage,
+} from "@mml-io/networked-dom-protocol";
 
-export class MockWebsocket {
-  private allMessages: Array<ServerMessage> = [];
+export class MockWebsocketV01 {
+  public readonly protocol = networkedDOMProtocolSubProtocol_v0_1;
+  private allMessages: Array<NetworkedDOMV01ServerMessage> = [];
   private messageTriggers = new Set<() => void>();
   private serverMessageListeners = new Set<(message: MessageEvent) => void>();
   private serverCloseListeners = new Set<() => void>();
 
   send(data: string) {
     const parsed = JSON.parse(data);
-    this.allMessages.push(parsed);
+    if (!Array.isArray(parsed)) {
+      throw new Error("Expected an array of messages");
+    }
+    this.allMessages.push(...parsed);
     this.messageTriggers.forEach((trigger) => {
       trigger();
     });
@@ -21,9 +29,9 @@ export class MockWebsocket {
   async waitForTotalMessageCount(
     totalMessageCount: number,
     startFrom = 0,
-  ): Promise<Array<ServerMessage>> {
-    let resolveProm: (value: Array<ServerMessage>) => void;
-    const promise = new Promise<Array<ServerMessage>>((resolve) => {
+  ): Promise<Array<NetworkedDOMV01ServerMessage>> {
+    let resolveProm: (value: Array<NetworkedDOMV01ServerMessage>) => void;
+    const promise = new Promise<Array<NetworkedDOMV01ServerMessage>>((resolve) => {
       resolveProm = resolve;
     });
 
@@ -32,7 +40,7 @@ export class MockWebsocket {
     }
 
     const trigger = () => {
-      if (this.allMessages.length === totalMessageCount) {
+      if (this.allMessages.length >= totalMessageCount) {
         this.messageTriggers.delete(trigger);
         resolveProm(this.allMessages.slice(startFrom, totalMessageCount));
       }
@@ -45,7 +53,6 @@ export class MockWebsocket {
     if (eventType === "message") {
       this.serverMessageListeners.add(listener);
     } else if (eventType === "close") {
-      console.log("adding close listener");
       this.serverCloseListeners.add(listener);
     }
   }
@@ -58,7 +65,7 @@ export class MockWebsocket {
     }
   }
 
-  sendToServer(toSend: ClientMessage) {
+  sendToServer(toSend: NetworkedDOMV01ClientMessage) {
     const asString = JSON.stringify(toSend);
     this.serverMessageListeners.forEach((listener) => {
       listener(

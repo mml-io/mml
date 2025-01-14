@@ -1,43 +1,45 @@
-export type ElementNodeDescription = {
+export type NetworkedDOMV01ElementNodeDescription = {
   type: "element";
   nodeId: number;
   tag: string;
   attributes: { [key: string]: string };
-  children: Array<NodeDescription>;
+  children: Array<NetworkedDOMV01NodeDescription>;
   text?: string;
 };
 
-export type TextNodeDescription = {
+export type NetworkedDOMV01TextNodeDescription = {
   type: "text";
   nodeId: number;
   text: string;
 };
 
-export type NodeDescription = ElementNodeDescription | TextNodeDescription;
+export type NetworkedDOMV01NodeDescription =
+  | NetworkedDOMV01ElementNodeDescription
+  | NetworkedDOMV01TextNodeDescription;
 
-export type SnapshotMessage = {
+export type NetworkedDOMV01SnapshotMessage = {
   type: "snapshot";
-  snapshot: NodeDescription;
+  snapshot: NetworkedDOMV01NodeDescription;
   documentTime: number;
 };
 
-export type ChildrenChangedDiff = {
+export type NetworkedDOMV01ChildrenChangedDiff = {
   type: "childrenChanged";
   nodeId: number;
   previousNodeId: number | null;
-  addedNodes: Array<NodeDescription>;
+  addedNodes: Array<NetworkedDOMV01NodeDescription>;
   removedNodes: Array<number>;
   documentTime?: number;
 };
 
-export type TextChangedDiff = {
+export type NetworkedDOMV01TextChangedDiff = {
   type: "textChanged";
   nodeId: number;
   text: string;
   documentTime?: number;
 };
 
-export type AttributeChangedDiff = {
+export type NetworkedDOMV01AttributeChangedDiff = {
   type: "attributeChange";
   nodeId: number;
   attribute: string;
@@ -45,22 +47,30 @@ export type AttributeChangedDiff = {
   documentTime?: number;
 };
 
-export type Diff = SnapshotMessage | ChildrenChangedDiff | AttributeChangedDiff | TextChangedDiff;
+export type NetworkedDOMV01Diff =
+  | NetworkedDOMV01SnapshotMessage
+  | NetworkedDOMV01ChildrenChangedDiff
+  | NetworkedDOMV01AttributeChangedDiff
+  | NetworkedDOMV01TextChangedDiff;
 
-export type PingMessage = {
+export type NetworkedDOMV01PingMessage = {
   type: "ping";
   ping: number;
   documentTime: number;
 };
 
-export type ErrorMessage = {
+export type NetworkedDOMV01ErrorMessage = {
   type: "error";
   message: string;
 };
 
-export type WarningMessage = {
+export type NetworkedDOMV01WarningMessage = {
   type: "warning";
   message: string;
 };
 
-export type ServerMessage = Diff | PingMessage | ErrorMessage | WarningMessage;
+export type NetworkedDOMV01ServerMessage =
+  | NetworkedDOMV01Diff
+  | NetworkedDOMV01PingMessage
+  | NetworkedDOMV01ErrorMessage
+  | NetworkedDOMV01WarningMessage;

@@ -6,8 +6,8 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "build": "tsx ./build.ts --build",
-    "iterate": "npm run build && npm run serve",
-    "serve": "node --enable-source-maps ./build/index.js",
+    "iterate": "tsx ./build.ts --watch",
+    "start-server": "node --enable-source-maps ./build/index.js",
     "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
   },

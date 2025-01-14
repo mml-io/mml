@@ -1,4 +1,4 @@
-export type RemoteEvent = {
+export type NetworkedDOMV01RemoteEvent = {
   type: "event";
   nodeId: number;
   name: string;
@@ -6,9 +6,9 @@ export type RemoteEvent = {
   params: any;
 };
 
-export type PongMessage = {
+export type NetworkedDOMV01PongMessage = {
   type: "pong";
   pong: number;
 };
 
-export type ClientMessage = RemoteEvent | PongMessage;
+export type NetworkedDOMV01ClientMessage = NetworkedDOMV01RemoteEvent | NetworkedDOMV01PongMessage;

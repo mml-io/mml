@@ -1,4 +1,4 @@
-import { LogMessage, RemoteEvent } from "@mml-io/observable-dom-common";
+import { LogMessage, ObservableDOMRemoteEvent } from "@mml-io/observable-dom-common";
 import {
   AbortablePromise,
   DOMWindow,
@@ -196,7 +196,7 @@ export class JSDOMRunner implements DOMRunnerInterface {
   public dispatchRemoteEventFromConnectionId(
     connectionId: number,
     domNode: Element,
-    remoteEvent: RemoteEvent,
+    remoteEvent: ObservableDOMRemoteEvent,
   ) {
     if (!this.domWindow) {
       throw new Error(ErrDOMWindowNotInitialized);

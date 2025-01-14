@@ -5,7 +5,7 @@ const jestConfig: JestConfigWithTsJest = {
   collectCoverage: true,
   testEnvironment: "node",
   coverageDirectory: "coverage",
-  coverageReporters: ["lcov", "text"],
+  coverageReporters: ["lcov"],
   extensionsToTreatAsEsm: [".ts"],
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
