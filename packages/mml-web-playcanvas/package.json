@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-web-playcanvas",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "publishConfig": {
     "access": "public"
   },
@@ -20,7 +20,7 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.18.1"
+    "@mml-io/mml-web": "^0.19.0"
   },
   "peerDependencies": {
     "playcanvas": "*"
@@ -30,8 +30,8 @@
     "jest-environment-jsdom": "29.7.0",
     "jest-expect-message": "1.1.3",
     "jest-fetch-mock": "3.0.3",
-    "resize-observer-polyfill": "1.5.1",
-    "playcanvas": "1.73.5"
+    "playcanvas": "1.73.5",
+    "resize-observer-polyfill": "1.5.1"
   },
   "babel": {
     "presets": [
