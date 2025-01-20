@@ -6,7 +6,7 @@
 </p>
 
 [![main github actions](https://github.com/mml-io/mml/actions/workflows/main.yaml/badge.svg)](https://github.com/mml-io/mml/actions/workflows/main.yaml)
-[![npm version](https://img.shields.io/npm/v/mml-web.svg?style=flat)](https://www.npmjs.com/package/mml-web)
+[![npm version](https://img.shields.io/npm/v/@mml-io/mml-web.svg?style=flat)](https://www.npmjs.com/package/@mml-io/mml-web)
 ![GitHub top language](https://img.shields.io/github/languages/top/mml-io/mml)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/mml-io/mml/blob/main/LICENSE)
 
