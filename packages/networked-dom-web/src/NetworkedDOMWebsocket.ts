@@ -107,6 +107,10 @@ export class NetworkedDOMWebsocket {
           websocketAdapter = new NetworkedDOMWebsocketV02Adapter(
             websocket,
             this.parentElement,
+            () => {
+              this.backoffTime = startingBackoffTimeMilliseconds;
+              this.setStatus(NetworkedDOMWebsocketStatus.Connected);
+            },
             this.timeCallback,
             this.options,
           );
@@ -114,6 +118,10 @@ export class NetworkedDOMWebsocket {
           websocketAdapter = new NetworkedDOMWebsocketV01Adapter(
             websocket,
             this.parentElement,
+            () => {
+              this.backoffTime = startingBackoffTimeMilliseconds;
+              this.setStatus(NetworkedDOMWebsocketStatus.Connected);
+            },
             this.timeCallback,
             this.options,
           );
@@ -126,9 +134,7 @@ export class NetworkedDOMWebsocket {
             websocket.close();
             return;
           }
-          this.backoffTime = startingBackoffTimeMilliseconds;
           websocketAdapter.receiveMessage(event);
-          this.setStatus(NetworkedDOMWebsocketStatus.Connected);
         });
 
         const onWebsocketClose = async () => {

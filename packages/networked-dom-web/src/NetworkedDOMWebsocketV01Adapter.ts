@@ -25,6 +25,7 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
   constructor(
     private websocket: WebSocket,
     private parentElement: HTMLElement,
+    private connectedCallback: () => void,
     private timeCallback?: (time: number) => void,
     private options: NetworkedDOMWebsocketOptions = {},
   ) {
@@ -87,6 +88,7 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
           switch (message.type) {
             case "snapshot":
               this.handleSnapshot(message);
+              this.connectedCallback();
               break;
             case "attributeChange":
               this.handleAttributeChange(message);
