@@ -3,6 +3,7 @@ import {
   IframeWrapper,
   MMLNetworkSource,
   NetworkedDOMWebsocketStatus,
+  NetworkedDOMWebsocketStatusToString,
   StandaloneTagDebugAdapter,
   StatusUI,
   allFields,
@@ -12,7 +13,7 @@ import {
   rendererField,
   setDebugGlobals,
   urlField
-} from "./chunk-OV4LNTMD.js";
+} from "./chunk-OGDCF6KN.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -283,7 +284,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-QRYHL5YY.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-6JRQ32LR.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -377,7 +378,7 @@ var TagsMode = class {
         if (status === NetworkedDOMWebsocketStatus.Connected) {
           statusUI.setNoStatus();
         } else {
-          statusUI.setStatus(NetworkedDOMWebsocketStatus[status]);
+          statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
         }
       },
       url: this.mmlSourceDefinition.url,
@@ -425,7 +426,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-NYSAP3BJ.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-OES4PZ5X.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
