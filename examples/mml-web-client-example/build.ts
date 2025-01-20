@@ -1,9 +1,20 @@
 import * as esbuild from "esbuild";
 
+import { rebuildOnDependencyChangesPlugin } from "../../build-utils/rebuildOnDependencyChangesPlugin";
+
 const buildMode = "--build";
 const watchMode = "--watch";
 
 const helpString = `Mode must be provided as one of ${buildMode} or ${watchMode}`;
+
+const args = process.argv.splice(2);
+
+if (args.length !== 1) {
+  console.error(helpString);
+  process.exit(1);
+}
+
+const mode = args[0];
 
 const buildOptions: esbuild.BuildOptions = {
   entryPoints: ["src/index.ts"],
@@ -15,16 +26,8 @@ const buildOptions: esbuild.BuildOptions = {
   packages: "external",
   sourcemap: true,
   target: "node14",
+  plugins: mode === watchMode ? [rebuildOnDependencyChangesPlugin] : [],
 };
-
-const args = process.argv.splice(2);
-
-if (args.length !== 1) {
-  console.error(helpString);
-  process.exit(1);
-}
-
-const mode = args[0];
 
 switch (mode) {
   case buildMode:

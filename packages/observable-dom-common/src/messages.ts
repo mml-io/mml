@@ -1,6 +1,8 @@
-import { RemoteEvent } from "@mml-io/networked-dom-protocol";
-
-import { ObservableDOMInterface, ObservableDOMMessage } from "./ObservableDOMInterface";
+import {
+  ObservableDOMInterface,
+  ObservableDOMMessage,
+  ObservableDOMRemoteEvent,
+} from "./ObservableDOMInterface";
 
 export const ADD_CONNECTED_USER_ID_MESSAGE_TYPE = "addConnectedUserId";
 export const REMOVE_CONNECTED_USER_ID_MESSAGE_TYPE = "removeConnectedUserId";
@@ -21,7 +23,7 @@ export type RemoveConnectedUserIdMessage = {
 export type DispatchRemoteEventFromConnectionIdMessage = {
   type: typeof DISPATCH_REMOTE_EVENT_FROM_CONNECTION_ID_MESSAGE_TYPE;
   connectionId: number;
-  event: RemoteEvent;
+  event: ObservableDOMRemoteEvent;
 };
 
 export type ToObservableDOMInstanceMessage =
@@ -62,7 +64,10 @@ export function observableDOMInterfaceToMessageSender(
         connectionId,
       });
     },
-    dispatchRemoteEventFromConnectionId(connectionId: number, remoteEvent: RemoteEvent): void {
+    dispatchRemoteEventFromConnectionId(
+      connectionId: number,
+      remoteEvent: ObservableDOMRemoteEvent,
+    ): void {
       sender({
         type: DISPATCH_REMOTE_EVENT_FROM_CONNECTION_ID_MESSAGE_TYPE,
         connectionId,

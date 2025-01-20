@@ -3,7 +3,7 @@ import {
   ObservableDOMInterface,
   ObservableDOMMessage,
   ObservableDOMParameters,
-  RemoteEvent,
+  ObservableDOMRemoteEvent,
   StaticVirtualDOMElement,
   StaticVirtualDOMMutationIdsRecord,
 } from "@mml-io/observable-dom-common";
@@ -27,7 +27,7 @@ export type DOMRunnerInterface = {
   dispatchRemoteEventFromConnectionId(
     connectionId: number,
     realElement: Element,
-    remoteEvent: RemoteEvent,
+    remoteEvent: ObservableDOMRemoteEvent,
   ): void;
   dispose(): void;
   getDocumentTime(): number;
@@ -153,12 +153,6 @@ export class ObservableDOM implements ObservableDOMInterface {
   }
 
   private processModificationList(mutationList: Array<MutationRecord>): void {
-    const documentEl = this.domRunner.getDocument() as unknown as Element;
-    const documentVirtualDOMElement = this.realElementToVirtualElement.get(documentEl);
-    if (!documentVirtualDOMElement) {
-      throw new Error(`document not created in processModificationList`);
-    }
-
     if (mutationList.length > 1) {
       // TODO (https://github.com/mml-io/mml/issues/100) - walk back through the records to derive the intermediate
       //  states (e.g. if an attribute is later added to an element created in an earlier record then it should not
@@ -166,166 +160,194 @@ export class ObservableDOM implements ObservableDOMInterface {
       //  visibility and expected client performance.
     }
 
+    const allMutationRecords: Array<StaticVirtualDOMMutationIdsRecord> = [];
     for (const mutation of mutationList) {
-      if (this.isIgnoredElement(mutation.target as Element | Text)) {
-        continue;
+      const idsRecord = this.createMutationRecord(mutation);
+      if (idsRecord) {
+        allMutationRecords.push(idsRecord);
       }
+    }
 
-      if (
-        mutation.type === "attributes" &&
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.isIgnoredAttribute(mutation.target as Element | Text, mutation.attributeName!)
-      ) {
-        continue;
-      }
+    if (allMutationRecords.length > 0) {
+      this.callback(
+        {
+          mutations: allMutationRecords,
+          documentTime: this.getDocumentTime(),
+        },
+        this,
+      );
+    }
+  }
 
-      const targetNode = mutation.target as Element | Text;
-      const targetElement = this.realElementToVirtualElement.get(targetNode);
-      if (!targetElement) {
-        throw new Error("Unknown node:" + targetNode + "," + mutation.type);
-      }
+  private createMutationRecord(mutation: MutationRecord): StaticVirtualDOMMutationIdsRecord | null {
+    if (this.isIgnoredElement(mutation.target as Element | Text)) {
+      return null;
+    }
 
-      let previousSiblingElement: LiveVirtualDOMElement | null = null;
-      let insertionIndex = 0;
-      const toAdd: Array<LiveVirtualDOMElement> = [];
-      const removedNodeIds: Array<number> = [];
+    if (
+      mutation.type === "attributes" &&
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.isIgnoredAttribute(mutation.target as Element | Text, mutation.attributeName!)
+    ) {
+      return null;
+    }
 
-      if (mutation.type === "childList") {
-        mutation.removedNodes.forEach((node: Node) => {
-          const asElementOrText = node as Element | Text;
-          if (this.isIgnoredElement(asElementOrText)) {
-            return;
-          }
-          const childDOMElement = this.realElementToVirtualElement.get(asElementOrText);
-          if (!childDOMElement) {
+    const targetNode = mutation.target as Element | Text;
+    const targetElement = this.realElementToVirtualElement.get(targetNode);
+    if (!targetElement) {
+      // This can happen if the target element for this mutation has been removed in a previous mutation
+      return null;
+    }
+
+    let previousSiblingElement: LiveVirtualDOMElement | null = null;
+    let insertionIndex = 0;
+    const toAdd: Array<LiveVirtualDOMElement> = [];
+    const removedNodeIds: Array<number> = [];
+
+    if (mutation.type === "childList") {
+      mutation.removedNodes.forEach((node: Node) => {
+        const asElementOrText = node as Element | Text;
+        if (this.isIgnoredElement(asElementOrText)) {
+          return;
+        }
+        const childDOMElement = this.realElementToVirtualElement.get(asElementOrText);
+        if (!childDOMElement) {
+          /*
+           This can happen if element was a child of a parent element, but was moved to a new parent in the same batch of mutations.
+           We can ignore this removal as the element will be in the correct place in the hierarchy already.
+          */
+          return;
+        } else {
+          const index = targetElement.childNodes.indexOf(childDOMElement);
+          if (index === -1) {
             /*
-             This can happen if element was a child of a parent element, but was moved to a new parent in the same batch of mutations.
-             We can ignore this removal as the element will be in the correct place in the hierarchy already.
-            */
-            return;
+           This can happen if element was a child of a parent element, but was moved to a new parent in the same batch of mutations.
+           We can ignore this removal as the element will be in the correct place in the hierarchy already.
+          */
           } else {
-            const index = targetElement.childNodes.indexOf(childDOMElement);
-            if (index === -1) {
-              /*
-             This can happen if element was a child of a parent element, but was moved to a new parent in the same batch of mutations.
-             We can ignore this removal as the element will be in the correct place in the hierarchy already.
-            */
+            this.removeVirtualDOMElement(childDOMElement);
+            removedNodeIds.push(childDOMElement.nodeId);
+            const removal = targetElement.childNodes.splice(index, 1);
+            if (removal.length !== 1) {
+              throw new Error("Removal length not 1");
             } else {
-              this.removeVirtualDOMElement(childDOMElement);
-              removedNodeIds.push(childDOMElement.nodeId);
-              const removal = targetElement.childNodes.splice(index, 1);
-              if (removal.length !== 1) {
-                throw new Error("Removal length not 1");
-              } else {
-                if (removal[0].nodeId !== childDOMElement.nodeId) {
-                  throw new Error("Removal node id mismatch");
-                }
+              if (removal[0].nodeId !== childDOMElement.nodeId) {
+                throw new Error("Removal node id mismatch");
               }
             }
-          }
-        });
-
-        mutation.addedNodes.forEach((node: Node) => {
-          const asElementOrText = node as Element | Text;
-          if (asElementOrText.parentNode !== targetNode) {
-            // Ignore this addition - it is likely overridden by an earlier addition of this element to its eventual node in this mutation batch
-          } else {
-            if (!previousSiblingElement) {
-              /*
-               Either there is no previous element (this is the first element)
-               or the previous element has not yet been determined.
-
-               Use the current previous sibling of this added node as the first
-               choice for the previous sibling, but only use previous siblings
-               that are not ignored (are tracked as virtual elements).
-              */
-              let firstNonIgnoredPreviousSibling: Element | Text | null =
-                asElementOrText.previousSibling as Element | Text;
-              let virtualPreviousSibling: LiveVirtualDOMElement | undefined;
-              while (firstNonIgnoredPreviousSibling && !virtualPreviousSibling) {
-                virtualPreviousSibling = this.realElementToVirtualElement.get(
-                  firstNonIgnoredPreviousSibling as Element | Text,
-                );
-                if (
-                  virtualPreviousSibling &&
-                  targetElement.childNodes.indexOf(virtualPreviousSibling) === -1
-                ) {
-                  // This element is not a child of the parent element - it is not a valid previous sibling
-                  virtualPreviousSibling = undefined;
-                }
-
-                firstNonIgnoredPreviousSibling = firstNonIgnoredPreviousSibling.previousSibling as
-                  | Element
-                  | Text
-                  | null;
-              }
-
-              if (virtualPreviousSibling) {
-                previousSiblingElement = virtualPreviousSibling;
-                insertionIndex = targetElement.childNodes.indexOf(previousSiblingElement);
-                if (insertionIndex === -1) {
-                  throw new Error(
-                    "Previous sibling is not currently a child of the parent element",
-                  );
-                }
-                insertionIndex += 1;
-              }
-            }
-            const childVirtualDOMElement = this.createVirtualDOMElementWithChildren(
-              asElementOrText,
-              targetElement,
-            );
-            if (childVirtualDOMElement) {
-              toAdd.push(childVirtualDOMElement);
-            }
-          }
-        });
-        targetElement.childNodes.splice(insertionIndex, 0, ...toAdd);
-      } else if (mutation.type === "attributes") {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const attributeName = mutation.attributeName!;
-        if (!this.isIgnoredAttribute(targetNode, attributeName)) {
-          const attributeValue = (targetNode as Element).getAttribute(attributeName);
-          if (attributeValue === null) {
-            delete targetElement.attributes[attributeName];
-          } else {
-            targetElement.attributes[attributeName] = attributeValue;
           }
         }
-      } else if (mutation.type === "characterData") {
-        targetElement.textContent = targetNode.textContent ? targetNode.textContent : undefined;
-      }
+      });
 
+      mutation.addedNodes.forEach((node: Node) => {
+        const asElementOrText = node as Element | Text;
+        if (asElementOrText.parentNode !== targetNode) {
+          // Ignore this addition - it is likely overridden by an earlier addition of this element to its eventual node in this mutation batch
+        } else {
+          if (!previousSiblingElement) {
+            /*
+             Either there is no previous element (this is the first element)
+             or the previous element has not yet been determined.
+
+             Use the current previous sibling of this added node as the first
+             choice for the previous sibling, but only use previous siblings
+             that are not ignored (are tracked as virtual elements).
+            */
+            let firstNonIgnoredPreviousSibling: Element | Text | null =
+              asElementOrText.previousSibling as Element | Text;
+            let virtualPreviousSibling: LiveVirtualDOMElement | undefined;
+            while (firstNonIgnoredPreviousSibling && !virtualPreviousSibling) {
+              virtualPreviousSibling = this.realElementToVirtualElement.get(
+                firstNonIgnoredPreviousSibling as Element | Text,
+              );
+              if (
+                virtualPreviousSibling &&
+                targetElement.childNodes.indexOf(virtualPreviousSibling) === -1
+              ) {
+                // This element is not a child of the parent element - it is not a valid previous sibling
+                virtualPreviousSibling = undefined;
+              }
+
+              firstNonIgnoredPreviousSibling = firstNonIgnoredPreviousSibling.previousSibling as
+                | Element
+                | Text
+                | null;
+            }
+
+            if (virtualPreviousSibling) {
+              previousSiblingElement = virtualPreviousSibling;
+              insertionIndex = targetElement.childNodes.indexOf(previousSiblingElement);
+              if (insertionIndex === -1) {
+                throw new Error("Previous sibling is not currently a child of the parent element");
+              }
+              insertionIndex += 1;
+            }
+          }
+          const childVirtualDOMElement = this.createVirtualDOMElementWithChildren(
+            asElementOrText,
+            targetElement,
+          );
+          if (childVirtualDOMElement) {
+            toAdd.push(childVirtualDOMElement);
+          }
+        }
+      });
+      targetElement.childNodes.splice(insertionIndex, 0, ...toAdd);
+
+      if (toAdd.length === 0 && removedNodeIds.length === 0) {
+        // This is a no-op mutation
+        return null;
+      }
       // Convert the "real" DOM MutationRecord into a "virtual" DOM MutationRecord that references the VirtualDOMElements
       // This is done so that the same process for handling mutations can be used for both changes to a live DOM and also
       // to diffs between DOM snapshots when reloading
-
       const addedNodes: Array<StaticVirtualDOMElement> = toAdd.map(virtualDOMElementToStatic);
-
-      const mutationRecord: StaticVirtualDOMMutationIdsRecord = {
-        type: mutation.type,
+      return {
+        type: "childList",
         targetId: targetElement.nodeId,
         addedNodes,
         removedNodeIds,
         previousSiblingId: previousSiblingElement
           ? (previousSiblingElement as LiveVirtualDOMElement).nodeId
           : null,
-        attribute: mutation.attributeName
-          ? {
-              attributeName: mutation.attributeName,
-              value: (mutation.target as Element).getAttribute(mutation.attributeName),
-            }
-          : null,
       };
-
-      this.callback(
-        {
-          mutation: mutationRecord,
-          documentTime: this.getDocumentTime(),
-        },
-        this,
-      );
+    } else if (mutation.type === "attributes") {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const attributeName = mutation.attributeName!;
+      if (!this.isIgnoredAttribute(targetNode, attributeName)) {
+        const previousValue = targetElement.attributes[attributeName];
+        const attributeValue = (targetNode as Element).getAttribute(attributeName);
+        if (attributeValue === null) {
+          if (previousValue === undefined) {
+            // This is a no-op mutation
+            return null;
+          }
+          delete targetElement.attributes[attributeName];
+        } else {
+          if (attributeValue === previousValue) {
+            // This is a no-op mutation
+            return null;
+          }
+          targetElement.attributes[attributeName] = attributeValue;
+        }
+        return {
+          type: "attributes",
+          targetId: targetElement.nodeId,
+          attributes: {
+            [attributeName]: attributeValue,
+          },
+        };
+      }
+    } else if (mutation.type === "characterData") {
+      targetElement.textContent = targetNode.textContent ? targetNode.textContent : undefined;
+      return {
+        type: "characterData",
+        targetId: targetElement.nodeId,
+        textContent: targetElement.textContent ? targetElement.textContent : "",
+      };
     }
+
+    throw new Error("Unknown mutation type: " + mutation.type);
   }
 
   private removeVirtualDOMElement(virtualDOMElement: LiveVirtualDOMElement): void {
@@ -442,7 +464,10 @@ export class ObservableDOM implements ObservableDOMInterface {
     return attributeName.startsWith("on");
   }
 
-  public dispatchRemoteEventFromConnectionId(connectionId: number, remoteEvent: RemoteEvent): void {
+  public dispatchRemoteEventFromConnectionId(
+    connectionId: number,
+    remoteEvent: ObservableDOMRemoteEvent,
+  ): void {
     const domNode = this.nodeIdToNode.get(remoteEvent.nodeId);
     if (!domNode) {
       console.error("Unknown node ID in remote event: " + remoteEvent.nodeId);

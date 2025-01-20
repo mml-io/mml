@@ -24,4 +24,8 @@ export * from "./time";
 export * from "./utils/calculateContentSize";
 export * from "./utils/EventHandlerCollection";
 export * from "./video";
-export { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
+export {
+  NetworkedDOMWebsocket,
+  NetworkedDOMWebsocketStatus,
+  NetworkedDOMWebsocketStatusToString,
+} from "@mml-io/networked-dom-web";

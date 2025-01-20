@@ -1,4 +1,9 @@
-import { RemoteEvent } from "@mml-io/networked-dom-protocol";
+export type ObservableDOMRemoteEvent = {
+  nodeId: number;
+  name: string;
+  bubbles: boolean;
+  params: any;
+};
 
 export type StaticVirtualDOMElement = {
   nodeId: number;
@@ -8,19 +13,32 @@ export type StaticVirtualDOMElement = {
   childNodes: Array<StaticVirtualDOMElement>;
 };
 
-export type StaticVirtualDOMMutationIdsRecord = {
-  type: "attributes" | "characterData" | "childList";
-  targetId: number;
-  addedNodes: Array<StaticVirtualDOMElement>;
-  removedNodeIds: Array<number>;
-  previousSiblingId: number | null;
-  attribute: { attributeName: string; value: string | null } | null;
-};
+export type StaticVirtualDOMMutationIdsRecord =
+  | {
+      type: "attributes";
+      targetId: number;
+      attributes: { [key: string]: string | null };
+    }
+  | {
+      type: "characterData";
+      targetId: number;
+      textContent: string;
+    }
+  | {
+      type: "childList";
+      targetId: number;
+      addedNodes: Array<StaticVirtualDOMElement>;
+      removedNodeIds: Array<number>;
+      previousSiblingId: number | null;
+    };
 
 export type ObservableDOMInterface = {
   addConnectedUserId(connectionId: number): void;
   removeConnectedUserId(connectionId: number): void;
-  dispatchRemoteEventFromConnectionId(connectionId: number, remoteEvent: RemoteEvent): void;
+  dispatchRemoteEventFromConnectionId(
+    connectionId: number,
+    remoteEvent: ObservableDOMRemoteEvent,
+  ): void;
   dispose(): void;
 };
 
@@ -31,7 +49,7 @@ export type LogMessage = {
 
 export type ObservableDOMMessage = {
   snapshot?: StaticVirtualDOMElement;
-  mutation?: StaticVirtualDOMMutationIdsRecord;
+  mutations?: Array<StaticVirtualDOMMutationIdsRecord>;
   logMessage?: LogMessage;
   documentTime: number;
 };

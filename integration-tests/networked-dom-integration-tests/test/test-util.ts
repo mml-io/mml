@@ -8,7 +8,11 @@ export function waitFor(condition: () => boolean, timeout = 1000) {
     }, 10);
     setTimeout(() => {
       clearInterval(interval);
-      reject(new Error("waitFor timeout"));
+      if (condition()) {
+        resolve();
+      } else {
+        reject(new Error("waitFor timeout"));
+      }
     }, timeout);
   });
 }

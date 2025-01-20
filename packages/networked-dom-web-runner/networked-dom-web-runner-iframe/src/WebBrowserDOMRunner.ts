@@ -1,5 +1,5 @@
-import { RemoteEvent } from "@mml-io/networked-dom-protocol";
 import { DOMRunnerFactory, DOMRunnerInterface, DOMRunnerMessage } from "@mml-io/observable-dom";
+import { ObservableDOMRemoteEvent } from "@mml-io/observable-dom-common";
 
 export const WebBrowserDOMRunnerFactory: DOMRunnerFactory = (
   htmlPath: string,
@@ -103,7 +103,7 @@ export class WebBrowserDOMRunner implements DOMRunnerInterface {
   dispatchRemoteEventFromConnectionId(
     connectionId: number,
     realElement: Element,
-    remoteEvent: RemoteEvent,
+    remoteEvent: ObservableDOMRemoteEvent,
   ): void {
     const bubbles = remoteEvent.bubbles || false;
     const remoteEventObject = new CustomEvent(remoteEvent.name, {

@@ -2,9 +2,10 @@ import {
   FullScreenMMLScene,
   MMLNetworkSource,
   NetworkedDOMWebsocketStatus,
+  NetworkedDOMWebsocketStatusToString,
   parseColorAttribute,
+  StatusUI,
 } from "@mml-io/mml-web";
-import { StatusUI } from "@mml-io/mml-web";
 import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
@@ -78,7 +79,7 @@ export class ThreeJSModeInternal {
         if (status === NetworkedDOMWebsocketStatus.Connected) {
           statusUI.setNoStatus();
         } else {
-          statusUI.setStatus(NetworkedDOMWebsocketStatus[status]);
+          statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
         }
       },
       url: this.mmlSourceDefinition.url,

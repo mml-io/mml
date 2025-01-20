@@ -5,12 +5,12 @@ const jestConfig: JestConfigWithTsJest = {
   collectCoverage: true,
   testEnvironment: "jsdom",
   coverageDirectory: "coverage",
-  coverageReporters: ["lcov", "text"],
+  coverageReporters: ["lcov"],
   extensionsToTreatAsEsm: [".ts"],
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
-  setupFilesAfterEnv: ["jest-expect-message"],
+  setupFilesAfterEnv: ["jest-expect-message", "./test/jest.setup.ts"],
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",

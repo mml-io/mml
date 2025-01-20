@@ -6,6 +6,7 @@ import {
   MMLNetworkSource,
   MMLScene,
   NetworkedDOMWebsocketStatus,
+  NetworkedDOMWebsocketStatusToString,
   registerCustomElementsToWindow,
   RemoteDocumentWrapper,
   StandaloneGraphicsAdapter,
@@ -89,7 +90,7 @@ declare global {
           statusUI.setNoStatus();
           fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
         } else {
-          statusUI.setStatus(NetworkedDOMWebsocketStatus[status]);
+          statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
         }
       },
       windowTarget,
