@@ -5,6 +5,8 @@
 class WebsocketEnd extends EventTarget {
   private readonly sendCallback: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => void;
   public readonly protocol: string;
+  private hasMessageListener = false;
+  private bufferedEvents: Array<MessageEvent> = [];
 
   constructor(
     protocol: string,
@@ -30,7 +32,28 @@ class WebsocketEnd extends EventTarget {
       }, 1);
       return;
     }
+
     super.addEventListener(type, listener, options);
+
+    if (type === "message") {
+      this.hasMessageListener = true;
+      const bufferedEvents = this.bufferedEvents;
+      this.bufferedEvents = [];
+      bufferedEvents.forEach((event) => {
+        this.dispatchEvent(event);
+      });
+    }
+  }
+
+  public dispatchEvent(event: Event): boolean {
+    if (event.type === "message") {
+      if (!this.hasMessageListener) {
+        // The message listener is not setup yet - buffer the event
+        this.bufferedEvents.push(event as MessageEvent);
+        return true;
+      }
+    }
+    return super.dispatchEvent(event);
   }
 
   public send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
