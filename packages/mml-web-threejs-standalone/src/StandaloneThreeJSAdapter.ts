@@ -1,4 +1,10 @@
-import { Interaction, MElement, MMLGraphicsInterface, radToDeg } from "@mml-io/mml-web";
+import {
+  Interaction,
+  MElement,
+  MMLGraphicsInterface,
+  radToDeg,
+  StandaloneGraphicsAdapter,
+} from "@mml-io/mml-web";
 import {
   ThreeJSClickTrigger,
   ThreeJSGraphicsAdapter,
@@ -21,7 +27,7 @@ export type StandaloneThreeJSAdapterOptions = {
   controlsType?: StandaloneThreeJSAdapterControlsType;
 };
 
-export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter {
+export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGraphicsAdapter {
   collisionType: THREE.Object3D;
   containerType: THREE.Object3D;
 

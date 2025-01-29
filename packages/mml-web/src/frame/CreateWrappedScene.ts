@@ -73,9 +73,6 @@ export function createWrappedScene<G extends GraphicsAdapter = GraphicsAdapter>(
     ) {
       scene.link(linkProps, abortSignal, windowCallback);
     },
-    getRootContainer: () => {
-      throw new Error("Wrapped scenes do not have a root container");
-    },
     getUserPositionAndRotation: () => {
       return scene.getUserPositionAndRotation();
     },

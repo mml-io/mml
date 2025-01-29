@@ -27,6 +27,7 @@ import {
   CylinderGraphics,
   DebugHelperGraphics,
   FrameGraphics,
+  GraphicsAdapter,
   ImageGraphics,
   InteractionGraphics,
   LabelGraphics,
@@ -39,10 +40,10 @@ import {
   PromptGraphics,
   RemoteDocumentGraphics,
   SphereGraphics,
+  StandaloneGraphicsAdapter,
   TransformableGraphics,
   VideoGraphics,
 } from "../graphics";
-import { GraphicsAdapter, StandaloneGraphicsAdapter } from "../graphics";
 import { InteractionManager } from "../interaction-ui";
 import { LoadingProgressManager } from "../loading";
 import { PromptManager } from "../prompt-ui";
@@ -118,8 +119,6 @@ export type IMMLScene<G extends GraphicsAdapter = GraphicsAdapter> = {
   getGraphicsAdapter: () => G;
   hasGraphicsAdapter: () => boolean;
 
-  getRootContainer: () => ReturnType<G["getRootContainer"]>;
-
   addCollider?: (collider: unknown, element: MElement<G>) => void;
   updateCollider?: (collider: unknown, element: MElement<G>) => void;
   removeCollider?: (collider: unknown, element: MElement<G>) => void;
@@ -155,7 +154,7 @@ export type IMMLScene<G extends GraphicsAdapter = GraphicsAdapter> = {
  *
  * It is the default implementation of the IMMLScene interface and presents a fly camera with drag controls.
  */
-export class MMLScene<G extends StandaloneGraphicsAdapter<any, any, any>> implements IMMLScene<G> {
+export class MMLScene<G extends StandaloneGraphicsAdapter> implements IMMLScene<G> {
   private colliders = new Set<unknown>();
 
   private interactions = new Set<Interaction<G>>();
@@ -210,13 +209,6 @@ export class MMLScene<G extends StandaloneGraphicsAdapter<any, any, any>> implem
       throw new Error("MMLScene not initialized with a graphics adapter. Call init() first.");
     }
     return this.graphicsAdapter;
-  }
-
-  public getRootContainer(): G["containerType"] {
-    if (!this.graphicsAdapter) {
-      throw new Error("MMLScene not initialized with a graphics adapter");
-    }
-    return this.graphicsAdapter.getRootContainer();
   }
 
   public getUserPositionAndRotation(): PositionAndRotation {
