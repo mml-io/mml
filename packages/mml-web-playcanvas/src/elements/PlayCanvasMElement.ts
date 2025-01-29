@@ -30,7 +30,7 @@ export class PlayCanvasMElement extends MElementGraphics<PlayCanvasGraphicsAdapt
     // If none of the ancestors are MElements then this element may be directly connected to the body (without a wrapper).
     // Attempt to use a global scene that has been configured to attach this element to.
     const scene = this.element.getScene();
-    this.currentParentContainer = scene.getRootContainer();
+    this.currentParentContainer = scene.getGraphicsAdapter().getRootContainer();
     this.currentParentContainer.addChild(this.container);
   }
 

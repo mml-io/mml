@@ -2,6 +2,7 @@ import {
   Interaction,
   Matr4,
   MMLGraphicsInterface,
+  StandaloneGraphicsAdapter,
   TransformableElement,
   Vect3,
 } from "@mml-io/mml-web";
@@ -33,7 +34,9 @@ export type StandalonePlayCanvasAdapterOptions = {
   controlsType?: StandalonePlayCanvasAdapterControlsType;
 };
 
-export class StandalonePlayCanvasAdapter implements PlayCanvasGraphicsAdapter {
+export class StandalonePlayCanvasAdapter
+  implements PlayCanvasGraphicsAdapter, StandaloneGraphicsAdapter
+{
   containerType: playcanvas.Entity;
   collisionType: playcanvas.Entity;
 

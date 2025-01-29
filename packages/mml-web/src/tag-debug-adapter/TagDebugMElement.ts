@@ -42,7 +42,7 @@ export class TagDebugMElement implements MElementGraphics<TagDebugGraphicsAdapte
       // Attempt to use a global scene that has been configured to attach this element to.
       const scene = this.mElement.getScene();
       this.currentParent = scene;
-      (scene.getRootContainer() as HTMLElement).append(this.container);
+      (scene.getGraphicsAdapter().getRootContainer() as HTMLElement).append(this.container);
       this.indentLevel = 0;
     }
 
@@ -181,7 +181,9 @@ export class TagDebugMElement implements MElementGraphics<TagDebugGraphicsAdapte
       this.currentParent.childElementHolder.removeChild(this.container);
       this.currentParent = null;
     } else {
-      (this.currentParent.getRootContainer() as HTMLElement).removeChild(this.container);
+      (this.currentParent.getGraphicsAdapter().getRootContainer() as HTMLElement).removeChild(
+        this.container,
+      );
       this.currentParent = null;
     }
   }
