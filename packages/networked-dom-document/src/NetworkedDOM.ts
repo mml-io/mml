@@ -248,6 +248,10 @@ export class NetworkedDOM {
     this.removeNetworkedDOMConnection(networkedDOMConnection);
   }
 
+  public hasWebSocket(webSocket: WebSocket): boolean {
+    return this.webSocketToNetworkedDOMConnection.has(webSocket);
+  }
+
   public addExistingNetworkedDOMConnections(
     networkedDOMConnections: Set<NetworkedDOMV01Connection | NetworkedDOMV02Connection>,
     domDiff: VirtualDOMDiffStruct | null,

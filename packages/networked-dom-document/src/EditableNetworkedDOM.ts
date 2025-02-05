@@ -157,6 +157,10 @@ export class EditableNetworkedDOM {
     }
   }
 
+  public hasWebSocket(webSocket: WebSocket): boolean {
+    return this.websockets.has(webSocket);
+  }
+
   public removeWebSocket(webSocket: WebSocket) {
     const networkedDOMConnection = this.websockets.get(webSocket);
     if (networkedDOMConnection === undefined) {
