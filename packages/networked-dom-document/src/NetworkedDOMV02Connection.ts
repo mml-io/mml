@@ -83,7 +83,7 @@ export class NetworkedDOMV02Connection {
   }
 
   public sendMessage(message: NetworkedDOMV02ServerMessage) {
-    this.webSocket.send(encodeServerMessage(message).getBuffer());
+    this.sendEncodedBytes(encodeServerMessage(message).getBuffer());
   }
 
   public sendMessages(messages: Array<NetworkedDOMV02ServerMessage>) {
@@ -92,7 +92,7 @@ export class NetworkedDOMV02Connection {
       encodeServerMessage(message, bufferWriter);
     }
     const bytes = bufferWriter.getBuffer();
-    this.webSocket.send(bytes);
+    this.sendEncodedBytes(bytes);
   }
 
   public sendEncodedBytes(bytes: Uint8Array) {
