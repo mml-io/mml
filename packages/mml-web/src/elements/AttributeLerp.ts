@@ -38,6 +38,12 @@ export class AttributeLerp<G extends GraphicsAdapter = GraphicsAdapter> extends 
     },
   });
 
+  public readonly isAttributeLerp = true;
+
+  public static isAttributeLerp(element: object): element is AttributeLerp {
+    return (element as AttributeLerp).isAttributeLerp;
+  }
+
   static get observedAttributes(): Array<string> {
     return [...AttributeLerp.attributeHandler.getAttributes()];
   }
@@ -77,8 +83,8 @@ export class AttributeLerp<G extends GraphicsAdapter = GraphicsAdapter> extends 
 
   public connectedCallback(): void {
     super.connectedCallback();
-    if (this.parentElement && this.parentElement instanceof MElement) {
-      this.registeredParentAttachment = this.parentElement;
+    if (this.parentElement && MElement.isMElement(this.parentElement)) {
+      this.registeredParentAttachment = this.parentElement as MElement<G>;
       this.registeredParentAttachment.addSideEffectChild(this);
     }
   }

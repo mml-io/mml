@@ -56,7 +56,7 @@ export class ThreeJSLight extends LightGraphics<ThreeJSGraphicsAdapter> {
       this.threeLight.castShadow = this.light.props.castShadows;
       this.threeLight.shadow.mapSize.width = 512;
       this.threeLight.shadow.mapSize.height = 512;
-      if (this.threeLight.shadow.camera instanceof THREE.PerspectiveCamera) {
+      if (this.threeLight.shadow.camera.isPerspectiveCamera) {
         this.threeLight.shadow.camera.near = 0.5;
         this.threeLight.shadow.camera.far = 500;
       }
@@ -120,7 +120,7 @@ export class ThreeJSLight extends LightGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setAngle(angle: number) {
-    if (this.threeLight instanceof THREE.SpotLight) {
+    if ((this.threeLight as THREE.SpotLight).isSpotLight) {
       (this.threeLight as THREE.SpotLight).angle = THREE.MathUtils.degToRad(angle);
     }
   }

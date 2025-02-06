@@ -156,7 +156,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public addSideEffectChild(child: MElement<G>): void {
-    if (child instanceof AttributeAnimation) {
+    if (AttributeAnimation.isAttributeAnimation(child)) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
         this.lightAnimatedAttributeHelper.addAnimation(child, attr);
@@ -166,7 +166,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public removeSideEffectChild(child: MElement<G>): void {
-    if (child instanceof AttributeAnimation) {
+    if (AttributeAnimation.isAttributeAnimation(child)) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
         this.lightAnimatedAttributeHelper.removeAnimation(child, attr);

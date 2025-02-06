@@ -22,7 +22,7 @@ export function getRelativePositionAndRotationRelativeToObject(
   tempContainerMatrix.identity();
   const tempMatr4 = new Matr4();
   for (let obj: ParentNode | null = container; obj; obj = obj.parentNode) {
-    if (obj instanceof TransformableElement) {
+    if (TransformableElement.isTransformableElement(obj)) {
       obj.calculateLocalMatrix(tempMatr4);
       tempContainerMatrix.premultiply(tempMatr4);
     }

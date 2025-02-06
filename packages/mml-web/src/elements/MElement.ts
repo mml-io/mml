@@ -25,6 +25,12 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
     super();
   }
 
+  public readonly isMElement = true;
+
+  public static isMElement(element: object): element is MElement {
+    return (element as MElement).isMElement;
+  }
+
   static getMElementFromObject(object: unknown): MElement<GraphicsAdapter> | null {
     return (object as any)[MELEMENT_PROPERTY_NAME] || null;
   }
@@ -240,8 +246,8 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   public getMElementParent(): MElement<G> | null {
     let parentNode = this.parentNode;
     while (parentNode != null) {
-      if (parentNode instanceof MElement) {
-        return parentNode;
+      if (MElement.isMElement(parentNode)) {
+        return parentNode as MElement<G>;
       }
       parentNode = parentNode.parentNode;
     }

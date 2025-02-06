@@ -8,7 +8,7 @@ export function calculateContentBounds(rootElement: Element): { min: IVect3; max
   let maxY: number | null = null;
   let maxZ: number | null = null;
   const traverse = (element: ChildNode) => {
-    if (element instanceof TransformableElement) {
+    if (TransformableElement.isTransformableElement(element)) {
       const bounds = element.getContentBounds();
       if (bounds) {
         bounds.getCorners().forEach((corner) => {

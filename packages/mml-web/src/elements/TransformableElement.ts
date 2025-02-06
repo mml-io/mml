@@ -30,6 +30,8 @@ export type TransformableElementProps = {
 export abstract class TransformableElement<
   G extends GraphicsAdapter = GraphicsAdapter,
 > extends MElement<G> {
+  public readonly isTransformableElement = true;
+
   private static tempQuat = new Quat();
 
   private transformableElementProps: TransformableElementProps = {
@@ -52,11 +54,15 @@ export abstract class TransformableElement<
 
   protected transformableElementGraphics: TransformableGraphics<G> | null = null;
 
+  public static isTransformableElement(element: object): element is TransformableElement {
+    return (element as TransformableElement).isTransformableElement;
+  }
+
   private getTransformableElementParent(): TransformableElement<G> | null {
     let parentNode = this.parentNode;
     while (parentNode != null) {
-      if (parentNode instanceof TransformableElement) {
-        return parentNode;
+      if (TransformableElement.isTransformableElement(parentNode)) {
+        return parentNode as TransformableElement<G>;
       }
       parentNode = parentNode.parentNode;
     }
@@ -443,8 +449,8 @@ function traverseImmediateTransformableElementChildren<G extends GraphicsAdapter
   callback: (element: TransformableElement<G>) => void,
 ) {
   element.childNodes.forEach((child) => {
-    if (child instanceof TransformableElement) {
-      callback(child);
+    if (TransformableElement.isTransformableElement(child)) {
+      callback(child as TransformableElement<G>);
     } else {
       traverseImmediateTransformableElementChildren(child, callback);
     }

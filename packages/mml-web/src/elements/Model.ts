@@ -38,8 +38,6 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     debug: defaultModelDebug,
   };
 
-  public isModel = true;
-
   private collideableHelper = new CollideableHelper(this);
 
   private static attributeHandler = new AttributeHandler<Model<GraphicsAdapter>>({
@@ -76,7 +74,14 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       instance.modelGraphics?.setAnimPauseTime(instance.props.animPauseTime, instance.props);
     },
   });
+
   public modelGraphics: ModelGraphics<G> | null = null;
+
+  public readonly isModel = true;
+
+  public static isModel(element: object): element is Model {
+    return (element as Model).isModel;
+  }
 
   protected enable() {
     this.collideableHelper.enable();

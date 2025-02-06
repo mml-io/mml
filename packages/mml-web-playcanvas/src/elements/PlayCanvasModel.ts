@@ -143,8 +143,8 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       // If the animation is removed then the model can be added to the parent attachment if the model is loaded
       if (this.loadedState && !this.registeredParentAttachment) {
         const parent = this.model.parentElement;
-        if (parent instanceof Model) {
-          this.registeredParentAttachment = parent;
+        if (parent && Model.isModel(parent)) {
+          this.registeredParentAttachment = parent as Model<PlayCanvasGraphicsAdapter>;
           (parent.modelGraphics as PlayCanvasModel).registerAttachment(this.model);
         }
       }
@@ -395,9 +395,9 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         this.updateMeshCallback();
 
         const parent = this.model.parentElement;
-        if (parent instanceof Model) {
+        if (parent && Model.isModel(parent)) {
           if (!this.latestAnimPromise && !this.animState) {
-            this.registeredParentAttachment = parent;
+            this.registeredParentAttachment = parent as Model<PlayCanvasGraphicsAdapter>;
             (parent.modelGraphics as PlayCanvasModel).registerAttachment(this.model);
           }
         }
@@ -518,7 +518,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     // Socketed children need to be updated when the animation is updated as their position may have updated
     this.socketChildrenByBone.forEach((children) => {
       children.forEach((child) => {
-        if (child instanceof TransformableElement) {
+        if (TransformableElement.isTransformableElement(child)) {
           child.didUpdateTransformation();
         }
       });

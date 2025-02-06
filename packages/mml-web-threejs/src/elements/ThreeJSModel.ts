@@ -123,8 +123,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       // If the animation is removed then the model can be added to the parent attachment if the model is loaded
       if (this.loadedState && !this.registeredParentAttachment) {
         const parent = this.model.parentElement;
-        if (parent instanceof Model) {
-          this.registeredParentAttachment = parent;
+        if (parent && Model.isModel(parent)) {
+          this.registeredParentAttachment = parent as Model<ThreeJSGraphicsAdapter>;
           (parent.modelGraphics as ThreeJSModel).registerAttachment(this.model);
         }
       }
@@ -264,9 +264,9 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         this.updateMeshCallback();
 
         const parent = this.model.parentElement;
-        if (parent instanceof Model) {
+        if (parent && Model.isModel(parent)) {
           if (!this.latestAnimPromise && !this.animState) {
-            this.registeredParentAttachment = parent;
+            this.registeredParentAttachment = parent as Model<ThreeJSGraphicsAdapter>;
             (parent.modelGraphics as ThreeJSModel).registerAttachment(this.model);
           }
         }
@@ -408,7 +408,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     // Socketed children need to be updated when the animation is updated as their position may have updated
     this.socketChildrenByBone.forEach((children) => {
       children.forEach((child) => {
-        if (child instanceof TransformableElement) {
+        if (TransformableElement.isTransformableElement(child)) {
           child.didUpdateTransformation();
         }
       });

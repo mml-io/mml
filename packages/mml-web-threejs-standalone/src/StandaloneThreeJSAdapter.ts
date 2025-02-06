@@ -224,11 +224,11 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
     const camera = this.camera;
     const renderer = this.renderer;
 
-    if (!(element instanceof MElement)) {
+    if (!MElement.isMElement(element)) {
       return null;
     }
 
-    const object = element.getContainer();
+    const object = (element as MElement<ThreeJSGraphicsAdapter>).getContainer();
 
     // Create a Box3 for the 3D bounding box
     const box3 = new THREE.Box3().setFromObject(object);

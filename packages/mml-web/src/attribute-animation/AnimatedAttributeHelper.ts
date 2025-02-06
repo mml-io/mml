@@ -110,12 +110,12 @@ export class AnimatedAttributeHelper {
   }
 
   public addSideEffectChild(child: MElement<GraphicsAdapter>): void {
-    if (child instanceof AttributeAnimation) {
+    if (AttributeAnimation.isAttributeAnimation(child)) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
         this.addAnimation(child, attr);
       }
-    } else if (child instanceof AttributeLerp) {
+    } else if (AttributeLerp.isAttributeLerp(child)) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
         this.addLerp(child, attr);
@@ -124,12 +124,12 @@ export class AnimatedAttributeHelper {
   }
 
   public removeSideEffectChild(child: MElement<GraphicsAdapter>): void {
-    if (child instanceof AttributeAnimation) {
+    if (AttributeAnimation.isAttributeAnimation(child)) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
         this.removeAnimation(child, attr);
       }
-    } else if (child instanceof AttributeLerp) {
+    } else if (AttributeLerp.isAttributeLerp(child)) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
         this.removeLerp(child, attr);
