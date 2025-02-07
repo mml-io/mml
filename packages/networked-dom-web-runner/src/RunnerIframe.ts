@@ -26,7 +26,8 @@ export class RunnerIframe {
     this.iframe.style.width = "0";
     this.iframe.style.height = "0";
     this.iframe.style.border = "none";
-    this.iframe.style.visibility = "hidden";
+    this.iframe.style.opacity = "0";
+    this.iframe.style.pointerEvents = "none";
 
     const paramsMinusCode: Partial<ObservableDOMParameters> = {
       ...this.observableDOMParameters,
