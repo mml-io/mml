@@ -244,7 +244,7 @@ export class StandalonePlayCanvasAdapter
     width: number;
     height: number;
   } | null {
-    if (!(element instanceof TransformableElement)) {
+    if (!TransformableElement.isTransformableElement(element)) {
       return null;
     }
 

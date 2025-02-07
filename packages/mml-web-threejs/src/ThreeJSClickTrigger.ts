@@ -95,7 +95,11 @@ export class ThreeJSClickTrigger {
           }
 
           const mElement = MElement.getMElementFromObject(obj);
-          if (mElement && mElement instanceof TransformableElement && mElement.isClickable()) {
+          if (
+            mElement &&
+            TransformableElement.isTransformableElement(mElement) &&
+            mElement.isClickable()
+          ) {
             // let's get the intersection point relative to the element origin
 
             const elementRelative = getRelativePositionAndRotationRelativeToObject(

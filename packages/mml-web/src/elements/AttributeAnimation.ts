@@ -114,6 +114,12 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
     },
   });
 
+  public readonly isAttributeAnimation = true;
+
+  public static isAttributeAnimation(element: object): element is AttributeAnimation {
+    return (element as AttributeAnimation).isAttributeAnimation;
+  }
+
   static get observedAttributes(): Array<string> {
     return [...AttributeAnimation.attributeHandler.getAttributes()];
   }
@@ -152,8 +158,8 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
 
   public connectedCallback(): void {
     super.connectedCallback();
-    if (this.parentElement && this.parentElement instanceof MElement) {
-      this.registeredParentAttachment = this.parentElement;
+    if (this.parentElement && MElement.isMElement(this.parentElement)) {
+      this.registeredParentAttachment = this.parentElement as MElement<G>;
       if (this.props.attr) {
         this.registeredParentAttachment.addSideEffectChild(this);
       }

@@ -24,7 +24,7 @@ export function configureWindowForMML(
     const traverse = (element: Element | Document) => {
       for (const i in element.children) {
         const child = element.children[i];
-        if (child instanceof MElement) {
+        if (MElement.isMElement(child)) {
           child.connectedCallback?.();
         }
         traverse(child);
