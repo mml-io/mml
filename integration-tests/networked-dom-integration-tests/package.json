@@ -9,9 +9,9 @@
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "devDependencies": {
-    "@mml-io/networked-dom-document": "^0.19.2",
-    "@mml-io/networked-dom-web": "^0.19.2",
-    "@mml-io/networked-dom-web-runner": "^0.19.2"
+    "@mml-io/networked-dom-document": "^0.19.3",
+    "@mml-io/networked-dom-web": "^0.19.3",
+    "@mml-io/networked-dom-web-runner": "^0.19.3"
   },
-  "version": "0.19.2"
+  "version": "0.19.3"
 }

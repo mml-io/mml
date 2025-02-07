@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-web-runner-relay",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "publishConfig": {
     "access": "public"
   },
@@ -20,8 +20,8 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web-runner": "^0.19.2",
-    "@mml-io/observable-dom-common": "^0.19.2"
+    "@mml-io/networked-dom-web-runner": "^0.19.3",
+    "@mml-io/observable-dom-common": "^0.19.3"
   },
   "devDependencies": {
     "jest-environment-jsdom": "29.7.0",

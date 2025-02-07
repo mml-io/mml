@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-web-threejs",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "publishConfig": {
     "access": "public"
   },
@@ -20,8 +20,8 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.19.2",
-    "@mml-io/model-loader": "^0.19.2"
+    "@mml-io/mml-web": "^0.19.3",
+    "@mml-io/model-loader": "^0.19.3"
   },
   "peerDependencies": {
     "three": "*"
