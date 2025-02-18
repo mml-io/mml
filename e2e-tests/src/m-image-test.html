@@ -4,5 +4,15 @@
 <m-image src="/assets/test-image.png" y="4" x="-3" width="5"></m-image>
 
 <!-- Show a cube behind the transparent image to demonstrate transparency -->
-<m-cube color="red" y="4" x="3" z="-5" height="6" rz="-45"></m-cube>
-<m-image src="/assets/transparency-test-image.png" y="4" x="3" width="5"></m-image>
+<m-cube color="red" y="4.5" x="3" z="-1.5" height="6" rz="-45"></m-cube>
+<m-image src="/assets/transparency-test-image.png" x="3.5" y="3.5" width="5"></m-image>
+<!-- New test image with transparency and absolute black pixels as alpha test can have problems with those -->
+<m-image src="/assets/transparency-test-image-black.png" x="-1.7" y="2" z="0.6" width="3"></m-image>
+<m-image
+  src="/assets/transparency-test-image-black.png"
+  x="2"
+  y="1.6"
+  z="2"
+  width="3"
+  opacity="0.3"
+></m-image>

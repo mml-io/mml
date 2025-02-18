@@ -11,10 +11,17 @@ describe("m-image", () => {
     // Wait for the m-image content to load
     await page.waitForFunction(
       () => {
-        return Array.from(document.querySelectorAll("m-image") as any).every((img: any) => {
-          const { height } = img.imageGraphics!.getWidthAndHeight();
-          return height > 3;
-        });
+        const images = Array.from(document.querySelectorAll("m-image") as any);
+        return (
+          images.length > 2 &&
+          images.every((img: any) => {
+            const { width, height } = img.imageGraphics?.getWidthAndHeight() ?? {
+              width: 0,
+              height: 0,
+            };
+            return width > 0 && height >= 3;
+          })
+        );
       },
       { timeout: 30000, polling: 100 },
     );
