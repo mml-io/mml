@@ -30705,10 +30705,13 @@ var _ThreeJSImage = class _ThreeJSImage2 extends ImageGraphics {
     this.mesh.castShadow = castShadows;
   }
   setOpacity(opacity) {
-    const needsUpdate = this.material.transparent === (opacity === 1);
-    this.material.transparent = opacity !== 1;
-    this.material.needsUpdate = needsUpdate;
+    const shouldBeTransparent = opacity !== 1 || this.loadedImageHasTransparency;
+    const needsUpdate = this.material.transparent !== shouldBeTransparent;
+    this.material.transparent = shouldBeTransparent;
     this.material.opacity = opacity;
+    if (needsUpdate) {
+      this.material.needsUpdate = true;
+    }
   }
   setEmissive() {
     this.updateMaterialEmissiveIntensity();
@@ -33994,4 +33997,4 @@ three/examples/jsm/libs/fflate.module.js:
   version 0.8.2
   *)
 */
-//# sourceMappingURL=ThreeJSModeInternal-2WUKFIJT.js.map
+//# sourceMappingURL=ThreeJSModeInternal-NF5EHTBO.js.map

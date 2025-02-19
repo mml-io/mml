@@ -426,7 +426,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-2WUKFIJT.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-NF5EHTBO.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
