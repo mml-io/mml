@@ -15,8 +15,15 @@
   width="3"
   emissive="2"
 ></m-image>
+<m-cylinder id="button" x="3" y="3" z="5" color="red" rx="90" height="0.2" radius="0.25"></m-cylinder>
 <script>
+  const toggleButton = document.getElementById("button");
   const toggleImage = document.getElementById("toggle-image");
-  setTimeout(() => toggleImage.setAttribute("opacity", 0.5), 2000);
-  setTimeout(() => toggleImage.removeAttribute("opacity"), 3000);
+  toggleButton.addEventListener("click", () => {
+    if (!toggleImage.getAttribute("opacity")) {
+      toggleImage.setAttribute("opacity", 0.5);
+    } else {
+      toggleImage.removeAttribute("opacity");
+    }
+  });
 </script>
