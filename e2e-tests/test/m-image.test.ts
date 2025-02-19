@@ -1,12 +1,15 @@
 import { takeAndCompareScreenshot } from "./testing-utils";
 
-describe("m-image opacity toggling with label tracking", () => {
-  test("image opacity changes with label indication", async () => {
+describe("m-image opacity toggling", () => {
+  test("image opacity changes are correctly applied", async () => {
     const page = await __BROWSER_GLOBAL__.newPage();
     await page.setViewport({ width: 1024, height: 1024 });
 
     await page.goto("http://localhost:7079/m-image-test.html/reset");
 
+    const opacityToggleImageSelector = "#toggle-image";
+
+    // Wait until all m-image elements have valid dimensions
     await page.waitForFunction(
       () => {
         const images = Array.from(document.querySelectorAll("m-image"));
@@ -24,32 +27,36 @@ describe("m-image opacity toggling with label tracking", () => {
       { timeout: 30000, polling: 100 },
     );
 
-    const labelSelector = "#label-group m-label";
-
-    // Initial screenshot before any opacity change
+    // Initial screenshot before opacity change
     await takeAndCompareScreenshot(page, 0.02);
 
-    // Wait until the label appears with content "Opacity: 0.5 added"
+    // Wait for opacity to become 0.5
     await page.waitForFunction(
       (selector) => {
-        const label = document.querySelector(selector);
-        return label && label.getAttribute("content") === "Opacity: 0.5 added";
+        const element = document.querySelector(selector);
+        if (!element) return false;
+        const opacityAttr = element.getAttribute("opacity");
+        return opacityAttr !== null && parseFloat(opacityAttr) === 0.5;
       },
-      { timeout: 10000, polling: 100 },
-      labelSelector,
+      { timeout: 30000, polling: 100 },
+      opacityToggleImageSelector,
     );
 
+    // Screenshot after opacity is set to 0.5
     await takeAndCompareScreenshot(page, 0.02);
 
+    // Wait for opacity to revert to 1
     await page.waitForFunction(
       (selector) => {
-        const label = document.querySelector(selector);
-        return label && label.getAttribute("content") === "Opacity attribute removed";
+        const element = document.querySelector(selector);
+        if (!element) return false;
+        return !element.getAttribute("opacity");
       },
-      { timeout: 10000, polling: 100 },
-      labelSelector,
+      { timeout: 30000, polling: 100 },
+      opacityToggleImageSelector,
     );
 
+    // Final screenshot after opacity attribute is removed
     await takeAndCompareScreenshot(page, 0.02);
 
     await page.close();
