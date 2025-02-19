@@ -64,10 +64,15 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setOpacity(opacity: number): void {
-    const needsUpdate = this.material.transparent === (opacity === 1);
-    this.material.transparent = opacity !== 1;
-    this.material.needsUpdate = needsUpdate;
+    const shouldBeTransparent = opacity !== 1 || this.loadedImageHasTransparency;
+    const needsUpdate = this.material.transparent !== shouldBeTransparent;
+
+    this.material.transparent = shouldBeTransparent;
     this.material.opacity = opacity;
+
+    if (needsUpdate) {
+      this.material.needsUpdate = true;
+    }
   }
 
   setEmissive() {

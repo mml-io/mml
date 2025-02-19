@@ -9,10 +9,29 @@
 <!-- New test image with transparency and absolute black pixels as alpha test can have problems with those -->
 <m-image src="/assets/transparency-test-image-black.png" x="-1.7" y="2" z="0.6" width="3"></m-image>
 <m-image
+  id="opacity-toggling-test-image"
   src="/assets/transparency-test-image-black.png"
   x="2"
   y="1.6"
   z="2"
   width="3"
-  opacity="0.3"
+  emissive="2"
 ></m-image>
+<m-group id="label-group" x="5.5" y="1.6" z="2"></m-group>
+<script>
+  const opacityToggleImage = document.getElementById('opacity-toggling-test-image');
+  const labelGroup = document.getElementById('label-group');
+  let label = null
+  setTimeout(() => {
+    label = document.createElement('m-label');
+    label.setAttribute("width", 4);
+    label.setAttribute("height", 0.5);
+    label.setAttribute('content', 'Opacity: 0.5 added');
+    labelGroup.appendChild(label);
+    opacityToggleImage.setAttribute('opacity', 0.5);
+  }, 1000);
+  setTimeout(() => {
+    label.setAttribute('content', 'Opacity attribute removed');
+    opacityToggleImage.removeAttribute('opacity');
+  }, 2000);
+</script>
