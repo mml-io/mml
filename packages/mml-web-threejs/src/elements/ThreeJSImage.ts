@@ -64,10 +64,15 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setOpacity(opacity: number): void {
-    const needsUpdate = this.material.transparent === (opacity === 1);
-    this.material.transparent = opacity !== 1;
-    this.material.needsUpdate = needsUpdate;
+    const shouldBeTransparent = opacity !== 1 || this.loadedImageHasTransparency;
+    const needsUpdate = this.material.transparent !== shouldBeTransparent;
+
+    this.material.transparent = shouldBeTransparent;
     this.material.opacity = opacity;
+
+    if (needsUpdate) {
+      this.material.needsUpdate = true;
+    }
   }
 
   setEmissive() {
@@ -181,15 +186,9 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
     if (!this.material) {
       return;
     }
-    if (this.loadedImageHasTransparency) {
-      this.material.alphaMap = new THREE.CanvasTexture(this.loadedImage);
-      this.material.alphaTest = 0.01;
-    } else {
-      this.material.alphaMap = null;
-      this.material.alphaTest = 0;
-    }
-    this.material.transparent = this.image.props.opacity !== 1 || this.loadedImageHasTransparency;
     this.material.map = new THREE.CanvasTexture(this.loadedImage);
+    this.material.transparent = this.image.props.opacity !== 1 || this.loadedImageHasTransparency;
+    this.material.alphaTest = 0.01;
     this.material.needsUpdate = true;
     this.updateMaterialEmissiveIntensity();
     this.updateWidthAndHeight();
