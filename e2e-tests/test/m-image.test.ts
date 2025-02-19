@@ -7,6 +7,8 @@ describe("m-image opacity toggling", () => {
 
     await page.goto("http://localhost:7079/m-image-test.html/reset");
 
+    const opacityToggleImageSelector = "#toggle-image";
+
     // Wait until all m-image elements have valid dimensions
     await page.waitForFunction(
       () => {
@@ -31,11 +33,34 @@ describe("m-image opacity toggling", () => {
     // clicks to set the opacity attribute to 0.5
     await clickElement(page, "m-cylinder");
 
+    // Wait for opacity to become 0.5
+    await page.waitForFunction(
+      (selector) => {
+        const element = document.querySelector(selector);
+        if (!element) return false;
+        const opacityAttr = element.getAttribute("opacity");
+        return opacityAttr !== null && parseFloat(opacityAttr) === 0.5;
+      },
+      { timeout: 30000, polling: 100 },
+      opacityToggleImageSelector,
+    );
+
     // Screenshot with opacity is set to 0.5
     await takeAndCompareScreenshot(page, 0.02);
 
     // clicks again to remove the opacity attribute
     await clickElement(page, "m-cylinder");
+
+    // Wait for opacity attribute to be removed
+    await page.waitForFunction(
+      (selector) => {
+        const element = document.querySelector(selector);
+        if (!element) return false;
+        return !element.getAttribute("opacity");
+      },
+      { timeout: 30000, polling: 100 },
+      opacityToggleImageSelector,
+    );
 
     // Final screenshot after opacity attribute is removed
     await takeAndCompareScreenshot(page, 0.02);
