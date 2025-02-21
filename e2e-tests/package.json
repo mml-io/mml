@@ -10,9 +10,9 @@
     "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
     "serve": "node --enable-source-maps ./build/index.js",
-    "ci:e2e-tests": "npm run wait-for-ports && HEADLESS=true jest --runInBand",
+    "ci:e2e-tests": "concurrently --max-processes 2 --success command-1 --kill-others \"NX_CACHE=false lerna run serve --scope e2e-tests\" \"npm run wait-for-ports && HEADLESS=true jest --runInBand\"",
     "e2e-tests": "npm run wait-for-ports && HEADLESS=false jest --runInBand",
-    "wait-for-ports": "npx wait-on http://127.0.0.1:7079 -t 60000"
+    "wait-for-ports": "npx wait-on http://localhost:7079/mml-logo.html -t 90000 --httpTimeout 5000 --interval 500"
   },
   "dependencies": {
     "@mml-io/networked-dom-server": "^0.19.3",
