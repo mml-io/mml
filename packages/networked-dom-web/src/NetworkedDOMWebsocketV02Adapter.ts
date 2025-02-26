@@ -144,6 +144,9 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
       case "changeHiddenFrom":
         this.handleChangeHiddenFrom(message);
         break;
+      case "changeVisibleTo":
+        // no-op for end user clients
+        break;
       case "childrenRemoved":
         this.handleChildrenRemoved(message);
         break;
