@@ -115,12 +115,21 @@ export class AttributeLerp<G extends GraphicsAdapter = GraphicsAdapter> extends 
     elementValueSetTime: number,
     elementValue: number,
     previousValue: number,
+    isDegrees: boolean,
   ) {
-    const from = previousValue;
+    let from = previousValue;
     const to = elementValue;
     const ratio = this.getLerpRatio(windowTime, elementValueSetTime);
     if (ratio >= 1) {
       return to;
+    }
+    if (isDegrees) {
+      // Should handle going from 359 to 1 as +2 rather than -358
+      if (to - from > 180) {
+        from += 360;
+      } else if (from - to > 180) {
+        from -= 360;
+      }
     }
     return from + (to - from) * ratio;
   }

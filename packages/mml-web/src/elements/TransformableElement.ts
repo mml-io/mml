@@ -148,7 +148,7 @@ export abstract class TransformableElement<
       },
     ],
     rx: [
-      AnimationType.Number,
+      AnimationType.Degrees,
       0,
       (newValue: number) => {
         this.transformableElementProps.rx = newValue;
@@ -157,7 +157,7 @@ export abstract class TransformableElement<
       },
     ],
     ry: [
-      AnimationType.Number,
+      AnimationType.Degrees,
       0,
       (newValue: number) => {
         this.transformableElementProps.ry = newValue;
@@ -166,7 +166,7 @@ export abstract class TransformableElement<
       },
     ],
     rz: [
-      AnimationType.Number,
+      AnimationType.Degrees,
       0,
       (newValue: number) => {
         this.transformableElementProps.rz = newValue;
