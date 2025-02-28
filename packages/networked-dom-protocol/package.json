@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-protocol",
-  "version": "0.19.3",
+  "version": "0.19.4",
   "publishConfig": {
     "access": "public"
   },
