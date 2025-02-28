@@ -10,18 +10,28 @@ type AttributeTuple<T extends AnimationType> = T extends AnimationType.Number
       AnimationTypeToValueType<T> | null,
       (newValue: AnimationTypeToValueType<T> | null) => void,
     ]
-  : [
-      AnimationType.Color,
-      AnimationTypeToValueType<T> | null,
-      (newValue: AnimationTypeToValueType<T> | null) => void,
-    ];
+  : T extends AnimationType.Degrees
+    ? [
+        AnimationType.Degrees,
+        AnimationTypeToValueType<T> | null,
+        (newValue: AnimationTypeToValueType<T> | null) => void,
+      ]
+    : [
+        AnimationType.Color,
+        AnimationTypeToValueType<T> | null,
+        (newValue: AnimationTypeToValueType<T> | null) => void,
+      ];
 
 export type AttributeHandlerRecord = Record<
   string,
-  AttributeTuple<AnimationType.Number> | AttributeTuple<AnimationType.Color>
+  | AttributeTuple<AnimationType.Number>
+  | AttributeTuple<AnimationType.Degrees>
+  | AttributeTuple<AnimationType.Color>
 >;
 
-type AnimationTypeToValueType<T extends AnimationType> = T extends AnimationType.Number
+type AnimationTypeToValueType<T extends AnimationType> = T extends
+  | AnimationType.Number
+  | AnimationType.Degrees
   ? number
   : MMLColor;
 
@@ -73,6 +83,12 @@ function isColorAttribute(
   attributeState: AttributeState<AnimationType>,
 ): attributeState is AttributeState<AnimationType.Color> {
   return attributeState.type === AnimationType.Color;
+}
+
+function isDegreesAttribute(
+  attributeState: AttributeState<AnimationType>,
+): attributeState is AttributeState<AnimationType.Degrees> {
+  return attributeState.type === AnimationType.Degrees;
 }
 
 function isNumberAttribute(
@@ -319,6 +335,17 @@ export class AnimatedAttributeHelper {
                 config.previousValue,
               ),
             );
+          } else if (isDegreesAttribute(config)) {
+            updateIfChangedValue(
+              state,
+              lerp.getFloatValueForTime(
+                this.element.getWindowTime(),
+                config.elementValueSetTime,
+                config.elementValue,
+                config.previousValue,
+                true,
+              ),
+            );
           } else if (isNumberAttribute(config)) {
             updateIfChangedValue(
               state,
@@ -327,6 +354,7 @@ export class AnimatedAttributeHelper {
                 config.elementValueSetTime,
                 config.elementValue,
                 config.previousValue,
+                false,
               ),
             );
           }

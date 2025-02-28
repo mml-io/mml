@@ -28,6 +28,7 @@ const defaultPingPongDelay = 0;
 
 export enum AnimationType {
   Number,
+  Degrees, // Special handling for lerping e.g. 359 to 1
   Color,
 }
 
