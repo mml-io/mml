@@ -316,6 +316,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       this.updateDebugVisualisation();
     }
     if (!src) {
+      this.latestSrcModelPromise = null;
       this.srcLoadingInstanceManager.abortIfLoading();
       this.socketChildrenByBone.forEach((children) => {
         children.forEach((child) => {
@@ -328,10 +329,13 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     }
 
     const contentSrc = this.model.contentSrcToContentAddress(src);
+    this.srcLoadingInstanceManager.start(this.model.getLoadingProgressManager(), contentSrc);
     const srcModelPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
+      if (this.latestSrcModelPromise !== srcModelPromise) {
+        return;
+      }
       this.srcLoadingInstanceManager.setProgress(loaded / total);
     });
-    this.srcLoadingInstanceManager.start(this.model.getLoadingProgressManager(), contentSrc);
     this.latestSrcModelPromise = srcModelPromise;
     srcModelPromise
       .then((asset) => {
@@ -510,6 +514,8 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       this.loadedState = null;
     }
     this.clearDebugVisualisation();
+    this.latestSrcModelPromise = null;
+    this.latestAnimPromise = null;
     this.animLoadingInstanceManager.dispose();
     this.srcLoadingInstanceManager.dispose();
   }
