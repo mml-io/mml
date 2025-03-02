@@ -15,7 +15,7 @@
     "wait-for-ports": "npx wait-on http://localhost:7079/mml-logo.html -t 90000 --httpTimeout 5000 --interval 500"
   },
   "dependencies": {
-    "@mml-io/networked-dom-server": "^0.19.4",
+    "@mml-io/networked-dom-server": "^0.19.5",
     "chokidar": "4.0.1",
     "express": "4.21.0",
     "express-ws": "5.0.2",
@@ -31,5 +31,5 @@
     "@types/jest-image-snapshot": "6.4.0",
     "@types/puppeteer": "7.0.4"
   },
-  "version": "0.19.4"
+  "version": "0.19.5"
 }
