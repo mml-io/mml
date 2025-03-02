@@ -139,10 +139,13 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
 
     const animSrc = this.model.contentSrcToContentAddress(anim);
+    this.animLoadingInstanceManager.start(this.model.getLoadingProgressManager(), animSrc);
     const animPromise = this.asyncLoadSourceAsset(animSrc, (loaded, total) => {
+      if (this.latestAnimPromise !== animPromise) {
+        return;
+      }
       this.animLoadingInstanceManager.setProgress(loaded / total);
     });
-    this.animLoadingInstanceManager.start(this.model.getLoadingProgressManager(), animSrc);
     this.latestAnimPromise = animPromise;
     animPromise
       .then((result) => {
@@ -200,6 +203,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.updateDebugVisualisation();
     }
     if (!src) {
+      this.latestSrcModelPromise = null;
       this.srcLoadingInstanceManager.abortIfLoading();
       this.socketChildrenByBone.forEach((children) => {
         children.forEach((child) => {
@@ -212,10 +216,13 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
 
     const contentSrc = this.model.contentSrcToContentAddress(src);
+    this.srcLoadingInstanceManager.start(this.model.getLoadingProgressManager(), contentSrc);
     const srcModelPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
+      if (this.latestSrcModelPromise !== srcModelPromise) {
+        return;
+      }
       this.srcLoadingInstanceManager.setProgress(loaded / total);
     });
-    this.srcLoadingInstanceManager.start(this.model.getLoadingProgressManager(), contentSrc);
     this.latestSrcModelPromise = srcModelPromise;
     srcModelPromise
       .then((result) => {
@@ -274,6 +281,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         if (this.animState) {
           this.playAnimation(this.animState.currentAnimationClip);
         }
+        console.log("Loaded model", this.loadedState);
         this.srcLoadingInstanceManager.finish();
 
         this.updateDebugVisualisation();
@@ -502,6 +510,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.loadedState = null;
     }
     this.clearDebugVisualisation();
+    this.latestSrcModelPromise = null;
+    this.latestAnimPromise = null;
     this.animLoadingInstanceManager.dispose();
     this.srcLoadingInstanceManager.dispose();
   }
