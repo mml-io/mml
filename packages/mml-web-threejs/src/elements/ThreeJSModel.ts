@@ -281,7 +281,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         if (this.animState) {
           this.playAnimation(this.animState.currentAnimationClip);
         }
-        console.log("Loaded model", this.loadedState);
         this.srcLoadingInstanceManager.finish();
 
         this.updateDebugVisualisation();
