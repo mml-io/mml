@@ -31439,7 +31439,6 @@ var _ThreeJSModel = class _ThreeJSModel2 extends ModelGraphics {
       if (this.animState) {
         this.playAnimation(this.animState.currentAnimationClip);
       }
-      console.log("Loaded model", this.loadedState);
       this.srcLoadingInstanceManager.finish();
       this.updateDebugVisualisation();
     }).catch((err2) => {
@@ -34007,4 +34006,4 @@ three/examples/jsm/libs/fflate.module.js:
   version 0.8.2
   *)
 */
-//# sourceMappingURL=ThreeJSModeInternal-IC7OBMP5.js.map
+//# sourceMappingURL=ThreeJSModeInternal-P6KK7Y4M.js.map
