@@ -83,6 +83,18 @@ describe("m-character", () => {
       { timeout: 5000, polling: 100 },
     );
 
+    // Wait until the character and animation are loaded
+    await page.waitForFunction(
+      () => {
+        const character = document.querySelector("m-character");
+        return (
+          (character as any).modelGraphics.hasLoadedModel() !== null &&
+          (character as any).modelGraphics.getBoundingBox() !== null &&
+          (character as any).modelGraphics.hasLoadedAnimation() !== null
+        );
+      },
+      { timeout: 30000, polling: 100 },
+    );
     await takeAndCompareScreenshot(page);
 
     await page.close();
