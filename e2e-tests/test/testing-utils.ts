@@ -50,6 +50,16 @@ export async function setDocumentTime(page: puppeteer.Page, documentTime: number
   }, documentTime);
 }
 
+export async function renderFrame(page: puppeteer.Page) {
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  });
+}
+
 export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold = 0.02) {
   expect(await page.screenshot()).toMatchImageSnapshot({
     failureThresholdType: "percent",

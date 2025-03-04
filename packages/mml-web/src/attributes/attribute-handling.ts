@@ -66,7 +66,11 @@ export function parseColorAttribute(
     }
 
     if (value.indexOf("rgb(") === 0) {
-      const rgb = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(value);
+      const rgb =
+        /^rgb\(\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*\)$/.exec(
+          value,
+        );
+
       if (rgb) {
         // e.g. rgb(255,0,255)
         return {
@@ -78,7 +82,11 @@ export function parseColorAttribute(
     }
 
     if (value.indexOf("rgba(") === 0) {
-      const rgba = /^rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d*\.?\d+)\)$/.exec(value);
+      const rgba =
+        /^rgba\(\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(\d*\.?\d+)\s*\)$/.exec(
+          value,
+        );
+
       if (rgba) {
         // e.g. rgba(255,0,255,0.5)
         return {
@@ -91,7 +99,10 @@ export function parseColorAttribute(
     }
 
     if (value.indexOf("hsl(") === 0) {
-      const hsl = /^hsl\(\s*(\d+)\s*,\s*(\d+(?:\.\d+)?%)\s*,\s*(\d+(?:\.\d+)?%)\)$/.exec(value);
+      const hsl =
+        /^hsl\(\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?%)\s*,\s*(-?\d+(?:\.\d+)?%)\s*\)$/.exec(
+          value,
+        );
       if (hsl) {
         let h = parseFloat(hsl[1]) / 360;
         // special case for hsl/hsla to change the behaviour at extremes such that animations can differentiate (and therefore lerp) between 0 and 360 degrees
@@ -118,7 +129,7 @@ export function parseColorAttribute(
 
     if (value.indexOf("hsla(") === 0) {
       const hsla =
-        /^hsla\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?%)\s*,\s*(\d+(?:\.\d+)?%),\s*(\d+(?:\.\d+)?)\)$/.exec(
+        /^hsla\(\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?%)\s*,\s*(-?\d+(?:\.\d+)?%),\s*(\d+(?:\.\d+)?)\)$/.exec(
           value,
         );
       if (hsla) {
