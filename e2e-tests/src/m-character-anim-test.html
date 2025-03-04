@@ -36,7 +36,7 @@
   const animUrl = myModel.getAttribute("anim");
 
   function updateLabel(content) {
-    setTimeout(() => myLabel.setAttribute("content", content), 500);
+    myLabel.setAttribute("content", content);
   }
 
   myCube.addEventListener("click", () => {
