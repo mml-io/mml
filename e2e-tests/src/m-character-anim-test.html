@@ -6,7 +6,7 @@
 
 
 <m-character
-id="my-character"
+  id="my-character"
   src="/assets/Body.glb"
   anim="/assets/idle.glb"
   anim-start-time="-2000"
@@ -36,7 +36,7 @@ id="my-character"
   const animUrl = myModel.getAttribute("anim");
 
   function updateLabel(content) {
-    setTimeout(() => myLabel.setAttribute("content", content), 200);
+    setTimeout(() => myLabel.setAttribute("content", content), 500);
   }
 
   myCube.addEventListener("click", () => {
