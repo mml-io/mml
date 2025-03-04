@@ -169,7 +169,9 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setAnimEnabled(): void {
-    // no-op - property is observed in animation tick
+    if (this.animState && !this.animState.appliedAnimation) {
+      this.playAnimation(this.animState.currentAnimationClip);
+    }
   }
 
   setAnimLoop(): void {
