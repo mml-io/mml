@@ -25,6 +25,48 @@ export class AttributeHandler<T> {
   }
 }
 
+function parseRGB(value: string): MMLColor | null {
+  const content = value.substring(value.indexOf("(") + 1, value.length - 1).split(",");
+  if (content.length < 3 || content.length > 4) return null;
+
+  const numbers = content.map((n) => parseFloat(n.trim()));
+  if (numbers.some((n) => isNaN(n))) return null;
+
+  return {
+    r: Math.min(255, Math.max(0, numbers[0])) / 255,
+    g: Math.min(255, Math.max(0, numbers[1])) / 255,
+    b: Math.min(255, Math.max(0, numbers[2])) / 255,
+    a: numbers.length === 4 ? Math.min(1, Math.max(0, numbers[3])) : undefined,
+  };
+}
+
+function parseHSL(value: string): MMLColor | null {
+  const content = value.substring(value.indexOf("(") + 1, value.length - 1).split(",");
+  if (content.length < 3 || content.length > 4) return null;
+
+  const numbers = content.map((n) => parseFloat(n.trim()));
+  if (numbers.some((n) => isNaN(n))) return null;
+
+  let [h, s, l] = numbers;
+
+  h = h / 360;
+  h = h === 0 ? 0.0001 : h === 1 ? 0.9999 : h;
+
+  s = s / 100;
+  s = s === 0 ? 0.0001 : s === 1 ? 0.9999 : s;
+
+  l = l / 100;
+  l = l === 0 ? 0.0001 : l === 1 ? 0.9999 : l;
+
+  const rgb = hslToRGB(h, s, l);
+  return {
+    r: rgb.r,
+    g: rgb.g,
+    b: rgb.b,
+    a: numbers.length === 4 ? Math.min(1, Math.max(0, numbers[3])) : undefined,
+  };
+}
+
 export function parseColorAttribute(value: string | null, defaultValue: null): MMLColor | null;
 export function parseColorAttribute(value: string | null, defaultValue: MMLColor): MMLColor;
 export function parseColorAttribute(
@@ -66,94 +108,19 @@ export function parseColorAttribute(
     }
 
     if (value.indexOf("rgb(") === 0) {
-      const rgb =
-        /^rgb\(\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*\)$/.exec(
-          value,
-        );
-
-      if (rgb) {
-        // e.g. rgb(255,0,255)
-        return {
-          r: parseInt(rgb[1], 10) / 255,
-          g: parseInt(rgb[2], 10) / 255,
-          b: parseInt(rgb[3], 10) / 255,
-        };
-      }
+      return parseRGB(value);
     }
 
     if (value.indexOf("rgba(") === 0) {
-      const rgba =
-        /^rgba\(\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(\d*\.?\d+)\s*\)$/.exec(
-          value,
-        );
-
-      if (rgba) {
-        // e.g. rgba(255,0,255,0.5)
-        return {
-          r: parseInt(rgba[1], 10) / 255,
-          g: parseInt(rgba[2], 10) / 255,
-          b: parseInt(rgba[3], 10) / 255,
-          a: parseFloat(rgba[4]),
-        };
-      }
+      return parseRGB(value);
     }
 
     if (value.indexOf("hsl(") === 0) {
-      const hsl =
-        /^hsl\(\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?%)\s*,\s*(-?\d+(?:\.\d+)?%)\s*\)$/.exec(
-          value,
-        );
-      if (hsl) {
-        let h = parseFloat(hsl[1]) / 360;
-        // special case for hsl/hsla to change the behaviour at extremes such that animations can differentiate (and therefore lerp) between 0 and 360 degrees
-        if (h === 0) {
-          h = 0.0001;
-        } else if (h === 1) {
-          h = 0.9999;
-        }
-        let s = parseFloat(hsl[2]) / 100;
-        if (s === 0) {
-          s = 0.0001;
-        } else if (s === 1) {
-          s = 0.9999;
-        }
-        let l = parseFloat(hsl[3]) / 100;
-        if (l === 0) {
-          l = 0.0001;
-        } else if (l === 1) {
-          l = 0.9999;
-        }
-        return hslToRGB(h, s, l);
-      }
+      return parseHSL(value);
     }
 
     if (value.indexOf("hsla(") === 0) {
-      const hsla =
-        /^hsla\(\s*(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*,\s*(-?\d+(?:\.\d+)?%)\s*,\s*(-?\d+(?:\.\d+)?%),\s*(\d+(?:\.\d+)?)\)$/.exec(
-          value,
-        );
-      if (hsla) {
-        let h = parseFloat(hsla[1]) / 360;
-        // special case for hsl/hsla to change the behaviour at extremes such that animations can differentiate (and therefore lerp) between 0 and 360 degrees
-        if (h === 0) {
-          h = 0.0001;
-        } else if (h === 1) {
-          h = 0.9999;
-        }
-        let s = parseFloat(hsla[2]) / 100;
-        if (s === 0) {
-          s = 0.0001;
-        } else if (s === 1) {
-          s = 0.9999;
-        }
-        let l = parseFloat(hsla[3]) / 100;
-        if (l === 0) {
-          l = 0.0001;
-        } else if (l === 1) {
-          l = 0.9999;
-        }
-        return hslToRGB(h, s, l);
-      }
+      return parseHSL(value);
     }
     return null;
   });
