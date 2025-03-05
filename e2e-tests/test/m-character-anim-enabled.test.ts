@@ -1,4 +1,4 @@
-import { clickElement, renderFrame, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-character", () => {
   test("animation enabled toggle", async () => {
@@ -35,8 +35,6 @@ describe("m-character", () => {
       { timeout: 5000, polling: 100 },
     );
 
-    await renderFrame(page);
-
     // screenshot
     await takeAndCompareScreenshot(page);
 
@@ -59,9 +57,6 @@ describe("m-character", () => {
       { timeout: 30000, polling: 100 },
     );
 
-    // renders a frame
-    await renderFrame(page);
-
     // screenshot
     await takeAndCompareScreenshot(page);
 
@@ -73,9 +68,6 @@ describe("m-character", () => {
       () => document.getElementById("anim-label")?.getAttribute("content") === "anim removed",
       { timeout: 5000, polling: 100 },
     );
-
-    // renders a frame
-    await renderFrame(page);
 
     // screenshot
     await takeAndCompareScreenshot(page);
@@ -103,8 +95,6 @@ describe("m-character", () => {
       },
       { timeout: 30000, polling: 100 },
     );
-
-    await renderFrame(page);
 
     await takeAndCompareScreenshot(page);
 
