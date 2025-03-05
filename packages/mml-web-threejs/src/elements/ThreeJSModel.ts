@@ -170,7 +170,18 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
   setAnimEnabled(): void {
     if (this.animState && !this.animState.appliedAnimation) {
+      for (const [attachment] of this.attachments) {
+        this.registerAttachment(attachment);
+      }
       this.playAnimation(this.animState.currentAnimationClip);
+    } else {
+      for (const [attachment, animState] of this.attachments) {
+        if (animState) {
+          animState.animationMixer.stopAllAction();
+        }
+        this.attachments.set(attachment, null);
+        this.model.getContainer().add(attachment.getContainer());
+      }
     }
   }
 
