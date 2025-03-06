@@ -26,8 +26,16 @@ export class AttributeHandler<T> {
 }
 
 function parseRGB(value: string): MMLColor | null {
+  value = value.trim();
+  const validStart = value.startsWith("rgb(") || value.startsWith("rgba(");
+  const validEnd = value.endsWith(")");
+  if (!validStart || !validEnd) return null;
+
   const content = value.substring(value.indexOf("(") + 1, value.length - 1).split(",");
+
   if (content.length < 3 || content.length > 4) return null;
+  if (value.startsWith("rgb(") && content.length !== 3) return null;
+  if (value.startsWith("rgba(") && content.length !== 4) return null;
 
   const numbers = content.map((n) => parseFloat(n.trim()));
   if (numbers.some((n) => isNaN(n))) return null;
@@ -41,8 +49,15 @@ function parseRGB(value: string): MMLColor | null {
 }
 
 function parseHSL(value: string): MMLColor | null {
+  value = value.trim();
+  const validStart = value.startsWith("hsl(") || value.startsWith("hsla(");
+  const validEnd = value.endsWith(")");
+  if (!validStart || !validEnd) return null;
   const content = value.substring(value.indexOf("(") + 1, value.length - 1).split(",");
+
   if (content.length < 3 || content.length > 4) return null;
+  if (value.startsWith("hsl(") && content.length !== 3) return null;
+  if (value.startsWith("hsla(") && content.length !== 4) return null;
 
   const numbers = content.map((n) => parseFloat(n.trim()));
   if (numbers.some((n) => isNaN(n))) return null;
@@ -74,7 +89,7 @@ export function parseColorAttribute(
   defaultValue: MMLColor | null,
 ): MMLColor | null {
   return parseAttribute(value, defaultValue, (value) => {
-    const colorNameValues = colors[value];
+    const colorNameValues = colors[value.trim()];
     if (colorNameValues) {
       return {
         r: colorNameValues[0],
