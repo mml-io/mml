@@ -13,7 +13,7 @@ import {
   rendererField,
   setDebugGlobals,
   urlField
-} from "./chunk-TRQKVP3X.js";
+} from "./chunk-I4EUYYQT.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -284,7 +284,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-43YNH42G.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-ITW3RGNJ.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -426,7 +426,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-O43LIVH4.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-3IYYYESR.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
