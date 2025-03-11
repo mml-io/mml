@@ -1,0 +1,92 @@
+<m-plane color="white" width="15" height="15" rx="-90"></m-plane>
+<m-light type="point" intensity="900" x="10" y="10" z="10"></m-light>
+<m-group id="my-group"></m-group>
+
+<script>
+  function hslToRgb(h, s, l) {
+    s /= 100;
+    l /= 100;
+    let c = (1 - Math.abs(2 * l - 1)) * s;
+    let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    let m = l - c / 2;
+    let r, g, b;
+    if (h < 60) {
+      [r, g, b] = [c, x, 0];
+    } else if (h < 120) {
+      [r, g, b] = [x, c, 0];
+    } else if (h < 180) {
+      [r, g, b] = [0, c, x];
+    } else if (h < 240) {
+      [r, g, b] = [0, x, c];
+    } else if (h < 300) {
+      [r, g, b] = [x, 0, c];
+    } else {
+      [r, g, b] = [c, 0, x];
+    }
+    return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+  }
+
+  const group = document.getElementById("my-group");
+  const colors = 64;
+
+  for (let i = 0; i < colors; i++) {
+    const hue = (i * 360) / colors;
+    const cubeColor = `hsl(${hue}, 100%, 50%)`;
+
+    const [r, g, b] = hslToRgb(hue, 100, 50);
+    const labelColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
+
+    const cube = document.createElement("m-cube");
+    const angle = (i * 360) / colors;
+    const theta = angle * Math.PI / 180;
+    const radius = 3;
+
+    cube.setAttribute("width", 0.2);
+    cube.setAttribute("height", 0.2);
+    cube.setAttribute("depth", 0.2);
+    cube.setAttribute("x", radius * Math.cos(theta));
+    cube.setAttribute("y", radius * Math.sin(theta) + 4);
+    cube.setAttribute("z", 4);
+    cube.setAttribute("color", cubeColor);
+    group.appendChild(cube);
+
+    const label = document.createElement("m-label");
+    label.setAttribute("text", i);
+    label.setAttribute("width", 0.4);
+    label.setAttribute("height", 0.2);
+    label.setAttribute("x", (radius - 0.3) * Math.cos(theta));
+    label.setAttribute("y", (radius - 0.3) * Math.sin(theta) + 4);
+    label.setAttribute("z", 4.5);
+    label.setAttribute("color", labelColor);
+    group.appendChild(label);
+  }
+
+  const edgeCaseLabel = document.createElement("m-label");
+  edgeCaseLabel.setAttribute("content", "rgba(0.30, 3.122849337825751e-14, 20.05, 0.5)");
+  edgeCaseLabel.setAttribute("width", 2.6);
+  edgeCaseLabel.setAttribute("height", 0.3);
+  edgeCaseLabel.setAttribute("x", 0);
+  edgeCaseLabel.setAttribute("y", 4.25);
+  edgeCaseLabel.setAttribute("z", 6.5);
+  edgeCaseLabel.setAttribute("color", "rgba(0.30, 3.122849337825751e-14, 20.05, 0.5)");
+  edgeCaseLabel.setAttribute("font-size", 11);
+  edgeCaseLabel.setAttribute("font-color", "rgba(3.12e-14, 150.30, 250.05, 0.5)");
+  edgeCaseLabel.setAttribute("alignment", "center");
+  edgeCaseLabel.setAttribute("emissive", 2);
+  group.appendChild(edgeCaseLabel);
+
+  const hlsLabel = document.createElement("m-label");
+  hlsLabel.setAttribute("content", "hsl(200.50001, 50.9999%, 10.999%)");
+  hlsLabel.setAttribute("width", 2.6);
+  hlsLabel.setAttribute("height", 0.3);
+  hlsLabel.setAttribute("x", 0);
+  hlsLabel.setAttribute("y", 4.45);
+  hlsLabel.setAttribute("z", 6.4);
+  hlsLabel.setAttribute("color", "hsl(200.50001, 50.9999%, 10.999%)");
+  hlsLabel.setAttribute("font-size", 11);
+  hlsLabel.setAttribute("font-color", "hsl(200.50001, 90.999%, 70.999%)");
+  hlsLabel.setAttribute("alignment", "center");
+  hlsLabel.setAttribute("emissive", 1);
+  group.appendChild(hlsLabel);
+
+</script>
