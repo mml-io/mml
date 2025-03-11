@@ -1,20 +1,67 @@
-<m-plane color="red" width="15" height="15" rx="-90"></m-plane>
-<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+<m-plane color="red" width="15" height="15" rx="-90" y="3"></m-plane>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="10" y="13" z="10"></m-light>
 
-<m-character id="my-character" src="/assets/Body.glb" anim="/assets/idle.glb">
+<m-cube id="my-cube" color="blue" x="-1" y="4" z="7" width="0.3" height="0.3" depth="0.3"></m-cube>
+<m-cylinder id="my-cylinder" color="cyan" x="1" y="4" z="7" radius="0.15" height="0.3" rx="90"></m-cylinder>
+
+
+<m-character
+  id="my-character"
+  src="/assets/Body.glb"
+  anim="/assets/idle.glb"
+  anim-start-time="-2000"
+  anim-pause-time="0"
+  y="3"
+  z="7"
+  >
   <m-model src="/assets/Head.glb"></m-model>
 </m-character>
+<m-label
+  content='anim="/assets/idle.glb"'
+  y="5.5"
+  z="7"
+  width="2"
+  height="0.5"
+  font-size="12"
+  id="anim-label"
+></m-label>
 
 <script>
-  let toggle = true;
+  let animating = true;
   const myModel = document.getElementById("my-character");
+  const myCube = document.getElementById("my-cube");
+  const myCylinder = document.getElementById("my-cylinder");
+  const myLabel = document.getElementById("anim-label");
+
   const animUrl = myModel.getAttribute("anim");
-  myModel.addEventListener("click", () => {
-    toggle = !toggle;
-    if (!toggle) {
-      myModel.removeAttribute("anim");
+
+  function updateLabel(content) {
+    myLabel.setAttribute("content", content);
+  }
+
+  myCube.addEventListener("click", () => {
+    animating = !animating;
+    if (!animating) {
+      myModel.setAttribute("anim-enabled", "false");
+      updateLabel('anim-enabled="false"');
     } else {
+      myModel.setAttribute("anim-start-time", "-2000");
+      myModel.setAttribute("anim-pause-time", "0");
+      myModel.setAttribute("anim-enabled", "true");
+      updateLabel('anim-enabled="true"');
+    }
+  });
+
+  myCylinder.addEventListener("click", () => {
+    animating = !animating;
+    if (!animating) {
+      myModel.removeAttribute("anim");
+      updateLabel("anim removed");
+    } else {
+      myModel.setAttribute("anim-start-time", "-2000");
+      myModel.setAttribute("anim-pause-time", "0");
       myModel.setAttribute("anim", animUrl);
+      updateLabel(`anim="${animUrl}"`);
     }
   });
 </script>
