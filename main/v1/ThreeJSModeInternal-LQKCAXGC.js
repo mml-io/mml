@@ -31345,6 +31345,22 @@ var _ThreeJSModel = class _ThreeJSModel2 extends ModelGraphics {
     });
   }
   setAnimEnabled() {
+    if (this.model.props.animEnabled) {
+      if (this.animState && !this.animState.appliedAnimation) {
+        for (const [attachment] of this.attachments) {
+          this.registerAttachment(attachment);
+        }
+        this.playAnimation(this.animState.currentAnimationClip);
+      }
+    } else if (!this.model.props.animEnabled) {
+      for (const [attachment, animState] of this.attachments) {
+        if (animState) {
+          animState.animationMixer.stopAllAction();
+        }
+        this.attachments.set(attachment, null);
+        this.model.getContainer().add(attachment.getContainer());
+      }
+    }
   }
   setAnimLoop() {
   }
@@ -34006,4 +34022,4 @@ three/examples/jsm/libs/fflate.module.js:
   version 0.8.2
   *)
 */
-//# sourceMappingURL=ThreeJSModeInternal-P6KK7Y4M.js.map
+//# sourceMappingURL=ThreeJSModeInternal-LQKCAXGC.js.map
