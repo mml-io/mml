@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-server",
-  "version": "0.19.5",
+  "version": "0.19.6",
   "publishConfig": {
     "access": "public"
   },
@@ -18,8 +18,8 @@
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/networked-dom-document": "^0.19.5",
-    "@mml-io/observable-dom": "^0.19.5",
-    "@mml-io/observable-dom-common": "^0.19.5"
+    "@mml-io/networked-dom-document": "^0.19.6",
+    "@mml-io/observable-dom": "^0.19.6",
+    "@mml-io/observable-dom-common": "^0.19.6"
   }
 }

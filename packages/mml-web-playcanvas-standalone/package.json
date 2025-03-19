@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-web-playcanvas-standalone",
-  "version": "0.19.5",
+  "version": "0.19.6",
   "publishConfig": {
     "access": "public"
   },
@@ -20,8 +20,8 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.19.5",
-    "@mml-io/mml-web-playcanvas": "^0.19.5"
+    "@mml-io/mml-web": "^0.19.6",
+    "@mml-io/mml-web-playcanvas": "^0.19.6"
   },
   "peerDependencies": {
     "playcanvas": "*"
