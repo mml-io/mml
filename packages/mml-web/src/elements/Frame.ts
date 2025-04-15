@@ -28,6 +28,7 @@ export type MFrameProps = {
 export class Frame<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
   static tagName = "m-frame";
   private frameGraphics: FrameGraphics<G> | null;
+  private hasInitialized = false;
 
   private static attributeHandler = new AttributeHandler<Frame<GraphicsAdapter>>({
     src: (instance, newValue) => {
@@ -131,6 +132,9 @@ export class Frame<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   };
 
   private shouldBeLoaded() {
+    if (!this.hasInitialized) {
+      return false;
+    }
     if (!this.isConnected) {
       return false;
     }
@@ -286,9 +290,6 @@ export class Frame<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     }
     const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
-    this.startEmitting();
-    this.syncLoadState();
-
     this.frameGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()
       .MMLFrameGraphicsInterface(this);
@@ -299,6 +300,11 @@ export class Frame<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
         this.attributeChangedCallback(name, null, value);
       }
     }
+
+    // Don't allow the frame to be loaded until after all attributes have been observed
+    this.hasInitialized = true;
+    this.startEmitting();
+    this.syncLoadState();
 
     this.applyBounds();
   }
