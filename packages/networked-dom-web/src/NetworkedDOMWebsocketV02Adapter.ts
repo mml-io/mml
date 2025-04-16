@@ -59,7 +59,8 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
   public handleEvent(element: HTMLElement, event: CustomEvent<{ element: HTMLElement }>) {
     const nodeId = this.elementToId.get(element);
     if (nodeId === undefined || nodeId === null) {
-      throw new Error("Element not found");
+      console.error("Element not found for event", { nodeId, element, event });
+      return;
     }
 
     const detailWithoutElement: Partial<typeof event.detail> = {
