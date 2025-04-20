@@ -520,6 +520,7 @@ export class NetworkedDOM {
       networkedDOMConnection.externalConnectionIds.delete(removingExternalId);
       networkedDOMConnection.externalIdToInternalId.delete(removingExternalId);
       networkedDOMConnection.internalIdToExternalId.delete(removingInternalId);
+      this.connectionIdToNetworkedDOMConnection.delete(removingInternalId);
     }
 
     // Remove the nodes that are only visible to this connection because of
