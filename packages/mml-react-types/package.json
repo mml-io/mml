@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-react-types",
-  "version": "0.19.6",
+  "version": "0.19.7",
   "publishConfig": {
     "access": "public"
   },
@@ -15,7 +15,7 @@
     "build": "tsx ./src/index.ts"
   },
   "devDependencies": {
-    "@mml-io/mml-schema": "^0.19.6"
+    "@mml-io/mml-schema": "^0.19.7"
   },
   "peerDependencies": {
     "@types/react": "*",

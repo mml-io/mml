@@ -1,6 +1,6 @@
 {
   "name": "networked-dom-web-runner-example",
-  "version": "0.19.6",
+  "version": "0.19.7",
   "private": true,
   "scripts": {
     "type-check": "tsc --noEmit",
@@ -11,7 +11,7 @@
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web-runner": "^0.19.6"
+    "@mml-io/networked-dom-web-runner": "^0.19.7"
   },
   "devDependencies": {
     "esbuild-css-modules-plugin": "3.1.2"
