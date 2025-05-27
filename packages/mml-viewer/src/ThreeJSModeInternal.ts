@@ -24,6 +24,7 @@ import { setDebugGlobals } from "./setDebugGlobals";
 import {
   ambientLightColorField,
   ambientLightField,
+  animationField,
   backgroundColorField,
   cameraFitContents,
   cameraFovField,
@@ -96,6 +97,7 @@ export class ThreeJSModeInternal {
         fullScreenMMLScene.getLoadingProgressManager().removeProgressCallback(loadingCallback);
 
         const fitContent = this.formIteration.getFieldValue(cameraFitContents);
+        this.setAnimation(this.formIteration);
         if (fitContent === "true") {
           graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
         }
@@ -127,7 +129,7 @@ export class ThreeJSModeInternal {
     this.setEnvironmentMap(formIteration, threeRenderer, threeScene);
 
     this.setCameraMode(formIteration, graphicsAdapter);
-
+    this.setAnimation(formIteration);
     formIteration.completed();
   }
 
@@ -279,6 +281,24 @@ export class ThreeJSModeInternal {
       }
     } else if (cameraMode === "none" && graphicsAdapter.controls !== null) {
       graphicsAdapter.setControlsType(StandaloneThreeJSAdapterControlsType.None);
+    }
+  }
+
+  private setAnimation(formIteration: FormIteration) {
+    const animation = formIteration.getFieldValue(animationField);
+    // This is the root tag of the MML scene
+    const mmlRoot =
+      this.loadedState?.mmlNetworkSource.remoteDocumentWrapper.remoteDocument.children[0]
+        ?.children[0];
+
+    // If the root tag is not an m-character, we don't have a character to animate
+    if (!this.loadedState || !mmlRoot || mmlRoot.tagName.toString() !== "M-CHARACTER") {
+      return;
+    }
+
+    if (animation === "idle") {
+      // Set the `anim` attribute to the idle animation
+      mmlRoot.setAttribute("anim", "/idle.glb");
     }
   }
 }
