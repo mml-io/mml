@@ -6,12 +6,11 @@ export function applyCharacterAnimation(mmlRoot: Element, animation: string) {
 
   // Store the original animation attribute so we can restore it later if the animation field is cleared
   const originalAnimationAttr = "x-anim";
-  let originalAnimation = mmlRoot.getAttribute(originalAnimationAttr);
+  const originalAnimation = mmlRoot.getAttribute(originalAnimationAttr);
   const currentAnimation = mmlRoot.getAttribute("anim");
   if (animation) {
     if (!originalAnimation) {
-      originalAnimation = currentAnimation || "";
-      mmlRoot.setAttribute(originalAnimationAttr, originalAnimation);
+      mmlRoot.setAttribute(originalAnimationAttr, currentAnimation || "");
     }
     if (currentAnimation !== animation) {
       mmlRoot.setAttribute("anim", animation);
@@ -19,8 +18,7 @@ export function applyCharacterAnimation(mmlRoot: Element, animation: string) {
   } else {
     if (originalAnimation) {
       mmlRoot.setAttribute("anim", originalAnimation);
-    } else {
-      mmlRoot.removeAttribute("anim");
+      mmlRoot.removeAttribute(originalAnimationAttr);
     }
   }
 }
