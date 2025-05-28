@@ -16,7 +16,10 @@ export class LoadingProgressBar {
   private hasCompleted = false;
   private loadingCallback: () => void;
 
-  constructor(private loadingProgressManager: LoadingProgressManager) {
+  constructor(
+    private loadingProgressManager: LoadingProgressManager,
+    private showDebugLoading: boolean,
+  ) {
     this.element = document.createElement("div");
     this.element.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -58,7 +61,9 @@ export class LoadingProgressBar {
     this.debugLabel.style.display = "inline-block";
     this.debugLabel.style.userSelect = "none";
     this.debugLabel.append(this.debugCheckbox);
-    this.progressDebugView.append(this.debugLabel);
+    if (this.showDebugLoading) {
+      this.progressDebugView.append(this.debugLabel);
+    }
 
     this.progressDebugElement = document.createElement("pre");
     this.progressDebugElement.style.margin = "0";

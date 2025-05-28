@@ -58,12 +58,15 @@ export class ThreeJSModeInternal {
     private targetForWrappers: HTMLElement,
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
+    private showDebugLoading: boolean,
   ) {
     this.init();
   }
 
   private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>();
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>(
+      this.showDebugLoading,
+    );
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandaloneThreeJSAdapter.create(fullScreenMMLScene.element, {
       controlsType: StandaloneThreeJSAdapterControlsType.DragFly,

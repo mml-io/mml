@@ -54,12 +54,15 @@ export class PlayCanvasModeInternal {
     private targetForWrappers: HTMLElement,
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
+    private showDebugLoading: boolean,
   ) {
     this.init();
   }
 
   private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandalonePlayCanvasAdapter>();
+    const fullScreenMMLScene = new FullScreenMMLScene<StandalonePlayCanvasAdapter>(
+      this.showDebugLoading,
+    );
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandalonePlayCanvasAdapter.create(fullScreenMMLScene.element, {
       controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,

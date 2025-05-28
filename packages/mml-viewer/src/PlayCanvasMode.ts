@@ -13,6 +13,7 @@ export class PlayCanvasMode implements GraphicsMode {
     private targetForWrappers: HTMLElement,
     private mmlSource: MMLSourceDefinition,
     private formIteration: FormIteration,
+    private showDebugLoading: boolean,
   ) {
     this.init();
   }
@@ -25,6 +26,7 @@ export class PlayCanvasMode implements GraphicsMode {
         this.targetForWrappers,
         this.mmlSource,
         this.formIteration,
+        this.showDebugLoading,
       );
     })();
     if (this.disposed) {
