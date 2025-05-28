@@ -13,7 +13,7 @@ import {
   rendererField,
   setDebugGlobals,
   urlField
-} from "./chunk-C6UKS2CN.js";
+} from "./chunk-52ZYVOZF.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -272,11 +272,12 @@ var FormIteration = class {
 
 // src/PlayCanvasMode.ts
 var PlayCanvasMode = class {
-  constructor(windowTarget, targetForWrappers, mmlSource, formIteration) {
+  constructor(windowTarget, targetForWrappers, mmlSource, formIteration, showDebugLoading) {
     this.windowTarget = windowTarget;
     this.targetForWrappers = targetForWrappers;
     this.mmlSource = mmlSource;
     this.formIteration = formIteration;
+    this.showDebugLoading = showDebugLoading;
     this.disposed = false;
     this.internalMode = null;
     this.type = "playcanvas";
@@ -284,12 +285,13 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-M6OM7UVE.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-WFA4YLGA.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
         this.mmlSource,
-        this.formIteration
+        this.formIteration,
+        this.showDebugLoading
       );
     })();
     if (this.disposed) {
@@ -352,18 +354,21 @@ var QueryParamState = class _QueryParamState {
 
 // src/TagsMode.ts
 var TagsMode = class {
-  constructor(windowTarget, targetForWrappers, mmlSourceDefinition, formIteration) {
+  constructor(windowTarget, targetForWrappers, mmlSourceDefinition, formIteration, showDebugLoading) {
     this.windowTarget = windowTarget;
     this.targetForWrappers = targetForWrappers;
     this.mmlSourceDefinition = mmlSourceDefinition;
     this.formIteration = formIteration;
+    this.showDebugLoading = showDebugLoading;
     this.disposed = false;
     this.loadedState = null;
     this.type = "tags";
     this.init();
   }
   async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene();
+    const fullScreenMMLScene = new FullScreenMMLScene(
+      this.showDebugLoading
+    );
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandaloneTagDebugAdapter.create(fullScreenMMLScene.element);
     if (this.disposed) {
@@ -414,11 +419,12 @@ var TagsMode = class {
 
 // src/ThreeJSMode.ts
 var ThreeJSMode = class {
-  constructor(windowTarget, targetForWrappers, mmlSource, formIteration) {
+  constructor(windowTarget, targetForWrappers, mmlSource, formIteration, showDebugLoading) {
     this.windowTarget = windowTarget;
     this.targetForWrappers = targetForWrappers;
     this.mmlSource = mmlSource;
     this.formIteration = formIteration;
+    this.showDebugLoading = showDebugLoading;
     this.disposed = false;
     this.internalMode = null;
     this.type = "threejs";
@@ -426,12 +432,13 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-II5ILQNE.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-ML3XSD5C.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
         this.mmlSource,
-        this.formIteration
+        this.formIteration,
+        this.showDebugLoading
       );
     })();
     if (this.disposed) {
@@ -734,21 +741,24 @@ var StandaloneViewer = class {
           this.windowTarget,
           this.targetForWrappers,
           source,
-          formIteration
+          formIteration,
+          !noUI
         );
       } else if (renderer === "threejs") {
         this.graphicsMode = new ThreeJSMode(
           this.windowTarget,
           this.targetForWrappers,
           source,
-          formIteration
+          formIteration,
+          !noUI
         );
       } else if (renderer === "tags") {
         this.graphicsMode = new TagsMode(
           this.windowTarget,
           this.targetForWrappers,
           source,
-          formIteration
+          formIteration,
+          !noUI
         );
       }
     } else {
