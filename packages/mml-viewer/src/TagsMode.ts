@@ -27,6 +27,7 @@ export class TagsMode implements GraphicsMode {
     private targetForWrappers: HTMLElement,
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
+    private showDebugLoading: boolean,
   ) {
     this.init();
   }
@@ -34,7 +35,9 @@ export class TagsMode implements GraphicsMode {
   public readonly type = "tags";
 
   private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>();
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>(
+      this.showDebugLoading,
+    );
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandaloneTagDebugAdapter.create(fullScreenMMLScene.element);
     if (this.disposed) {

@@ -25,7 +25,19 @@ export const lightGroup: GroupDefinition = {
   label: "Light",
 };
 
-export const allGroups = [sourceGroup, rendererGroup, cameraGroup, lightGroup, environmentGroup];
+export const characterGroup: GroupDefinition = {
+  name: "character",
+  label: "Character",
+};
+
+export const allGroups = [
+  sourceGroup,
+  rendererGroup,
+  cameraGroup,
+  lightGroup,
+  environmentGroup,
+  characterGroup,
+];
 
 export const cameraModeField: FieldDefinition = {
   name: "cameraMode",
@@ -144,7 +156,16 @@ export const ambientLightColorField: FieldDefinition = {
   groupDefinition: lightGroup,
 };
 
+export const characterAnimationField: FieldDefinition = {
+  name: "charAnim",
+  label: "m-character Animation",
+  type: "string",
+  defaultValue: "",
+  groupDefinition: characterGroup,
+};
+
 export const allFields = [
+  characterAnimationField,
   cameraModeField,
   cameraFitContents,
   cameraLookAtField,

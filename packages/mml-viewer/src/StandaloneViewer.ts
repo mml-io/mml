@@ -72,6 +72,7 @@ export class StandaloneViewer {
           this.targetForWrappers,
           source,
           formIteration,
+          !noUI,
         );
       } else if (renderer === "threejs") {
         this.graphicsMode = new ThreeJSMode(
@@ -79,6 +80,7 @@ export class StandaloneViewer {
           this.targetForWrappers,
           source,
           formIteration,
+          !noUI,
         );
       } else if (renderer === "tags") {
         this.graphicsMode = new TagsMode(
@@ -86,6 +88,7 @@ export class StandaloneViewer {
           this.targetForWrappers,
           source,
           formIteration,
+          !noUI,
         );
       }
     } else {

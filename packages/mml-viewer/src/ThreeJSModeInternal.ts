@@ -16,6 +16,7 @@ import { HDRJPGLoader } from "@monogrid/gainmap-js";
 import * as THREE from "three";
 
 import { calculateContentBounds } from "./calculateContentBounds";
+import { applyCharacterAnimation } from "./characterAnimation";
 import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
@@ -33,6 +34,7 @@ import {
   cameraOrbitPitchField,
   cameraOrbitSpeedField,
   cameraPositionField,
+  characterAnimationField,
   environmentMapField,
 } from "./ui/fields";
 
@@ -56,12 +58,15 @@ export class ThreeJSModeInternal {
     private targetForWrappers: HTMLElement,
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
+    private showDebugLoading: boolean,
   ) {
     this.init();
   }
 
   private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>();
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>(
+      this.showDebugLoading,
+    );
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandaloneThreeJSAdapter.create(fullScreenMMLScene.element, {
       controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
@@ -99,6 +104,7 @@ export class ThreeJSModeInternal {
         if (fitContent === "true") {
           graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
         }
+        this.applyCharacterAnimation(this.formIteration.getFieldValue(characterAnimationField));
       }
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
@@ -127,6 +133,7 @@ export class ThreeJSModeInternal {
     this.setEnvironmentMap(formIteration, threeRenderer, threeScene);
 
     this.setCameraMode(formIteration, graphicsAdapter);
+    this.applyCharacterAnimation(formIteration.getFieldValue(characterAnimationField));
 
     formIteration.completed();
   }
@@ -279,6 +286,17 @@ export class ThreeJSModeInternal {
       }
     } else if (cameraMode === "none" && graphicsAdapter.controls !== null) {
       graphicsAdapter.setControlsType(StandaloneThreeJSAdapterControlsType.None);
+    }
+  }
+
+  private applyCharacterAnimation(animation: string) {
+    // This is the root tag of the MML scene
+    const mmlRoot =
+      this.loadedState?.mmlNetworkSource.remoteDocumentWrapper.remoteDocument.children[0]
+        ?.children[0];
+
+    if (mmlRoot) {
+      applyCharacterAnimation(mmlRoot, animation);
     }
   }
 }
