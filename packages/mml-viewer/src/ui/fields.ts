@@ -25,9 +25,9 @@ export const lightGroup: GroupDefinition = {
   label: "Light",
 };
 
-export const avatarGroup: GroupDefinition = {
-  name: "avatar",
-  label: "Avatar",
+export const characterGroup: GroupDefinition = {
+  name: "character",
+  label: "Character",
 };
 
 export const allGroups = [
@@ -36,7 +36,7 @@ export const allGroups = [
   cameraGroup,
   lightGroup,
   environmentGroup,
-  avatarGroup,
+  characterGroup,
 ];
 
 export const cameraModeField: FieldDefinition = {
@@ -156,16 +156,16 @@ export const ambientLightColorField: FieldDefinition = {
   groupDefinition: lightGroup,
 };
 
-export const animationField: FieldDefinition = {
-  name: "animation",
-  label: "Animation",
+export const characterAnimationField: FieldDefinition = {
+  name: "charAnim",
+  label: "m-character Animation",
   type: "string",
-  defaultValue: "idle",
-  groupDefinition: avatarGroup,
+  defaultValue: "",
+  groupDefinition: characterGroup,
 };
 
 export const allFields = [
-  animationField,
+  characterAnimationField,
   cameraModeField,
   cameraFitContents,
   cameraLookAtField,

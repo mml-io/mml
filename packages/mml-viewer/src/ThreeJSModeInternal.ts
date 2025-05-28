@@ -16,6 +16,7 @@ import { HDRJPGLoader } from "@monogrid/gainmap-js";
 import * as THREE from "three";
 
 import { calculateContentBounds } from "./calculateContentBounds";
+import { applyCharacterAnimation } from "./characterAnimation";
 import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
@@ -24,7 +25,6 @@ import { setDebugGlobals } from "./setDebugGlobals";
 import {
   ambientLightColorField,
   ambientLightField,
-  animationField,
   backgroundColorField,
   cameraFitContents,
   cameraFovField,
@@ -34,6 +34,7 @@ import {
   cameraOrbitPitchField,
   cameraOrbitSpeedField,
   cameraPositionField,
+  characterAnimationField,
   environmentMapField,
 } from "./ui/fields";
 
@@ -97,10 +98,10 @@ export class ThreeJSModeInternal {
         fullScreenMMLScene.getLoadingProgressManager().removeProgressCallback(loadingCallback);
 
         const fitContent = this.formIteration.getFieldValue(cameraFitContents);
-        this.setAnimation(this.formIteration);
         if (fitContent === "true") {
           graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
         }
+        this.applyCharacterAnimation(this.formIteration.getFieldValue(characterAnimationField));
       }
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
@@ -129,7 +130,8 @@ export class ThreeJSModeInternal {
     this.setEnvironmentMap(formIteration, threeRenderer, threeScene);
 
     this.setCameraMode(formIteration, graphicsAdapter);
-    this.setAnimation(formIteration);
+    this.applyCharacterAnimation(formIteration.getFieldValue(characterAnimationField));
+
     formIteration.completed();
   }
 
@@ -284,21 +286,14 @@ export class ThreeJSModeInternal {
     }
   }
 
-  private setAnimation(formIteration: FormIteration) {
-    const animation = formIteration.getFieldValue(animationField);
+  private applyCharacterAnimation(animation: string) {
     // This is the root tag of the MML scene
     const mmlRoot =
       this.loadedState?.mmlNetworkSource.remoteDocumentWrapper.remoteDocument.children[0]
         ?.children[0];
 
-    // If the root tag is not an m-character, we don't have a character to animate
-    if (!this.loadedState || !mmlRoot || mmlRoot.tagName.toString() !== "M-CHARACTER") {
-      return;
-    }
-
-    if (animation === "idle") {
-      // Set the `anim` attribute to the idle animation
-      mmlRoot.setAttribute("anim", "/idle.glb");
+    if (mmlRoot) {
+      applyCharacterAnimation(mmlRoot, animation);
     }
   }
 }
