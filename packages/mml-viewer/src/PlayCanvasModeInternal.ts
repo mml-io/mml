@@ -15,7 +15,7 @@ import {
 import * as playcanvas from "playcanvas";
 
 import { calculateContentBounds } from "./calculateContentBounds";
-import { applyCharacterAnimation } from "./characterAnimation";
+import { applyAnimation } from "./character";
 import { envMaps } from "./env-maps";
 import { FormIteration } from "./FormIteration";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
@@ -292,7 +292,7 @@ export class PlayCanvasModeInternal {
         ?.children[0];
 
     if (mmlRoot) {
-      applyCharacterAnimation(mmlRoot, animation);
+      applyAnimation(mmlRoot, animation);
     }
   }
 
