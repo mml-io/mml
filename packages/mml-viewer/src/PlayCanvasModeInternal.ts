@@ -64,38 +64,23 @@ export class PlayCanvasModeInternal {
     if (this.loadedState) {
       const existingSource = this.loadedState.mmlNetworkSource;
       existingSource.dispose();
-      this.loadedState.mmlNetworkSource = MMLNetworkSource.create({
-        mmlScene: this.loadedState.fullScreenMMLScene,
-        statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
-          this.loadedState?.statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
-        },
-        url: source.url,
-        windowTarget: this.windowTarget,
-        targetForWrappers: this.targetForWrappers,
-      });
-      setDebugGlobals({
-        mmlScene: this.loadedState.fullScreenMMLScene,
-        remoteDocumentWrapper: this.loadedState.mmlNetworkSource.remoteDocumentWrapper,
-      });
+
+      const mmlNetworkSource = this.createSource(
+        this.mmlSourceDefinition,
+        this.loadedState.statusUI,
+        this.loadedState.fullScreenMMLScene,
+        this.loadedState.graphicsAdapter,
+      );
+      this.loadedState.mmlNetworkSource = mmlNetworkSource;
     }
   }
 
-  private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandalonePlayCanvasAdapter>(
-      this.showDebugLoading,
-    );
-    document.body.append(fullScreenMMLScene.element);
-    const graphicsAdapter = await StandalonePlayCanvasAdapter.create(fullScreenMMLScene.element, {
-      controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
-    });
-
-    if (this.disposed) {
-      graphicsAdapter.dispose();
-      return;
-    }
-
-    fullScreenMMLScene.init(graphicsAdapter);
-    const statusUI = new StatusUI();
+  private createSource(
+    source: MMLSourceDefinition,
+    statusUI: StatusUI,
+    fullScreenMMLScene: FullScreenMMLScene<StandalonePlayCanvasAdapter>,
+    graphicsAdapter: StandalonePlayCanvasAdapter,
+  ): MMLNetworkSource {
     const mmlNetworkSource = MMLNetworkSource.create({
       mmlScene: fullScreenMMLScene,
       statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
@@ -105,7 +90,7 @@ export class PlayCanvasModeInternal {
           statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
         }
       },
-      url: this.mmlSourceDefinition.url,
+      url: source.url,
       windowTarget: this.windowTarget,
       targetForWrappers: this.targetForWrappers,
     });
@@ -127,6 +112,33 @@ export class PlayCanvasModeInternal {
       }
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
+    return mmlNetworkSource;
+  }
+
+  private async init() {
+    const fullScreenMMLScene = new FullScreenMMLScene<StandalonePlayCanvasAdapter>(
+      this.showDebugLoading,
+    );
+    document.body.append(fullScreenMMLScene.element);
+    const graphicsAdapter = await StandalonePlayCanvasAdapter.create(fullScreenMMLScene.element, {
+      controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
+    });
+
+    if (this.disposed) {
+      graphicsAdapter.dispose();
+      return;
+    }
+
+    fullScreenMMLScene.init(graphicsAdapter);
+    const statusUI = new StatusUI();
+
+    const mmlNetworkSource = this.createSource(
+      this.mmlSourceDefinition,
+      statusUI,
+      fullScreenMMLScene,
+      graphicsAdapter,
+    );
+
     this.loadedState = {
       mmlNetworkSource,
       graphicsAdapter,

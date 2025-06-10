@@ -68,20 +68,55 @@ export class ThreeJSModeInternal {
     if (this.loadedState) {
       const existingSource = this.loadedState.mmlNetworkSource;
       existingSource.dispose();
-      this.loadedState.mmlNetworkSource = MMLNetworkSource.create({
-        mmlScene: this.loadedState.fullScreenMMLScene,
-        statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
-          this.loadedState?.statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
-        },
-        url: source.url,
-        windowTarget: this.windowTarget,
-        targetForWrappers: this.targetForWrappers,
-      });
-      setDebugGlobals({
-        mmlScene: this.loadedState.fullScreenMMLScene,
-        remoteDocumentWrapper: this.loadedState.mmlNetworkSource.remoteDocumentWrapper,
-      });
+
+      const mmlNetworkSource = this.createSource(
+        this.mmlSourceDefinition,
+        this.loadedState.statusUI,
+        this.loadedState.fullScreenMMLScene,
+        this.loadedState.graphicsAdapter,
+      );
+      this.loadedState.mmlNetworkSource = mmlNetworkSource;
     }
+  }
+
+  private createSource(
+    source: MMLSourceDefinition,
+    statusUI: StatusUI,
+    fullScreenMMLScene: FullScreenMMLScene<StandaloneThreeJSAdapter>,
+    graphicsAdapter: StandaloneThreeJSAdapter,
+  ): MMLNetworkSource {
+    const mmlNetworkSource = MMLNetworkSource.create({
+      mmlScene: fullScreenMMLScene,
+      statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
+        if (status === NetworkedDOMWebsocketStatus.Connected) {
+          statusUI.setNoStatus();
+        } else {
+          statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
+        }
+      },
+      url: source.url,
+      windowTarget: this.windowTarget,
+      targetForWrappers: this.targetForWrappers,
+    });
+    setDebugGlobals({
+      mmlScene: fullScreenMMLScene,
+      remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper,
+    });
+    const loadingCallback = () => {
+      const [, completedLoading] = fullScreenMMLScene.getLoadingProgressManager().toRatio();
+      if (completedLoading) {
+        fullScreenMMLScene.getLoadingProgressManager().removeProgressCallback(loadingCallback);
+
+        const fitContent = this.formIteration.getFieldValue(cameraFitContents);
+        if (fitContent === "true") {
+          graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
+        }
+
+        this.applyCharacterAnimation(this.formIteration.getFieldValue(characterAnimationField));
+      }
+    };
+    fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
+    return mmlNetworkSource;
   }
 
   private async init() {
@@ -99,36 +134,14 @@ export class ThreeJSModeInternal {
 
     fullScreenMMLScene.init(graphicsAdapter);
     const statusUI = new StatusUI();
-    const mmlNetworkSource = MMLNetworkSource.create({
-      mmlScene: fullScreenMMLScene,
-      statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
-        if (status === NetworkedDOMWebsocketStatus.Connected) {
-          statusUI.setNoStatus();
-        } else {
-          statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
-        }
-      },
-      url: this.mmlSourceDefinition.url,
-      windowTarget: this.windowTarget,
-      targetForWrappers: this.targetForWrappers,
-    });
-    setDebugGlobals({
-      mmlScene: fullScreenMMLScene,
-      remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper,
-    });
-    const loadingCallback = () => {
-      const [, completedLoading] = fullScreenMMLScene.getLoadingProgressManager().toRatio();
-      if (completedLoading) {
-        fullScreenMMLScene.getLoadingProgressManager().removeProgressCallback(loadingCallback);
 
-        const fitContent = this.formIteration.getFieldValue(cameraFitContents);
-        if (fitContent === "true") {
-          graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
-        }
-        this.applyCharacterAnimation(this.formIteration.getFieldValue(characterAnimationField));
-      }
-    };
-    fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
+    const mmlNetworkSource = this.createSource(
+      this.mmlSourceDefinition,
+      statusUI,
+      fullScreenMMLScene,
+      graphicsAdapter,
+    );
+
     this.loadedState = {
       mmlNetworkSource,
       graphicsAdapter,
