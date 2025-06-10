@@ -63,6 +63,27 @@ export class ThreeJSModeInternal {
     this.init();
   }
 
+  public updateSource(source: MMLSourceDefinition): void {
+    this.mmlSourceDefinition = source;
+    if (this.loadedState) {
+      const existingSource = this.loadedState.mmlNetworkSource;
+      existingSource.dispose();
+      this.loadedState.mmlNetworkSource = MMLNetworkSource.create({
+        mmlScene: this.loadedState.fullScreenMMLScene,
+        statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
+          this.loadedState?.statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
+        },
+        url: source.url,
+        windowTarget: this.windowTarget,
+        targetForWrappers: this.targetForWrappers,
+      });
+      setDebugGlobals({
+        mmlScene: this.loadedState.fullScreenMMLScene,
+        remoteDocumentWrapper: this.loadedState.mmlNetworkSource.remoteDocumentWrapper,
+      });
+    }
+  }
+
   private async init() {
     const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>(
       this.showDebugLoading,

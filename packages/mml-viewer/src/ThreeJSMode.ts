@@ -18,6 +18,13 @@ export class ThreeJSMode implements GraphicsMode {
     this.init();
   }
 
+  public updateSource(source: MMLSourceDefinition): void {
+    this.mmlSource = source;
+    if (this.internalMode) {
+      this.internalMode.updateSource(source);
+    }
+  }
+
   private async init() {
     this.internalMode = await (async () => {
       const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal");

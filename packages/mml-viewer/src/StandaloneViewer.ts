@@ -26,6 +26,25 @@ export class StandaloneViewer {
     this.handleParams();
   }
 
+  private updateUrlParams(params: Record<string, string>) {
+    const url = new URL(window.location.href);
+
+    // Update URL search parameters with provided params
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === "") {
+        url.searchParams.delete(key);
+      } else {
+        url.searchParams.set(key, value);
+      }
+    });
+
+    // Update the URL without causing a page reload
+    window.history.pushState({}, "", url.toString());
+
+    // Trigger parameter handling to apply the changes
+    this.handleParams();
+  }
+
   private handleParams() {
     const queryParamState = new QueryParamState(window.location.search);
     const formIteration = new FormIteration(queryParamState, this.viewerUI, this.formIteration);
@@ -40,13 +59,19 @@ export class StandaloneViewer {
       this.viewerUI.show();
     }
 
+    if (this.graphicsMode && this.graphicsMode.type !== renderer) {
+      this.graphicsMode.dispose();
+      this.graphicsMode = null;
+    }
+
     let source: MMLSourceDefinition;
     if (url) {
       source = { url };
       if (this.source && this.source.url !== url) {
         if (this.graphicsMode) {
-          this.graphicsMode.dispose();
-          this.graphicsMode = null;
+          // We know this is the correct graphics mode because we just checked the type above
+          // We can reuse it with a new source
+          this.graphicsMode.updateSource(source);
         }
       }
       this.source = source;
@@ -61,10 +86,6 @@ export class StandaloneViewer {
     }
     this.viewerUI.hideAddressMenu();
 
-    if (this.graphicsMode && this.graphicsMode.type !== renderer) {
-      this.graphicsMode.dispose();
-      this.graphicsMode = null;
-    }
     if (!this.graphicsMode) {
       if (renderer === "playcanvas") {
         this.graphicsMode = new PlayCanvasMode(
