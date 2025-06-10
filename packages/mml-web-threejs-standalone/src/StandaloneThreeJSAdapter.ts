@@ -25,6 +25,7 @@ export enum StandaloneThreeJSAdapterControlsType {
 
 export type StandaloneThreeJSAdapterOptions = {
   controlsType?: StandaloneThreeJSAdapterControlsType;
+  autoConnectRoot?: boolean;
 };
 
 export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGraphicsAdapter {
@@ -84,7 +85,9 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
     return new Promise<void>((resolve) => {
       this.rootContainer = new THREE.Group();
       this.threeScene = new THREE.Scene();
-      this.threeScene.add(this.rootContainer);
+      if (this.options.autoConnectRoot === undefined || this.options.autoConnectRoot) {
+        this.threeScene.add(this.rootContainer);
+      }
 
       this.camera = new THREE.PerspectiveCamera(
         75,
@@ -165,6 +168,18 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
     }
     renderer.domElement.style.pointerEvents = "none";
     return renderer;
+  }
+
+  disconnectRoot() {
+    if (this.rootContainer.parent) {
+      this.rootContainer.parent.remove(this.rootContainer);
+    }
+  }
+
+  connectRoot() {
+    if (!this.rootContainer.parent) {
+      this.threeScene.add(this.rootContainer);
+    }
   }
 
   start() {

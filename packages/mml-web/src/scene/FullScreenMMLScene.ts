@@ -1,25 +1,46 @@
 import { StandaloneGraphicsAdapter } from "../graphics";
-import { LoadingProgressBar } from "../loading";
+import { LoadingProgressBar, LoadingSpinner } from "../loading";
 import { MMLScene } from "./MMLScene";
 
+export type FullScreenMMLSceneOptions = {
+  showDebugLoading?: boolean;
+  loadingStyle?: "bar" | "spinner";
+};
+
 export class FullScreenMMLScene<G extends StandaloneGraphicsAdapter> extends MMLScene<G> {
-  private loadingProgressBar: LoadingProgressBar;
+  private loadingProgressBar: LoadingProgressBar | LoadingSpinner;
   private showDebugLoading: boolean;
 
-  constructor(showDebugLoading = true) {
+  constructor(private options: FullScreenMMLSceneOptions = {}) {
     super(document.createElement("div"));
     this.element = document.createElement("div");
     this.element.style.width = "100%";
     this.element.style.height = "100%";
     this.element.style.position = "relative";
 
-    this.showDebugLoading = showDebugLoading;
-
-    const loadingProgressManager = this.getLoadingProgressManager();
-    this.loadingProgressBar = new LoadingProgressBar(loadingProgressManager, this.showDebugLoading);
-    this.element.append(this.loadingProgressBar.element);
+    this.showDebugLoading = options.showDebugLoading || true;
+    this.createLoadingProgressBar();
 
     this.configureWindowStyling();
+  }
+
+  private createLoadingProgressBar() {
+    const loadingProgressManager = this.getLoadingProgressManager();
+    const loadingStyle = this.options.loadingStyle || "bar";
+    if (loadingStyle === "spinner") {
+      this.loadingProgressBar = new LoadingSpinner(loadingProgressManager);
+    } else {
+      this.loadingProgressBar = new LoadingProgressBar(
+        loadingProgressManager,
+        this.showDebugLoading,
+      );
+    }
+    this.element.append(this.loadingProgressBar.element);
+  }
+
+  public resetLoadingProgressBar() {
+    this.loadingProgressBar.dispose();
+    this.createLoadingProgressBar();
   }
 
   private configureWindowStyling() {

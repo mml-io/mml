@@ -37,6 +37,12 @@ import {
   environmentMapField,
 } from "./ui/fields";
 
+export type PlayCanvasModeOptions = {
+  showDebugLoading?: boolean;
+  hideUntilLoaded?: boolean;
+  loadingStyle?: "bar" | "spinner";
+};
+
 export class PlayCanvasModeInternal {
   private disposed = false;
   public readonly type = "playcanvas";
@@ -54,7 +60,7 @@ export class PlayCanvasModeInternal {
     private targetForWrappers: HTMLElement,
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
-    private showDebugLoading: boolean,
+    private options: PlayCanvasModeOptions,
   ) {
     this.init();
   }
@@ -62,6 +68,9 @@ export class PlayCanvasModeInternal {
   public updateSource(source: MMLSourceDefinition): void {
     this.mmlSourceDefinition = source;
     if (this.loadedState) {
+      if (this.options.hideUntilLoaded) {
+        this.loadedState.graphicsAdapter.disconnectRoot();
+      }
       const existingSource = this.loadedState.mmlNetworkSource;
       existingSource.dispose();
 
@@ -72,6 +81,7 @@ export class PlayCanvasModeInternal {
         this.loadedState.graphicsAdapter,
       );
       this.loadedState.mmlNetworkSource = mmlNetworkSource;
+      this.loadedState.fullScreenMMLScene.resetLoadingProgressBar();
     }
   }
 
@@ -100,15 +110,25 @@ export class PlayCanvasModeInternal {
     });
     const loadingCallback = () => {
       const [, completedLoading] = fullScreenMMLScene.getLoadingProgressManager().toRatio();
+
+      /*
+       Attempt to apply the character animation as soon as the possible element exists so that the animation
+       counts towards the loading progress.
+      */
+      this.applyCharacterAnimation(this.formIteration.getFieldValue(characterAnimationField));
       if (completedLoading) {
         fullScreenMMLScene.getLoadingProgressManager().removeProgressCallback(loadingCallback);
+
+        if (this.options.hideUntilLoaded) {
+          requestAnimationFrame(() => {
+            this.loadedState?.graphicsAdapter.connectRoot();
+          });
+        }
 
         const fitContent = this.formIteration.getFieldValue(cameraFitContents);
         if (fitContent === "true") {
           graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
         }
-
-        this.applyCharacterAnimation(this.formIteration.getFieldValue(characterAnimationField));
       }
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
@@ -116,12 +136,14 @@ export class PlayCanvasModeInternal {
   }
 
   private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandalonePlayCanvasAdapter>(
-      this.showDebugLoading,
-    );
+    const fullScreenMMLScene = new FullScreenMMLScene<StandalonePlayCanvasAdapter>({
+      showDebugLoading: this.options.showDebugLoading,
+      loadingStyle: this.options.loadingStyle,
+    });
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandalonePlayCanvasAdapter.create(fullScreenMMLScene.element, {
       controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
+      autoConnectRoot: !this.options.hideUntilLoaded,
     });
 
     if (this.disposed) {
@@ -318,15 +340,16 @@ export class PlayCanvasModeInternal {
     }
   }
 
-  private applyCharacterAnimation(animation: string) {
+  private applyCharacterAnimation(animation: string): boolean {
     // This is the root tag of the MML scene
     const mmlRoot =
       this.loadedState?.mmlNetworkSource.remoteDocumentWrapper.remoteDocument.children[0]
         ?.children[0];
 
     if (mmlRoot) {
-      applyCharacterAnimation(mmlRoot, animation);
+      return applyCharacterAnimation(mmlRoot, animation);
     }
+    return false;
   }
 
   public dispose() {

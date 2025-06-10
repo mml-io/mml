@@ -38,6 +38,12 @@ import {
   environmentMapField,
 } from "./ui/fields";
 
+export type ThreeJSModeOptions = {
+  showDebugLoading?: boolean;
+  hideUntilLoaded?: boolean;
+  loadingStyle?: "bar" | "spinner";
+};
+
 export class ThreeJSModeInternal {
   private disposed = false;
 
@@ -58,7 +64,7 @@ export class ThreeJSModeInternal {
     private targetForWrappers: HTMLElement,
     private mmlSourceDefinition: MMLSourceDefinition,
     private formIteration: FormIteration,
-    private showDebugLoading: boolean,
+    private options: ThreeJSModeOptions,
   ) {
     this.init();
   }
@@ -66,6 +72,9 @@ export class ThreeJSModeInternal {
   public updateSource(source: MMLSourceDefinition): void {
     this.mmlSourceDefinition = source;
     if (this.loadedState) {
+      if (this.options.hideUntilLoaded) {
+        this.loadedState.graphicsAdapter.disconnectRoot();
+      }
       const existingSource = this.loadedState.mmlNetworkSource;
       existingSource.dispose();
 
@@ -76,6 +85,7 @@ export class ThreeJSModeInternal {
         this.loadedState.graphicsAdapter,
       );
       this.loadedState.mmlNetworkSource = mmlNetworkSource;
+      this.loadedState.fullScreenMMLScene.resetLoadingProgressBar();
     }
   }
 
@@ -104,15 +114,25 @@ export class ThreeJSModeInternal {
     });
     const loadingCallback = () => {
       const [, completedLoading] = fullScreenMMLScene.getLoadingProgressManager().toRatio();
+
+      /*
+       Attempt to apply the character animation as soon as the possible element exists so that the animation
+       counts towards the loading progress.
+      */
+      this.applyCharacterAnimation(this.formIteration.getFieldValue(characterAnimationField));
       if (completedLoading) {
         fullScreenMMLScene.getLoadingProgressManager().removeProgressCallback(loadingCallback);
+
+        if (this.options.hideUntilLoaded) {
+          requestAnimationFrame(() => {
+            this.loadedState?.graphicsAdapter.connectRoot();
+          });
+        }
 
         const fitContent = this.formIteration.getFieldValue(cameraFitContents);
         if (fitContent === "true") {
           graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
         }
-
-        this.applyCharacterAnimation(this.formIteration.getFieldValue(characterAnimationField));
       }
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
@@ -120,12 +140,14 @@ export class ThreeJSModeInternal {
   }
 
   private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>(
-      this.showDebugLoading,
-    );
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneThreeJSAdapter>({
+      showDebugLoading: this.options.showDebugLoading,
+      loadingStyle: this.options.loadingStyle,
+    });
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandaloneThreeJSAdapter.create(fullScreenMMLScene.element, {
       controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
+      autoConnectRoot: !this.options.hideUntilLoaded,
     });
     if (this.disposed) {
       graphicsAdapter.dispose();
@@ -323,14 +345,15 @@ export class ThreeJSModeInternal {
     }
   }
 
-  private applyCharacterAnimation(animation: string) {
+  private applyCharacterAnimation(animation: string): boolean {
     // This is the root tag of the MML scene
     const mmlRoot =
       this.loadedState?.mmlNetworkSource.remoteDocumentWrapper.remoteDocument.children[0]
         ?.children[0];
 
     if (mmlRoot) {
-      applyCharacterAnimation(mmlRoot, animation);
+      return applyCharacterAnimation(mmlRoot, animation);
     }
+    return false;
   }
 }
