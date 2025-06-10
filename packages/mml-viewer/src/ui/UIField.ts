@@ -76,6 +76,8 @@ export class UIField extends UIElement {
         this.input.type = "number";
       } else if (fieldDefinition.type === "color") {
         this.input.type = "text";
+      } else if (fieldDefinition.type === "boolean") {
+        this.input.type = "checkbox";
       } else {
         this.input.type = "text";
       }
@@ -97,6 +99,10 @@ export class UIField extends UIElement {
         if (this.input) {
           const input = this.input;
           this.input.addEventListener("input", () => {
+            if (input.type === "checkbox") {
+              this.onChange(input.checked ? "true" : "false");
+              return;
+            }
             this.onChange(input.value);
           });
         } else if (this.selectElement) {
@@ -119,11 +125,18 @@ export class UIField extends UIElement {
     if (this.selectElement) {
       this.selectElement.value = value;
     } else if (this.input) {
-      this.input.value = value;
+      if (this.input.type === "checkbox") {
+        this.input.checked = value === "true";
+      } else {
+        this.input.value = value;
+      }
     }
   }
 
   onChange(value: string) {
+    if (this.fieldDefinition.type === "boolean") {
+      value = value === "true" || value === "on" || value === "1" ? "true" : "false";
+    }
     setUrlParam(this.fieldDefinition.name, value);
   }
 }

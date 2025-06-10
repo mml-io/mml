@@ -4,10 +4,12 @@ import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
 import { PlayCanvasMode } from "./PlayCanvasMode";
+import { PlayCanvasModeOptions } from "./PlayCanvasModeInternal";
 import { QueryParamState } from "./QueryParamState";
 import { TagsMode } from "./TagsMode";
 import { ThreeJSMode } from "./ThreeJSMode";
-import { rendererField, urlField } from "./ui/fields";
+import { ThreeJSModeOptions } from "./ThreeJSModeInternal";
+import { hideUntilLoadedField, loadingStyleField, rendererField, urlField } from "./ui/fields";
 import { ViewerUI } from "./ui/ViewerUI";
 
 export class StandaloneViewer {
@@ -52,6 +54,7 @@ export class StandaloneViewer {
 
     const url = formIteration.getFieldValue(urlField);
     const renderer = formIteration.getFieldValue(rendererField);
+    const loadingStyle = formIteration.getFieldValue(loadingStyleField);
     const noUI = parseBoolAttribute(queryParamState.read("noUI"), false);
     if (noUI) {
       this.viewerUI.hide();
@@ -86,6 +89,17 @@ export class StandaloneViewer {
     }
     this.viewerUI.hideAddressMenu();
 
+    const hideUntilLoaded = parseBoolAttribute(
+      formIteration.getFieldValue(hideUntilLoadedField),
+      false,
+    );
+
+    const options: ThreeJSModeOptions | PlayCanvasModeOptions = {
+      loadingStyle: loadingStyle as "bar" | "spinner",
+      hideUntilLoaded,
+      showDebugLoading: !noUI,
+    };
+
     if (!this.graphicsMode) {
       if (renderer === "playcanvas") {
         this.graphicsMode = new PlayCanvasMode(
@@ -93,7 +107,7 @@ export class StandaloneViewer {
           this.targetForWrappers,
           source,
           formIteration,
-          !noUI,
+          options,
         );
       } else if (renderer === "threejs") {
         this.graphicsMode = new ThreeJSMode(
@@ -101,7 +115,7 @@ export class StandaloneViewer {
           this.targetForWrappers,
           source,
           formIteration,
-          !noUI,
+          options,
         );
       } else if (renderer === "tags") {
         this.graphicsMode = new TagsMode(

@@ -56,9 +56,9 @@ export class TagsMode implements GraphicsMode {
   }
 
   private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>(
-      this.showDebugLoading,
-    );
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>({
+      showDebugLoading: this.showDebugLoading,
+    });
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandaloneTagDebugAdapter.create(fullScreenMMLScene.element);
     if (this.disposed) {
