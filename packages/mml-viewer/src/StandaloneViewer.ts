@@ -25,7 +25,20 @@ export class StandaloneViewer {
     window.addEventListener("popstate", () => {
       this.handleParams();
     });
+    window.addEventListener("message", (event) => {
+      this.handlePostMessage(event);
+    });
     this.handleParams();
+  }
+
+  private handlePostMessage(event: MessageEvent) {
+    const isParamUpdate =
+      event?.data?.type === "updateParams" &&
+      typeof event.data.params === "object" &&
+      event.data.params !== null;
+    if (isParamUpdate) {
+      this.updateUrlParams(event.data.params);
+    }
   }
 
   private updateUrlParams(params: Record<string, string>) {
