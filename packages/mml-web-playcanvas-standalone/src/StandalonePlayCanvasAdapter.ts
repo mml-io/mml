@@ -32,6 +32,7 @@ export enum StandalonePlayCanvasAdapterControlsType {
 
 export type StandalonePlayCanvasAdapterOptions = {
   controlsType?: StandalonePlayCanvasAdapterControlsType;
+  autoConnectRoot?: boolean;
 };
 
 export class StandalonePlayCanvasAdapter
@@ -45,6 +46,8 @@ export class StandalonePlayCanvasAdapter
   public controls: PlayCanvasControls | null = null;
   private camera: playcanvas.Entity;
   private canvas: HTMLCanvasElement | null = null;
+
+  private contentRoot: playcanvas.Entity;
 
   private clickTrigger: PlayCanvasClickTrigger;
 
@@ -153,7 +156,12 @@ export class StandalonePlayCanvasAdapter
       clearColor: new playcanvas.Color(1, 1, 1, 1),
     } as playcanvas.CameraComponent);
     this.camera.setPosition(0, 5, 10);
-    this.playcanvasApp.root.addChild(this.camera);
+    this.contentRoot = new playcanvas.Entity("contentRoot", this.playcanvasApp);
+    this.contentRoot.addChild(this.camera);
+
+    if (this.options.autoConnectRoot === undefined || this.options.autoConnectRoot) {
+      this.playcanvasApp.root.addChild(this.contentRoot);
+    }
 
     this.setControlsType(this.options.controlsType);
 
@@ -234,8 +242,20 @@ export class StandalonePlayCanvasAdapter
     this.clickTrigger.dispose();
   }
 
+  disconnectRoot() {
+    if (this.contentRoot.parent) {
+      this.contentRoot.parent.removeChild(this.contentRoot);
+    }
+  }
+
+  connectRoot() {
+    if (!this.contentRoot.parent) {
+      this.playcanvasApp.root.addChild(this.contentRoot);
+    }
+  }
+
   getRootContainer() {
-    return this.playcanvasApp.root;
+    return this.contentRoot;
   }
 
   public getBoundingBoxForElement(element: HTMLElement): {

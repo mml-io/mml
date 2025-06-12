@@ -34,10 +34,31 @@ export class TagsMode implements GraphicsMode {
 
   public readonly type = "tags";
 
+  public updateSource(source: MMLSourceDefinition): void {
+    this.mmlSourceDefinition = source;
+    if (this.loadedState) {
+      const existingSource = this.loadedState.mmlNetworkSource;
+      existingSource.dispose();
+      this.loadedState.mmlNetworkSource = MMLNetworkSource.create({
+        mmlScene: this.loadedState.fullScreenMMLScene,
+        statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
+          this.loadedState?.statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
+        },
+        url: source.url,
+        windowTarget: this.windowTarget,
+        targetForWrappers: this.targetForWrappers,
+      });
+      setDebugGlobals({
+        mmlScene: this.loadedState.fullScreenMMLScene,
+        remoteDocumentWrapper: this.loadedState.mmlNetworkSource.remoteDocumentWrapper,
+      });
+    }
+  }
+
   private async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>(
-      this.showDebugLoading,
-    );
+    const fullScreenMMLScene = new FullScreenMMLScene<StandaloneTagDebugAdapter>({
+      showDebugLoading: this.showDebugLoading,
+    });
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandaloneTagDebugAdapter.create(fullScreenMMLScene.element);
     if (this.disposed) {

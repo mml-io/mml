@@ -1,6 +1,7 @@
 import { FormIteration } from "./FormIteration";
 import { GraphicsMode } from "./GraphicsMode";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
+import { ThreeJSModeOptions } from "./ThreeJSModeInternal";
 
 export class ThreeJSMode implements GraphicsMode {
   private disposed = false;
@@ -13,9 +14,16 @@ export class ThreeJSMode implements GraphicsMode {
     private targetForWrappers: HTMLElement,
     private mmlSource: MMLSourceDefinition,
     private formIteration: FormIteration,
-    private showDebugLoading: boolean,
+    private options: ThreeJSModeOptions,
   ) {
     this.init();
+  }
+
+  public updateSource(source: MMLSourceDefinition): void {
+    this.mmlSource = source;
+    if (this.internalMode) {
+      this.internalMode.updateSource(source);
+    }
   }
 
   private async init() {
@@ -26,7 +34,7 @@ export class ThreeJSMode implements GraphicsMode {
         this.targetForWrappers,
         this.mmlSource,
         this.formIteration,
-        this.showDebugLoading,
+        this.options,
       );
     })();
     if (this.disposed) {

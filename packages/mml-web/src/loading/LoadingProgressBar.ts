@@ -14,6 +14,7 @@ export class LoadingProgressBar {
   private debugCheckbox: HTMLInputElement;
 
   private hasCompleted = false;
+  private disposed = false;
   private loadingCallback: () => void;
 
   constructor(
@@ -126,6 +127,10 @@ export class LoadingProgressBar {
   }
 
   public dispose() {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
     this.loadingProgressManager.removeProgressCallback(this.loadingCallback);
     this.element.remove();
   }

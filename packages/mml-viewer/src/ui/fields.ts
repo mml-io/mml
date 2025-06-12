@@ -30,6 +30,11 @@ export const characterGroup: GroupDefinition = {
   label: "Character",
 };
 
+export const loadingGroup: GroupDefinition = {
+  name: "loading",
+  label: "Loading",
+};
+
 export const allGroups = [
   sourceGroup,
   rendererGroup,
@@ -37,6 +42,7 @@ export const allGroups = [
   lightGroup,
   environmentGroup,
   characterGroup,
+  loadingGroup,
 ];
 
 export const cameraModeField: FieldDefinition = {
@@ -114,6 +120,23 @@ export const urlField: FieldDefinition = {
   groupDefinition: sourceGroup,
 };
 
+export const loadingStyleField: FieldDefinition = {
+  name: "loadingStyle",
+  label: "Loading Style",
+  type: "string",
+  options: ["bar", "spinner"],
+  defaultValue: "bar",
+  groupDefinition: loadingGroup,
+};
+
+export const hideUntilLoadedField: FieldDefinition = {
+  name: "hideUntilLoaded",
+  label: "Hide Until Loaded",
+  type: "boolean",
+  defaultValue: false,
+  groupDefinition: loadingGroup,
+};
+
 export const rendererField: FieldDefinition = {
   name: "renderer",
   label: "Renderer",
@@ -176,6 +199,7 @@ export const allFields = [
   cameraFovField,
   environmentMapField,
   urlField,
+  loadingStyleField,
   rendererField,
   backgroundColorField,
   ambientLightField,

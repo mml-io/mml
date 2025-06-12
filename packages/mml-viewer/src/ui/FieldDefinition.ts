@@ -1,7 +1,7 @@
 export type FieldDefinition = {
   readonly name: string;
   readonly label: string;
-  readonly type: string;
+  readonly type: "string" | "number" | "x,y,z" | "color" | "boolean";
   readonly requireSubmission?: boolean;
   readonly options?: string[];
   readonly defaultValue: string | number | boolean;
