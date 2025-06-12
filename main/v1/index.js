@@ -8,12 +8,14 @@ import {
   StatusUI,
   allFields,
   allGroups,
+  hideUntilLoadedField,
+  loadingStyleField,
   parseBoolAttribute,
   registerCustomElementsToWindow,
   rendererField,
   setDebugGlobals,
   urlField
-} from "./chunk-52ZYVOZF.js";
+} from "./chunk-UQMRU7HR.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -111,6 +113,8 @@ var UIField = class extends UIElement {
         this.input.type = "number";
       } else if (fieldDefinition.type === "color") {
         this.input.type = "text";
+      } else if (fieldDefinition.type === "boolean") {
+        this.input.type = "checkbox";
       } else {
         this.input.type = "text";
       }
@@ -131,6 +135,10 @@ var UIField = class extends UIElement {
         if (this.input) {
           const input2 = this.input;
           this.input.addEventListener("input", () => {
+            if (input2.type === "checkbox") {
+              this.onChange(input2.checked ? "true" : "false");
+              return;
+            }
             this.onChange(input2.value);
           });
         } else if (this.selectElement) {
@@ -151,10 +159,17 @@ var UIField = class extends UIElement {
     if (this.selectElement) {
       this.selectElement.value = value;
     } else if (this.input) {
-      this.input.value = value;
+      if (this.input.type === "checkbox") {
+        this.input.checked = value === "true";
+      } else {
+        this.input.value = value;
+      }
     }
   }
   onChange(value) {
+    if (this.fieldDefinition.type === "boolean") {
+      value = value === "true" || value === "on" || value === "1" ? "true" : "false";
+    }
     setUrlParam(this.fieldDefinition.name, value);
   }
 };
@@ -272,26 +287,32 @@ var FormIteration = class {
 
 // src/PlayCanvasMode.ts
 var PlayCanvasMode = class {
-  constructor(windowTarget, targetForWrappers, mmlSource, formIteration, showDebugLoading) {
+  constructor(windowTarget, targetForWrappers, mmlSource, formIteration, options) {
     this.windowTarget = windowTarget;
     this.targetForWrappers = targetForWrappers;
     this.mmlSource = mmlSource;
     this.formIteration = formIteration;
-    this.showDebugLoading = showDebugLoading;
+    this.options = options;
     this.disposed = false;
     this.internalMode = null;
     this.type = "playcanvas";
     this.init();
   }
+  updateSource(source) {
+    this.mmlSource = source;
+    if (this.internalMode) {
+      this.internalMode.updateSource(source);
+    }
+  }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-TGX2JRI5.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-OGVG3KWR.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
         this.mmlSource,
         this.formIteration,
-        this.showDebugLoading
+        this.options
       );
     })();
     if (this.disposed) {
@@ -365,10 +386,30 @@ var TagsMode = class {
     this.type = "tags";
     this.init();
   }
+  updateSource(source) {
+    this.mmlSourceDefinition = source;
+    if (this.loadedState) {
+      const existingSource = this.loadedState.mmlNetworkSource;
+      existingSource.dispose();
+      this.loadedState.mmlNetworkSource = MMLNetworkSource.create({
+        mmlScene: this.loadedState.fullScreenMMLScene,
+        statusUpdated: (status) => {
+          this.loadedState?.statusUI.setStatus(NetworkedDOMWebsocketStatusToString(status));
+        },
+        url: source.url,
+        windowTarget: this.windowTarget,
+        targetForWrappers: this.targetForWrappers
+      });
+      setDebugGlobals({
+        mmlScene: this.loadedState.fullScreenMMLScene,
+        remoteDocumentWrapper: this.loadedState.mmlNetworkSource.remoteDocumentWrapper
+      });
+    }
+  }
   async init() {
-    const fullScreenMMLScene = new FullScreenMMLScene(
-      this.showDebugLoading
-    );
+    const fullScreenMMLScene = new FullScreenMMLScene({
+      showDebugLoading: this.showDebugLoading
+    });
     document.body.append(fullScreenMMLScene.element);
     const graphicsAdapter = await StandaloneTagDebugAdapter.create(fullScreenMMLScene.element);
     if (this.disposed) {
@@ -419,26 +460,32 @@ var TagsMode = class {
 
 // src/ThreeJSMode.ts
 var ThreeJSMode = class {
-  constructor(windowTarget, targetForWrappers, mmlSource, formIteration, showDebugLoading) {
+  constructor(windowTarget, targetForWrappers, mmlSource, formIteration, options) {
     this.windowTarget = windowTarget;
     this.targetForWrappers = targetForWrappers;
     this.mmlSource = mmlSource;
     this.formIteration = formIteration;
-    this.showDebugLoading = showDebugLoading;
+    this.options = options;
     this.disposed = false;
     this.internalMode = null;
     this.type = "threejs";
     this.init();
   }
+  updateSource(source) {
+    this.mmlSource = source;
+    if (this.internalMode) {
+      this.internalMode.updateSource(source);
+    }
+  }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-S3SIPCX3.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-PQGN343G.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
         this.mmlSource,
         this.formIteration,
-        this.showDebugLoading
+        this.options
       );
     })();
     if (this.disposed) {
@@ -697,6 +744,27 @@ var StandaloneViewer = class {
     window.addEventListener("popstate", () => {
       this.handleParams();
     });
+    window.addEventListener("message", (event) => {
+      this.handlePostMessage(event);
+    });
+    this.handleParams();
+  }
+  handlePostMessage(event) {
+    const isParamUpdate = event?.data?.type === "updateParams" && typeof event.data.params === "object" && event.data.params !== null;
+    if (isParamUpdate) {
+      this.updateUrlParams(event.data.params);
+    }
+  }
+  updateUrlParams(params) {
+    const url = new URL(window.location.href);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === void 0 || value === "") {
+        url.searchParams.delete(key);
+      } else {
+        url.searchParams.set(key, value);
+      }
+    });
+    window.history.pushState({}, "", url.toString());
     this.handleParams();
   }
   handleParams() {
@@ -705,19 +773,23 @@ var StandaloneViewer = class {
     this.formIteration = formIteration;
     const url = formIteration.getFieldValue(urlField);
     const renderer = formIteration.getFieldValue(rendererField);
+    const loadingStyle = formIteration.getFieldValue(loadingStyleField);
     const noUI = parseBoolAttribute(queryParamState.read("noUI"), false);
     if (noUI) {
       this.viewerUI.hide();
     } else {
       this.viewerUI.show();
     }
+    if (this.graphicsMode && this.graphicsMode.type !== renderer) {
+      this.graphicsMode.dispose();
+      this.graphicsMode = null;
+    }
     let source;
     if (url) {
       source = { url };
       if (this.source && this.source.url !== url) {
         if (this.graphicsMode) {
-          this.graphicsMode.dispose();
-          this.graphicsMode = null;
+          this.graphicsMode.updateSource(source);
         }
       }
       this.source = source;
@@ -731,10 +803,15 @@ var StandaloneViewer = class {
       return;
     }
     this.viewerUI.hideAddressMenu();
-    if (this.graphicsMode && this.graphicsMode.type !== renderer) {
-      this.graphicsMode.dispose();
-      this.graphicsMode = null;
-    }
+    const hideUntilLoaded = parseBoolAttribute(
+      formIteration.getFieldValue(hideUntilLoadedField),
+      false
+    );
+    const options = {
+      loadingStyle,
+      hideUntilLoaded,
+      showDebugLoading: !noUI
+    };
     if (!this.graphicsMode) {
       if (renderer === "playcanvas") {
         this.graphicsMode = new PlayCanvasMode(
@@ -742,7 +819,7 @@ var StandaloneViewer = class {
           this.targetForWrappers,
           source,
           formIteration,
-          !noUI
+          options
         );
       } else if (renderer === "threejs") {
         this.graphicsMode = new ThreeJSMode(
@@ -750,7 +827,7 @@ var StandaloneViewer = class {
           this.targetForWrappers,
           source,
           formIteration,
-          !noUI
+          options
         );
       } else if (renderer === "tags") {
         this.graphicsMode = new TagsMode(
