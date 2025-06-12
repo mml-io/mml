@@ -33,7 +33,7 @@ export class StandaloneViewer {
 
   private handlePostMessage(event: MessageEvent) {
     const isParamUpdate =
-      event?.data?.type === "params" &&
+      event?.data?.type === "updateParams" &&
       typeof event.data.params === "object" &&
       event.data.params !== null;
     if (isParamUpdate) {
