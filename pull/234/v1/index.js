@@ -744,7 +744,16 @@ var StandaloneViewer = class {
     window.addEventListener("popstate", () => {
       this.handleParams();
     });
+    window.addEventListener("message", (event) => {
+      this.handlePostMessage(event);
+    });
     this.handleParams();
+  }
+  handlePostMessage(event) {
+    const isParamUpdate = event?.data?.type === "updateParams" && typeof event.data.params === "object" && event.data.params !== null;
+    if (isParamUpdate) {
+      this.updateUrlParams(event.data.params);
+    }
   }
   updateUrlParams(params) {
     const url = new URL(window.location.href);
