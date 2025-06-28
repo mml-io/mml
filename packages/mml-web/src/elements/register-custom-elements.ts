@@ -3,6 +3,7 @@ import { AttributeLerp } from "./AttributeLerp";
 import { Audio } from "./Audio";
 import { Character } from "./Character";
 import { ChatProbe } from "./ChatProbe";
+import { ControlProbe } from "./ControlProbe";
 import { Cube } from "./Cube";
 import { Cylinder } from "./Cylinder";
 import { Frame } from "./Frame";
@@ -46,4 +47,5 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Interaction.tagName, Interaction);
   targetWindow.customElements.define(AttributeAnimation.tagName, AttributeAnimation);
   targetWindow.customElements.define(AttributeLerp.tagName, AttributeLerp);
+  targetWindow.customElements.define(ControlProbe.tagName, ControlProbe);
 }
