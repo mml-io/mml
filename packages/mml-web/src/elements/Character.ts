@@ -13,7 +13,7 @@ export class Character<G extends GraphicsAdapter = GraphicsAdapter> extends Mode
   }
 
   public parentTransformed(): void {
-    // no-op
+    super.parentTransformed();
   }
 
   public isClickable(): boolean {
