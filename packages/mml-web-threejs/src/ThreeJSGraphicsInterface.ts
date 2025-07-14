@@ -1,9 +1,10 @@
-import { MMLGraphicsInterface } from "@mml-io/mml-web";
+import { Animation, MMLGraphicsInterface } from "@mml-io/mml-web";
 
 import * as ThreeJSElements from "./elements";
 import { ThreeJSGraphicsAdapter } from "./ThreeJSGraphicsAdapter";
 
 export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapter> = {
+  MMLAnimationGraphicsInterface: (element) => new ThreeJSElements.ThreeJSAnimation(element),
   MElementGraphicsInterface: (element) => new ThreeJSElements.ThreeJSMElement(element),
   MMLDebugHelperGraphicsInterface: (debugHelper) =>
     new ThreeJSElements.ThreeJSDebugHelper(debugHelper),

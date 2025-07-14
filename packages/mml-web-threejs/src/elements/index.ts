@@ -1,3 +1,4 @@
+export * from "./ThreeJSAnimation";
 export * from "./ThreeJSAudio";
 export * from "./ThreeJSChatProbe";
 export * from "./ThreeJSCube";
