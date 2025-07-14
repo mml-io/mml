@@ -23,11 +23,12 @@
     "@mml-io/mml-web": "^0.19.7",
     "@mml-io/mml-web-playcanvas-standalone": "^0.19.7",
     "@mml-io/mml-web-threejs-standalone": "^0.19.7",
-    "@monogrid/gainmap-js": "3.0.6",
     "playcanvas": "1.73.5",
-    "three": "0.163.0"
+    "@monogrid/gainmap-js": "3.1.0",
+    "three": "0.178.0"
   },
   "devDependencies": {
-    "@types/three": "0.163.0"
+    "@types/three": "0.178.1",
+    "esbuild-css-modules-plugin": "3.1.2"
   }
 }
