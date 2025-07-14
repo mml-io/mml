@@ -1,5 +1,6 @@
 import { DebugHelper } from "../debug-helper";
 import {
+  Animation,
   Audio,
   ChatProbe,
   Cube,
@@ -21,6 +22,7 @@ import {
   Video,
 } from "../elements";
 import {
+  AnimationGraphics,
   AudioGraphics,
   ChatProbeGraphics,
   CubeGraphics,
@@ -49,6 +51,7 @@ import { LoadingProgressManager } from "../loading";
 import { PromptManager } from "../prompt-ui";
 
 export interface MMLGraphicsInterface<C extends GraphicsAdapter> {
+  MMLAnimationGraphicsInterface: (element: Animation<C>) => AnimationGraphics<C>;
   MMLDebugHelperGraphicsInterface<G extends C>(debugHelper: DebugHelper<G>): DebugHelperGraphics<G>;
   RemoteDocumentGraphicsInterface: (element: RemoteDocument<C>) => RemoteDocumentGraphics<C>;
   MElementGraphicsInterface: (element: MElement<C>) => MElementGraphics<C>;

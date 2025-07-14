@@ -1,10 +1,12 @@
-import { MModelProps, Model } from "../elements";
+import { Animation, MModelProps, Model } from "../elements";
 import { IVect3 } from "../math/Vect3";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class ModelGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(element: Model<G>, updateMeshCallback: () => void) {}
+  constructor(element: Model<G>, updateMeshCallback: () => void) {
+    void element; // suppressing unused for linter
+    void updateMeshCallback; // same
+  }
 
   abstract enable(): void;
 
@@ -38,6 +40,8 @@ export abstract class ModelGraphics<G extends GraphicsAdapter = GraphicsAdapter>
   abstract setDebug(debug: boolean, mModelProps: MModelProps): void;
 
   abstract setCastShadows(castShadows: boolean, mModelProps: MModelProps): void;
+
+  abstract updateChildAnimation?(animation: Animation<G>, animationState: any): void;
 
   abstract dispose(): void;
 }
