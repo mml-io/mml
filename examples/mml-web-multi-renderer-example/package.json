@@ -16,6 +16,6 @@
     "@mml-io/mml-web-runner": "^0.19.7",
     "@mml-io/mml-web-threejs-standalone": "^0.19.7",
     "playcanvas": "1.73.5",
-    "three": "0.163.0"
+    "three": "0.178.0"
   }
 }

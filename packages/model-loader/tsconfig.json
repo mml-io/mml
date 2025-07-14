@@ -11,6 +11,7 @@
       "node",
       "jest"
     ],
+    "skipLibCheck": true,
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",

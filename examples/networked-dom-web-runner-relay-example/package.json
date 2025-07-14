@@ -13,5 +13,8 @@
   "dependencies": {
     "@mml-io/networked-dom-web-runner": "^0.19.7",
     "@mml-io/networked-dom-web-runner-relay": "^0.19.7"
+  },
+  "devDependencies": {
+    "esbuild-css-modules-plugin": "3.1.2"
   }
 }

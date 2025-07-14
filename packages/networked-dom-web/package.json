@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "jest-canvas-mock": "2.5.2",
-    "jest-environment-jsdom": "29.7.0",
+    "jest-environment-jsdom": "30.0.4",
     "jest-expect-message": "1.1.3"
   }
 }
