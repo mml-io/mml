@@ -56,6 +56,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   >();
 
   private pendingAnim: string | null = null;
+  private pendingAnimationUpdates = new Map<Animation<ThreeJSGraphicsAdapter>, any>();
 
   constructor(
     private model: Model<ThreeJSGraphicsAdapter>,
@@ -106,14 +107,16 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   updateChildAnimation(animation: Animation<ThreeJSGraphicsAdapter>, animationState: any) {
-    if (!this.animationMixer || !this.loadedState) return;
+    if (!this.animationMixer || !this.loadedState) {
+      // queue if model isn't loaded yet
+      this.pendingAnimationUpdates.set(animation, animationState);
+      return;
+    }
 
     console.log("updateChildAnimation called for:", animation.id, "with state:", animationState);
 
-    // Get existing action
     let action = this.childAnimationActions.get(animation);
 
-    // If no action exists and we have an animation clip, create one
     if (!action && animationState && animationState.animationClip) {
       console.log("Creating new animation action for:", animation.id);
       action = this.animationMixer.clipAction(animationState.animationClip, this.loadedState.group);
@@ -121,7 +124,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.childAnimationActions.set(animation, action);
     }
 
-    // Update the action if it exists
     if (action) {
       if (animationState && animationState.weight !== undefined) {
         console.log("Updating weight for:", animation.id, "to:", animationState.weight);
@@ -137,10 +139,30 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     this.updateAnimationActions();
   }
 
+  removeChildAnimation(animation: Animation<ThreeJSGraphicsAdapter>) {
+    if (!this.animationMixer || !this.loadedState) {
+      this.pendingAnimationUpdates.delete(animation);
+      return;
+    }
+
+    console.log("removeChildAnimation called for:", animation.id);
+
+    const action = this.childAnimationActions.get(animation);
+    if (action) {
+      action.stop();
+      this.animationMixer.uncacheAction(action.getClip(), this.loadedState.group);
+      this.childAnimationActions.delete(animation);
+
+      console.log("Removed animation action for:", animation.id);
+    }
+
+    this.updateAnimationActions();
+  }
+
   private updateAnimationActions() {
     if (!this.animationMixer) return;
 
-    // If anim attribute is set, only play that action and stop all child actions
+    // anim attribute is set, only play that action and stop all child actions
     if (this.animAttributeAction) {
       this.animAttributeAction.enabled = true;
       this.animAttributeAction.setEffectiveWeight(1);
@@ -151,25 +173,32 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         action.stop();
       }
     } else {
-      // Blend all child actions
+      let hasActiveAnimations = false;
       for (const [animation, action] of this.childAnimationActions) {
         const weight = animation.props.weight;
         action.enabled = weight > 0;
         action.setEffectiveWeight(weight);
         if (weight > 0) {
           action.play();
+          hasActiveAnimations = true;
         } else {
           action.stop();
         }
+      }
+
+      // no child animations active and no anim attribute is set,
+      // model should get back to t-pose
+      if (!hasActiveAnimations && this.childAnimationActions.size > 0) {
+        console.log("No active child animations, resetting to A-pose");
+        this.animationMixer.stopAllAction();
+        this.animationMixer.setTime(0);
       }
     }
   }
 
   setAnim(anim: string | null, mModelProps: any): void {
-    // Store the pending animation
     this.pendingAnim = anim;
 
-    // If model isn't loaded yet, wait for it
     if (!this.loadedState) {
       return;
     }
@@ -225,27 +254,27 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  setAnimEnabled(animEnabled: boolean | null, mModelProps: any): void {
-    // Animation enabling is handled in updateAnimation
+  setAnimEnabled(): void {
+    //
   }
 
-  setAnimLoop(animLoop: boolean | null, mModelProps: any): void {
-    // no-op - property is observed in animation tick
+  setAnimLoop(): void {
+    //
   }
 
-  setAnimStartTime(animStartTime: number | null, mModelProps: any): void {
-    // no-op - property is observed in animation tick
+  setAnimStartTime(): void {
+    //
   }
 
-  setAnimPauseTime(animPauseTime: number | null, mModelProps: any): void {
-    // no-op - property is observed in animation tick
+  setAnimPauseTime(): void {
+    //
   }
 
   transformed(): void {
-    // no-op
+    //
   }
 
-  setSrc(src: string | null, mModelProps: any): void {
+  setSrc(src: string | null): void {
     if (this.loadedState !== null) {
       this.loadedState.group.removeFromParent();
       if (this.registeredParentAttachment) {
@@ -267,6 +296,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
     this.animAttributeAction = null;
     this.childAnimationActions.clear();
+    this.pendingAnimationUpdates.clear();
 
     if (!src) {
       this.latestSrcModelPromise = null;
@@ -293,7 +323,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     srcModelPromise
       .then((result) => {
         if (this.latestSrcModelPromise !== srcModelPromise || !this.model.isConnected) {
-          // If we've loaded a different model since, or we're no longer connected, dispose of this one
+          // we've loaded a different model since, or we're no longer connected
+          // dispose of this one
           ThreeJSModel.disposeOfGroup(result.group);
           return;
         }
@@ -312,7 +343,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           }
         });
 
-        console.log("Model bones:", Array.from(bones.keys()));
         const boundingBox = new THREE.Box3();
         group.updateWorldMatrix(true, true);
         boundingBox.expandByObject(group);
@@ -327,10 +357,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         };
         this.model.getContainer().add(group);
 
-        // Initialize animation mixer
         this.animationMixer = new THREE.AnimationMixer(group);
 
-        // Set up document time tick listener for animation updates
         if (!this.documentTimeTickListener) {
           this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
             (documentTime: number) => {
@@ -361,6 +389,12 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
         // Apply any pending animation now that the model is loaded
         this.applyPendingAnimation();
+
+        // apply any pending animation updates that arrived before the model finished loading
+        for (const [animation, animationState] of this.pendingAnimationUpdates) {
+          this.updateChildAnimation(animation, animationState);
+        }
+        this.pendingAnimationUpdates.clear();
       })
       .catch((err) => {
         console.error("Error loading m-model.src", err);
@@ -368,15 +402,9 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       });
   }
 
-  public registerAttachment(attachment: Model<ThreeJSGraphicsAdapter>) {
-    // This is for the old animation system - keeping for compatibility
-    // but not using for the new unified system
-  }
+  public registerAttachment(attachment: Model<ThreeJSGraphicsAdapter>) {}
 
-  public unregisterAttachment(attachment: Model<ThreeJSGraphicsAdapter>) {
-    // This is for the old animation system - keeping for compatibility
-    // but not using for the new unified system
-  }
+  public unregisterAttachment(attachment: Model<ThreeJSGraphicsAdapter>) {}
 
   private updateDebugVisualisation() {
     if (!this.model.props.debug) {
@@ -514,6 +542,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
     this.animAttributeAction = null;
     this.childAnimationActions.clear();
+    this.pendingAnimationUpdates.clear();
   }
 
   private static disposeOfGroup(group: THREE.Object3D) {

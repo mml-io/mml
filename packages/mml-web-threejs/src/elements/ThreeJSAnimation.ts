@@ -1,4 +1,4 @@
-import { Animation, MAnimationProps } from "@mml-io/mml-web";
+import { Animation } from "@mml-io/mml-web";
 import { AnimationGraphics } from "@mml-io/mml-web";
 import { LoadingInstanceManager } from "@mml-io/mml-web";
 import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
@@ -74,12 +74,15 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
           })),
         });
 
+        const existingWeight = this.animationState?.weight ?? this.animation.props.weight;
+
         this.animationState = {
           animationClip,
           animationAction: null,
-          weight: this.animation.props.weight,
+          weight: existingWeight,
         };
 
+        console.log("Animation state created with weight:", existingWeight);
         this.updateParentAnimation();
         this.loadingInstanceManager.finish();
       })
@@ -90,31 +93,45 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
       });
   }
 
-  setWeight(weight: number, mAnimationProps: any): void {
+  setWeight(weight: number): void {
     console.log("ThreeJSAnimation.setWeight called with weight:", weight);
     if (this.animationState) {
       this.animationState.weight = weight;
       this.updateParentAnimation();
     } else {
-      // If animation state doesn't exist yet, store the weight for when it's created
+      // anim state doesn't exist yet create a temp to be replaced when src loaded
+      console.log(
+        "ThreeJSAnimation.setWeight: creating temporary animation state with weight:",
+        weight,
+      );
       this.animationState = {
-        animationClip: null as any, // Will be set when src is loaded
+        animationClip: null as any, // set when loaded
         animationAction: null,
         weight,
       };
+      this.updateParentAnimation();
     }
   }
 
   private updateParentAnimation() {
     if (!this.parentModel || !this.animationState) {
+      console.log("updateParentAnimation: missing parentModel or animationState", {
+        hasParentModel: !!this.parentModel,
+        hasAnimationState: !!this.animationState,
+      });
       return;
     }
 
-    // Notify the parent model that this animation has changed
+    // notify parent model that anim changed
     if (this.parentModel.modelGraphics) {
-      // We'll need to add a method to the ModelGraphics interface to handle this
-      // For now, we'll just store the animation state and let the model handle it
+      console.log("updateParentAnimation: calling updateChildAnimation on parent model", {
+        animationId: this.animation.id,
+        weight: this.animationState.weight,
+        hasClip: !!this.animationState.animationClip,
+      });
       this.parentModel.modelGraphics.updateChildAnimation?.(this.animation, this.animationState);
+    } else {
+      console.error("updateParentAnimation: parent model has no modelGraphics");
     }
   }
 
@@ -130,6 +147,12 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
       this.latestSrcPromise = null;
     }
     this.loadingInstanceManager.dispose();
+
+    if (this.parentModel && this.parentModel.modelGraphics) {
+      console.log("ThreeJSAnimation disposing, notifying parent model");
+      this.parentModel.modelGraphics.removeChildAnimation?.(this.animation);
+    }
+
     this.animationState = null;
   }
 
