@@ -43,5 +43,7 @@ export abstract class ModelGraphics<G extends GraphicsAdapter = GraphicsAdapter>
 
   abstract updateChildAnimation?(animation: Animation<G>, animationState: any): void;
 
+  abstract removeChildAnimation?(animation: Animation<G>): void;
+
   abstract dispose(): void;
 }

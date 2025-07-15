@@ -6,6 +6,7 @@ import { AnimationGraphics } from "../graphics";
 import { AnimationType } from "./AttributeAnimation";
 import { AttributeLerp } from "./AttributeLerp";
 import { MElement } from "./MElement";
+import { Model } from "./Model";
 
 const defaultAnimationSrc = null;
 const defaultAnimationWeight = 0;
@@ -125,15 +126,35 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
       ],
     });
 
+    if (this.parentElement && Model.isModel(this.parentElement)) {
+      this.parentElement.addSideEffectChild(this);
+    } else {
+      console.warn("Animation connected, but no parent Model found:", this.id);
+    }
+
+    // Process attributes in the correct order: src first, then weight
     for (const name of Animation.observedAttributes) {
       const value = this.getAttribute(name);
       if (value !== null) {
         this.attributeChangedCallback(name, null, value);
       }
     }
+
+    // Ensure the initial weight is set immediately after src is processed
+    const weightValue = this.getAttribute("weight");
+    if (weightValue !== null) {
+      const parsedWeight = parseFloatAttribute(weightValue, defaultAnimationWeight);
+      this.props.weight = parsedWeight;
+      // Set the weight directly on the graphics adapter to ensure immediate application
+      this.animationGraphics?.setWeight(parsedWeight, this.props);
+    }
   }
 
   disconnectedCallback() {
+    if (this.parentElement && Model.isModel(this.parentElement)) {
+      this.parentElement.removeSideEffectChild(this);
+    }
+
     this.animationGraphics?.dispose();
     this.animationGraphics = null;
     this.animatedAttributeHelper = null;

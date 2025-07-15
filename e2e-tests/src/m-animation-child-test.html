@@ -1,0 +1,74 @@
+<m-plane y="3" color="#8888AA" width="15" height="15" rx="-90"></m-plane>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+
+<m-group id="labels"></m-group>
+
+<m-model id="body-model" y="3" z="6.5" src="/assets/Body.glb"></m-model>
+
+<script>
+  const labels = document.getElementById("labels");
+  const model = document.getElementById("body-model");
+
+  const runAnimUrl = "/assets/anim_run.glb";
+  const airAnimUrl = "/assets/anim_air.glb";
+
+  const addRunLabel = createLabel("add_run_anim", -3, 5.0, 3);
+  const addAirLabel = createLabel("add_air_anim", -3, 4.6, 3);
+  const removeRunLabel = createLabel("remove_run_anim", -3, 4.2, 3);
+  const removeAirLabel = createLabel("remove_air_anim", -3, 3.8, 3);
+
+  function createLabel(text, x, y, z) {
+    const label = document.createElement("m-label");
+    label.setAttribute("id", `${text}-label`);
+    label.setAttribute("content", text);
+    label.setAttribute("x", x);
+    label.setAttribute("y", y);
+    label.setAttribute("z", z);
+    label.setAttribute("rx", 0);
+    label.setAttribute("width", 2)
+    label.setAttribute("height", 0.3);
+    label.setAttribute("alignment", "center");
+    label.setAttribute("padding", 0);
+    label.setAttribute("font-size", 20);
+    labels.appendChild(label);
+    return label;
+  }
+
+  function createAnimation(anim, weight) {
+    const animation = document.createElement("m-animation");
+    animation.setAttribute("src", anim);
+    animation.setAttribute("weight", weight);
+    return animation;
+  }
+
+  function addAnimation(animation) {
+    model.appendChild(animation);
+  }
+
+  function removeAnimation(animation) {
+    model.removeChild(animation);
+  }
+
+  const runAnimation = createAnimation(runAnimUrl, 1.0);
+  const airAnimation = createAnimation(airAnimUrl, 0.5);
+
+  addAnimation(runAnimation);
+  addAnimation(airAnimation);
+
+  addRunLabel.addEventListener("click", () => {
+    addAnimation(runAnimation);
+  });
+
+  addAirLabel.addEventListener("click", () => {
+    addAnimation(airAnimation);
+  });
+
+  removeRunLabel.addEventListener("click", () => {
+    removeAnimation(runAnimation);
+  });
+
+  removeAirLabel.addEventListener("click", () => {
+    removeAnimation(airAnimation);
+  });
+  
+</script>

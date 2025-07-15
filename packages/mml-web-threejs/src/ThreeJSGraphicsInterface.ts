@@ -1,4 +1,4 @@
-import { Animation, MMLGraphicsInterface } from "@mml-io/mml-web";
+import { MMLGraphicsInterface } from "@mml-io/mml-web";
 
 import * as ThreeJSElements from "./elements";
 import { ThreeJSGraphicsAdapter } from "./ThreeJSGraphicsAdapter";
