@@ -91,11 +91,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     return this.loadedState?.group ?? new THREE.Object3D();
   }
 
-  setDebug(debug: boolean, mModelProps: any): void {
+  setDebug(): void {
     this.updateDebugVisualisation();
   }
 
-  setCastShadows(castShadows: boolean, mModelProps: any): void {
+  setCastShadows(castShadows: boolean): void {
     if (this.loadedState) {
       this.loadedState.group.traverse((object) => {
         if ((object as THREE.Mesh).isMesh) {
@@ -196,7 +196,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  setAnim(anim: string | null, mModelProps: any): void {
+  setAnim(anim: string | null): void {
     this.pendingAnim = anim;
 
     if (!this.loadedState) {
@@ -255,23 +255,23 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setAnimEnabled(): void {
-    //
+    // no-op
   }
 
   setAnimLoop(): void {
-    //
+    // no-op - property is observed in animation tick
   }
 
   setAnimStartTime(): void {
-    //
+    // no-op - property is observed in animation tick
   }
 
   setAnimPauseTime(): void {
-    //
+    // no-op - property is observed in animation tick
   }
 
   transformed(): void {
-    //
+    // no-op
   }
 
   setSrc(src: string | null): void {
@@ -494,20 +494,13 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     });
   }
 
-  private updateAnimation(docTimeMs: number, force: boolean = false) {
+  private updateAnimation(docTimeMs: number) {
     if (!this.animationMixer) return;
 
-    let animationTimeMs = docTimeMs - this.model.props.animStartTime;
-    if (docTimeMs < this.model.props.animStartTime) {
-      animationTimeMs = 0;
-    } else if (this.model.props.animPauseTime !== null) {
-      if (docTimeMs > this.model.props.animPauseTime) {
-        animationTimeMs = this.model.props.animPauseTime - this.model.props.animStartTime;
-      }
-    }
-
     if (this.model.props.animEnabled) {
-      this.animationMixer.setTime(animationTimeMs / 1000);
+      const documentTime = this.model.getDocumentTime();
+      const animationTime = documentTime / 1000;
+      this.animationMixer.setTime(animationTime);
       this.triggerSocketedChildrenTransformed();
     } else {
       this.animationMixer.stopAllAction();
