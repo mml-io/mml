@@ -5,12 +5,21 @@
 
 <m-model id="body-model" y="3" z="6.5" src="/assets/Body.glb"></m-model>
 
+<m-model id="body-model-b" x="1.5" y="3" z="6.5" src="/assets/Body.glb">
+  <m-animation src="/assets/anim_air.glb" weight="0.5"></m-animation>
+  <m-animation src="/assets/anim_run.glb" weight="0.5"></m-animation>
+</m-model>
+
 <script>
   const labels = document.getElementById("labels");
   const model = document.getElementById("body-model");
 
   const runAnimUrl = "/assets/anim_run.glb";
   const airAnimUrl = "/assets/anim_air.glb";
+  const idleAnimUrl = "/assets/anim_idle.glb";
+
+  const addIdleAnimAttrLabel = createLabel("add_anim_attr", -3, 6.0, 3);
+  const removeIdleAnimAttrLabel = createLabel("remove_anim_attr", -3, 5.6, 3);
 
   const addRunLabel = createLabel("add_run_anim", -3, 5.0, 3);
   const addAirLabel = createLabel("add_air_anim", -3, 4.6, 3);
@@ -52,20 +61,14 @@
   const runAnimation = createAnimation(runAnimUrl, 1.0);
   const airAnimation = createAnimation(airAnimUrl, 0.5);
 
-  addRunLabel.addEventListener("click", () => {
-    addAnimation(runAnimation);
+  addRunLabel.addEventListener("click", () => addAnimation(runAnimation));
+  addAirLabel.addEventListener("click", () => addAnimation(airAnimation));
+  removeRunLabel.addEventListener("click", () => removeAnimation(runAnimation));
+  removeAirLabel.addEventListener("click", () => removeAnimation(airAnimation));
+  addIdleAnimAttrLabel.addEventListener("click", () => {
+    model.setAttribute("anim", idleAnimUrl);
   });
-
-  addAirLabel.addEventListener("click", () => {
-    addAnimation(airAnimation);
+  removeIdleAnimAttrLabel.addEventListener("click", () => {
+    model.removeAttribute("anim");
   });
-
-  removeRunLabel.addEventListener("click", () => {
-    removeAnimation(runAnimation);
-  });
-
-  removeAirLabel.addEventListener("click", () => {
-    removeAnimation(airAnimation);
-  });
-  
 </script>
