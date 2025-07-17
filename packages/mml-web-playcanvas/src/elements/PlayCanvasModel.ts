@@ -1,4 +1,5 @@
 import {
+  Animation,
   IVect3,
   LoadingInstanceManager,
   MElement,
@@ -261,6 +262,20 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
   public setAnimPauseTime(): void {
     // no-op
+  }
+
+  public updateChildAnimation(
+    animation: Animation<PlayCanvasGraphicsAdapter>,
+    animationState: any,
+  ) {
+    void animation;
+    void animationState;
+    // TODO: Implement
+  }
+
+  public removeChildAnimation(animation: Animation<PlayCanvasGraphicsAdapter>) {
+    void animation;
+    // TODO: Implement
   }
 
   public transformed(): void {
