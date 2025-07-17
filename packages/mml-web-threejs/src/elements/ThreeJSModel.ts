@@ -67,6 +67,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
   private pendingAnim: string | null = null;
   private pendingAnimationUpdates = new Map<Animation<ThreeJSGraphicsAdapter>, any>();
+  private modelReady = false;
 
   constructor(
     private model: Model<ThreeJSGraphicsAdapter>,
@@ -122,21 +123,47 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.pendingAnimationUpdates.set(animation, animationState);
       return;
     }
-
-    console.log("updateChildAnimation called for:", animation.id, "with state:", animationState);
-
     let action = this.childAnimationActions.get(animation);
 
     if (!action && animationState && animationState.animationClip) {
-      console.log("Creating new animation action for:", animation.id);
-      action = this.animationMixer.clipAction(animationState.animationClip, this.loadedState.group);
+      // filter out tracks that don't have corresponding bones
+      const availableBones = Array.from(this.loadedState.bones.keys());
+      const unavailableBones = [];
+      const compatibleTracks = animationState.animationClip.tracks.filter(
+        (track: THREE.KeyframeTrack) => {
+          const trackName = track.name;
+          const boneName = trackName.split(".")[0];
+          const canBindTrack = availableBones.includes(boneName);
+          if (!canBindTrack) {
+            unavailableBones.push(boneName);
+          }
+          return canBindTrack;
+        },
+      );
+
+      if (compatibleTracks.length === 0) {
+        console.warn(
+          `Animation "${animation.id}" has no tracks that can bind to the current model's bones. Skipping animation.`,
+        );
+        return;
+      }
+
+      const filteredClip = new THREE.AnimationClip(
+        animationState.animationClip.name,
+        animationState.animationClip.duration,
+        compatibleTracks,
+      );
+      const filteredCount = animationState.animationClip.tracks.length - compatibleTracks.length;
+      const tracks = `${filteredCount} incompatible track${filteredCount === 1 ? "" : "s"}`;
+      console.log(`Animation "${animation.id}": filtered ${tracks}`);
+
+      action = this.animationMixer.clipAction(filteredClip, this.loadedState.group);
       action.enabled = true;
       this.childAnimationActions.set(animation, action);
     }
 
     if (action) {
       if (animationState && animationState.weight !== undefined) {
-        console.log("Updating weight for:", animation.id, "to:", animationState.weight);
         action.setEffectiveWeight(animationState.weight);
         if (animationState.weight > 0) {
           action.play();
@@ -155,15 +182,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       return;
     }
 
-    console.log("removeChildAnimation called for:", animation.id);
-
     const action = this.childAnimationActions.get(animation);
     if (action) {
       action.stop();
       this.animationMixer.uncacheAction(action.getClip(), this.loadedState.group);
       this.childAnimationActions.delete(animation);
-
-      console.log("Removed animation action for:", animation.id);
     }
 
     this.updateAnimationActions();
@@ -199,7 +222,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       // no child animations active and no anim attribute is set,
       // model should get back to t-pose
       if (!hasActiveAnimations && this.childAnimationActions.size > 0) {
-        console.log("No active child animations, resetting to A-pose");
         this.animationMixer.stopAllAction();
         this.animationMixer.setTime(0);
       }
@@ -339,6 +361,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     this.animAttributeAction = null;
     this.childAnimationActions.clear();
     this.pendingAnimationUpdates.clear();
+    this.modelReady = false;
 
     if (!src) {
       this.latestSrcModelPromise = null;
@@ -433,11 +456,10 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         }
         this.srcLoadingInstanceManager.finish();
         this.updateDebugVisualisation();
+        this.modelReady = true;
 
-        // Apply any pending animation now that the model is loaded
         this.applyPendingAnimation();
 
-        // apply any pending animation updates that arrived before the model finished loading
         for (const [animation, animationState] of this.pendingAnimationUpdates) {
           this.updateChildAnimation(animation, animationState);
         }
@@ -540,6 +562,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       }
       this.animAttributeAction = null;
     }
+    // Reset model ready flag when resetting animation mixer
+    this.modelReady = false;
   }
 
   public registerSocketChild(
@@ -748,6 +772,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     this.animAttributeAction = null;
     this.childAnimationActions.clear();
     this.pendingAnimationUpdates.clear();
+    this.modelReady = false;
   }
 
   private static disposeOfGroup(group: THREE.Object3D) {
