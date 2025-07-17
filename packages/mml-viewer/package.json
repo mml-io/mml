@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-viewer",
-  "version": "0.19.7",
+  "version": "0.20.0",
   "private": true,
   "publishConfig": {
     "access": "public"
@@ -20,11 +20,11 @@
     "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.19.7",
-    "@mml-io/mml-web-playcanvas-standalone": "^0.19.7",
-    "@mml-io/mml-web-threejs-standalone": "^0.19.7",
-    "playcanvas": "1.73.5",
+    "@mml-io/mml-web": "^0.20.0",
+    "@mml-io/mml-web-playcanvas-standalone": "^0.20.0",
+    "@mml-io/mml-web-threejs-standalone": "^0.20.0",
     "@monogrid/gainmap-js": "3.1.0",
+    "playcanvas": "1.73.5",
     "three": "0.178.0"
   },
   "devDependencies": {
