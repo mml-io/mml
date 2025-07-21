@@ -712,6 +712,27 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="loop" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the animation should loop (true) or play once (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="start-time" type="xs:integer">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the animation should begin. Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="pause-time" type="xs:integer">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the animation should pause. If there is no value the animation will not be paused.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>
