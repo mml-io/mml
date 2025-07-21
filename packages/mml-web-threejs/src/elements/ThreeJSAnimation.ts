@@ -10,6 +10,9 @@ type ThreeJSAnimationState = {
   animationClip: THREE.AnimationClip;
   animationAction: THREE.AnimationAction | null;
   weight: number;
+  loop: boolean;
+  startTime: number;
+  pauseTime: number | null;
 };
 
 export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> {
@@ -75,11 +78,17 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
         });
 
         const existingWeight = this.animationState?.weight ?? this.animation.props.weight;
+        const existingLoop = this.animationState?.loop ?? this.animation.props.loop;
+        const existingStartTime = this.animationState?.startTime ?? this.animation.props.startTime;
+        const existingPauseTime = this.animationState?.pauseTime ?? this.animation.props.pauseTime;
 
         this.animationState = {
           animationClip,
           animationAction: null,
           weight: existingWeight,
+          loop: existingLoop,
+          startTime: existingStartTime,
+          pauseTime: existingPauseTime,
         };
 
         console.log("Animation state created with weight:", existingWeight);
@@ -108,6 +117,75 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
         animationClip: null as any, // set when loaded
         animationAction: null,
         weight,
+        loop: this.animation.props.loop,
+        startTime: this.animation.props.startTime,
+        pauseTime: this.animation.props.pauseTime,
+      };
+      this.updateParentAnimation();
+    }
+  }
+
+  setLoop(loop: boolean): void {
+    console.log("ThreeJSAnimation.setLoop called with loop:", loop);
+    if (this.animationState) {
+      this.animationState.loop = loop;
+      this.updateParentAnimation();
+    } else {
+      // anim state doesn't exist yet create a temp to be replaced when src loaded
+      console.log("ThreeJSAnimation.setLoop: creating temporary animation state with loop:", loop);
+      this.animationState = {
+        animationClip: null as any, // set when loaded
+        animationAction: null,
+        weight: this.animation.props.weight,
+        loop,
+        startTime: this.animation.props.startTime,
+        pauseTime: this.animation.props.pauseTime,
+      };
+      this.updateParentAnimation();
+    }
+  }
+
+  setStartTime(startTime: number): void {
+    console.log("ThreeJSAnimation.setStartTime called with startTime:", startTime);
+    if (this.animationState) {
+      this.animationState.startTime = startTime;
+      this.updateParentAnimation();
+    } else {
+      // anim state doesn't exist yet create a temp to be replaced when src loaded
+      console.log(
+        "ThreeJSAnimation.setStartTime: creating temporary animation state with startTime:",
+        startTime,
+      );
+      this.animationState = {
+        animationClip: null as any, // set when loaded
+        animationAction: null,
+        weight: this.animation.props.weight,
+        loop: this.animation.props.loop,
+        startTime,
+        pauseTime: this.animation.props.pauseTime,
+      };
+      this.updateParentAnimation();
+    }
+  }
+
+  setPauseTime(pauseTime: number | null): void {
+    console.log("ThreeJSAnimation.setPauseTime called with pauseTime:", pauseTime);
+    if (this.animationState) {
+      this.animationState.pauseTime = pauseTime;
+      this.updateParentAnimation();
+    } else {
+      // anim state doesn't exist yet create a temp to be replaced when src loaded
+      console.log(
+        "ThreeJSAnimation.setPauseTime: creating temporary animation state with pauseTime:",
+        pauseTime,
+      );
+      this.animationState = {
+        animationClip: null as any, // set when loaded
+        animationAction: null,
+        weight: this.animation.props.weight,
+        loop: this.animation.props.loop,
+        startTime: this.animation.props.startTime,
+        pauseTime,
       };
       this.updateParentAnimation();
     }

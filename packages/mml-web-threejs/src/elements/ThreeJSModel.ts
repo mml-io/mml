@@ -155,7 +155,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       );
       const filteredCount = animationState.animationClip.tracks.length - compatibleTracks.length;
       const tracks = `${filteredCount} incompatible track${filteredCount === 1 ? "" : "s"}`;
-      console.log(`Animation "${animation.id}": filtered ${tracks}`);
+      console.log(`Animation "${animation}": filtered ${tracks}`);
 
       action = this.animationMixer.clipAction(filteredClip, this.loadedState.group);
       action.enabled = true;
@@ -164,16 +164,19 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
     if (action) {
       if (animationState && animationState.weight !== undefined) {
+        // Don't automatically start the action - timing control is handled in updateAnimation
         action.setEffectiveWeight(animationState.weight);
-        if (animationState.weight > 0) {
-          action.play();
-        } else {
-          action.stop();
-        }
+        // The action will be started/stopped based on timing in updateAnimation
       }
     }
 
     this.updateAnimationActions();
+
+    // Trigger an immediate update to apply timing logic
+    if (this.documentTimeTickListener) {
+      const documentTime = this.model.getDocumentTime();
+      this.updateAnimation(documentTime);
+    }
   }
 
   removeChildAnimation(animation: Animation<ThreeJSGraphicsAdapter>) {
@@ -206,25 +209,9 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         action.stop();
       }
     } else {
-      let hasActiveAnimations = false;
-      for (const [animation, action] of this.childAnimationActions) {
-        const weight = animation.props.weight;
-        action.enabled = weight > 0;
-        action.setEffectiveWeight(weight);
-        if (weight > 0) {
-          action.play();
-          hasActiveAnimations = true;
-        } else {
-          action.stop();
-        }
-      }
-
-      // no child animations active and no anim attribute is set,
-      // model should get back to t-pose
-      if (!hasActiveAnimations && this.childAnimationActions.size > 0) {
-        this.animationMixer.stopAllAction();
-        this.animationMixer.setTime(0);
-      }
+      // Child animations are controlled by updateAnimation method based on timing
+      // This method is called when animations are added/removed, but timing control
+      // is handled in updateAnimation during the document time tick
     }
   }
 
@@ -685,9 +672,74 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     } else if (this.animationMixer) {
       // Handle child animations
       if (this.model.props.animEnabled) {
-        const documentTime = this.model.getDocumentTime();
-        const animationTime = documentTime / 1000;
-        this.animationMixer.setTime(animationTime);
+        // Update each child animation based on its individual timing properties
+        for (const [animation, action] of this.childAnimationActions) {
+          const animationState = (animation.animationGraphics as any)?.getAnimationState();
+          if (animationState && action) {
+            // Check if this animation should be active based on timing
+            let shouldBeActive = true;
+            let animationTimeMs = 0;
+
+            // Handle start time - animation doesn't start until start time
+            if (docTimeMs < animationState.startTime) {
+              shouldBeActive = false;
+            } else {
+              animationTimeMs = docTimeMs - animationState.startTime;
+            }
+
+            // Handle pause time - animation stops at pause time
+            if (shouldBeActive && animationState.pauseTime !== null) {
+              if (docTimeMs > animationState.pauseTime) {
+                shouldBeActive = false; // Stop the animation when pause time is reached
+              }
+            }
+
+            // Handle loop and duration
+            if (shouldBeActive && animationState.animationClip) {
+              if (!animationState.loop) {
+                if (animationTimeMs > animationState.animationClip.duration * 1000) {
+                  animationTimeMs = animationState.animationClip.duration * 1000;
+                  shouldBeActive = false; // Stop the animation when it reaches the end
+                }
+              }
+            }
+
+            // Control the action based on timing
+            if (shouldBeActive) {
+              action.enabled = true;
+              action.setEffectiveWeight(animationState.weight);
+              if (animationState.weight > 0) {
+                action.play();
+              } else {
+                action.stop();
+              }
+            } else {
+              action.enabled = false;
+              action.stop();
+            }
+          }
+        }
+
+        // Check if any animations are active
+        let hasActiveAnimations = false;
+        for (const [, action] of this.childAnimationActions) {
+          if (action.enabled) {
+            hasActiveAnimations = true;
+            break;
+          }
+        }
+
+        if (hasActiveAnimations) {
+          // Set the mixer time to the current document time for proper blending
+          const documentTime = this.model.getDocumentTime();
+          const animationTime = documentTime / 1000;
+          this.animationMixer.setTime(animationTime);
+        } else {
+          // No active animations, stop all actions and reset to t-pose
+          this.animationMixer.stopAllAction();
+          this.animationMixer.setTime(0);
+        }
+
         this.triggerSocketedChildrenTransformed();
       } else {
         this.animationMixer.stopAllAction();

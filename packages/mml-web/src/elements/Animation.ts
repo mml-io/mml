@@ -1,5 +1,5 @@
 import { AnimatedAttributeHelper } from "../attribute-animation/AnimatedAttributeHelper";
-import { AttributeHandler, parseFloatAttribute } from "../attributes";
+import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
 import { GraphicsAdapter } from "../graphics";
 import { AnimationGraphics } from "../graphics";
@@ -10,10 +10,16 @@ import { Model } from "./Model";
 
 const defaultAnimationSrc = null;
 const defaultAnimationWeight = 0;
+const defaultAnimationLoop = true;
+const defaultAnimationStartTime = 0;
+const defaultAnimationPauseTime = null;
 
 export type MAnimationProps = {
   src: string | null;
   weight: number;
+  loop: boolean;
+  startTime: number;
+  pauseTime: number | null;
 };
 
 export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MElement<G> {
@@ -22,6 +28,9 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
   public props: MAnimationProps = {
     src: defaultAnimationSrc,
     weight: defaultAnimationWeight,
+    loop: defaultAnimationLoop,
+    startTime: defaultAnimationStartTime,
+    pauseTime: defaultAnimationPauseTime,
   };
 
   private animatedAttributeHelper: AnimatedAttributeHelper | null = null;
@@ -42,6 +51,18 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
         instance.props.weight = parseFloatAttribute(newValue, defaultAnimationWeight);
         instance.animationGraphics?.setWeight(instance.props.weight, instance.props);
       }
+    },
+    loop: (instance, newValue) => {
+      instance.props.loop = parseBoolAttribute(newValue, defaultAnimationLoop);
+      instance.animationGraphics?.setLoop(instance.props.loop, instance.props);
+    },
+    "start-time": (instance, newValue) => {
+      instance.props.startTime = parseFloatAttribute(newValue, defaultAnimationStartTime);
+      instance.animationGraphics?.setStartTime(instance.props.startTime, instance.props);
+    },
+    "pause-time": (instance, newValue) => {
+      instance.props.pauseTime = parseFloatAttribute(newValue, defaultAnimationPauseTime);
+      instance.animationGraphics?.setPauseTime(instance.props.pauseTime, instance.props);
     },
   });
 

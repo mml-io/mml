@@ -10,5 +10,11 @@ export abstract class AnimationGraphics<G extends GraphicsAdapter = GraphicsAdap
 
   abstract setWeight(weight: number, mAnimationProps: MAnimationProps): void;
 
+  abstract setLoop(loop: boolean, mAnimationProps: MAnimationProps): void;
+
+  abstract setStartTime(startTime: number, mAnimationProps: MAnimationProps): void;
+
+  abstract setPauseTime(pauseTime: number | null, mAnimationProps: MAnimationProps): void;
+
   abstract dispose(): void;
 }

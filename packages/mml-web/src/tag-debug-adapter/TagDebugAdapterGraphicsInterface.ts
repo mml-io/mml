@@ -245,6 +245,9 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
     {
       setSrc: "src",
       setWeight: "weight",
+      setLoop: "loop",
+      setStartTime: "start-time",
+      setPauseTime: "pause-time",
     },
     {},
   ),
