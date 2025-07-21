@@ -68,14 +68,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
         this.latestSrcPromise = null;
 
         const animationClip = result.animations[0];
-        console.log("Loaded animation clip:", {
-          name: animationClip.name,
-          duration: animationClip.duration,
-          tracks: animationClip.tracks.map((track) => ({
-            name: track.name,
-            type: track.constructor.name,
-          })),
-        });
 
         const existingWeight = this.animationState?.weight ?? this.animation.props.weight;
         const existingLoop = this.animationState?.loop ?? this.animation.props.loop;
@@ -91,7 +83,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
           pauseTime: existingPauseTime,
         };
 
-        console.log("Animation state created with weight:", existingWeight);
         this.updateParentAnimation();
         this.loadingInstanceManager.finish();
       })
@@ -103,16 +94,11 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
   }
 
   setWeight(weight: number): void {
-    console.log("ThreeJSAnimation.setWeight called with weight:", weight);
     if (this.animationState) {
       this.animationState.weight = weight;
       this.updateParentAnimation();
     } else {
       // anim state doesn't exist yet create a temp to be replaced when src loaded
-      console.log(
-        "ThreeJSAnimation.setWeight: creating temporary animation state with weight:",
-        weight,
-      );
       this.animationState = {
         animationClip: null as any, // set when loaded
         animationAction: null,
@@ -126,13 +112,10 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
   }
 
   setLoop(loop: boolean): void {
-    console.log("ThreeJSAnimation.setLoop called with loop:", loop);
     if (this.animationState) {
       this.animationState.loop = loop;
       this.updateParentAnimation();
     } else {
-      // anim state doesn't exist yet create a temp to be replaced when src loaded
-      console.log("ThreeJSAnimation.setLoop: creating temporary animation state with loop:", loop);
       this.animationState = {
         animationClip: null as any, // set when loaded
         animationAction: null,
@@ -146,16 +129,10 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
   }
 
   setStartTime(startTime: number): void {
-    console.log("ThreeJSAnimation.setStartTime called with startTime:", startTime);
     if (this.animationState) {
       this.animationState.startTime = startTime;
       this.updateParentAnimation();
     } else {
-      // anim state doesn't exist yet create a temp to be replaced when src loaded
-      console.log(
-        "ThreeJSAnimation.setStartTime: creating temporary animation state with startTime:",
-        startTime,
-      );
       this.animationState = {
         animationClip: null as any, // set when loaded
         animationAction: null,
@@ -169,16 +146,10 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
   }
 
   setPauseTime(pauseTime: number | null): void {
-    console.log("ThreeJSAnimation.setPauseTime called with pauseTime:", pauseTime);
     if (this.animationState) {
       this.animationState.pauseTime = pauseTime;
       this.updateParentAnimation();
     } else {
-      // anim state doesn't exist yet create a temp to be replaced when src loaded
-      console.log(
-        "ThreeJSAnimation.setPauseTime: creating temporary animation state with pauseTime:",
-        pauseTime,
-      );
       this.animationState = {
         animationClip: null as any, // set when loaded
         animationAction: null,
@@ -193,20 +164,11 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
 
   private updateParentAnimation() {
     if (!this.parentModel || !this.animationState) {
-      console.log("updateParentAnimation: missing parentModel or animationState", {
-        hasParentModel: !!this.parentModel,
-        hasAnimationState: !!this.animationState,
-      });
       return;
     }
 
     // notify parent model that anim changed
     if (this.parentModel.modelGraphics) {
-      console.log("updateParentAnimation: calling updateChildAnimation on parent model", {
-        animationId: this.animation.id,
-        weight: this.animationState.weight,
-        hasClip: !!this.animationState.animationClip,
-      });
       this.parentModel.modelGraphics.updateChildAnimation?.(this.animation, this.animationState);
     } else {
       console.error("updateParentAnimation: parent model has no modelGraphics");
@@ -227,7 +189,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     this.loadingInstanceManager.dispose();
 
     if (this.parentModel && this.parentModel.modelGraphics) {
-      console.log("ThreeJSAnimation disposing, notifying parent model");
       this.parentModel.modelGraphics.removeChildAnimation?.(this.animation);
     }
 
