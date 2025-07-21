@@ -34,6 +34,13 @@ export const PlayCanvasGraphicsInterface: MMLGraphicsInterface<PlayCanvasGraphic
     new PlayCanvasElements.PlayCanvasRemoteDocument(element),
   MMLAnimationGraphicsInterface: (element) => {
     void element; // TODO: Implement
-    return undefined as any;
+    return {
+      setSrc: () => {},
+      setWeight: () => {},
+      setLoop: () => {},
+      setStartTime: () => {},
+      setPauseTime: () => {},
+      dispose: () => {},
+    } as any;
   },
 };
