@@ -20,10 +20,7 @@ export class FullScreenMMLScene<G extends StandaloneGraphicsAdapter> extends MML
 
     this.showDebugLoading = options.showDebugLoading ?? true;
 
-    if (this.showDebugLoading) {
-      this.createLoadingProgressBar();
-    }
-
+    this.createLoadingProgressBar();
     this.configureWindowStyling();
   }
 
@@ -33,16 +30,17 @@ export class FullScreenMMLScene<G extends StandaloneGraphicsAdapter> extends MML
     if (loadingStyle === "spinner") {
       this.loadingProgressBar = new LoadingSpinner(loadingProgressManager);
     } else {
-      this.loadingProgressBar = new LoadingProgressBar(loadingProgressManager);
+      this.loadingProgressBar = new LoadingProgressBar(
+        loadingProgressManager,
+        this.showDebugLoading,
+      );
     }
     this.element.append(this.loadingProgressBar.element);
   }
 
   public resetLoadingProgressBar() {
     this.loadingProgressBar.dispose();
-    if (this.showDebugLoading) {
-      this.createLoadingProgressBar();
-    }
+    this.createLoadingProgressBar();
   }
 
   private configureWindowStyling() {
