@@ -3,6 +3,7 @@ import {
   IVect3,
   LoadingInstanceManager,
   MElement,
+  MModelProps,
   Model,
   ModelGraphics,
   TransformableElement,
@@ -45,12 +46,17 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   // Child animation support - similar to ThreeJS implementation
   private childAnimationActions = new Map<
     Animation<PlayCanvasGraphicsAdapter>,
-    playcanvas.AnimComponent
+    {
+      animationAsset: playcanvas.Asset;
+      weight: number;
+      loop: boolean;
+      startTime: number;
+      pauseTime: number | null;
+    }
   >();
   private pendingAnimationUpdates = new Map<Animation<PlayCanvasGraphicsAdapter>, any>();
   private mainAnimComponent: playcanvas.AnimComponent | null = null;
   private currentAnimationAsset: playcanvas.Asset | null = null;
-  private animEvaluator: any = null; // For multi-clip blending
   private animAttributeComponent: playcanvas.AnimComponent | null = null; // For anim attribute
   private pendingAnim: string | null = null; // For pending anim attribute
 
@@ -88,12 +94,12 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     return this.model.getContainer();
   }
 
-  setDebug(): void {
+  setDebug(debug: boolean, mModelProps: MModelProps): void {
     this.updateDebugVisualisation();
   }
 
-  setCastShadows(): void {
-    // TODO
+  setCastShadows(castShadows: boolean, mModelProps: MModelProps): void {
+    // TODO: Implement shadow casting for PlayCanvas
   }
 
   public registerAttachment(attachment: Model<PlayCanvasGraphicsAdapter>) {
@@ -133,12 +139,11 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     return null;
   }
 
-  setAnim(anim: string | null): void {
+  setAnim(anim: string | null, mModelProps: MModelProps): void {
     console.log("setAnim called:", {
       anim,
       hasAnimState: !!this.animState,
       hasAnimAttributeComponent: !!this.animAttributeComponent,
-      hasMainAnimComponent: !!this.mainAnimComponent,
       childActionsCount: this.childAnimationActions.size,
       documentTimeTickListener: !!this.documentTimeTickListener,
     });
@@ -199,25 +204,14 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         );
       }
 
-      // Ensure main anim component is set up for child animations
-      if (this.childAnimationActions.size > 0 && this.loadedState && !this.mainAnimComponent) {
-        console.log("Creating mainAnimComponent for child animations");
-        this.mainAnimComponent = this.loadedState.renderEntity.addComponent(
-          "anim",
-          {},
-        ) as playcanvas.AnimComponent;
-      }
-
       console.log("Before updateAnimationActions:", {
         hasAnimAttributeComponent: !!this.animAttributeComponent,
-        hasMainAnimComponent: !!this.mainAnimComponent,
         childActionsCount: this.childAnimationActions.size,
       });
       // update child animation actions to restore them
       this.updateAnimationActions();
       console.log("After updateAnimationActions:", {
         hasAnimAttributeComponent: !!this.animAttributeComponent,
-        hasMainAnimComponent: !!this.mainAnimComponent,
         childActionsCount: this.childAnimationActions.size,
       });
       return;
@@ -235,6 +229,22 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
     // Apply the pending animation
     this.applyPendingAnimation();
+  }
+
+  setAnimEnabled(animEnabled: boolean | null, mModelProps: MModelProps): void {
+    // no-op - property is observed in animation tick
+  }
+
+  setAnimLoop(animLoop: boolean | null, mModelProps: MModelProps): void {
+    // no-op - property is observed in animation tick
+  }
+
+  setAnimStartTime(animStartTime: number | null, mModelProps: MModelProps): void {
+    // no-op - property is observed in animation tick
+  }
+
+  setAnimPauseTime(animPauseTime: number | null, mModelProps: MModelProps): void {
+    // no-op - property is observed in animation tick
   }
 
   private connectAnimationToModel() {
@@ -303,19 +313,6 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     // If anim is not set, restore child animations
     if (!anim) {
       console.log("applyPendingAnimation: Anim is null - restoring child animations");
-      // Ensure main anim component is set up for child animations
-      if (this.childAnimationActions.size > 0 && this.loadedState && !this.mainAnimComponent) {
-        this.mainAnimComponent = this.loadedState.renderEntity.addComponent(
-          "anim",
-          {},
-        ) as playcanvas.AnimComponent;
-      }
-
-      // Re-enable child actions
-      for (const action of this.childAnimationActions.values()) {
-        action.enabled = true;
-      }
-
       // Ensure document time tick listener is set up for child animations
       if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
         this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
@@ -407,12 +404,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         }
 
         // Stop all child animations when anim attribute is set
-        if (this.mainAnimComponent) {
-          this.mainAnimComponent.playing = false;
-        }
-        for (const [, action] of this.childAnimationActions) {
-          action.enabled = false;
-        }
+        this.updateAnimationActions();
 
         this.animLoadingInstanceManager.finish();
       })
@@ -460,35 +452,12 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     }
   }
 
-  public setAnimEnabled(): void {
-    // no-op
-  }
-
-  public setAnimLoop(): void {
-    // no-op
-  }
-
-  public setAnimStartTime(): void {
-    // no-op
-  }
-
-  public setAnimPauseTime(): void {
-    // no-op
-  }
-
   public updateChildAnimation(
     animation: Animation<PlayCanvasGraphicsAdapter>,
     animationState: any,
   ) {
     // Only process if this is actually a PlayCanvas animation state
-    // ThreeJS animations will have animationClip, PlayCanvas animations will have animationAsset
-    if (!animationState || (!animationState.animationAsset && !animationState.animationClip)) {
-      return;
-    }
-
-    // If this is a ThreeJS animation state (has animationClip), ignore it
-    // This prevents PlayCanvas from interfering with ThreeJS functionality
-    if (animationState.animationClip && !animationState.animationAsset) {
+    if (!animationState || !animationState.animationAsset) {
       return;
     }
 
@@ -498,31 +467,21 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       return;
     }
 
-    // For PlayCanvas, we need to create an AnimComponent for each animation
-    // This is different from ThreeJS where we use a single mixer
-    let animComponent = this.childAnimationActions.get(animation) as any;
+    // Store the animation state for this animation
+    this.childAnimationActions.set(animation, {
+      animationAsset: animationState.animationAsset,
+      weight: animationState.weight,
+      loop: animationState.loop,
+      startTime: animationState.startTime,
+      pauseTime: animationState.pauseTime,
+    });
 
-    if (!animComponent && animationState && animationState.animationAsset) {
-      // Create a new AnimComponent for this animation
-      const playcanvasEntity = this.loadedState.renderEntity;
-      animComponent = playcanvasEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
-      animComponent.assignAnimation("SingleAnimation", animationState.animationAsset.resource);
-
-      this.childAnimationActions.set(animation, animComponent);
-    }
-
-    if (animComponent) {
-      // Update the animation state based on timing properties
-      if (animationState) {
-        // Handle weight (blending)
-        if (animationState.weight !== undefined) {
-          // PlayCanvas doesn't have direct weight control like ThreeJS
-          // We'll handle this in the updateAnimation method
-        }
-
-        // Handle timing properties (start-time, pause-time, loop)
-        // These will be handled in the updateAnimation method during document time ticks
-      }
+    // Ensure main anim component is set up for child animations
+    if (this.childAnimationActions.size > 0 && this.loadedState && !this.mainAnimComponent) {
+      this.mainAnimComponent = this.loadedState.renderEntity.addComponent(
+        "anim",
+        {},
+      ) as playcanvas.AnimComponent;
     }
 
     // Ensure document time tick listener is set up for child animations
@@ -542,31 +501,18 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   public removeChildAnimation(animation: Animation<PlayCanvasGraphicsAdapter>) {
-    // Only process PlayCanvas animations, ignore ThreeJS animations
-    // This prevents PlayCanvas from interfering with ThreeJS functionality
     if (!this.loadedState) {
       this.pendingAnimationUpdates.delete(animation);
       return;
     }
 
-    const animComponent = this.childAnimationActions.get(animation) as any;
-    if (animComponent) {
-      animComponent.reset();
-      animComponent.unbind();
-      animComponent.entity.removeComponent("anim");
-      this.childAnimationActions.delete(animation);
-    }
+    this.childAnimationActions.delete(animation);
   }
 
   private updateAnimationActions() {
     // anim attribute is set, only play that action and stop all child actions
     if (this.animAttributeComponent) {
       this.animAttributeComponent.enabled = true;
-
-      // Stop all child actions
-      for (const action of this.childAnimationActions.values()) {
-        action.enabled = false;
-      }
 
       // Stop main anim component for child animations
       if (this.mainAnimComponent) {
@@ -614,7 +560,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     }
   }
 
-  setSrc(src: string): void {
+  setSrc(src: string | null, mModelProps: MModelProps): void {
     const playcanvasEntity = this.model.getContainer() as playcanvas.Entity;
     if (this.loadedState !== null) {
       this.loadedState.renderEntity.remove();
@@ -873,6 +819,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     this.childAnimationActions.clear();
     this.pendingAnimationUpdates.clear();
     this.pendingAnim = null;
+    this.currentAnimationAsset = null;
   }
 
   private triggerSocketedChildrenTransformed() {
@@ -909,11 +856,6 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         }
       }
 
-      // Stop all child animations when anim attribute is active
-      for (const [, animComponent] of this.childAnimationActions) {
-        animComponent.playing = false;
-      }
-
       for (const [model, animState] of this.attachments) {
         if (animState) {
           animState.animComponent.playing = this.model.props.animEnabled;
@@ -927,54 +869,76 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       }
       this.triggerSocketedChildrenTransformed();
     } else {
-      // Handle child animations (m-animation tags)
-      if (this.model.props.animEnabled) {
-        for (const [animation, animComponent] of this.childAnimationActions) {
-          const animationState = (animation.animationGraphics as any)?.getAnimationState();
-          if (animationState) {
-            let shouldBeActive = true;
-            let animationTimeMs = 0;
+      // Handle child animations (m-animation tags) using weight-based selection
+      if (
+        this.model.props.animEnabled &&
+        this.mainAnimComponent &&
+        this.childAnimationActions.size > 0
+      ) {
+        // Find the animation with the highest weight that should be active
+        let bestAnimation: playcanvas.Asset | null = null;
+        let bestTime = 0;
+        let bestWeight = 0;
 
-            // Handle start time - animation doesn't start until start time
-            if (docTimeMs < animationState.startTime) {
+        for (const [animation, animationState] of this.childAnimationActions) {
+          let shouldBeActive = true;
+          let animationTimeMs = 0;
+
+          // Handle start time - animation doesn't start until start time
+          if (docTimeMs < animationState.startTime) {
+            shouldBeActive = false;
+          } else {
+            animationTimeMs = docTimeMs - animationState.startTime;
+          }
+
+          // Handle pause time - animation stops at pause time
+          if (shouldBeActive && animationState.pauseTime !== null) {
+            if (docTimeMs > animationState.pauseTime) {
               shouldBeActive = false;
-            } else {
-              animationTimeMs = docTimeMs - animationState.startTime;
-            }
-
-            // Handle pause time - animation stops at pause time
-            if (shouldBeActive && animationState.pauseTime !== null) {
-              if (docTimeMs > animationState.pauseTime) {
-                shouldBeActive = false;
-              }
-            }
-
-            // Handle loop and duration
-            if (shouldBeActive && animationState.animationAsset) {
-              const durationMs = animationState.animationAsset.resource.duration * 1000;
-              if (!animationState.loop && animationTimeMs > durationMs) {
-                animationTimeMs = durationMs;
-                shouldBeActive = false; // Stop the animation when it reaches the end
-              }
-            }
-
-            // Control the animation based on timing and weight
-            if (shouldBeActive && animationState.weight > 0) {
-              animComponent.playing = true;
-              // @ts-expect-error - accessing _controller private property
-              const clip = animComponent.baseLayer._controller._animEvaluator.clips[0];
-              if (clip) {
-                clip.time = animationTimeMs / 1000;
-              }
-            } else {
-              animComponent.playing = false;
             }
           }
+
+          // Handle loop and duration
+          if (shouldBeActive && animationState.animationAsset) {
+            const durationMs = animationState.animationAsset.resource.duration * 1000;
+            if (!animationState.loop && animationTimeMs > durationMs) {
+              animationTimeMs = durationMs;
+              shouldBeActive = false; // Stop the animation when it reaches the end
+            }
+          }
+
+          // Select the animation with the highest weight that should be active
+          if (shouldBeActive && animationState.weight > bestWeight) {
+            bestAnimation = animationState.animationAsset;
+            bestTime = animationTimeMs;
+            bestWeight = animationState.weight;
+          }
+        }
+
+        // Apply the best animation using assignAnimation (direct assignment)
+        if (bestAnimation && bestWeight > 0) {
+          if (this.currentAnimationAsset !== bestAnimation) {
+            this.mainAnimComponent.assignAnimation("ChildAnimation", bestAnimation.resource);
+            this.currentAnimationAsset = bestAnimation;
+          }
+
+          // Make sure animation is playing
+          this.mainAnimComponent.playing = true;
+
+          // Set animation time
+          // @ts-expect-error - accessing _controller private property
+          const clip = this.mainAnimComponent.baseLayer._controller._animEvaluator.clips[0];
+          if (clip) {
+            clip.time = bestTime / 1000;
+          }
+        } else {
+          // No active animations, stop the component
+          this.mainAnimComponent.playing = false;
         }
       } else {
         // Stop all child animations when animations are disabled
-        for (const [, animComponent] of this.childAnimationActions) {
-          animComponent.playing = false;
+        if (this.mainAnimComponent) {
+          this.mainAnimComponent.playing = false;
         }
       }
 
