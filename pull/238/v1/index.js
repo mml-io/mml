@@ -306,7 +306,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-3DHUKZEF.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-5MQIOMA3.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
