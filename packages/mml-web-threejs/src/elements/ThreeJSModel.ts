@@ -1,4 +1,4 @@
-import { MElement, Model, TransformableElement } from "@mml-io/mml-web";
+import { Animation, MElement, MModelProps, Model, TransformableElement } from "@mml-io/mml-web";
 import { ModelGraphics } from "@mml-io/mml-web";
 import { LoadingInstanceManager } from "@mml-io/mml-web";
 import { IVect3 } from "@mml-io/mml-web";
@@ -58,6 +58,17 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
   private documentTimeTickListener: null | { remove: () => void } = null;
 
+  private animationMixer: THREE.AnimationMixer | null = null;
+  private animAttributeAction: THREE.AnimationAction | null = null;
+  private childAnimationActions = new Map<
+    Animation<ThreeJSGraphicsAdapter>,
+    THREE.AnimationAction
+  >();
+
+  private pendingAnim: string | null = null;
+  private pendingAnimationUpdates = new Map<Animation<ThreeJSGraphicsAdapter>, any>();
+  private modelReady = false;
+
   constructor(
     private model: Model<ThreeJSGraphicsAdapter>,
     private updateMeshCallback: () => void,
@@ -91,11 +102,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     return this.loadedState?.group ?? new THREE.Object3D();
   }
 
-  setDebug(): void {
+  setDebug(debug: boolean, mModelProps: MModelProps): void {
     this.updateDebugVisualisation();
   }
 
-  setCastShadows(castShadows: boolean) {
+  setCastShadows(castShadows: boolean, mModelProps: MModelProps): void {
     if (this.loadedState) {
       this.loadedState.group.traverse((object) => {
         if ((object as THREE.Mesh).isMesh) {
@@ -106,7 +117,105 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  setAnim(anim: string): void {
+  updateChildAnimation(animation: Animation<ThreeJSGraphicsAdapter>, animationState: any) {
+    if (!this.animationMixer || !this.loadedState) {
+      // queue if model isn't loaded yet
+      this.pendingAnimationUpdates.set(animation, animationState);
+      return;
+    }
+    let action = this.childAnimationActions.get(animation);
+
+    if (!action && animationState && animationState.animationClip) {
+      // filter out tracks that don't have corresponding bones
+      const availableBones = Array.from(this.loadedState.bones.keys());
+      const unavailableBones = [];
+      const compatibleTracks = animationState.animationClip.tracks.filter(
+        (track: THREE.KeyframeTrack) => {
+          const trackName = track.name;
+          const boneName = trackName.split(".")[0];
+          const canBindTrack = availableBones.includes(boneName);
+          if (!canBindTrack) {
+            unavailableBones.push(boneName);
+          }
+          return canBindTrack;
+        },
+      );
+
+      if (compatibleTracks.length === 0) {
+        console.warn(
+          `Animation "${animation.id}" has no tracks that can bind to the current model's bones. Skipping animation.`,
+        );
+        return;
+      }
+
+      const filteredClip = new THREE.AnimationClip(
+        animationState.animationClip.name,
+        animationState.animationClip.duration,
+        compatibleTracks,
+      );
+      const filteredCount = animationState.animationClip.tracks.length - compatibleTracks.length;
+      const tracks = `${filteredCount} incompatible track${filteredCount === 1 ? "" : "s"}`;
+      console.log(`Animation "${animation}": filtered ${tracks}`);
+
+      action = this.animationMixer.clipAction(filteredClip, this.loadedState.group);
+      action.enabled = true;
+      this.childAnimationActions.set(animation, action);
+    }
+
+    if (action) {
+      if (animationState && animationState.weight !== undefined) {
+        // Don't automatically start the action - timing control is handled in updateAnimation
+        action.setEffectiveWeight(animationState.weight);
+        // The action will be started/stopped based on timing in updateAnimation
+      }
+    }
+
+    this.updateAnimationActions();
+
+    // Trigger an immediate update to apply timing logic
+    if (this.documentTimeTickListener) {
+      const documentTime = this.model.getDocumentTime();
+      this.updateAnimation(documentTime);
+    }
+  }
+
+  removeChildAnimation(animation: Animation<ThreeJSGraphicsAdapter>) {
+    if (!this.animationMixer || !this.loadedState) {
+      this.pendingAnimationUpdates.delete(animation);
+      return;
+    }
+
+    const action = this.childAnimationActions.get(animation);
+    if (action) {
+      action.stop();
+      this.animationMixer.uncacheAction(action.getClip(), this.loadedState.group);
+      this.childAnimationActions.delete(animation);
+    }
+
+    this.updateAnimationActions();
+  }
+
+  private updateAnimationActions() {
+    if (!this.animationMixer) return;
+
+    // anim attribute is set, only play that action and stop all child actions
+    if (this.animAttributeAction) {
+      this.animAttributeAction.enabled = true;
+      this.animAttributeAction.setEffectiveWeight(1);
+      this.animAttributeAction.play();
+
+      // Stop all child actions
+      for (const action of this.childAnimationActions.values()) {
+        action.stop();
+      }
+    } else {
+      // Child animations are controlled by updateAnimation method based on timing
+      // This method is called when animations are added/removed, but timing control
+      // is handled in updateAnimation during the document time tick
+    }
+  }
+
+  setAnim(anim: string | null, mModelProps: MModelProps): void {
     this.resetAnimationMixer();
     this.animState = null;
     for (const [attachment, animState] of this.attachments) {
@@ -120,7 +229,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.latestAnimPromise = null;
       this.animLoadingInstanceManager.abortIfLoading();
 
-      // If the animation is removed then the model can be added to the parent attachment if the model is loaded
+      // if the animation is removed then the model can be added to
+      // the parent attachment if the model is loaded
       if (this.loadedState && !this.registeredParentAttachment) {
         const parent = this.model.parentElement;
         if (parent && Model.isModel(parent)) {
@@ -128,6 +238,18 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           (parent.modelGraphics as ThreeJSModel).registerAttachment(this.model);
         }
       }
+
+      // restore document time tick listener for child animations if we have any
+      if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
+        this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+          (documentTime: number) => {
+            this.updateAnimation(documentTime);
+          },
+        );
+      }
+
+      // update child animation actions to restore them
+      this.updateAnimationActions();
       return;
     }
 
@@ -168,7 +290,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       });
   }
 
-  setAnimEnabled(): void {
+  setAnimEnabled(animEnabled: boolean | null, mModelProps: MModelProps): void {
     if (this.model.props.animEnabled) {
       if (this.animState && !this.animState.appliedAnimation) {
         for (const [attachment] of this.attachments) {
@@ -187,15 +309,15 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  setAnimLoop(): void {
+  setAnimLoop(animLoop: boolean | null, mModelProps: MModelProps): void {
     // no-op - property is observed in animation tick
   }
 
-  setAnimStartTime(): void {
+  setAnimStartTime(animStartTime: number | null, mModelProps: MModelProps): void {
     // no-op - property is observed in animation tick
   }
 
-  setAnimPauseTime(): void {
+  setAnimPauseTime(animPauseTime: number | null, mModelProps: MModelProps): void {
     // no-op - property is observed in animation tick
   }
 
@@ -203,7 +325,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     // no-op
   }
 
-  setSrc(src: string): void {
+  setSrc(src: string | null, mModelProps: MModelProps): void {
     if (this.loadedState !== null) {
       this.loadedState.group.removeFromParent();
       if (this.registeredParentAttachment) {
@@ -217,6 +339,17 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.updateMeshCallback();
       this.updateDebugVisualisation();
     }
+
+    // Clean up animation mixer
+    if (this.animationMixer) {
+      this.animationMixer.stopAllAction();
+      this.animationMixer = null;
+    }
+    this.animAttributeAction = null;
+    this.childAnimationActions.clear();
+    this.pendingAnimationUpdates.clear();
+    this.modelReady = false;
+
     if (!src) {
       this.latestSrcModelPromise = null;
       this.srcLoadingInstanceManager.abortIfLoading();
@@ -242,7 +375,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     srcModelPromise
       .then((result) => {
         if (this.latestSrcModelPromise !== srcModelPromise || !this.model.isConnected) {
-          // If we've loaded a different model since, or we're no longer connected, dispose of this one
+          // we've loaded a different model since, or we're no longer connected
+          // dispose of this one
           ThreeJSModel.disposeOfGroup(result.group);
           return;
         }
@@ -260,6 +394,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
             bones.set(object.name, object);
           }
         });
+
         const boundingBox = new THREE.Box3();
         group.updateWorldMatrix(true, true);
         boundingBox.expandByObject(group);
@@ -273,6 +408,16 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           },
         };
         this.model.getContainer().add(group);
+
+        this.animationMixer = new THREE.AnimationMixer(group);
+
+        if (!this.documentTimeTickListener) {
+          this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+            (documentTime: number) => {
+              this.updateAnimation(documentTime);
+            },
+          );
+        }
 
         for (const [boneName, children] of this.socketChildrenByBone) {
           const bone = bones.get(boneName);
@@ -297,8 +442,15 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           this.playAnimation(this.animState.currentAnimationClip);
         }
         this.srcLoadingInstanceManager.finish();
-
         this.updateDebugVisualisation();
+        this.modelReady = true;
+
+        this.applyPendingAnimation();
+
+        for (const [animation, animationState] of this.pendingAnimationUpdates) {
+          this.updateChildAnimation(animation, animationState);
+        }
+        this.pendingAnimationUpdates.clear();
       })
       .catch((err) => {
         console.error("Error loading m-model.src", err);
@@ -386,6 +538,19 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       }
       this.animState.appliedAnimation = null;
     }
+    // Clear anim attribute action when resetting
+    if (this.animAttributeAction) {
+      this.animAttributeAction.stop();
+      if (this.loadedState && this.animationMixer) {
+        this.animationMixer.uncacheAction(
+          this.animAttributeAction.getClip(),
+          this.loadedState.group,
+        );
+      }
+      this.animAttributeAction = null;
+    }
+    // Reset model ready flag when resetting animation mixer
+    this.modelReady = false;
   }
 
   public registerSocketChild(
@@ -504,6 +669,129 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         this.animState.appliedAnimation?.animationMixer.setTime(animationTimeMs / 1000);
         this.triggerSocketedChildrenTransformed();
       }
+    } else if (this.animationMixer) {
+      // Handle child animations
+      if (this.model.props.animEnabled) {
+        // Update each child animation based on its individual timing properties
+        for (const [animation, action] of this.childAnimationActions) {
+          const animationState = (animation.animationGraphics as any)?.getAnimationState();
+          if (animationState && action) {
+            // Check if this animation should be active based on timing
+            let shouldBeActive = true;
+            let animationTimeMs = 0;
+
+            // Handle start time - animation doesn't start until start time
+            if (docTimeMs < animationState.startTime) {
+              shouldBeActive = false;
+            } else {
+              animationTimeMs = docTimeMs - animationState.startTime;
+            }
+
+            // Handle pause time - animation stops at pause time
+            if (shouldBeActive && animationState.pauseTime !== null) {
+              if (docTimeMs > animationState.pauseTime) {
+                shouldBeActive = false; // Stop the animation when pause time is reached
+              }
+            }
+
+            // Handle loop and duration
+            if (shouldBeActive && animationState.animationClip) {
+              if (!animationState.loop) {
+                if (animationTimeMs > animationState.animationClip.duration * 1000) {
+                  animationTimeMs = animationState.animationClip.duration * 1000;
+                  shouldBeActive = false; // Stop the animation when it reaches the end
+                }
+              }
+            }
+
+            // Control the action based on timing
+            if (shouldBeActive) {
+              action.enabled = true;
+              action.setEffectiveWeight(animationState.weight);
+              if (animationState.weight > 0) {
+                action.play();
+              } else {
+                action.stop();
+              }
+            } else {
+              action.enabled = false;
+              action.stop();
+            }
+          }
+        }
+
+        // Check if any animations are active
+        let hasActiveAnimations = false;
+        for (const [, action] of this.childAnimationActions) {
+          if (action.enabled) {
+            hasActiveAnimations = true;
+            break;
+          }
+        }
+
+        if (hasActiveAnimations) {
+          // Set the mixer time to the current document time for proper blending
+          const documentTime = this.model.getDocumentTime();
+          const animationTime = documentTime / 1000;
+          this.animationMixer.setTime(animationTime);
+        } else {
+          // No active animations, stop all actions and reset to t-pose
+          this.animationMixer.stopAllAction();
+          this.animationMixer.setTime(0);
+        }
+
+        this.triggerSocketedChildrenTransformed();
+      } else {
+        this.animationMixer.stopAllAction();
+      }
+    }
+  }
+
+  private applyPendingAnimation() {
+    if (!this.animationMixer || !this.loadedState || this.pendingAnim === undefined) return;
+
+    const anim = this.pendingAnim;
+    this.pendingAnim = null;
+
+    // Stop and remove anim attribute action
+    if (this.animAttributeAction) {
+      this.animAttributeAction.stop();
+      this.animationMixer.uncacheAction(this.animAttributeAction.getClip(), this.loadedState.group);
+      this.animAttributeAction = null;
+    }
+
+    // If anim is set, load and play only that animation
+    if (anim) {
+      this.latestAnimPromise = this.asyncLoadSourceAsset(
+        this.model.contentSrcToContentAddress(anim),
+        () => {},
+      );
+      this.latestAnimPromise.then((result) => {
+        if (!this.model.isConnected || !this.loadedState || !this.animationMixer) return;
+        const clip = result.animations[0];
+        const action = this.animationMixer.clipAction(clip, this.loadedState.group);
+        action.enabled = true;
+        action.setEffectiveWeight(1);
+        action.play();
+        this.animAttributeAction = action;
+
+        // Stop all child actions
+        for (const childAction of this.childAnimationActions.values()) {
+          childAction.stop();
+        }
+
+        // Ensure document time tick listener is set up for animation updates
+        if (!this.documentTimeTickListener) {
+          this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+            (documentTime: number) => {
+              this.updateAnimation(documentTime);
+            },
+          );
+        }
+      });
+    } else {
+      // If anim is not set, update child actions
+      this.updateAnimationActions();
     }
   }
 
@@ -528,6 +816,15 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     this.latestAnimPromise = null;
     this.animLoadingInstanceManager.dispose();
     this.srcLoadingInstanceManager.dispose();
+
+    if (this.animationMixer) {
+      this.animationMixer.stopAllAction();
+      this.animationMixer = null;
+    }
+    this.animAttributeAction = null;
+    this.childAnimationActions.clear();
+    this.pendingAnimationUpdates.clear();
+    this.modelReady = false;
   }
 
   private static disposeOfGroup(group: THREE.Object3D) {

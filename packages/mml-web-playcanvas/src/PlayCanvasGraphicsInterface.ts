@@ -32,4 +32,16 @@ export const PlayCanvasGraphicsInterface: MMLGraphicsInterface<PlayCanvasGraphic
     new PlayCanvasElements.PlayCanvasVideo(element, updateMeshCallback),
   RemoteDocumentGraphicsInterface: (element) =>
     new PlayCanvasElements.PlayCanvasRemoteDocument(element),
+  MMLAnimationGraphicsInterface: (element) => new PlayCanvasElements.PlayCanvasAnimation(element),
+  // MMLAnimationGraphicsInterface: (element) => {
+  //   void element; // TODO: Implement
+  //   return {
+  //     setSrc: () => {},
+  //     setWeight: () => {},
+  //     setLoop: () => {},
+  //     setStartTime: () => {},
+  //     setPauseTime: () => {},
+  //     dispose: () => {},
+  //   } as any;
+  // },
 };

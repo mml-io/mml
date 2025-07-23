@@ -1,3 +1,4 @@
+export * from "./PlayCanvasAnimation";
 export * from "./PlayCanvasAudio";
 export * from "./PlayCanvasChatProbe";
 export * from "./PlayCanvasCube";

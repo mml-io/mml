@@ -232,4 +232,14 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
     },
     {},
   ),
+  MMLAnimationGraphicsInterface: TagDebugAdapterElement(
+    {
+      setSrc: "src",
+      setWeight: "weight",
+      setLoop: "loop",
+      setStartTime: "start-time",
+      setPauseTime: "pause-time",
+    },
+    {},
+  ),
 };
