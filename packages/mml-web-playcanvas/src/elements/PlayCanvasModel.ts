@@ -42,6 +42,18 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   >();
   private registeredParentAttachment: Model<PlayCanvasGraphicsAdapter> | null = null;
 
+  // Child animation support - similar to ThreeJS implementation
+  private childAnimationActions = new Map<
+    Animation<PlayCanvasGraphicsAdapter>,
+    playcanvas.AnimComponent
+  >();
+  private pendingAnimationUpdates = new Map<Animation<PlayCanvasGraphicsAdapter>, any>();
+  private mainAnimComponent: playcanvas.AnimComponent | null = null;
+  private currentAnimationAsset: playcanvas.Asset | null = null;
+  private animEvaluator: any = null; // For multi-clip blending
+  private animAttributeComponent: playcanvas.AnimComponent | null = null; // For anim attribute
+  private pendingAnim: string | null = null; // For pending anim attribute
+
   private socketChildrenByBone = new Map<string, Set<MElement<PlayCanvasGraphicsAdapter>>>();
 
   private debugBoundingBox: playcanvas.Entity | null = null;
@@ -121,15 +133,27 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     return null;
   }
 
-  setAnim(anim: string): void {
+  setAnim(anim: string | null): void {
+    console.log("setAnim called:", {
+      anim,
+      hasAnimState: !!this.animState,
+      hasAnimAttributeComponent: !!this.animAttributeComponent,
+      hasMainAnimComponent: !!this.mainAnimComponent,
+      childActionsCount: this.childAnimationActions.size,
+      documentTimeTickListener: !!this.documentTimeTickListener,
+    });
+
+    // Clean up existing anim state
     if (this.animState) {
+      console.log("Cleaning up existing animState");
       if (this.animState.animComponent) {
         this.animState.animComponent.reset();
         this.animState.animComponent.unbind();
         this.animState.animComponent.entity.removeComponent("anim");
       }
       this.animState = null;
-      // TODO - clear up the asset?
+
+      // Clean up attachments
       for (const [attachment, animState] of this.attachments) {
         if (animState) {
           animState.animComponent.reset();
@@ -139,9 +163,24 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         this.attachments.set(attachment, null);
       }
     }
+
+    // Clear anim attribute component when resetting (like ThreeJS resetAnimationMixer)
+    if (this.animAttributeComponent) {
+      console.log("Clearing animAttributeComponent");
+      this.animAttributeComponent.reset();
+      this.animAttributeComponent.unbind();
+      this.animAttributeComponent.entity.removeComponent("anim");
+      this.animAttributeComponent = null;
+    }
+
     if (!anim) {
+      console.log("Anim attribute REMOVED - restoring child animations");
       this.latestAnimPromise = null;
-      // If the animation is removed then the model can be added to the parent attachment if the model is loaded
+      this.animLoadingInstanceManager.abortIfLoading();
+      this.pendingAnim = null;
+
+      // if the animation is removed then the model can be added to
+      // the parent attachment if the model is loaded
       if (this.loadedState && !this.registeredParentAttachment) {
         const parent = this.model.parentElement;
         if (parent && Model.isModel(parent)) {
@@ -149,8 +188,153 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
           (parent.modelGraphics as PlayCanvasModel).registerAttachment(this.model);
         }
       }
+
+      // restore document time tick listener for child animations if we have any
+      if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
+        console.log("Restoring document time tick listener for child animations");
+        this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+          (documentTime: number) => {
+            this.updateAnimation(documentTime);
+          },
+        );
+      }
+
+      // Ensure main anim component is set up for child animations
+      if (this.childAnimationActions.size > 0 && this.loadedState && !this.mainAnimComponent) {
+        console.log("Creating mainAnimComponent for child animations");
+        this.mainAnimComponent = this.loadedState.renderEntity.addComponent(
+          "anim",
+          {},
+        ) as playcanvas.AnimComponent;
+      }
+
+      console.log("Before updateAnimationActions:", {
+        hasAnimAttributeComponent: !!this.animAttributeComponent,
+        hasMainAnimComponent: !!this.mainAnimComponent,
+        childActionsCount: this.childAnimationActions.size,
+      });
+      // update child animation actions to restore them
+      this.updateAnimationActions();
+      console.log("After updateAnimationActions:", {
+        hasAnimAttributeComponent: !!this.animAttributeComponent,
+        hasMainAnimComponent: !!this.mainAnimComponent,
+        childActionsCount: this.childAnimationActions.size,
+      });
       return;
     }
+
+    console.log("Anim attribute SET - loading animation:", anim);
+    // Store the pending animation
+    this.pendingAnim = anim;
+
+    // If the model is not loaded yet, wait for it
+    if (!this.loadedState) {
+      console.log("Model not loaded yet, waiting...");
+      return;
+    }
+
+    // Apply the pending animation
+    this.applyPendingAnimation();
+  }
+
+  private connectAnimationToModel() {
+    if (!this.animState || !this.loadedState || !this.loadedState.renderEntity) {
+      console.warn("connectAnimationToModel: Missing required state", {
+        hasAnimState: !!this.animState,
+        hasLoadedState: !!this.loadedState,
+        hasRenderEntity: !!this.loadedState?.renderEntity,
+      });
+      return;
+    }
+
+    try {
+      const playcanvasEntity = this.loadedState.renderEntity;
+
+      // Check if entity already has an anim component
+      let animComponent = playcanvasEntity.anim;
+      if (!animComponent) {
+        animComponent = playcanvasEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
+      }
+
+      if (!animComponent) {
+        console.error("connectAnimationToModel: Failed to create or get anim component");
+        return;
+      }
+
+      animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
+      this.animState.animComponent = animComponent;
+      this.animAttributeComponent = animComponent; // Set the dedicated anim attribute component
+      console.log("connectAnimationToModel: Set animAttributeComponent");
+    } catch (error) {
+      console.error("Error in connectAnimationToModel:", error);
+    }
+  }
+
+  private applyPendingAnimation() {
+    console.log("applyPendingAnimation called:", {
+      hasLoadedState: !!this.loadedState,
+      hasRenderEntity: !!this.loadedState?.renderEntity,
+      pendingAnim: this.pendingAnim,
+    });
+
+    if (!this.loadedState || !this.loadedState.renderEntity || this.pendingAnim === undefined) {
+      console.warn("applyPendingAnimation: Not ready", {
+        hasLoadedState: !!this.loadedState,
+        hasRenderEntity: !!this.loadedState?.renderEntity,
+        pendingAnim: this.pendingAnim,
+      });
+      return;
+    }
+
+    const anim = this.pendingAnim;
+    this.pendingAnim = null;
+
+    // Clean up existing anim state
+    if (this.animState) {
+      console.log("applyPendingAnimation: Cleaning up existing animState");
+      if (this.animState.animComponent) {
+        this.animState.animComponent.reset();
+        this.animState.animComponent.unbind();
+        this.animState.animComponent.entity.removeComponent("anim");
+      }
+      this.animState = null;
+    }
+
+    // If anim is not set, restore child animations
+    if (!anim) {
+      console.log("applyPendingAnimation: Anim is null - restoring child animations");
+      // Ensure main anim component is set up for child animations
+      if (this.childAnimationActions.size > 0 && this.loadedState && !this.mainAnimComponent) {
+        this.mainAnimComponent = this.loadedState.renderEntity.addComponent(
+          "anim",
+          {},
+        ) as playcanvas.AnimComponent;
+      }
+
+      // Re-enable child actions
+      for (const action of this.childAnimationActions.values()) {
+        action.enabled = true;
+      }
+
+      // Ensure document time tick listener is set up for child animations
+      if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
+        this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+          (documentTime: number) => {
+            this.updateAnimation(documentTime);
+          },
+        );
+      }
+
+      this.updateAnimationActions();
+      return;
+    }
+
+    // Load and apply the animation
+    if (!this.model.isConnected) {
+      console.warn("applyPendingAnimation: Model not connected, skipping");
+      return;
+    }
+
     const animSrc = this.model.contentSrcToContentAddress(anim);
     const animPromise = this.asyncLoadAnimAsset(animSrc, (loaded, total) => {
       this.animLoadingInstanceManager.setProgress(loaded / total);
@@ -159,33 +343,61 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     this.latestAnimPromise = animPromise;
     animPromise
       .then((asset) => {
-        if (this.latestAnimPromise !== animPromise || !this.model.isConnected) {
-          // TODO
-          // If we've loaded a different model since, or we're no longer connected, dispose of this one
-          // PlayCanvasModel.disposeOfGroup(result.group);
+        if (
+          this.latestAnimPromise !== animPromise ||
+          !this.model.isConnected ||
+          !this.loadedState
+        ) {
+          console.warn("applyPendingAnimation: Promise resolved but conditions not met", {
+            latestAnimPromise: this.latestAnimPromise,
+            animPromise,
+            isConnected: this.model.isConnected,
+            hasLoadedState: !!this.loadedState,
+          });
           return;
         }
         this.latestAnimPromise = null;
+
+        console.log("applyPendingAnimation: Animation loaded, setting animState");
+        // Set up the anim state
         this.animState = {
           animAsset: asset,
           animComponent: null,
         };
-        // Play the animation
-        this.connectAnimationToModel();
 
-        for (const [attachment] of this.attachments) {
-          const playcanvasEntity = attachment.getContainer() as playcanvas.Entity;
-          const animComponent = playcanvasEntity.addComponent(
-            "anim",
-            {},
-          ) as playcanvas.AnimComponent;
-          animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
-          const animState = {
-            animComponent,
-          };
-          this.attachments.set(attachment, animState);
+        // Connect the animation to the model
+        if (this.animState) {
+          this.connectAnimationToModel();
         }
 
+        // Ensure updateAnimation is called AFTER animAttributeComponent is set
+        if (this.documentTimeTickListener) {
+          const documentTime = this.model.getDocumentTime();
+          this.updateAnimation(documentTime);
+        }
+
+        // Set up attachments
+        for (const [attachment] of this.attachments) {
+          const playcanvasEntity = attachment.getContainer() as playcanvas.Entity;
+
+          // Check if entity already has an anim component
+          let animComponent = playcanvasEntity.anim;
+          if (!animComponent) {
+            animComponent = playcanvasEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
+          }
+
+          if (animComponent) {
+            animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
+            const animState = {
+              animComponent,
+            };
+            this.attachments.set(attachment, animState);
+          } else {
+            console.warn("Failed to create anim component for attachment");
+          }
+        }
+
+        // Set up document time tick listener for anim attribute
         if (!this.documentTimeTickListener) {
           this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
             (documentTime: number) => {
@@ -193,21 +405,21 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
             },
           );
         }
+
+        // Stop all child animations when anim attribute is set
+        if (this.mainAnimComponent) {
+          this.mainAnimComponent.playing = false;
+        }
+        for (const [, action] of this.childAnimationActions) {
+          action.enabled = false;
+        }
+
         this.animLoadingInstanceManager.finish();
       })
       .catch((err) => {
         console.error("Error loading m-model.anim", err);
         this.animLoadingInstanceManager.error(err);
       });
-  }
-
-  private connectAnimationToModel() {
-    if (this.animState && this.loadedState) {
-      const playcanvasEntity = this.loadedState.renderEntity;
-      const animComponent = playcanvasEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
-      animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
-      this.animState.animComponent = animComponent;
-    }
   }
 
   public registerSocketChild(
@@ -268,14 +480,103 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     animation: Animation<PlayCanvasGraphicsAdapter>,
     animationState: any,
   ) {
-    void animation;
-    void animationState;
-    // TODO: Implement
+    // Only process if this is actually a PlayCanvas animation state
+    // ThreeJS animations will have animationClip, PlayCanvas animations will have animationAsset
+    if (!animationState || (!animationState.animationAsset && !animationState.animationClip)) {
+      return;
+    }
+
+    // If this is a ThreeJS animation state (has animationClip), ignore it
+    // This prevents PlayCanvas from interfering with ThreeJS functionality
+    if (animationState.animationClip && !animationState.animationAsset) {
+      return;
+    }
+
+    if (!this.loadedState) {
+      // queue if model isn't loaded yet
+      this.pendingAnimationUpdates.set(animation, animationState);
+      return;
+    }
+
+    // For PlayCanvas, we need to create an AnimComponent for each animation
+    // This is different from ThreeJS where we use a single mixer
+    let animComponent = this.childAnimationActions.get(animation) as any;
+
+    if (!animComponent && animationState && animationState.animationAsset) {
+      // Create a new AnimComponent for this animation
+      const playcanvasEntity = this.loadedState.renderEntity;
+      animComponent = playcanvasEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
+      animComponent.assignAnimation("SingleAnimation", animationState.animationAsset.resource);
+
+      this.childAnimationActions.set(animation, animComponent);
+    }
+
+    if (animComponent) {
+      // Update the animation state based on timing properties
+      if (animationState) {
+        // Handle weight (blending)
+        if (animationState.weight !== undefined) {
+          // PlayCanvas doesn't have direct weight control like ThreeJS
+          // We'll handle this in the updateAnimation method
+        }
+
+        // Handle timing properties (start-time, pause-time, loop)
+        // These will be handled in the updateAnimation method during document time ticks
+      }
+    }
+
+    // Ensure document time tick listener is set up for child animations
+    if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
+      this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+        (documentTime: number) => {
+          this.updateAnimation(documentTime);
+        },
+      );
+    }
+
+    // Trigger an immediate update to apply timing logic
+    if (this.documentTimeTickListener) {
+      const documentTime = this.model.getDocumentTime();
+      this.updateAnimation(documentTime);
+    }
   }
 
   public removeChildAnimation(animation: Animation<PlayCanvasGraphicsAdapter>) {
-    void animation;
-    // TODO: Implement
+    // Only process PlayCanvas animations, ignore ThreeJS animations
+    // This prevents PlayCanvas from interfering with ThreeJS functionality
+    if (!this.loadedState) {
+      this.pendingAnimationUpdates.delete(animation);
+      return;
+    }
+
+    const animComponent = this.childAnimationActions.get(animation) as any;
+    if (animComponent) {
+      animComponent.reset();
+      animComponent.unbind();
+      animComponent.entity.removeComponent("anim");
+      this.childAnimationActions.delete(animation);
+    }
+  }
+
+  private updateAnimationActions() {
+    // anim attribute is set, only play that action and stop all child actions
+    if (this.animAttributeComponent) {
+      this.animAttributeComponent.enabled = true;
+
+      // Stop all child actions
+      for (const action of this.childAnimationActions.values()) {
+        action.enabled = false;
+      }
+
+      // Stop main anim component for child animations
+      if (this.mainAnimComponent) {
+        this.mainAnimComponent.playing = false;
+      }
+    } else {
+      // Child animations are controlled by updateAnimation method based on timing
+      // This method is called when animations are added/removed, but timing control
+      // is handled in updateAnimation during the document time tick
+    }
   }
 
   public transformed(): void {
@@ -362,6 +663,15 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         this.latestSrcModelPromise = null;
         const renderEntity: playcanvas.Entity = asset.resource.instantiateRenderEntity();
 
+        // Set up document time tick listener for child animations if we have any
+        if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
+          this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+            (documentTime: number) => {
+              this.updateAnimation(documentTime);
+            },
+          );
+        }
+
         let boundingBox: playcanvas.BoundingBox | null = null;
         const renders = renderEntity.findComponents("render") as Array<playcanvas.RenderComponent>;
         for (const render of renders) {
@@ -410,7 +720,6 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
           }
         }
 
-        this.connectAnimationToModel();
         this.updateMeshCallback();
 
         const parent = this.model.parentElement;
@@ -424,6 +733,24 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         this.srcLoadingInstanceManager.finish();
 
         this.updateDebugVisualisation();
+
+        // Apply pending animation updates
+        for (const [animation, animationState] of this.pendingAnimationUpdates) {
+          this.updateChildAnimation(animation, animationState);
+        }
+        this.pendingAnimationUpdates.clear();
+
+        // Apply pending anim attribute if set
+        this.applyPendingAnimation();
+
+        // Ensure document time tick listener is set up if we have child animations
+        if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
+          this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+            (documentTime: number) => {
+              this.updateAnimation(documentTime);
+            },
+          );
+        }
       })
       .catch((err) => {
         console.error("Error loading m-model.src", err);
@@ -533,10 +860,22 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     this.latestAnimPromise = null;
     this.animLoadingInstanceManager.dispose();
     this.srcLoadingInstanceManager.dispose();
+
+    if (this.mainAnimComponent) {
+      this.mainAnimComponent.playing = false;
+      this.mainAnimComponent = null;
+    }
+    if (this.animAttributeComponent) {
+      this.animAttributeComponent.playing = false;
+      this.animAttributeComponent = null;
+    }
+
+    this.childAnimationActions.clear();
+    this.pendingAnimationUpdates.clear();
+    this.pendingAnim = null;
   }
 
   private triggerSocketedChildrenTransformed() {
-    // Socketed children need to be updated when the animation is updated as their position may have updated
     this.socketChildrenByBone.forEach((children) => {
       children.forEach((child) => {
         if (TransformableElement.isTransformableElement(child)) {
@@ -547,41 +886,99 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   private updateAnimation(docTimeMs: number) {
-    let animationTimeMs = docTimeMs - this.model.props.animStartTime;
-    if (docTimeMs < this.model.props.animStartTime) {
-      animationTimeMs = 0;
-    } else if (this.model.props.animPauseTime !== null) {
-      if (docTimeMs > this.model.props.animPauseTime) {
-        animationTimeMs = this.model.props.animPauseTime - this.model.props.animStartTime;
+    // Handle anim attribute (main animation)
+    if (this.animAttributeComponent) {
+      let animationTimeMs = docTimeMs - this.model.props.animStartTime;
+      if (docTimeMs < this.model.props.animStartTime) {
+        animationTimeMs = 0;
+      } else if (this.model.props.animPauseTime !== null) {
+        if (docTimeMs > this.model.props.animPauseTime) {
+          animationTimeMs = this.model.props.animPauseTime - this.model.props.animStartTime;
+        }
       }
-    }
 
-    const animComponent = this.animState?.animComponent;
-    if (animComponent) {
       if (!this.model.props.animEnabled) {
-        animComponent.playing = false;
+        this.animAttributeComponent.playing = false;
         this.triggerSocketedChildrenTransformed();
       } else {
-        animComponent.playing = true;
+        this.animAttributeComponent.playing = true;
         // @ts-expect-error - accessing _controller private property
-        const clip = animComponent.baseLayer._controller._animEvaluator.clips[0];
+        const clip = this.animAttributeComponent.baseLayer._controller._animEvaluator.clips[0];
         if (clip) {
           clip.time = animationTimeMs / 1000;
         }
       }
-    }
 
-    for (const [model, animState] of this.attachments) {
-      if (animState) {
-        animState.animComponent.playing = this.model.props.animEnabled;
-        // @ts-expect-error - accessing _controller private property
-        const clip = animState.animComponent.baseLayer._controller._animEvaluator.clips[0];
-        if (clip) {
-          clip.time = animationTimeMs / 1000;
-          (model.modelGraphics as PlayCanvasModel).triggerSocketedChildrenTransformed();
+      // Stop all child animations when anim attribute is active
+      for (const [, animComponent] of this.childAnimationActions) {
+        animComponent.playing = false;
+      }
+
+      for (const [model, animState] of this.attachments) {
+        if (animState) {
+          animState.animComponent.playing = this.model.props.animEnabled;
+          // @ts-expect-error - accessing _controller private property
+          const clip = animState.animComponent.baseLayer._controller._animEvaluator.clips[0];
+          if (clip) {
+            clip.time = animationTimeMs / 1000;
+            (model.modelGraphics as PlayCanvasModel).triggerSocketedChildrenTransformed();
+          }
         }
       }
+      this.triggerSocketedChildrenTransformed();
+    } else {
+      // Handle child animations (m-animation tags)
+      if (this.model.props.animEnabled) {
+        for (const [animation, animComponent] of this.childAnimationActions) {
+          const animationState = (animation.animationGraphics as any)?.getAnimationState();
+          if (animationState) {
+            let shouldBeActive = true;
+            let animationTimeMs = 0;
+
+            // Handle start time - animation doesn't start until start time
+            if (docTimeMs < animationState.startTime) {
+              shouldBeActive = false;
+            } else {
+              animationTimeMs = docTimeMs - animationState.startTime;
+            }
+
+            // Handle pause time - animation stops at pause time
+            if (shouldBeActive && animationState.pauseTime !== null) {
+              if (docTimeMs > animationState.pauseTime) {
+                shouldBeActive = false;
+              }
+            }
+
+            // Handle loop and duration
+            if (shouldBeActive && animationState.animationAsset) {
+              const durationMs = animationState.animationAsset.resource.duration * 1000;
+              if (!animationState.loop && animationTimeMs > durationMs) {
+                animationTimeMs = durationMs;
+                shouldBeActive = false; // Stop the animation when it reaches the end
+              }
+            }
+
+            // Control the animation based on timing and weight
+            if (shouldBeActive && animationState.weight > 0) {
+              animComponent.playing = true;
+              // @ts-expect-error - accessing _controller private property
+              const clip = animComponent.baseLayer._controller._animEvaluator.clips[0];
+              if (clip) {
+                clip.time = animationTimeMs / 1000;
+              }
+            } else {
+              animComponent.playing = false;
+            }
+          }
+        }
+      } else {
+        // Stop all child animations when animations are disabled
+        for (const [, animComponent] of this.childAnimationActions) {
+          animComponent.playing = false;
+        }
+      }
+
+      this.triggerSocketedChildrenTransformed();
     }
-    this.triggerSocketedChildrenTransformed();
   }
 }
