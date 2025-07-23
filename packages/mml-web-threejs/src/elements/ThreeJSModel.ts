@@ -1,4 +1,4 @@
-import { Animation, MElement, Model, TransformableElement } from "@mml-io/mml-web";
+import { Animation, MElement, MModelProps, Model, TransformableElement } from "@mml-io/mml-web";
 import { ModelGraphics } from "@mml-io/mml-web";
 import { LoadingInstanceManager } from "@mml-io/mml-web";
 import { IVect3 } from "@mml-io/mml-web";
@@ -102,11 +102,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     return this.loadedState?.group ?? new THREE.Object3D();
   }
 
-  setDebug(): void {
+  setDebug(debug: boolean, mModelProps: MModelProps): void {
     this.updateDebugVisualisation();
   }
 
-  setCastShadows(castShadows: boolean): void {
+  setCastShadows(castShadows: boolean, mModelProps: MModelProps): void {
     if (this.loadedState) {
       this.loadedState.group.traverse((object) => {
         if ((object as THREE.Mesh).isMesh) {
@@ -215,7 +215,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  setAnim(anim: string | null): void {
+  setAnim(anim: string | null, mModelProps: MModelProps): void {
     this.resetAnimationMixer();
     this.animState = null;
     for (const [attachment, animState] of this.attachments) {
@@ -290,7 +290,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       });
   }
 
-  setAnimEnabled(): void {
+  setAnimEnabled(animEnabled: boolean | null, mModelProps: MModelProps): void {
     if (this.model.props.animEnabled) {
       if (this.animState && !this.animState.appliedAnimation) {
         for (const [attachment] of this.attachments) {
@@ -309,15 +309,15 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  setAnimLoop(): void {
+  setAnimLoop(animLoop: boolean | null, mModelProps: MModelProps): void {
     // no-op - property is observed in animation tick
   }
 
-  setAnimStartTime(): void {
+  setAnimStartTime(animStartTime: number | null, mModelProps: MModelProps): void {
     // no-op - property is observed in animation tick
   }
 
-  setAnimPauseTime(): void {
+  setAnimPauseTime(animPauseTime: number | null, mModelProps: MModelProps): void {
     // no-op - property is observed in animation tick
   }
 
@@ -325,7 +325,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     // no-op
   }
 
-  setSrc(src: string | null): void {
+  setSrc(src: string | null, mModelProps: MModelProps): void {
     if (this.loadedState !== null) {
       this.loadedState.group.removeFromParent();
       if (this.registeredParentAttachment) {
