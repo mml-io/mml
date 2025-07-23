@@ -51,7 +51,8 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
 
     const contentSrc = this.animation.contentSrcToContentAddress(src);
     this.loadingInstanceManager.start(this.animation.getLoadingProgressManager(), contentSrc);
-    const srcPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
+    let srcPromise: Promise<playcanvas.Asset>;
+    srcPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
       if (this.latestSrcPromise !== srcPromise) {
         return;
       }
