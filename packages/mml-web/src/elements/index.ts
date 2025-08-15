@@ -7,6 +7,7 @@ export * from "./Cube";
 export * from "./Cylinder";
 export * from "./Frame";
 export * from "./Group";
+export * from "./Overlay";
 export * from "./Image";
 export * from "./Interaction";
 export * from "./Label";

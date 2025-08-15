@@ -17,6 +17,149 @@ import {
   NetworkedDOMV02TextChangedDiff,
 } from "@mml-io/networked-dom-protocol";
 
+// These tags are always disallowed because they allow arbitrary HTML to be injected
+const ALWAYS_DISALLOWED_TAGS = new Set(["foreignobject","iframe","script"]);
+
+const SVG_TAG_NAMES_ADJUSTMENT_MAP = new Map(
+  [
+    "svg",
+    "defs",
+    "g",
+    "text",
+    "filter",
+    "stop",
+    "path",
+    "rect",
+    "line",
+    "circle",
+    "animate",
+    "altGlyph",
+    "altGlyphDef",
+    "altGlyphItem",
+    "animateColor",
+    "animateMotion",
+    "animateTransform",
+    "clipPath",
+    "feBlend",
+    "feDropShadow",
+    "feColorMatrix",
+    "feComponentTransfer",
+    "feComposite",
+    "feConvolveMatrix",
+    "feDiffuseLighting",
+    "feDisplacementMap",
+    "feDistantLight",
+    "feFlood",
+    "feFuncA",
+    "feFuncB",
+    "feFuncG",
+    "feFuncR",
+    "feGaussianBlur",
+    "feImage",
+    "feMerge",
+    "feMergeNode",
+    "feMorphology",
+    "feOffset",
+    "fePointLight",
+    "feSpecularLighting",
+    "feSpotLight",
+    "feTile",
+    "feTurbulence",
+    "glyphRef",
+    "linearGradient",
+    "radialGradient",
+    "textPath",
+    // `foreignObject` is explicitly disallowed because it allows injecting arbitrary HTML
+    // "foreignObject", 
+  ].map((tn) => [tn.toLowerCase(), tn]),
+);
+
+const SVG_ATTRS_ADJUSTMENT_MAP = new Map(
+  [
+    "attributeName",
+    "attributeType",
+    "baseFrequency",
+    "baseProfile",
+    "calcMode",
+    "clipPathUnits",
+    "diffuseConstant",
+    "edgeMode",
+    "filterUnits",
+    "glyphRef",
+    "gradientTransform",
+    "gradientUnits",
+    "kernelMatrix",
+    "kernelUnitLength",
+    "keyPoints",
+    "keySplines",
+    "keyTimes",
+    "lengthAdjust",
+    "limitingConeAngle",
+    "markerHeight",
+    "markerUnits",
+    "markerWidth",
+    "maskContentUnits",
+    "maskUnits",
+    "numOctaves",
+    "pathLength",
+    "patternContentUnits",
+    "patternTransform",
+    "patternUnits",
+    "pointsAtX",
+    "pointsAtY",
+    "pointsAtZ",
+    "preserveAlpha",
+    "preserveAspectRatio",
+    "primitiveUnits",
+    "refX",
+    "refY",
+    "repeatCount",
+    "repeatDur",
+    "requiredExtensions",
+    "requiredFeatures",
+    "specularConstant",
+    "specularExponent",
+    "spreadMethod",
+    "startOffset",
+    "stdDeviation",
+    "stitchTiles",
+    "surfaceScale",
+    "systemLanguage",
+    "tableValues",
+    "targetX",
+    "targetY",
+    "textLength",
+    "viewBox",
+    "viewTarget",
+    "xChannelSelector",
+    "yChannelSelector",
+    "zoomAndPan",
+  ].map((attr) => [attr.toLowerCase(), attr]),
+);
+
+function getRemoteDocument(element: any) {
+  for (
+    let parentNode: ParentNode | null = element;
+    parentNode;
+    parentNode = parentNode.parentNode
+  ) {
+    if (parentNode.nodeName === "M-REMOTE-DOCUMENT" && (parentNode as any).getMMLScene()) {
+      // Return the first remote document that has an explicit scene set
+      return parentNode as any;
+    }
+  }
+  return null;
+}
+
+function remapAttributeName(attrName: string): string {
+  const remapped = SVG_ATTRS_ADJUSTMENT_MAP.get(attrName.toLowerCase());
+  console.log("remapAttributeName", attrName, remapped);
+  if (remapped) {
+    return remapped;
+  }
+  return attrName;
+}
+
 import { DOMSanitizer } from "./DOMSanitizer";
 import {
   isHTMLElement,
@@ -165,6 +308,7 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
 
   private handleTextChanged(message: NetworkedDOMV02TextChangedDiff) {
     const { nodeId, text } = message;
+    console.log("Handling textChanged message", { nodeId, text });
 
     if (nodeId === undefined || nodeId === null) {
       console.warn("No nodeId in textChanged message");
@@ -370,7 +514,8 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
             element.removeAttribute(key);
           } else {
             if (DOMSanitizer.shouldAcceptAttribute(key)) {
-              element.setAttribute(key, newValue);
+              const remappedKey = remapAttributeName(key);
+              element.setAttribute(remappedKey, newValue);
             }
           }
         }
@@ -419,7 +564,41 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
             : `x-${tag}`;
         }
       }
-      element = document.createElement(filteredTag);
+      if (ALWAYS_DISALLOWED_TAGS.has(filteredTag.toLowerCase())) {
+        console.error("Disallowing tag", filteredTag);
+        filteredTag = this.options.replacementTagPrefix
+          ? this.options.replacementTagPrefix + tag
+          : `x-${tag}`;
+      }
+      filteredTag = filteredTag.toLowerCase();
+      console.log("Creating element with tag", tag, "->", filteredTag);
+      const svgTagMapping = SVG_TAG_NAMES_ADJUSTMENT_MAP.get(filteredTag);
+      if (svgTagMapping) {
+        filteredTag = svgTagMapping;
+        console.log("Using SVG tag mapping for", tag, "->", filteredTag);
+        const xmlns = "http://www.w3.org/2000/svg";
+        element = document.createElementNS(xmlns, filteredTag);
+        element.addEventListener("click", (event) => {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+          console.log("SVG click event on", element as any, "->", event);
+          const remoteDocument = getRemoteDocument(element as any);
+          if (remoteDocument) {
+            console.log("remoteDocument", remoteDocument);
+            remoteDocument.dispatchEvent(
+              new CustomEvent("consume-event", {
+                bubbles: true,
+                detail: { element: element as any, originalEvent: event },
+              }),
+            );
+          } else {
+            console.warn("No remote document found for SVG click event", element as any);
+          }
+        });
+      } else {
+        console.log("Regular element creation for", tag, "->", filteredTag);
+        element = document.createElement(filteredTag);
+      }
     } catch (e) {
       console.error(`Error creating element: (${tag})`, e);
       element = document.createElement("x-div");
@@ -427,7 +606,8 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
     for (const [key, value] of attributes) {
       if (value !== null) {
         if (DOMSanitizer.shouldAcceptAttribute(key)) {
-          element.setAttribute(key, value);
+          const remappedKey = remapAttributeName(key);
+          element.setAttribute(remappedKey, value);
         }
       }
     }

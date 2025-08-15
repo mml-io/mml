@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Children Mirror Test - Nested Divs</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; gap: 20px; margin: 20px 0; }
+        .source, .target { 
+            border: 2px solid #ccc; 
+            padding: 15px; 
+            min-height: 300px; 
+            width: 400px;
+            background: #f9f9f9;
+        }
+        .source { border-color: #4CAF50; }
+        .target { border-color: #2196F3; }
+        .source h3 { color: #4CAF50; margin-top: 0; }
+        .target h3 { color: #2196F3; margin-top: 0; }
+        button { 
+            padding: 8px 16px; 
+            margin: 5px; 
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover { background: #45a049; }
+        .yellow-div {
+            background-color: yellow; 
+            color: black; 
+            padding: 10px; 
+            width: 100px; 
+            height: 100px; 
+            display: block;
+            margin: 5px 0;
+        }
+        .pink-div {
+            background-color: pink; 
+            color: white; 
+            padding: 10px; 
+            width: 50px; 
+            height: 50px; 
+            display: block;
+        }
+        .new-child {
+            background-color: lightblue;
+            color: black;
+            padding: 5px;
+            margin: 2px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Children Mirror Test - Nested Divs</h1>
+    <p>Testing appending children to nested elements</p>
+    
+    <div>
+        <button onclick="addChildToYellowDiv()">Add Child to Yellow Div</button>
+        <button onclick="addChildToPinkDiv()">Add Child to Pink Div</button>
+        <button onclick="addAnotherYellowDiv()">Add Another Yellow Div</button>
+        <button onclick="clearAll()">Clear All</button>
+        <button onclick="logStructure()">Log Structure</button>
+    </div>
+
+    <div class="container">
+        <div class="source">
+            <h3>Source Element</h3>
+            <div id="source">
+                <div class="yellow-div" id="yellow1">
+                    Yellow Div 1
+                    <div class="pink-div" id="pink1">
+                        Pink Div 1
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="target">
+            <h3>Target Element (Mirrored)</h3>
+            <div id="target">
+                <!-- Children will be automatically mirrored here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="log" style="margin-top: 20px; padding: 10px; background: #f0f0f0; white-space: pre-wrap; font-family: monospace;"></div>
+
+    <script type="module">
+        // Include the ChildrenMirror class inline for testing
+        class ChildrenMirror {
+            constructor(sourceElement, targetElement, options = {}) {
+                this.sourceElement = sourceElement;
+                this.targetElement = targetElement;
+                this.isDisposed = false;
+                
+                const {
+                    mirrorExisting = true,
+                    subtree = false,
+                    attributes = true,
+                    characterData = true,
+                    nodeFilter = () => true,
+                } = options;
+                
+                this.nodeFilter = nodeFilter;
+                
+                if (mirrorExisting) {
+                    this.mirrorAllChildren(this.nodeFilter);
+                }
+                
+                this.mutationObserver = new MutationObserver((mutations) => {
+                    console.log('🔍 Mutations detected:', mutations);
+                    this.handleMutations(mutations, this.nodeFilter);
+                });
+                
+                this.mutationObserver.observe(this.sourceElement, {
+                    childList: true,
+                    subtree,
+                    attributes,
+                    characterData,
+                });
+                
+                console.log('✅ ChildrenMirror initialized', { sourceElement, targetElement, options });
+            }
+            
+            mirrorAllChildren(nodeFilter) {
+                console.log('🔄 Mirroring all children');
+                while (this.targetElement.firstChild) {
+                    this.targetElement.removeChild(this.targetElement.firstChild);
+                }
+                
+                Array.from(this.sourceElement.childNodes)
+                    .filter(nodeFilter)
+                    .forEach((node, index) => {
+                        console.log(`  Cloning node ${index}:`, node);
+                        const clonedNode = node.cloneNode(true);
+                        this.targetElement.appendChild(clonedNode);
+                    });
+            }
+            
+            handleMutations(mutations) {
+                if (this.isDisposed) return;
+                
+                for (const mutation of mutations) {
+                    console.log(`🔧 Handling mutation type: ${mutation.type}`, mutation);
+                    if (mutation.type === 'childList') {
+                        this.handleChildListMutation(mutation);
+                    } else if (mutation.type === 'attributes') {
+                        this.handleAttributeMutation(mutation);
+                    } else if (mutation.type === 'characterData') {
+                        this.handleCharacterDataMutation(mutation);
+                    }
+                }
+            }
+            
+            handleChildListMutation(mutation) {
+                console.log('📝 Handling child list mutation:', {
+                    target: mutation.target,
+                    addedNodes: Array.from(mutation.addedNodes),
+                    removedNodes: Array.from(mutation.removedNodes)
+                });
+                
+                // Handle removed nodes
+                mutation.removedNodes.forEach(removedNode => {
+                    if (!this.nodeFilter(removedNode)) return;
+                    
+                    const correspondingNode = this.findCorrespondingNode(removedNode, this.nodeFilter);
+                    console.log('❌ Removing node:', { removedNode, correspondingNode });
+                    if (correspondingNode && correspondingNode.parentNode === this.targetElement) {
+                        this.targetElement.removeChild(correspondingNode);
+                    }
+                });
+                
+                // Handle added nodes
+                mutation.addedNodes.forEach(addedNode => {
+                    if (!this.nodeFilter(addedNode)) return;
+                    
+                    console.log('➕ Adding node:', addedNode);
+                    const clonedNode = addedNode.cloneNode(true);
+                    const nextSibling = this.findNextSiblingInTarget(addedNode, this.nodeFilter);
+                    console.log('📍 Insertion point:', { clonedNode, nextSibling });
+                    
+                    if (nextSibling) {
+                        this.targetElement.insertBefore(clonedNode, nextSibling);
+                    } else {
+                        this.targetElement.appendChild(clonedNode);
+                    }
+                });
+            }
+            
+            handleAttributeMutation(mutation) {
+                const correspondingNode = this.findCorrespondingNode(mutation.target, this.nodeFilter);
+                if (correspondingNode && correspondingNode instanceof Element && mutation.target instanceof Element) {
+                    if (mutation.attributeName) {
+                        const newValue = mutation.target.getAttribute(mutation.attributeName);
+                        if (newValue !== null) {
+                            correspondingNode.setAttribute(mutation.attributeName, newValue);
+                        } else {
+                            correspondingNode.removeAttribute(mutation.attributeName);
+                        }
+                    }
+                }
+            }
+            
+            handleCharacterDataMutation(mutation) {
+                const correspondingNode = this.findCorrespondingNode(mutation.target, this.nodeFilter);
+                if (correspondingNode) {
+                    correspondingNode.textContent = mutation.target.textContent;
+                }
+            }
+            
+            findCorrespondingNode(sourceNode, nodeFilter = () => true) {
+                const sourceChildren = Array.from(this.sourceElement.childNodes);
+                const sourceIndex = sourceChildren.indexOf(sourceNode);
+                if (sourceIndex === -1) return null;
+                
+                const filteredSourceIndex = sourceChildren
+                    .slice(0, sourceIndex)
+                    .filter(nodeFilter)
+                    .length;
+                
+                const targetChildren = Array.from(this.targetElement.childNodes);
+                const result = targetChildren[filteredSourceIndex] || null;
+                
+                console.log('🔍 Finding corresponding node:', {
+                    sourceNode,
+                    sourceIndex,
+                    filteredSourceIndex,
+                    result
+                });
+                
+                return result;
+            }
+            
+            findNextSiblingInTarget(sourceNode, nodeFilter) {
+                const sourceChildren = Array.from(this.sourceElement.childNodes);
+                const sourceIndex = sourceChildren.indexOf(sourceNode);
+                
+                const filteredNodesBeforeInsertion = sourceChildren
+                    .slice(0, sourceIndex + 1)
+                    .filter(nodeFilter)
+                    .length;
+                
+                const targetChildren = Array.from(this.targetElement.childNodes);
+                const result = targetChildren[filteredNodesBeforeInsertion] || null;
+                
+                console.log('🎯 Finding next sibling:', {
+                    sourceNode,
+                    sourceIndex,
+                    filteredNodesBeforeInsertion,
+                    result
+                });
+                
+                return result;
+            }
+            
+            dispose() {
+                if (this.isDisposed) return;
+                this.mutationObserver.disconnect();
+                this.isDisposed = true;
+            }
+        }
+
+        // Initialize the mirror
+        const sourceElement = document.getElementById('source');
+        const targetElement = document.getElementById('target');
+        const logElement = document.getElementById('log');
+        
+        // Only mirror element nodes
+        const mirror = new ChildrenMirror(sourceElement, targetElement, {
+            nodeFilter: (node) => node.nodeType === Node.ELEMENT_NODE,
+            subtree: false // Only observe direct children of source
+        });
+
+        let childCounter = 1;
+        
+        function log(message) {
+            console.log(message);
+            logElement.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        window.addChildToYellowDiv = function() {
+            const yellowDiv = document.getElementById('yellow1');
+            if (yellowDiv) {
+                const newChild = document.createElement('div');
+                newChild.className = 'new-child';
+                newChild.textContent = `Child ${childCounter++} in Yellow`;
+                log(`Adding child to yellow div: ${newChild.textContent}`);
+                yellowDiv.appendChild(newChild);
+            } else {
+                log('Yellow div not found!');
+            }
+        };
+        
+        window.addChildToPinkDiv = function() {
+            const pinkDiv = document.getElementById('pink1');
+            if (pinkDiv) {
+                const newChild = document.createElement('div');
+                newChild.className = 'new-child';
+                newChild.textContent = `Child ${childCounter++} in Pink`;
+                newChild.style.fontSize = '10px';
+                log(`Adding child to pink div: ${newChild.textContent}`);
+                pinkDiv.appendChild(newChild);
+            } else {
+                log('Pink div not found!');
+            }
+        };
+        
+        window.addAnotherYellowDiv = function() {
+            const sourceElement = document.getElementById('source');
+            const newYellowDiv = document.createElement('div');
+            newYellowDiv.className = 'yellow-div';
+            newYellowDiv.textContent = `Yellow Div ${childCounter++}`;
+            log(`Adding new yellow div to source: ${newYellowDiv.textContent}`);
+            sourceElement.appendChild(newYellowDiv);
+        };
+        
+        window.clearAll = function() {
+            log('Clearing all children from source');
+            const sourceElement = document.getElementById('source');
+            while (sourceElement.firstChild) {
+                sourceElement.removeChild(sourceElement.firstChild);
+            }
+        };
+        
+        window.logStructure = function() {
+            log('=== CURRENT STRUCTURE ===');
+            log('Source HTML:');
+            log(sourceElement.innerHTML);
+            log('Target HTML:');
+            log(targetElement.innerHTML);
+            log('========================');
+        };
+
+        // Initial log
+        log('Children Mirror Test initialized');
+        window.logStructure();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            mirror.dispose();
+        });
+    </script>
+</body>
+</html> 

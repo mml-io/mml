@@ -18,9 +18,9 @@ export class FullScreenMMLScene<G extends StandaloneGraphicsAdapter> extends MML
     this.element.style.height = "100%";
     this.element.style.position = "relative";
 
-    this.showDebugLoading = options.showDebugLoading || true;
-    this.createLoadingProgressBar();
+    this.showDebugLoading = options.showDebugLoading ?? true;
 
+    this.createLoadingProgressBar();
     this.configureWindowStyling();
   }
 
@@ -41,6 +41,10 @@ export class FullScreenMMLScene<G extends StandaloneGraphicsAdapter> extends MML
   public resetLoadingProgressBar() {
     this.loadingProgressBar.dispose();
     this.createLoadingProgressBar();
+  }
+
+  public getOverlayElement() {
+    return this.element;
   }
 
   private configureWindowStyling() {

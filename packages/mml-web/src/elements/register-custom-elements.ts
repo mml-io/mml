@@ -7,6 +7,7 @@ import { Cube } from "./Cube";
 import { Cylinder } from "./Cylinder";
 import { Frame } from "./Frame";
 import { Group } from "./Group";
+import { Overlay } from "./Overlay";
 import { Image } from "./Image";
 import { Interaction } from "./Interaction";
 import { Label } from "./Label";
@@ -37,6 +38,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Group.tagName, Group);
   targetWindow.customElements.define(Prompt.tagName, Prompt);
   targetWindow.customElements.define(Link.tagName, Link);
+  targetWindow.customElements.define(Overlay.tagName, Overlay);
   targetWindow.customElements.define(Sphere.tagName, Sphere);
   targetWindow.customElements.define(Image.tagName, Image);
   targetWindow.customElements.define(Video.tagName, Video);

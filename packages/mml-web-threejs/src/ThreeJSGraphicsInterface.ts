@@ -17,6 +17,7 @@ export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapt
   MMLInteractionGraphicsInterface: (element) => new ThreeJSElements.ThreeJSInteraction(element),
   MMLLabelGraphicsInterface: (element) => new ThreeJSElements.ThreeJSLabel(element),
   MMLLightGraphicsInterface: (element) => new ThreeJSElements.ThreeJSLight(element),
+  MMLOverlayGraphicsInterface: (element) => new ThreeJSElements.ThreeJSOverlay(element),
   MMLLinkGraphicsInterface: (element) => new ThreeJSElements.ThreeJSLink(element),
   MMLModelGraphicsInterface: (element, updateMeshCallback) =>
     new ThreeJSElements.ThreeJSModel(element, updateMeshCallback),

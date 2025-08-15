@@ -29,6 +29,7 @@ watcher
     const document = new EditableNetworkedDOM(
       url.pathToFileURL(filename).toString(),
       LocalObservableDOMFactory,
+      false,
     );
     document.load(contents);
 

@@ -5,6 +5,7 @@ export * from "./CylinderGraphics";
 export * from "./DebugHelperGraphics";
 export * from "./FrameGraphics";
 export * from "./GraphicsAdapter";
+export * from "./OverlayGraphics";
 export * from "./ImageGraphics";
 export * from "./InteractionGraphics";
 export * from "./LabelGraphics";

@@ -229,7 +229,7 @@ export class NetworkedDOMWebsocket {
 }
 
 export function isHTMLElement(node: unknown, rootNode: HTMLElement): node is HTMLElement {
-  if (node instanceof HTMLElement) {
+  if (node instanceof HTMLElement || node instanceof Element) {
     return true;
   }
   if (!rootNode.ownerDocument.defaultView) {

@@ -62,7 +62,7 @@ export class MMLNetworkSource {
           this.options.statusUpdated(status);
         },
         {
-          tagPrefix: "m-",
+          // tagPrefix: "m-",
         },
       );
       this.websocket = websocket;

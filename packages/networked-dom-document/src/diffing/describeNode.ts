@@ -62,7 +62,7 @@ export function describeNodeWithChildrenForV01Connection(
   }
   let emittedTagName = virtualDOMElement.tag;
   if (emittedTagName === "#document") {
-    emittedTagName = "DIV";
+    emittedTagName = "div";
   }
   if (emittedTagName === "#text") {
     const textNode: NetworkedDOMV02TextNodeDescription = {
@@ -111,7 +111,7 @@ export function describeNodeWithChildrenForV02Connection(
   }
   let emittedTagName = virtualDOMElement.tag;
   if (emittedTagName === "#document") {
-    emittedTagName = "DIV";
+    emittedTagName = "div";
   }
   if (emittedTagName === "#text") {
     const textNode: NetworkedDOMV02TextNodeDescription = {

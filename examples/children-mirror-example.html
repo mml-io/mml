@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Children Mirror Example</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; gap: 20px; margin: 20px 0; }
+        .source, .target { 
+            border: 2px solid #ccc; 
+            padding: 15px; 
+            min-height: 200px; 
+            width: 300px;
+            background: #f9f9f9;
+        }
+        .source { border-color: #4CAF50; }
+        .target { border-color: #2196F3; }
+        .source h3 { color: #4CAF50; margin-top: 0; }
+        .target h3 { color: #2196F3; margin-top: 0; }
+        button { 
+            padding: 8px 16px; 
+            margin: 5px; 
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover { background: #45a049; }
+        .child-item {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Children Mirror Example</h1>
+    <p>This example demonstrates automatic mirroring of children between two elements using MutationObserver.</p>
+    
+    <div>
+        <button onclick="addChild()">Add Child to Source</button>
+        <button onclick="removeLastChild()">Remove Last Child</button>
+        <button onclick="modifyFirstChild()">Modify First Child</button>
+        <button onclick="clearAll()">Clear All</button>
+    </div>
+
+    <div class="container">
+        <div class="source">
+            <h3>Source Element</h3>
+            <div id="source">
+                <div class="child-item">Initial Child 1</div>
+                <div class="child-item">Initial Child 2</div>
+            </div>
+        </div>
+        
+        <div class="target">
+            <h3>Target Element (Mirrored)</h3>
+            <div id="target">
+                <!-- Children will be automatically mirrored here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the ChildrenMirror utility
+        // import { ChildrenMirror } from './packages/mml-web/src/utils/ChildrenMirror.ts';
+        
+        // For this example, we'll include a simplified version inline
+        class ChildrenMirror {
+            constructor(sourceElement, targetElement, options = {}) {
+                this.sourceElement = sourceElement;
+                this.targetElement = targetElement;
+                this.isDisposed = false;
+                
+                const {
+                    mirrorExisting = true,
+                    subtree = false,
+                    attributes = true,
+                    characterData = true,
+                    nodeFilter = () => true,
+                } = options;
+                
+                this.nodeFilter = nodeFilter;
+                
+                if (mirrorExisting) {
+                    this.mirrorAllChildren();
+                }
+                
+                this.mutationObserver = new MutationObserver((mutations) => {
+                    this.handleMutations(mutations);
+                });
+                
+                this.mutationObserver.observe(this.sourceElement, {
+                    childList: true,
+                    subtree,
+                    attributes,
+                    characterData,
+                });
+            }
+            
+            mirrorAllChildren() {
+                while (this.targetElement.firstChild) {
+                    this.targetElement.removeChild(this.targetElement.firstChild);
+                }
+                
+                Array.from(this.sourceElement.childNodes)
+                    .filter(this.nodeFilter)
+                    .forEach(node => {
+                        const clonedNode = node.cloneNode(true);
+                        this.targetElement.appendChild(clonedNode);
+                    });
+            }
+            
+            handleMutations(mutations) {
+                if (this.isDisposed) return;
+                
+                for (const mutation of mutations) {
+                    if (mutation.type === 'childList') {
+                        this.handleChildListMutation(mutation);
+                    } else if (mutation.type === 'attributes') {
+                        this.handleAttributeMutation(mutation);
+                    } else if (mutation.type === 'characterData') {
+                        this.handleCharacterDataMutation(mutation);
+                    }
+                }
+            }
+            
+            handleChildListMutation(mutation) {
+                mutation.removedNodes.forEach(removedNode => {
+                    if (!this.nodeFilter(removedNode)) return;
+                    
+                    const correspondingNode = this.findCorrespondingNode(removedNode);
+                    if (correspondingNode && correspondingNode.parentNode === this.targetElement) {
+                        this.targetElement.removeChild(correspondingNode);
+                    }
+                });
+                
+                mutation.addedNodes.forEach(addedNode => {
+                    if (!this.nodeFilter(addedNode)) return;
+                    
+                    const clonedNode = addedNode.cloneNode(true);
+                    const nextSibling = this.findNextSiblingInTarget(addedNode);
+                    if (nextSibling) {
+                        this.targetElement.insertBefore(clonedNode, nextSibling);
+                    } else {
+                        this.targetElement.appendChild(clonedNode);
+                    }
+                });
+            }
+            
+            handleAttributeMutation(mutation) {
+                const correspondingNode = this.findCorrespondingNode(mutation.target);
+                if (correspondingNode && correspondingNode instanceof Element && mutation.target instanceof Element) {
+                    if (mutation.attributeName) {
+                        const newValue = mutation.target.getAttribute(mutation.attributeName);
+                        if (newValue !== null) {
+                            correspondingNode.setAttribute(mutation.attributeName, newValue);
+                        } else {
+                            correspondingNode.removeAttribute(mutation.attributeName);
+                        }
+                    }
+                }
+            }
+            
+            handleCharacterDataMutation(mutation) {
+                const correspondingNode = this.findCorrespondingNode(mutation.target);
+                if (correspondingNode) {
+                    correspondingNode.textContent = mutation.target.textContent;
+                }
+            }
+            
+            findCorrespondingNode(sourceNode) {
+                const sourceIndex = Array.from(this.sourceElement.childNodes).indexOf(sourceNode);
+                if (sourceIndex === -1) return null;
+                
+                const targetChildren = Array.from(this.targetElement.childNodes);
+                return targetChildren[sourceIndex] || null;
+            }
+            
+            findNextSiblingInTarget(sourceNode) {
+                const sourceChildren = Array.from(this.sourceElement.childNodes);
+                const sourceIndex = sourceChildren.indexOf(sourceNode);
+                
+                for (let i = sourceIndex + 1; i < sourceChildren.length; i++) {
+                    if (this.nodeFilter(sourceChildren[i])) {
+                        const targetIndex = Array.from(this.sourceElement.childNodes)
+                            .slice(0, i)
+                            .filter(this.nodeFilter)
+                            .length;
+                        return this.targetElement.childNodes[targetIndex] || null;
+                    }
+                }
+                
+                return null;
+            }
+            
+            dispose() {
+                if (this.isDisposed) return;
+                this.mutationObserver.disconnect();
+                this.isDisposed = true;
+            }
+        }
+
+        // Initialize the mirror
+        const sourceElement = document.getElementById('source');
+        const targetElement = document.getElementById('target');
+        
+        const mirror = new ChildrenMirror(sourceElement, targetElement, {
+            // Only mirror element nodes, not text nodes
+            nodeFilter: (node) => node.nodeType === Node.ELEMENT_NODE
+        });
+
+        // Demo functions
+        let childCounter = 3;
+        
+        window.addChild = function() {
+            const newChild = document.createElement('div');
+            newChild.className = 'child-item';
+            newChild.textContent = `Dynamic Child ${childCounter++}`;
+            newChild.style.background = '#e8f5e8';
+            sourceElement.appendChild(newChild);
+        };
+        
+        window.removeLastChild = function() {
+            const children = sourceElement.children;
+            if (children.length > 0) {
+                sourceElement.removeChild(children[children.length - 1]);
+            }
+        };
+        
+        window.modifyFirstChild = function() {
+            const firstChild = sourceElement.firstElementChild;
+            if (firstChild) {
+                firstChild.style.background = firstChild.style.background === 'lightcoral' ? 'white' : 'lightcoral';
+                firstChild.textContent = firstChild.textContent.includes('(Modified)') 
+                    ? firstChild.textContent.replace(' (Modified)', '')
+                    : firstChild.textContent + ' (Modified)';
+            }
+        };
+        
+        window.clearAll = function() {
+            while (sourceElement.firstChild) {
+                sourceElement.removeChild(sourceElement.firstChild);
+            }
+        };
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            mirror.dispose();
+        });
+    </script>
+</body>
+</html> 

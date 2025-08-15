@@ -232,4 +232,14 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
     },
     {},
   ),
+  MMLOverlayGraphicsInterface: TagDebugAdapterElement(
+    {
+      setAnchor: "anchor",
+      setOffsetX: "offset-x",
+      setOffsetY: "offset-y",
+    },
+    {
+      dispose: () => {},
+    },
+  ),
 };

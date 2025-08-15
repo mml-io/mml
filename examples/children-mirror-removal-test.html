@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Children Mirror Removal Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; gap: 20px; margin: 20px 0; }
+        .source, .target { 
+            border: 2px solid #ccc; 
+            padding: 15px; 
+            min-height: 300px; 
+            width: 400px;
+            background: #f9f9f9;
+        }
+        .source { border-color: #4CAF50; }
+        .target { border-color: #2196F3; }
+        .source h3 { color: #4CAF50; margin-top: 0; }
+        .target h3 { color: #2196F3; margin-top: 0; }
+        button { 
+            padding: 8px 16px; 
+            margin: 5px; 
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover { background: #45a049; }
+        .test-item {
+            background: lightblue;
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .test-item:hover {
+            background: lightcoral;
+        }
+        .nested-container {
+            background: lightyellow;
+            border: 2px dashed #999;
+            padding: 10px;
+            margin: 5px;
+        }
+        .nested-item {
+            background: lightgreen;
+            border: 1px solid #666;
+            padding: 5px;
+            margin: 3px;
+            cursor: pointer;
+        }
+        .nested-item:hover {
+            background: orange;
+        }
+    </style>
+</head>
+<body>
+    <h1>Children Mirror Removal Test</h1>
+    <p>Click on items to remove them. Check if removals are mirrored correctly.</p>
+    
+    <div>
+        <button onclick="addDirectChild()">Add Direct Child</button>
+        <button onclick="addNestedChild()">Add Nested Child</button>
+        <button onclick="removeFirstDirect()">Remove First Direct</button>
+        <button onclick="removeFirstNested()">Remove First Nested</button>
+        <button onclick="clearAll()">Clear All</button>
+        <button onclick="logStructure()">Log Structure</button>
+    </div>
+
+    <div class="container">
+        <div class="source">
+            <h3>Source Element (Click items to remove)</h3>
+            <div id="source">
+                <div class="test-item" onclick="removeThis(this)">Direct Item 1 (click to remove)</div>
+                <div class="test-item" onclick="removeThis(this)">Direct Item 2 (click to remove)</div>
+                <div class="nested-container">
+                    <strong>Nested Container</strong>
+                    <div class="nested-item" onclick="removeThis(this)">Nested Item 1 (click to remove)</div>
+                    <div class="nested-item" onclick="removeThis(this)">Nested Item 2 (click to remove)</div>
+                </div>
+                <div class="test-item" onclick="removeThis(this)">Direct Item 3 (click to remove)</div>
+            </div>
+        </div>
+        
+        <div class="target">
+            <h3>Target Element (Should Mirror Removals)</h3>
+            <div id="target">
+                <!-- Children will be automatically mirrored here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="log" style="margin-top: 20px; padding: 10px; background: #f0f0f0; white-space: pre-wrap; font-family: monospace; max-height: 200px; overflow-y: auto;"></div>
+
+    <script type="module">
+        // Updated ChildrenMirror with the current implementation
+        class ChildrenMirror {
+            constructor(sourceElement, targetElement, options = {}) {
+                this.sourceElement = sourceElement;
+                this.targetElement = targetElement;
+                this.isDisposed = false;
+                
+                const {
+                    mirrorExisting = true,
+                    subtree = false,
+                    attributes = true,
+                    characterData = true,
+                    nodeFilter = () => true,
+                } = options;
+                
+                this.nodeFilter = nodeFilter;
+                
+                if (mirrorExisting) {
+                    this.mirrorAllChildren(this.nodeFilter);
+                }
+                
+                this.mutationObserver = new MutationObserver((mutations) => {
+                    console.log('🔍 Mutations detected:', mutations);
+                    this.handleMutations(mutations, this.nodeFilter);
+                });
+                
+                this.mutationObserver.observe(this.sourceElement, {
+                    childList: true,
+                    subtree,
+                    attributes,
+                    characterData,
+                });
+                
+                console.log('✅ ChildrenMirror initialized', { sourceElement, targetElement, options });
+            }
+            
+            mirrorAllChildren(nodeFilter) {
+                console.log('🔄 Mirroring all children');
+                while (this.targetElement.firstChild) {
+                    this.targetElement.removeChild(this.targetElement.firstChild);
+                }
+                
+                Array.from(this.sourceElement.childNodes)
+                    .filter(nodeFilter)
+                    .forEach((node, index) => {
+                        console.log(`  Cloning node ${index}:`, node);
+                        const clonedNode = node.cloneNode(true);
+                        this.targetElement.appendChild(clonedNode);
+                    });
+            }
+            
+            handleMutations(mutations) {
+                if (this.isDisposed) return;
+                
+                for (const mutation of mutations) {
+                    console.log(`🔧 Handling mutation type: ${mutation.type}`, mutation);
+                    if (mutation.type === 'childList') {
+                        this.handleChildListMutation(mutation);
+                    }
+                }
+            }
+            
+            handleChildListMutation(mutation) {
+                console.log('📝 Handling child list mutation:', {
+                    target: mutation.target,
+                    addedNodes: Array.from(mutation.addedNodes),
+                    removedNodes: Array.from(mutation.removedNodes)
+                });
+                
+                // Check if this mutation is on the source element itself (direct children)
+                if (mutation.target === this.sourceElement) {
+                    this.handleDirectChildrenMutation(mutation);
+                } else {
+                    this.handleNestedMutation(mutation);
+                }
+            }
+            
+            handleDirectChildrenMutation(mutation) {
+                console.log('🎯 Handling direct children mutation');
+                
+                // Handle removed nodes
+                mutation.removedNodes.forEach((removedNode, index) => {
+                    if (!this.nodeFilter(removedNode)) return;
+                    
+                    console.log('❌ Removing direct child:', removedNode);
+                    // For direct children, we need to find by position using previousSibling/nextSibling
+                    const correspondingNode = this.findCorrespondingRemovedNode(mutation, index);
+                    if (correspondingNode && correspondingNode.parentNode === this.targetElement) {
+                        console.log('🗑️ Removing corresponding node:', correspondingNode);
+                        this.targetElement.removeChild(correspondingNode);
+                    } else {
+                        console.log('⚠️ Could not find corresponding node for removal');
+                    }
+                });
+                
+                // Handle added nodes
+                mutation.addedNodes.forEach(addedNode => {
+                    if (!this.nodeFilter(addedNode)) return;
+                    
+                    console.log('➕ Adding direct child:', addedNode);
+                    const clonedNode = addedNode.cloneNode(true);
+                    const nextSibling = this.findNextSiblingInTarget(addedNode, this.nodeFilter);
+                    
+                    if (nextSibling) {
+                        this.targetElement.insertBefore(clonedNode, nextSibling);
+                    } else {
+                        this.targetElement.appendChild(clonedNode);
+                    }
+                });
+            }
+            
+            handleNestedMutation(mutation) {
+                console.log('🏠 Handling nested mutation');
+                
+                const correspondingTarget = this.findCorrespondingNestedElement(mutation.target);
+                if (!correspondingTarget) {
+                    console.log('⚠️ Could not find corresponding target, doing full resync');
+                    this.mirrorAllChildren(this.nodeFilter);
+                    return;
+                }
+                
+                // Handle removed nodes
+                mutation.removedNodes.forEach((removedNode, index) => {
+                    if (!this.nodeFilter(removedNode)) return;
+                    
+                    console.log('❌ Removing nested child:', removedNode);
+                    const correspondingNode = this.findCorrespondingNestedRemovedNode(mutation, index, correspondingTarget);
+                    if (correspondingNode && correspondingNode.parentNode === correspondingTarget) {
+                        console.log('🗑️ Removing corresponding nested node:', correspondingNode);
+                        correspondingTarget.removeChild(correspondingNode);
+                    } else {
+                        console.log('⚠️ Could not find corresponding nested node for removal');
+                    }
+                });
+                
+                // Handle added nodes
+                mutation.addedNodes.forEach(addedNode => {
+                    if (!this.nodeFilter(addedNode)) return;
+                    
+                    console.log('➕ Adding nested child:', addedNode);
+                    const clonedNode = addedNode.cloneNode(true);
+                    const nextSibling = this.findNextSiblingInParent(
+                        addedNode,
+                        mutation.target,
+                        correspondingTarget,
+                        this.nodeFilter
+                    );
+                    
+                    if (nextSibling) {
+                        correspondingTarget.insertBefore(clonedNode, nextSibling);
+                    } else {
+                        correspondingTarget.appendChild(clonedNode);
+                    }
+                });
+            }
+            
+            findCorrespondingRemovedNode(mutation, removedIndex) {
+                // Use previousSibling information to find the right position
+                const previousSibling = mutation.previousSibling;
+                console.log('🔍 Finding removed node using previousSibling:', previousSibling);
+                
+                if (previousSibling) {
+                    const correspondingPrevious = this.findCorrespondingNode(previousSibling, this.nodeFilter);
+                    if (correspondingPrevious && correspondingPrevious.nextSibling) {
+                        return correspondingPrevious.nextSibling;
+                    }
+                }
+                
+                // Fallback: use nextSibling
+                const nextSibling = mutation.nextSibling;
+                if (nextSibling) {
+                    const correspondingNext = this.findCorrespondingNode(nextSibling, this.nodeFilter);
+                    if (correspondingNext && correspondingNext.previousSibling) {
+                        return correspondingNext.previousSibling;
+                    }
+                }
+                
+                // Final fallback: assume it's the first/last child
+                const targetChildren = Array.from(this.targetElement.childNodes).filter(this.nodeFilter);
+                return targetChildren[removedIndex] || targetChildren[targetChildren.length - 1];
+            }
+            
+            findCorrespondingNestedRemovedNode(mutation, removedIndex, correspondingTarget) {
+                const previousSibling = mutation.previousSibling;
+                console.log('🔍 Finding nested removed node using previousSibling:', previousSibling);
+                
+                if (previousSibling) {
+                    const correspondingPrevious = this.findCorrespondingNodeInParent(
+                        previousSibling, 
+                        mutation.target, 
+                        correspondingTarget, 
+                        this.nodeFilter
+                    );
+                    if (correspondingPrevious && correspondingPrevious.nextSibling) {
+                        return correspondingPrevious.nextSibling;
+                    }
+                }
+                
+                const nextSibling = mutation.nextSibling;
+                if (nextSibling) {
+                    const correspondingNext = this.findCorrespondingNodeInParent(
+                        nextSibling, 
+                        mutation.target, 
+                        correspondingTarget, 
+                        this.nodeFilter
+                    );
+                    if (correspondingNext && correspondingNext.previousSibling) {
+                        return correspondingNext.previousSibling;
+                    }
+                }
+                
+                const targetChildren = Array.from(correspondingTarget.childNodes).filter(this.nodeFilter);
+                return targetChildren[removedIndex] || targetChildren[targetChildren.length - 1];
+            }
+            
+            // ... (rest of the methods remain the same)
+            findCorrespondingNode(sourceNode, nodeFilter = () => true) {
+                const sourceChildren = Array.from(this.sourceElement.childNodes);
+                const sourceIndex = sourceChildren.indexOf(sourceNode);
+                if (sourceIndex === -1) return null;
+                
+                const filteredSourceIndex = sourceChildren
+                    .slice(0, sourceIndex)
+                    .filter(nodeFilter)
+                    .length;
+                
+                const targetChildren = Array.from(this.targetElement.childNodes);
+                return targetChildren[filteredSourceIndex] || null;
+            }
+            
+            findNextSiblingInTarget(sourceNode, nodeFilter) {
+                const sourceChildren = Array.from(this.sourceElement.childNodes);
+                const sourceIndex = sourceChildren.indexOf(sourceNode);
+                
+                const filteredNodesBeforeInsertion = sourceChildren
+                    .slice(0, sourceIndex + 1)
+                    .filter(nodeFilter)
+                    .length;
+                
+                const targetChildren = Array.from(this.targetElement.childNodes);
+                return targetChildren[filteredNodesBeforeInsertion] || null;
+            }
+            
+            findCorrespondingNestedElement(sourceElement) {
+                const path = [];
+                let current = sourceElement;
+                
+                while (current && current !== this.sourceElement) {
+                    const parent = current.parentElement;
+                    if (!parent) break;
+                    
+                    const siblings = Array.from(parent.children);
+                    const index = siblings.indexOf(current);
+                    path.unshift(index);
+                    current = parent;
+                }
+                
+                if (current !== this.sourceElement) {
+                    return null;
+                }
+                
+                let targetCurrent = this.targetElement;
+                for (const index of path) {
+                    const children = Array.from(targetCurrent.children);
+                    if (index >= children.length) {
+                        return null;
+                    }
+                    targetCurrent = children[index];
+                }
+                
+                return targetCurrent;
+            }
+            
+            findCorrespondingNodeInParent(sourceNode, sourceParent, targetParent, nodeFilter) {
+                const sourceChildren = Array.from(sourceParent.childNodes);
+                const sourceIndex = sourceChildren.indexOf(sourceNode);
+                if (sourceIndex === -1) return null;
+                
+                const filteredSourceIndex = sourceChildren
+                    .slice(0, sourceIndex)
+                    .filter(nodeFilter)
+                    .length;
+                
+                const targetChildren = Array.from(targetParent.childNodes);
+                return targetChildren[filteredSourceIndex] || null;
+            }
+            
+            findNextSiblingInParent(sourceNode, sourceParent, targetParent, nodeFilter) {
+                const sourceChildren = Array.from(sourceParent.childNodes);
+                const sourceIndex = sourceChildren.indexOf(sourceNode);
+                
+                const filteredNodesBeforeInsertion = sourceChildren
+                    .slice(0, sourceIndex + 1)
+                    .filter(nodeFilter)
+                    .length;
+                
+                const targetChildren = Array.from(targetParent.childNodes);
+                return targetChildren[filteredNodesBeforeInsertion] || null;
+            }
+            
+            dispose() {
+                if (this.isDisposed) return;
+                this.mutationObserver.disconnect();
+                this.isDisposed = true;
+            }
+        }
+
+        // Initialize the mirror
+        const sourceElement = document.getElementById('source');
+        const targetElement = document.getElementById('target');
+        const logElement = document.getElementById('log');
+        
+        const mirror = new ChildrenMirror(sourceElement, targetElement, {
+            nodeFilter: (node) => node.nodeType === Node.ELEMENT_NODE,
+            subtree: true // Enable nested observation
+        });
+
+        let itemCounter = 4;
+        
+        function log(message) {
+            console.log(message);
+            logElement.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        window.removeThis = function(element) {
+            log(`Removing element: ${element.textContent}`);
+            element.parentNode.removeChild(element);
+        };
+        
+        window.addDirectChild = function() {
+            const newItem = document.createElement('div');
+            newItem.className = 'test-item';
+            newItem.textContent = `Direct Item ${itemCounter++} (click to remove)`;
+            newItem.onclick = () => removeThis(newItem);
+            sourceElement.appendChild(newItem);
+            log(`Added direct child: ${newItem.textContent}`);
+        };
+        
+        window.addNestedChild = function() {
+            const container = sourceElement.querySelector('.nested-container');
+            if (container) {
+                const newItem = document.createElement('div');
+                newItem.className = 'nested-item';
+                newItem.textContent = `Nested Item ${itemCounter++} (click to remove)`;
+                newItem.onclick = () => removeThis(newItem);
+                container.appendChild(newItem);
+                log(`Added nested child: ${newItem.textContent}`);
+            }
+        };
+        
+        window.removeFirstDirect = function() {
+            const firstDirect = sourceElement.querySelector('.test-item');
+            if (firstDirect) {
+                log(`Removing first direct: ${firstDirect.textContent}`);
+                firstDirect.parentNode.removeChild(firstDirect);
+            }
+        };
+        
+        window.removeFirstNested = function() {
+            const firstNested = sourceElement.querySelector('.nested-item');
+            if (firstNested) {
+                log(`Removing first nested: ${firstNested.textContent}`);
+                firstNested.parentNode.removeChild(firstNested);
+            }
+        };
+        
+        window.clearAll = function() {
+            log('Clearing all children from source');
+            while (sourceElement.firstChild) {
+                sourceElement.removeChild(sourceElement.firstChild);
+            }
+        };
+        
+        window.logStructure = function() {
+            log('=== CURRENT STRUCTURE ===');
+            log('Source children count: ' + sourceElement.children.length);
+            log('Target children count: ' + targetElement.children.length);
+            log('========================');
+        };
+
+        // Initial log
+        log('Children Mirror Removal Test initialized');
+        window.logStructure();
+    </script>
+</body>
+</html> 

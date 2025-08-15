@@ -35,6 +35,7 @@ describe("JSDOMRunner", () => {
       "http://example.com/index.html",
       `
 <m-cube onclick="this.setAttribute('color', 'red');"></m-cube>
+<svg><defs><linearGradient><feDropShadow></feDropShadow></linearGradient></defs></svg>
 <m-sphere id="my-sphere"></m-sphere>
 <m-group id="my-group"></m-group>
 <script>

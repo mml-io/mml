@@ -65,11 +65,12 @@ declare global {
 
     fullScreenMMLScene.init(graphicsAdapter);
 
-    const useIframe = new URL(window.location.href).searchParams.get("iframe") === "true";
+    const useIframe = scriptUrl.searchParams.get("iframe") === "true";
 
     let targetForWrappers: HTMLElement;
     let windowTarget: Window;
 
+    console.log("useIframe", useIframe);
     if (useIframe) {
       const { iframeWindow, iframeBody } = await IframeWrapper.create();
       windowTarget = iframeWindow;

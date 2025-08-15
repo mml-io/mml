@@ -9,6 +9,7 @@ export * from "./ThreeJSInteraction";
 export * from "./ThreeJSLabel";
 export * from "./ThreeJSLight";
 export * from "./ThreeJSLink";
+export * from "./ThreeJSOverlay";
 export * from "./ThreeJSMElement";
 export * from "./ThreeJSModel";
 export * from "./ThreeJSPlane";

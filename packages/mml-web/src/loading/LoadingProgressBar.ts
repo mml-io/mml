@@ -55,14 +55,14 @@ export class LoadingProgressBar {
       }
     });
 
-    this.debugLabel = document.createElement("label");
-    this.debugLabel.textContent = "Debug loading";
-    this.debugLabel.style.fontFamily = "sans-serif";
-    this.debugLabel.style.padding = "5px";
-    this.debugLabel.style.display = "inline-block";
-    this.debugLabel.style.userSelect = "none";
-    this.debugLabel.append(this.debugCheckbox);
     if (this.showDebugLoading) {
+      this.debugLabel = document.createElement("label");
+      this.debugLabel.textContent = "Debug loading";
+      this.debugLabel.style.fontFamily = "sans-serif";
+      this.debugLabel.style.padding = "5px";
+      this.debugLabel.style.display = "inline-block";
+      this.debugLabel.style.userSelect = "none";
+      this.debugLabel.append(this.debugCheckbox);
       this.progressDebugView.append(this.debugLabel);
     }
 

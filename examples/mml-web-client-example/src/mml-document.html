@@ -1,12 +1,437 @@
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
 <m-light type="spotlight" intensity="900" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
-<m-cube y="2" id="my-cube" color="red"></m-cube>
+<m-cube y="2" id="my-cube" onclick="doClick()" color="red"></m-cube>
+
+<m-overlay anchor="bottom-right" offset-x="-100" offset-y="-50">
+  <div>
+    <svg viewBox="0 0 240 180" width="240" height="180" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Button gradient -->
+        <linearGradient id="buttonGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#f0f0f0;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#d0d0d0;stop-opacity:1" />
+        </linearGradient>
+
+        <!-- Button hover gradient -->
+        <linearGradient id="buttonHoverGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#e0e0e0;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#c0c0c0;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+
+      <!-- Panel background -->
+      <rect x="0" y="0" width="240" height="180" fill="#2a2a2a" stroke="#666" stroke-width="2" rx="8" />
+
+      <foreignObject class="node" x="46" y="22" width="100" height="100" style="border:1px green solid">
+        <iframe src="https://www.example.com" style="width:100%;height:100%;"></iframe>
+      </foreignObject>
+      <!-- Panel title -->
+      <text x="120" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">
+        CUBE CONTROL PANEL
+      </text>
+
+      <!-- Color control section -->
+      <text x="10" y="40" font-family="Arial, sans-serif" font-size="12" fill="#ccc">Colors:</text>
+
+      <!-- Color buttons -->
+      <g id="color-red" class="color-button" style="cursor: pointer;">
+        <rect x="10" y="45" width="30" height="25" fill="#ff4444" stroke="#fff" stroke-width="1" rx="3" />
+        <text x="25" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#fff">RED</text>
+      </g>
+
+      <g id="color-green" class="color-button" style="cursor: pointer;">
+        <rect x="45" y="45" width="30" height="25" fill="#44ff44" stroke="#fff" stroke-width="1" rx="3" />
+        <text x="60" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#000">GREEN</text>
+      </g>
+
+      <g id="color-blue" class="color-button" style="cursor: pointer;">
+        <rect x="80" y="45" width="30" height="25" fill="#4444ff" stroke="#fff" stroke-width="1" rx="3" />
+        <text x="95" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#fff">BLUE</text>
+      </g>
+
+      <g id="color-yellow" class="color-button" style="cursor: pointer;">
+        <rect x="115" y="45" width="30" height="25" fill="#ffff44" stroke="#fff" stroke-width="1" rx="3" />
+        <text x="130" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#000">YELLOW</text>
+      </g>
+
+      <g id="color-purple" class="color-button" style="cursor: pointer;">
+        <rect x="150" y="45" width="30" height="25" fill="#ff44ff" stroke="#fff" stroke-width="1" rx="3" />
+        <text x="165" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#fff">PURPLE</text>
+      </g>
+
+      <g id="color-orange" class="color-button" style="cursor: pointer;">
+        <rect x="185" y="45" width="30" height="25" fill="#ff8844" stroke="#fff" stroke-width="1" rx="3" />
+        <text x="200" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#000">ORANGE</text>
+      </g>
+
+      <!-- Position control section -->
+      <text x="10" y="90" font-family="Arial, sans-serif" font-size="12" fill="#ccc">Position:</text>
+
+      <!-- Random position button -->
+      <g id="random-position" class="control-button" style="cursor: pointer;">
+        <rect x="10" y="95" width="100" height="30" fill="url(#buttonGradient)" stroke="#888" stroke-width="1" rx="5" />
+        <text x="60" y="113" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#333">
+          RANDOM POS
+        </text>
+      </g>
+
+      <!-- Reset position button -->
+      <g id="reset-position" class="control-button" style="cursor: pointer;">
+        <rect x="120" y="95" width="100" height="30" fill="url(#buttonGradient)" stroke="#888" stroke-width="1" rx="5" />
+        <text x="170" y="113" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#333">
+          RESET POS
+        </text>
+      </g>
+
+      <!-- Height control section -->
+      <text x="10" y="145" font-family="Arial, sans-serif" font-size="12" fill="#ccc">Height:</text>
+
+      <!-- Height up button -->
+      <g id="height-up" class="control-button" style="cursor: pointer;">
+        <rect x="10" y="150" width="50" height="25" fill="url(#buttonGradient)" stroke="#888" stroke-width="1" rx="3" />
+        <text x="35" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333">UP</text>
+      </g>
+
+      <!-- Height down button -->
+      <g id="height-down" class="control-button" style="cursor: pointer;">
+        <rect x="65" y="150" width="50" height="25" fill="url(#buttonGradient)" stroke="#888" stroke-width="1" rx="3" />
+        <text x="90" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333">DOWN</text>
+      </g>
+
+      <!-- Height reset button -->
+      <g id="height-reset" class="control-button" style="cursor: pointer;">
+        <rect x="120" y="150" width="50" height="25" fill="url(#buttonGradient)" stroke="#888" stroke-width="1" rx="3" />
+        <text x="145" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333">RESET</text>
+      </g>
+
+      <!-- Status display -->
+      <text id="cube-status" x="10" y="175" font-family="Arial, sans-serif" font-size="10" fill="#aaa">
+        Status: Ready
+      </text>
+    </svg>
+  </div>
+</m-overlay>
+
+<m-overlay anchor="top-left">
+  <div style="color: white; padding: 10px; width: 300px; height: 150px; display: block;">
+    <svg viewBox="0 0 600 160" width="600" height="160" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Gradient for the health fill -->
+        <linearGradient id="healthGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#00ff41;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#32cd32;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#228b22;stop-opacity:1" />
+        </linearGradient>
+
+        <!-- Gradient for low health -->
+        <linearGradient id="lowHealthGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#ff4444;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#ff6666;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#cc0000;stop-opacity:1" />
+        </linearGradient>
+
+        <!-- Shine effect gradient -->
+        <linearGradient id="shineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.6" />
+          <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0.2" />
+          <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.1" />
+        </linearGradient>
+
+        <!-- Background gradient -->
+        <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#333333;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#111111;stop-opacity:1" />
+        </linearGradient>
+
+        <!-- Glow filter -->
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+
+        <!-- Pulse animation for low health -->
+        <filter id="pulse" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+
+        <!-- Logo gradient -->
+        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#ffff00;stop-opacity:1" />
+          <stop offset="30%" style="stop-color:#ffa500;stop-opacity:1" />
+          <stop offset="70%" style="stop-color:#ff6600;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#ff0000;stop-opacity:1" />
+        </linearGradient>
+
+        <!-- Logo shadow gradient -->
+        <linearGradient id="logoShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#000000;stop-opacity:0.8" />
+          <stop offset="100%" style="stop-color:#333333;stop-opacity:0.6" />
+        </linearGradient>
+
+        <!-- Chrome effect gradient -->
+        <linearGradient id="chromeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
+          <stop offset="25%" style="stop-color:#cccccc;stop-opacity:0.7" />
+          <stop offset="50%" style="stop-color:#999999;stop-opacity:0.5" />
+          <stop offset="75%" style="stop-color:#666666;stop-opacity:0.7" />
+          <stop offset="100%" style="stop-color:#333333;stop-opacity:0.9" />
+        </linearGradient>
+
+        <!-- Logo glow filter -->
+        <filter id="logoGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#ffaa00" flood-opacity="0.8"/>
+          <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.5"/>
+        </filter>
+      </defs>
+
+      <!-- GAME LOGO -->
+      <g transform="translate(300, 30)" onclick="doClick()">
+        <!-- Logo background/shadow -->
+        <text id="game-name-shadow" x="2" y="32" text-anchor="middle" font-family="Impact, Arial Black, sans-serif"
+              font-size="24" font-weight="900" fill="url(#logoShadow)" opacity="0.7">
+          BANTERBUS
+        </text>
+        <text x="2" y="52" text-anchor="middle" font-family="Impact, Arial Black, sans-serif"
+              font-size="16" font-weight="900" fill="url(#logoShadow)" opacity="0.7">
+          TYCOON
+        </text>
+
+        <!-- Main logo text -->
+        <text id="game-name" x="0" y="30" text-anchor="middle" font-family="Impact, Arial Black, sans-serif"
+              font-size="24" font-weight="900" fill="url(#logoGradient)"
+              stroke="#000" stroke-width="0.5" filter="url(#logoGlow)">
+          BANTERBUS
+          <animate attributeName="opacity" values="0;1;1" dur="1s" begin="0.5s"/>
+          <animateTransform attributeName="transform" type="scale"
+                            values="0.8;1.1;1" dur="1s" begin="0.5s"/>
+        </text>
+        <text x="0" y="50" text-anchor="middle" font-family="Impact, Arial Black, sans-serif"
+              font-size="16" font-weight="900" fill="url(#chromeGradient)"
+              stroke="#333" stroke-width="0.3" filter="url(#logoGlow)">
+          TYCOON
+          <animate attributeName="opacity" values="0;1;1" dur="1s" begin="0.8s"/>
+          <animateTransform attributeName="transform" type="scale"
+                            values="0.8;1.1;1" dur="1s" begin="0.8s"/>
+        </text>
+
+        <!-- Decorative elements -->
+        <g opacity="0.8">
+          <!-- Left wing -->
+          <path d="M -120 20 Q -100 15 -80 25 Q -90 30 -110 25 Z"
+                fill="url(#logoGradient)" opacity="0.6">
+            <animateTransform attributeName="transform" type="rotate"
+                              values="0;5;0" dur="3s" repeatCount="indefinite"/>
+          </path>
+          <!-- Right wing -->
+          <path d="M 120 20 Q 100 15 80 25 Q 90 30 110 25 Z"
+                fill="url(#logoGradient)" opacity="0.6">
+            <animateTransform attributeName="transform" type="rotate"
+                              values="0;-5;0" dur="3s" repeatCount="indefinite"/>
+          </path>
+
+          <!-- Bus icon elements -->
+          <rect x="-140" y="35" width="20" height="12" rx="2" fill="#ffaa00" opacity="0.7"/>
+          <circle cx="-135" cy="47" r="3" fill="#333"/>
+          <circle cx="-125" cy="47" r="3" fill="#333"/>
+
+          <rect x="120" y="35" width="20" height="12" rx="2" fill="#ffaa00" opacity="0.7"/>
+          <circle cx="125" cy="47" r="3" fill="#333"/>
+          <circle cx="135" cy="47" r="3" fill="#333"/>
+        </g>
+
+        <!-- Sparkle effects -->
+        <g opacity="0.8">
+          <text x="-60" y="15" font-size="12" fill="#ffff00">★</text>
+          <text x="65" y="15" font-size="12" fill="#ffff00">★</text>
+          <text x="-45" y="60" font-size="8" fill="#ff6600">✦</text>
+          <text x="50" y="60" font-size="8" fill="#ff6600">✦</text>
+
+          <animateTransform attributeName="transform" type="rotate"
+                            values="0;360" dur="20s" repeatCount="indefinite"/>
+        </g>
+      </g>
+
+      <!-- Health Bar Container -->
+      <g transform="translate(150, 105)">
+        <!-- Background border -->
+        <rect x="-5" y="-5" width="310" height="40" rx="8" ry="8"
+              fill="none" stroke="#666" stroke-width="2" filter="url(#glow)"/>
+
+        <!-- Background -->
+        <rect x="0" y="0" width="300" height="30" rx="5" ry="5" fill="url(#bgGradient)"/>
+
+        <!-- Health fill (75% health) -->
+        <rect x="2" y="2" width="221" height="26" rx="3" ry="3" fill="url(#healthGradient)">
+          <animate attributeName="width" values="0;221;221" dur="2s" begin="0s"/>
+          <animateTransform attributeName="transform" type="scale"
+                            values="1,1;1.02,1.02;1,1" dur="3s" repeatCount="indefinite"/>
+        </rect>
+
+        <!-- Shine effect -->
+        <rect x="2" y="2" width="221" height="13" rx="3" ry="3" fill="url(#shineGradient)">
+          <animate attributeName="width" values="0;221;221" dur="2s" begin="0s"/>
+        </rect>
+
+        <!-- Moving highlight effect -->
+        <rect x="0" y="2" width="20" height="26" rx="3" ry="3" fill="url(#shineGradient)" opacity="0.8">
+          <animateTransform attributeName="transform" type="translateX"
+                            values="-20;320;-20" dur="4s" repeatCount="indefinite"/>
+        </rect>
+
+        <!-- Health segments/notches -->
+        <g stroke="#000" stroke-width="1" opacity="0.3">
+          <line x1="60" y1="2" x2="60" y2="28"/>
+          <line x1="120" y1="2" x2="120" y2="28"/>
+          <line x1="180" y1="2" x2="180" y2="28"/>
+          <line x1="240" y1="2" x2="240" y2="28"/>
+        </g>
+      </g>
+
+      <!-- Health text -->
+      <text x="300" y="150" text-anchor="middle" font-family="Arial, sans-serif"
+            font-size="14" font-weight="bold" fill="#fff" filter="url(#glow)">
+        HP: 75/100
+        <animate attributeName="opacity" values="0;1;1" dur="2.5s" begin="0s"/>
+      </text>
+
+      <!-- Health icon -->
+      <g transform="translate(115, 110)">
+        <circle cx="10" cy="10" r="8" fill="#ff4444" stroke="#fff" stroke-width="2"/>
+        <rect x="7" y="6" width="6" height="2" fill="#fff"/>
+        <rect x="9" y="4" width="2" height="6" fill="#fff"/>
+      </g>
+    </svg>
+  </div>
+</m-overlay>
 
 <script>
   let toggle = false;
   const myCube = document.getElementById("my-cube");
-  myCube.addEventListener("click", () => {
+  const gameName = document.getElementById("game-name");
+  const gameNameShadow = document.getElementById("game-name-shadow");
+  const cubeStatus = document.getElementById("cube-status");
+
+  // Original click function for the logo/cube
+  function doClick() {
     toggle = !toggle;
     myCube.setAttribute("color", toggle ? "green" : "red");
+    gameName.childNodes[0].textContent = toggle ? "BANTERBUS" : "SUBRETNAB";
+    gameNameShadow.childNodes[0].textContent = toggle ? "BANTERBUS" : "SUBRETNAB";
+    updateStatus("Logo clicked!");
+  }
+
+  // Update status display
+  function updateStatus(message) {
+    cubeStatus.textContent = `Status: ${message}`;
+    setTimeout(() => {
+      cubeStatus.textContent = "Status: Ready";
+    }, 2000);
+  }
+
+  // Color control buttons
+  document.getElementById("color-red").addEventListener("click", () => {
+    myCube.setAttribute("color", "red");
+    updateStatus("Color set to red");
   });
+
+  document.getElementById("color-green").addEventListener("click", () => {
+    myCube.setAttribute("color", "green");
+    updateStatus("Color set to green");
+  });
+
+  document.getElementById("color-blue").addEventListener("click", () => {
+    myCube.setAttribute("color", "blue");
+    updateStatus("Color set to blue");
+  });
+
+  document.getElementById("color-yellow").addEventListener("click", () => {
+    myCube.setAttribute("color", "yellow");
+    updateStatus("Color set to yellow");
+  });
+
+  document.getElementById("color-purple").addEventListener("click", () => {
+    myCube.setAttribute("color", "purple");
+    updateStatus("Color set to purple");
+  });
+
+  document.getElementById("color-orange").addEventListener("click", () => {
+    myCube.setAttribute("color", "orange");
+    updateStatus("Color set to orange");
+  });
+
+  // Position control buttons
+  document.getElementById("random-position").addEventListener("click", () => {
+    const randomX = Math.floor(Math.random() * 20) - 10; // -10 to 10
+    const randomZ = Math.floor(Math.random() * 20) - 10; // -10 to 10
+    myCube.setAttribute("x", randomX);
+    myCube.setAttribute("z", randomZ);
+    updateStatus(`Random position: x=${randomX}, z=${randomZ}`);
+  });
+
+  document.getElementById("reset-position").addEventListener("click", () => {
+    myCube.setAttribute("x", "0");
+    myCube.setAttribute("z", "0");
+    updateStatus("Position reset to center");
+  });
+
+  // Height control buttons
+  document.getElementById("height-up").addEventListener("click", () => {
+    const currentY = parseFloat(myCube.getAttribute("y") || "2");
+    const newY = currentY + 1;
+    myCube.setAttribute("y", newY);
+    updateStatus(`Height increased to ${newY}`);
+  });
+
+  document.getElementById("height-down").addEventListener("click", () => {
+    const currentY = parseFloat(myCube.getAttribute("y") || "2");
+    const newY = Math.max(0.5, currentY - 1); // Don't go below 0.5
+    myCube.setAttribute("y", newY);
+    updateStatus(`Height decreased to ${newY}`);
+  });
+
+  document.getElementById("height-reset").addEventListener("click", () => {
+    myCube.setAttribute("y", "2");
+    updateStatus("Height reset to 2");
+  });
+
+  // Add hover effects for buttons
+  function addHoverEffect(buttonId) {
+    const button = document.getElementById(buttonId);
+    const rect = button.querySelector("rect");
+
+    button.addEventListener("mouseenter", () => {
+      rect.setAttribute("opacity", "0.8");
+    });
+
+    button.addEventListener("mouseleave", () => {
+      rect.setAttribute("opacity", "1");
+    });
+  }
+
+  // Apply hover effects to control buttons
+  ["random-position", "reset-position", "height-up", "height-down", "height-reset"].forEach(addHoverEffect);
+
+  // Apply hover effects to color buttons
+  ["color-red", "color-green", "color-blue", "color-yellow", "color-purple", "color-orange"].forEach(buttonId => {
+    const button = document.getElementById(buttonId);
+    const rect = button.querySelector("rect");
+
+    button.addEventListener("mouseenter", () => {
+      rect.setAttribute("stroke-width", "2");
+    });
+
+    button.addEventListener("mouseleave", () => {
+      rect.setAttribute("stroke-width", "1");
+    });
+  });
+
+  // Initialize status
+  updateStatus("Control panel loaded");
 </script>
