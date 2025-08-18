@@ -18,7 +18,11 @@
     "print-links": "echo \"Run this command in the package you would like to link this repo's packages to:\n\"; echo \"npm link\" $(lerna ls --loglevel=error)",
     "version": "lerna version --no-push --force-publish",
     "ci:e2e-tests": "lerna run --stream ci:e2e-tests",
-    "e2e-tests": "lerna run --stream e2e-tests"
+    "ci:e2e-tests:threejs": "lerna run --stream ci:e2e-tests:threejs",
+    "ci:e2e-tests:playcanvas": "lerna run --stream ci:e2e-tests:playcanvas",
+    "e2e-tests": "lerna run --stream e2e-tests",
+    "e2e-tests:threejs": "lerna run --stream e2e-tests:threejs",
+    "e2e-tests:playcanvas": "lerna run --stream e2e-tests:playcanvas"
   },
   "workspaces": [
     "packages/**/*",

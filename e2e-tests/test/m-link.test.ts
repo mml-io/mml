@@ -1,6 +1,6 @@
 import * as puppeteer from "puppeteer";
 
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-link", () => {
   test("visible and clickable", async () => {
@@ -8,7 +8,7 @@ describe("m-link", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-link-test.html/reset");
+    await navigateToTestPage(page, "m-link-test.html/reset");
 
     await page.waitForSelector("m-link");
 

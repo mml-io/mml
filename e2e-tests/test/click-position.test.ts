@@ -1,4 +1,4 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-plane position click", () => {
   test("can get right position on click", async () => {
@@ -6,7 +6,7 @@ describe("m-plane position click", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/click-position-test.html/reset");
+    await navigateToTestPage(page, "click-position-test.html/reset");
 
     await page.waitForSelector("m-plane");
 
@@ -49,7 +49,7 @@ describe("m-plane position click", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/click-position-test.html/reset");
+    await navigateToTestPage(page, "click-position-test.html/reset");
 
     await page.waitForSelector("m-plane");
 

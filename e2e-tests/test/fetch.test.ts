@@ -1,10 +1,12 @@
+import { navigateToTestPage } from "./testing-utils";
+
 describe("fetch", () => {
   test("fetch-ed content", async () => {
     const page = await __BROWSER_GLOBAL__.newPage();
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/fetch-test.html/reset");
+    await navigateToTestPage(page, "fetch-test.html/reset");
 
     const textSelector = await page.waitForSelector("m-label");
     const fullTitle = await textSelector?.evaluate((el) => el.getAttribute("content"));

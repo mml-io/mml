@@ -1,4 +1,4 @@
-import { Matr4 } from "../math";
+import { Matr4, Vect3 } from "../math";
 import { MMLGraphicsInterface } from "../scene";
 import { TagDebugGraphicsAdapter } from "./StandaloneTagDebugAdapter";
 import { TagDebugAdapterDebugHelper } from "./TagDebugAdapterDebugHelper";
@@ -95,6 +95,15 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
     {
       getWorldMatrix: () => {
         return new Matr4();
+      },
+      getWorldPosition: () => {
+        return new Vect3(0, 0, 0);
+      },
+      getLocalPosition: () => {
+        return new Vect3(0, 0, 0);
+      },  
+      getVisible: () => {
+        return true;
       },
     },
   ),

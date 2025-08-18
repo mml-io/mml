@@ -1,4 +1,4 @@
-import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-attr-anim precedence", () => {
   test("animations are used in order of precedence", async () => {
@@ -6,7 +6,7 @@ describe("m-attr-anim precedence", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/attr-anim-precedence.html/reset");
+    await navigateToTestPage(page, "attr-anim-precedence.html/reset");
 
     await page.waitForSelector("m-attr-anim[attr='x']");
 
@@ -23,7 +23,7 @@ describe("m-attr-anim precedence", () => {
 
     for (const [id, expectedX] of Object.entries(expectedXPositions)) {
       const actualX = await page.evaluate((id) => {
-        return (document.querySelector(`#${id}`) as any).getContainer().position.x;
+        return (document.querySelector(`#${id}`) as any).getLocalPosition().x;
       }, id);
 
       expect(`${id}: ${actualX}`).toEqual(`${id}: ${expectedX}`);

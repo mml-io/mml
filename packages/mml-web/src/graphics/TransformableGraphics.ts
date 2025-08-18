@@ -1,5 +1,6 @@
 import { TransformableElement, TransformableElementProps } from "../elements";
 import { Matr4 } from "../math/Matr4";
+import { IVect3 } from "../math/Vect3";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class TransformableGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
@@ -7,6 +8,10 @@ export abstract class TransformableGraphics<G extends GraphicsAdapter = Graphics
   constructor(element: TransformableElement<G>) {}
 
   abstract getWorldMatrix(): Matr4;
+
+  abstract getWorldPosition(): IVect3;
+
+  abstract getLocalPosition(): IVect3;
 
   abstract setSocket(
     socket: string | null,
@@ -39,6 +44,8 @@ export abstract class TransformableGraphics<G extends GraphicsAdapter = Graphics
   abstract setScaleY(scaleY: number, transformableElementProps: TransformableElementProps): void;
 
   abstract setScaleZ(scaleZ: number, transformableElementProps: TransformableElementProps): void;
+
+  abstract getVisible(): boolean;
 
   abstract setVisible(visible: boolean, transformableElementProps: TransformableElementProps): void;
 

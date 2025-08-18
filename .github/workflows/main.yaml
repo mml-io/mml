@@ -79,7 +79,7 @@ jobs:
       - name: Lint
         run: npm run lint-all
 
-  e2e-test:
+  e2e-test-playcanvas:
     name: End-to-end Test
     needs: build
     runs-on: ubuntu-latest
@@ -101,18 +101,49 @@ jobs:
         uses: ./.github/actions/retrieve-deps-and-build
 
       - name: End to End Test
-        run: npm run ci:e2e-tests
+        run: npm run ci:e2e-tests:playcanvas
 
       - name: Upload End to End Test Images
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: images
-          path: e2e-tests/test/__image_snapshots__/
+          name: images-playcanvas
+          path: e2e-tests/test/__image_snapshots__/__diff_output__/
+
+  e2e-test-threejs:
+    name: End-to-end Test
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache
+          key: ${{ runner.os }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+
+      - name: "Retrieve Dependencies and Build Artifacts"
+        id: retrieve-deps-and-build
+        uses: ./.github/actions/retrieve-deps-and-build
+
+      - name: End to End Test
+        run: npm run ci:e2e-tests:threejs
+
+      - name: Upload End to End Test Images
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: images-threejs
+          path: e2e-tests/test/__image_snapshots__/__diff_output__/
 
   summary:
     name: Summary
-    needs: [build, test, type-check, lint, e2e-test]
+    needs: [build, test, type-check, lint, e2e-test-playcanvas, e2e-test-threejs]
     runs-on: ubuntu-latest
     steps:
       - name: Summary
@@ -121,7 +152,8 @@ jobs:
           echo "Test: ${{ needs.test.result }}"
           echo "Type Check: ${{ needs.type-check.result }}"
           echo "Lint: ${{ needs.lint.result }}"
-          echo "End-to-end Test: ${{ needs.e2e-test.result }}"
+          echo "End-to-end Test (PlayCanvas): ${{ needs.e2e-test-playcanvas.result }}"
+          echo "End-to-end Test (ThreeJS): ${{ needs.e2e-test-threejs.result }}"
 
   publish-gh-pages:
     name: Publish GitHub Pages

@@ -1,4 +1,9 @@
-import { clickElement, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import {
+  clickElement,
+  navigateToTestPage,
+  setDocumentTime,
+  takeAndCompareScreenshot,
+} from "./testing-utils";
 
 type ExpectedStates = { [key: string]: { x: number; height: number } };
 
@@ -8,14 +13,14 @@ describe("m-attr-lerp", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/attr-lerp.html/reset");
+    await navigateToTestPage(page, "attr-lerp.html/reset");
 
     await page.waitForSelector("m-attr-lerp[attr='x']");
 
     async function testExpectedStates(expectedStates: ExpectedStates) {
       for (const [id, expected] of Object.entries(expectedStates)) {
         const actualX = await page.evaluate((id) => {
-          return (document.querySelector(`#${id}`) as any).getContainer().position.x;
+          return (document.querySelector(`#${id}`) as any).getLocalPosition().x;
         }, id);
 
         const actualHeight = await page.evaluate((id) => {

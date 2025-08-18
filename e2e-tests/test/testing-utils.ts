@@ -20,6 +20,13 @@ declare global {
   }
 }
 
+// Get the current renderer from environment variable
+const CURRENT_RENDERER = (process.env.RENDERER || "threejs") as "threejs" | "playcanvas";
+
+function getRendererUrlSuffix(): string {
+  return CURRENT_RENDERER === "playcanvas" ? "?playcanvas" : "";
+}
+
 export async function clickElement(
   page: puppeteer.Page,
   selector: string,
@@ -60,10 +67,29 @@ export async function renderFrame(page: puppeteer.Page) {
   });
 }
 
+export async function navigateToTestPage(page: puppeteer.Page, testPath: string): Promise<void> {
+  const url = `http://localhost:7079/${testPath}${getRendererUrlSuffix()}`;
+  await page.goto(url);
+
+  // Wait for the debug globals to be set
+  await page.waitForFunction(
+    () => {
+      return window["mml-web-client"] !== undefined;
+    },
+    { timeout: 5000 },
+  );
+}
+
 export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold = 0.02) {
   await renderFrame(page);
   expect(await page.screenshot()).toMatchImageSnapshot({
     failureThresholdType: "percent",
     failureThreshold: threshold,
+    customSnapshotIdentifier: ({ defaultIdentifier }) => {
+      // Transform the default identifier to include renderer
+      // Default format: "test-file-ts-describe-block-test-name-1"
+      // New format: "test-file-ts-describe-block-test-name-1-{renderer}-snap"
+      return `${defaultIdentifier}-${CURRENT_RENDERER}-snap`;
+    },
   });
 }

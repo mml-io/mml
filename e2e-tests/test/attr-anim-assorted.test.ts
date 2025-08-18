@@ -1,4 +1,4 @@
-import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-attr-anim assorted", () => {
   test("assorted attributes are affected by animations", async () => {
@@ -6,7 +6,7 @@ describe("m-attr-anim assorted", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/attr-anim-assorted.html/reset");
+    await navigateToTestPage(page, "attr-anim-assorted.html/reset");
 
     await page.waitForSelector("m-attr-anim[attr='color']");
 

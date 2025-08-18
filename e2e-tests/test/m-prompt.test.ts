@@ -1,4 +1,4 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-prompt", () => {
   test("visible and clickable", async () => {
@@ -6,7 +6,7 @@ describe("m-prompt", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-prompt-test.html/reset");
+    await navigateToTestPage(page, "m-prompt-test.html/reset");
 
     await page.waitForSelector("m-prompt");
 

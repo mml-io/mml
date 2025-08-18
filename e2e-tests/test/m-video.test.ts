@@ -1,4 +1,4 @@
-import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-video", () => {
   test("videos paused at correct times", async () => {
@@ -6,17 +6,24 @@ describe("m-video", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-video-test.html/reset");
+    await navigateToTestPage(page, "m-video-test.html/reset");
 
     // Wait for the m-video content to load
     await page.waitForFunction(
       () => {
-        const { height, width } = (
-          document.querySelector("m-video") as any
-        ).videoGraphics!.getWidthAndHeight();
-        return width > 3 && height > 3;
+        return Array.from(document.querySelectorAll("m-video") as any).every((video: any) => {
+          if (video.getAttribute("enabled") === "false") {
+            // If the video is disabled, it's intentionally not loaded
+            return true;
+          }
+          if (!video || !video.videoGraphics) {
+            return false;
+          }
+          const { width, height } = video.videoGraphics.getWidthAndHeight();
+          return width > 1 || height > 1;
+        });
       },
-      { timeout: 30000, polling: 100 },
+      { timeout: 5000, polling: 100 },
     );
 
     await setDocumentTime(page, 10000);

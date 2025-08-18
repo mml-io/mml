@@ -1,4 +1,4 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-interaction", () => {
   test("visible and clickable", async () => {
@@ -6,7 +6,7 @@ describe("m-interaction", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-interaction-test.html/reset");
+    await navigateToTestPage(page, "m-interaction-test.html/reset");
 
     await page.waitForSelector("m-plane[color='yellow']");
 

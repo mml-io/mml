@@ -1,4 +1,4 @@
-import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("mml logo using m-attr-anim", () => {
   test("the mml logo is animated", async () => {
@@ -6,7 +6,7 @@ describe("mml logo using m-attr-anim", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/mml-logo.html/reset");
+    await navigateToTestPage(page, "mml-logo.html/reset");
 
     await page.waitForSelector("m-attr-anim[attr='x']");
 

@@ -1,4 +1,4 @@
-import { takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-model", () => {
   test("draco compression", async () => {
@@ -6,7 +6,7 @@ describe("m-model", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-model-draco-test.html/reset");
+    await navigateToTestPage(page, "m-model-draco-test.html/reset");
 
     await page.waitForSelector("m-model");
 

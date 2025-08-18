@@ -1,9 +1,11 @@
 import {
+  IVect3,
   Matr4,
   Matr4Data,
   Model,
   TransformableElement,
   TransformableGraphics,
+  Vect3,
 } from "@mml-io/mml-web";
 import * as THREE from "three";
 
@@ -23,6 +25,18 @@ export class ThreeJSTransformable extends TransformableGraphics<ThreeJSGraphicsA
     const container = this.getContainer();
     container.updateWorldMatrix(true, false);
     return new Matr4(container.matrixWorld.elements as Matr4Data);
+  }
+
+  getWorldPosition(): IVect3 {
+    return this.getContainer().getWorldPosition(new THREE.Vector3());
+  }
+
+  getLocalPosition(): IVect3 {
+    return this.getContainer().position;
+  }
+
+  getVisible(): boolean {
+    return this.getContainer().visible;
   }
 
   setVisible(visible: boolean): void {
