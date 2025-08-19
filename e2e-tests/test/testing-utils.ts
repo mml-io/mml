@@ -71,7 +71,7 @@ export async function navigateToTestPage(page: puppeteer.Page, testPath: string)
   const url = `http://localhost:7079/${testPath}${getRendererUrlSuffix()}`;
   await page.goto(url);
 
-  // Wait for the debug globals to be set
+  // Wait for the debug globals to be set to ensure the utils functions are available
   await page.waitForFunction(
     () => {
       return window["mml-web-client"] !== undefined;
@@ -86,9 +86,6 @@ export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold =
     failureThresholdType: "percent",
     failureThreshold: threshold,
     customSnapshotIdentifier: ({ defaultIdentifier }) => {
-      // Transform the default identifier to include renderer
-      // Default format: "test-file-ts-describe-block-test-name-1"
-      // New format: "test-file-ts-describe-block-test-name-1-{renderer}-snap"
       return `${defaultIdentifier}-${CURRENT_RENDERER}-snap`;
     },
   });
