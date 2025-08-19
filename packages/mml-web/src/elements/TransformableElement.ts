@@ -3,7 +3,7 @@ import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../at
 import { OrientedBoundingBox } from "../bounding-box";
 import { DebugHelper } from "../debug-helper";
 import { GraphicsAdapter, TransformableGraphics } from "../graphics";
-import { degToRad, Matr4, Quat } from "../math";
+import { degToRad, IVect3, Matr4, Quat, Vect3 } from "../math";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 
@@ -441,6 +441,18 @@ export abstract class TransformableElement<
       this.desiredVisible && !this.isDisabled(),
       this.transformableElementProps,
     );
+  }
+
+  public getVisible(): boolean {
+    return this.transformableElementGraphics?.getVisible() ?? false;
+  }
+
+  public getWorldPosition(): IVect3 {
+    return this.transformableElementGraphics?.getWorldPosition() ?? new Vect3(0, 0, 0);
+  }
+
+  public getLocalPosition(): IVect3 {
+    return this.transformableElementGraphics?.getLocalPosition() ?? new Vect3(0, 0, 0);
   }
 }
 

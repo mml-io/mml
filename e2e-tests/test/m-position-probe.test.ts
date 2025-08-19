@@ -1,4 +1,4 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-position-probe", () => {
   test("receives user positions", async () => {
@@ -6,7 +6,7 @@ describe("m-position-probe", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-position-probe-test.html/reset");
+    await navigateToTestPage(page, "m-position-probe-test.html/reset");
 
     await page.waitForSelector("m-position-probe");
 

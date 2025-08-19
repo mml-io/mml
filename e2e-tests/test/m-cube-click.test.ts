@@ -1,4 +1,4 @@
-import { takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-cube", () => {
   test("visible and clickable", async () => {
@@ -6,7 +6,7 @@ describe("m-cube", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-cube-test.html/reset");
+    await navigateToTestPage(page, "m-cube-test.html/reset");
 
     await page.waitForSelector("m-cube[color='red']");
 

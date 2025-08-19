@@ -1,4 +1,4 @@
-import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-attr-anim ping-pong", () => {
   test("animations can ping-pong", async () => {
@@ -6,7 +6,7 @@ describe("m-attr-anim ping-pong", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/attr-anim-ping-pong.html/reset");
+    await navigateToTestPage(page, "attr-anim-ping-pong.html/reset");
 
     await page.waitForSelector("m-attr-anim[attr='x']");
 
@@ -59,7 +59,7 @@ describe("m-attr-anim ping-pong", () => {
 
       for (const [id, expectedXForElementAtTimes] of Object.entries(expectedXPositions)) {
         const actualX = await page.evaluate((id) => {
-          return (document.querySelector(`#${id}`) as any).getContainer().position.x;
+          return (document.querySelector(`#${id}`) as any).getLocalPosition().x;
         }, id);
 
         const expectedX =

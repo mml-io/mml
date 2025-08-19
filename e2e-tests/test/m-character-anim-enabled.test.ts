@@ -1,4 +1,4 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-character", () => {
   test("animation enabled toggle", async () => {
@@ -6,7 +6,7 @@ describe("m-character", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-character-anim-test.html/reset");
+    await navigateToTestPage(page, "m-character-anim-test.html/reset");
 
     await page.waitForSelector("m-character");
 
@@ -15,9 +15,9 @@ describe("m-character", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).modelGraphics.hasLoadedModel() !== null &&
+          (character as any).modelGraphics.hasLoadedModel() &&
           (character as any).modelGraphics.getBoundingBox() !== null &&
-          (character as any).modelGraphics.hasLoadedAnimation() !== null
+          (character as any).modelGraphics.hasLoadedAnimation()
         );
       },
       { timeout: 30000, polling: 100 },
@@ -52,7 +52,7 @@ describe("m-character", () => {
     await page.waitForFunction(
       () => {
         const character = document.querySelector("m-character");
-        return (character as any).modelGraphics.hasLoadedAnimation() !== null;
+        return (character as any).modelGraphics.hasLoadedAnimation();
       },
       { timeout: 30000, polling: 100 },
     );
@@ -88,9 +88,9 @@ describe("m-character", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).modelGraphics.hasLoadedModel() !== null &&
+          (character as any).modelGraphics.hasLoadedModel() &&
           (character as any).modelGraphics.getBoundingBox() !== null &&
-          (character as any).modelGraphics.hasLoadedAnimation() !== null
+          (character as any).modelGraphics.hasLoadedAnimation()
         );
       },
       { timeout: 30000, polling: 100 },

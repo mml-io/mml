@@ -1,4 +1,4 @@
-import { takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-image drawing canvas", () => {
   test("canvas based m-image", async () => {
@@ -6,7 +6,7 @@ describe("m-image drawing canvas", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/canvas-test.html/reset");
+    await navigateToTestPage(page, "canvas-test.html/reset");
 
     await page.waitForFunction(
       () => {

@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "type-check": "tsc --noEmit",
-    "build": "tsx ./build.ts --build",
-    "iterate": "npm run build && npm run serve",
+    "iterate": "npm run serve",
     "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
-    "serve": "node --enable-source-maps ./build/index.js",
-    "ci:e2e-tests": "concurrently --max-processes 2 --success command-1 --kill-others \"NX_CACHE=false lerna run serve --scope e2e-tests\" \"npm run wait-for-ports && HEADLESS=true jest --runInBand\"",
-    "e2e-tests": "npm run wait-for-ports && HEADLESS=false jest --runInBand",
+    "serve": "tsx ./src/index.ts",
+    "ci:e2e-tests": "npm run ci:e2e-tests:threejs && npm run ci:e2e-tests:playcanvas",
+    "ci:e2e-tests:threejs": "concurrently --max-processes 2 --success command-1 --kill-others \"NX_CACHE=false lerna run serve --scope e2e-tests\" \"npm run wait-for-ports && RENDERER=threejs HEADLESS=true jest --runInBand\"",
+    "ci:e2e-tests:playcanvas": "concurrently --max-processes 2 --success command-1 --kill-others \"NX_CACHE=false lerna run serve --scope e2e-tests\" \"npm run wait-for-ports && RENDERER=playcanvas HEADLESS=true jest --runInBand\"",
+    "e2e-tests": "npm run e2e-tests:threejs && npm run e2e-tests:playcanvas",
+    "e2e-tests:threejs": "npm run wait-for-ports && RENDERER=threejs HEADLESS=false jest --runInBand",
+    "e2e-tests:playcanvas": "npm run wait-for-ports && RENDERER=playcanvas HEADLESS=false jest --runInBand",
     "wait-for-ports": "npx wait-on http://localhost:7079/mml-logo.html -t 90000 --httpTimeout 5000 --interval 500"
   },
   "dependencies": {

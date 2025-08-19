@@ -1,4 +1,4 @@
-import { takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-label", () => {
   test("label visible", async () => {
@@ -6,7 +6,7 @@ describe("m-label", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-label-test.html/reset");
+    await navigateToTestPage(page, "m-label-test.html/reset");
 
     await page.waitForSelector("m-label");
 

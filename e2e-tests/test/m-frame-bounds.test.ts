@@ -1,4 +1,4 @@
-import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-frame", () => {
   test("bounds test", async () => {
@@ -6,7 +6,7 @@ describe("m-frame", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-frame-bounds-test.html/reset");
+    await navigateToTestPage(page, "m-frame-bounds-test.html/reset");
 
     await page.waitForSelector("m-image");
 
@@ -26,6 +26,9 @@ describe("m-frame", () => {
     await page.waitForFunction(
       () => {
         return Array.from(document.querySelectorAll("m-video") as any).every((video: any) => {
+          if (!video || !video.videoGraphics) {
+            return false;
+          }
           const { width, height } = video.videoGraphics.getWidthAndHeight();
           const aspect = width / height;
           const hasCorrectAspect = Math.abs(aspect - 1.777) < 0.01;
@@ -54,8 +57,7 @@ describe("m-frame", () => {
           const elements = Array.from(document.querySelectorAll(tag));
           results[tag] = {
             count: elements.length,
-            visible: elements.filter((element) => (element as any).getContainer().visible === true)
-              .length,
+            visible: elements.filter((element) => (element as any).getVisible()).length,
           };
         });
         return results;
@@ -68,6 +70,8 @@ describe("m-frame", () => {
 
     // All visible - on edge of frame
     await setDocumentTime(page, 1499);
+    // Wait for 1 second
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await takeAndCompareScreenshot(page);
     expect(await getVisibilityOfContainersForTags()).toEqual({
       "m-image": { count: 1, visible: 1 },

@@ -1,4 +1,4 @@
-import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-attr-anim sequences", () => {
   test("animations are sequenced", async () => {
@@ -6,7 +6,7 @@ describe("m-attr-anim sequences", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/attr-anim-sequences.html/reset");
+    await navigateToTestPage(page, "attr-anim-sequences.html/reset");
 
     await page.waitForSelector("m-attr-anim[attr='x']");
 

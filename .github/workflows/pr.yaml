@@ -11,108 +11,13 @@ permissions:
   checks: write
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          persist-credentials: false
-
-      - name: "NPM Install, Build, and Cache"
-        id: npm-install-build-and-cache
-        uses: ./.github/actions/npm-install-build-and-cache
-
-  test:
-    name: Test
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          persist-credentials: false
-
-      - name: "Retrieve Dependencies and Build Artifacts"
-        id: retrieve-deps-and-build
-        uses: ./.github/actions/retrieve-deps-and-build
-
-      - name: Test
-        run: npm run test-all
-
-  type-check:
-    name: Type Check
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          persist-credentials: false
-
-      - name: "Retrieve Dependencies and Build Artifacts"
-        id: retrieve-deps-and-build
-        uses: ./.github/actions/retrieve-deps-and-build
-
-      - name: Type Check
-        run: npm run type-check-all
-
-  lint:
-    name: Lint
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          persist-credentials: false
-
-      - name: "Retrieve Dependencies and Build Artifacts"
-        id: retrieve-deps-and-build
-        uses: ./.github/actions/retrieve-deps-and-build
-
-      - name: Lint
-        run: npm run lint-all
-
-  e2e-test:
-    name: End-to-end Test
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache
-          key: ${{ runner.os }}
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          persist-credentials: false
-
-      - name: "Retrieve Dependencies and Build Artifacts"
-        id: retrieve-deps-and-build
-        uses: ./.github/actions/retrieve-deps-and-build
-
-      - name: End to End Test
-        run: npm run ci:e2e-tests
-
-      - name: Upload End to End Test Images
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: images
-          path: e2e-tests/test/__image_snapshots__/
+  ci:
+    name: Common CI Jobs
+    uses: ./.github/workflows/ci-common.yaml
 
   publish-gh-pages:
     name: Publish GitHub Pages
-    needs: [ build ]
+    needs: [ ci ]
     runs-on: ubuntu-latest
     env:
       PR_PATH: pull/${{github.event.number}}
@@ -148,13 +53,9 @@ jobs:
 
   summary:
     name: Summary
-    needs: [build, test, type-check, lint, e2e-test]
+    needs: [ci]
     runs-on: ubuntu-latest
     steps:
       - name: Summary
         run: |
-          echo "Build: ${{ needs.build.result }}"
-          echo "Test: ${{ needs.test.result }}"
-          echo "Type Check: ${{ needs.type-check.result }}"
-          echo "Lint: ${{ needs.lint.result }}"
-          echo "End-to-end Test: ${{ needs.e2e-test.result }}"
+          echo "Common CI Jobs: ${{ needs.ci.result }}"

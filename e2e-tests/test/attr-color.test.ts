@@ -1,4 +1,4 @@
-import { renderFrame, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, renderFrame, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-attr-anim color", () => {
   test("parse color attributes including floating point and scientific notation", async () => {
@@ -6,7 +6,7 @@ describe("m-attr-anim color", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/attr-color.html/reset");
+    await navigateToTestPage(page, "attr-color.html/reset");
 
     // Wait for all m-cube and m-label elements to be present
     await page.waitForFunction(

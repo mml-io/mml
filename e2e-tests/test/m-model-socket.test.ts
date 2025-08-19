@@ -1,4 +1,4 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-element-socket", () => {
   test("socketed element position", async () => {
@@ -6,7 +6,7 @@ describe("m-element-socket", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-model-socket-test.html/reset");
+    await navigateToTestPage(page, "m-model-socket-test.html/reset");
 
     await page.waitForSelector("m-character");
 
@@ -15,8 +15,8 @@ describe("m-element-socket", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).modelGraphics.hasLoadedModel() !== null &&
-          (character as any).modelGraphics.hasLoadedAnimation() !== null
+          (character as any).modelGraphics.hasLoadedModel() &&
+          (character as any).modelGraphics.hasLoadedAnimation()
         );
       },
       { timeout: 30000, polling: 100 },
@@ -31,8 +31,7 @@ describe("m-element-socket", () => {
     // socketed m-cube position should match the left hand bone position
     let [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
-      const worldPos = cube.getContainer().position.clone();
-      const { x, y, z } = cube.getContainer().getWorldPosition(worldPos);
+      const { x, y, z } = cube.getWorldPosition();
       return [x, y, z];
     });
     await takeAndCompareScreenshot(page);
@@ -47,8 +46,7 @@ describe("m-element-socket", () => {
     // socketed m-cube position should match the right hand bone position
     [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
-      const worldPos = cube.getContainer().position.clone();
-      const { x, y, z } = cube.getContainer().getWorldPosition(worldPos);
+      const { x, y, z } = cube.getWorldPosition();
       return [x, y, z];
     });
     await takeAndCompareScreenshot(page);
@@ -63,8 +61,7 @@ describe("m-element-socket", () => {
     // socketed m-cube position should match its parent origin (0, 0, 0)
     [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
-      const worldPos = cube.getContainer().position.clone();
-      const { x, y, z } = cube.getContainer().getWorldPosition(worldPos);
+      const { x, y, z } = cube.getWorldPosition();
       return [x, y, z];
     });
     await takeAndCompareScreenshot(page);
@@ -79,8 +76,7 @@ describe("m-element-socket", () => {
     // socketed m-cube position should match the head bone position
     [xPos, yPos, zPos] = await page.evaluate(() => {
       const cube = document.getElementById("socketed-cube") as any;
-      const worldPos = cube.getContainer().position.clone();
-      const { x, y, z } = cube.getContainer().getWorldPosition(worldPos);
+      const { x, y, z } = cube.getWorldPosition();
       return [x, y, z];
     });
     expect(xPos).toBeLessThan(0.01);

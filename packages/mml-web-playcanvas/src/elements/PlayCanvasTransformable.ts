@@ -1,4 +1,5 @@
 import {
+  IVect3,
   Matr4,
   Model,
   TransformableElement,
@@ -45,6 +46,14 @@ export class PlayCanvasTransformable extends TransformableGraphics<PlayCanvasGra
     return new Matr4(this.getPlayCanvasEntity().getWorldTransform().data);
   }
 
+  getWorldPosition(): IVect3 {
+    return this.getPlayCanvasEntity().getPosition();
+  }
+
+  getLocalPosition(): IVect3 {
+    return this.getPlayCanvasEntity().getLocalPosition();
+  }
+
   setSocket(socketName: string | null): void {
     if (this.socketName !== socketName) {
       if (this.socketName !== null && this.registeredSocketParent) {
@@ -72,6 +81,10 @@ export class PlayCanvasTransformable extends TransformableGraphics<PlayCanvasGra
       this.registeredSocketParent = parentModel.modelGraphics as PlayCanvasModel;
       this.registeredSocketParent.registerSocketChild(this.transformableElement, socketName);
     }
+  }
+
+  getVisible(): boolean {
+    return this.getPlayCanvasEntity().enabled;
   }
 
   setVisible(visible: boolean): void {

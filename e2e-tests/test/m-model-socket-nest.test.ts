@@ -1,4 +1,4 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-element-socket", () => {
   test("socketed element animation inheritance", async () => {
@@ -6,7 +6,7 @@ describe("m-element-socket", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-model-socket-nest-test.html/reset");
+    await navigateToTestPage(page, "m-model-socket-nest-test.html/reset");
 
     await page.waitForSelector("m-character");
 
@@ -15,8 +15,8 @@ describe("m-element-socket", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).modelGraphics.hasLoadedModel() !== null &&
-          (character as any).modelGraphics.hasLoadedAnimation() !== null
+          (character as any).modelGraphics.hasLoadedModel() &&
+          (character as any).modelGraphics.hasLoadedAnimation()
         );
       },
       { timeout: 10000, polling: 100 },

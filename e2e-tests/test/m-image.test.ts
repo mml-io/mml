@@ -1,11 +1,11 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-image opacity toggling", () => {
   test("image opacity changes are correctly applied", async () => {
     const page = await __BROWSER_GLOBAL__.newPage();
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-image-test.html/reset");
+    await navigateToTestPage(page, "m-image-test.html/reset");
 
     const opacityToggleImageSelector = "#toggle-image";
 

@@ -1,4 +1,4 @@
-import { clickElement, takeAndCompareScreenshot } from "./testing-utils";
+import { clickElement, navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-frame", () => {
   test("bounds load-range", async () => {
@@ -6,7 +6,7 @@ describe("m-frame", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-frame-bounds-load-range-test.html/reset");
+    await navigateToTestPage(page, "m-frame-bounds-load-range-test.html/reset");
 
     await page.waitForSelector("m-frame");
 
