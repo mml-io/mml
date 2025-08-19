@@ -14,6 +14,7 @@ import {
 } from "@mml-io/mml-web-playcanvas-standalone";
 import * as playcanvas from "playcanvas";
 
+import { addLoadingCompleteMarker } from "./addLoadingCompleteMarker";
 import { calculateContentBounds } from "./calculateContentBounds";
 import { applyCharacterAnimation } from "./characterAnimation";
 import { envMaps } from "./env-maps";
@@ -129,6 +130,8 @@ export class PlayCanvasModeInternal {
         if (fitContent === "true") {
           graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
         }
+
+        addLoadingCompleteMarker();
       }
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);

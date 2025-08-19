@@ -15,6 +15,7 @@ import {
 import { HDRJPGLoader } from "@monogrid/gainmap-js";
 import * as THREE from "three";
 
+import { addLoadingCompleteMarker } from "./addLoadingCompleteMarker";
 import { calculateContentBounds } from "./calculateContentBounds";
 import { applyCharacterAnimation } from "./characterAnimation";
 import { envMaps } from "./env-maps";
@@ -133,6 +134,8 @@ export class ThreeJSModeInternal {
         if (fitContent === "true") {
           graphicsAdapter.controls?.fitContent(calculateContentBounds(this.targetForWrappers));
         }
+
+        addLoadingCompleteMarker();
       }
     };
     fullScreenMMLScene.getLoadingProgressManager().addProgressCallback(loadingCallback);
