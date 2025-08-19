@@ -15,8 +15,8 @@ describe("m-element-socket", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).modelGraphics.hasLoadedModel() !== null &&
-          (character as any).modelGraphics.hasLoadedAnimation() !== null
+          (character as any).modelGraphics.hasLoadedModel() &&
+          (character as any).modelGraphics.hasLoadedAnimation()
         );
       },
       { timeout: 10000, polling: 100 },

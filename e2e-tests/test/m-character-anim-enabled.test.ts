@@ -15,9 +15,9 @@ describe("m-character", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).modelGraphics.hasLoadedModel() !== null &&
+          (character as any).modelGraphics.hasLoadedModel() &&
           (character as any).modelGraphics.getBoundingBox() !== null &&
-          (character as any).modelGraphics.hasLoadedAnimation() !== null
+          (character as any).modelGraphics.hasLoadedAnimation()
         );
       },
       { timeout: 30000, polling: 100 },
@@ -52,7 +52,7 @@ describe("m-character", () => {
     await page.waitForFunction(
       () => {
         const character = document.querySelector("m-character");
-        return (character as any).modelGraphics.hasLoadedAnimation() !== null;
+        return (character as any).modelGraphics.hasLoadedAnimation();
       },
       { timeout: 30000, polling: 100 },
     );
@@ -88,9 +88,9 @@ describe("m-character", () => {
       () => {
         const character = document.querySelector("m-character");
         return (
-          (character as any).modelGraphics.hasLoadedModel() !== null &&
+          (character as any).modelGraphics.hasLoadedModel() &&
           (character as any).modelGraphics.getBoundingBox() !== null &&
-          (character as any).modelGraphics.hasLoadedAnimation() !== null
+          (character as any).modelGraphics.hasLoadedAnimation()
         );
       },
       { timeout: 30000, polling: 100 },

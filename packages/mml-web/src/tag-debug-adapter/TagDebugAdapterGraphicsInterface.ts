@@ -101,7 +101,7 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
       },
       getLocalPosition: () => {
         return new Vect3(0, 0, 0);
-      },  
+      },
       getVisible: () => {
         return true;
       },

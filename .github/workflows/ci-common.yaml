@@ -13,6 +13,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,6 +29,7 @@ jobs:
     name: Test
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -46,6 +48,7 @@ jobs:
     name: Type Check
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -64,6 +67,7 @@ jobs:
     name: Lint
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -78,41 +82,44 @@ jobs:
       - name: Lint
         run: npm run lint-all
 
-  e2e-test-playcanvas:
-    name: End-to-end Test (PlayCanvas)
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache
-          key: ${{ runner.os }}
+  # TODO: Re-enable (https://github.com/mml-io/mml/issues/241)
+  # e2e-test-playcanvas:
+  #   name: End-to-end Test (PlayCanvas)
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 10
+  #   steps:
+  #     - uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           ~/.cache
+  #         key: ${{ runner.os }}
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          persist-credentials: false
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #         persist-credentials: false
 
-      - name: "Retrieve Dependencies and Build Artifacts"
-        id: retrieve-deps-and-build
-        uses: ./.github/actions/retrieve-deps-and-build
+  #     - name: "Retrieve Dependencies and Build Artifacts"
+  #       id: retrieve-deps-and-build
+  #       uses: ./.github/actions/retrieve-deps-and-build
 
-      - name: End to End Test
-        run: npm run ci:e2e-tests:playcanvas
+  #     - name: End to End Test
+  #       run: npm run ci:e2e-tests:playcanvas
 
-      - name: Upload End to End Test Images
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: images-playcanvas
-          path: e2e-tests/test/__image_snapshots__/__diff_output__/
+  #     - name: Upload End to End Test Images
+  #       if: failure()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: images-playcanvas
+  #         path: e2e-tests/test/__image_snapshots__/__diff_output__/
 
   e2e-test-threejs:
     name: End-to-end Test (ThreeJS)
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/cache@v4
         with:

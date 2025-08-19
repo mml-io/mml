@@ -16,7 +16,7 @@ describe("m-video-emissive", () => {
             return false;
           }
           const { width, height } = video.videoGraphics.getWidthAndHeight();
-          return width > 1 || height > 1;
+          return width > 2 && height > 2;
         });
       },
       { timeout: 5000, polling: 100 },

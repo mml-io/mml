@@ -5,7 +5,6 @@ import {
   Model,
   TransformableElement,
   TransformableGraphics,
-  Vect3,
 } from "@mml-io/mml-web";
 import * as THREE from "three";
 
