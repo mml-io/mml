@@ -6,7 +6,7 @@ import * as playcanvas from "playcanvas";
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 
 export type PlayCanvasAnimationState = {
-  animationAsset: playcanvas.Asset;
+  animationAsset: playcanvas.Asset | null;
   weight: number;
   loop: boolean;
   startTime: number;
@@ -17,30 +17,28 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
   private loadingInstanceManager = new LoadingInstanceManager(`${Animation.tagName}.src`);
   private latestSrcPromise: Promise<playcanvas.Asset> | null = null;
 
-  private animationState: PlayCanvasAnimationState | null = null;
+  private animationState: PlayCanvasAnimationState;
   private parentModel: Model<PlayCanvasGraphicsAdapter> | null = null;
 
   constructor(private animation: Animation<PlayCanvasGraphicsAdapter>) {
     super(animation);
-    this.findParentModel();
-  }
-
-  private findParentModel() {
-    let parent = this.animation.parentElement;
-    while (parent) {
-      if (parent.tagName === "M-MODEL" || parent.tagName === "M-CHARACTER") {
-        this.parentModel = parent as Model<PlayCanvasGraphicsAdapter>;
-        break;
-      }
-      parent = parent.parentElement;
+    if (animation.parentElement && Model.isModel(animation.parentElement)) {
+      this.parentModel = animation.parentElement as Model<PlayCanvasGraphicsAdapter>;
     }
+    this.animationState = {
+      animationAsset: null,
+      weight: animation.props.weight,
+      loop: animation.props.loop,
+      startTime: animation.props.startTime,
+      pauseTime: animation.props.pauseTime,
+    };
   }
 
   setSrc(src: string | null): void {
-    if (this.animationState) {
-      this.animationState.animationAsset = null as any;
-      this.animationState = null;
+    if (this.animationState.animationAsset) {
+      this.animationState.animationAsset.unload();
     }
+    this.animationState.animationAsset = null;
 
     if (!src) {
       this.latestSrcPromise = null;
@@ -65,18 +63,7 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
         }
         this.latestSrcPromise = null;
 
-        const existingWeight = this.animationState?.weight ?? this.animation.props.weight;
-        const existingLoop = this.animationState?.loop ?? this.animation.props.loop;
-        const existingStartTime = this.animationState?.startTime ?? this.animation.props.startTime;
-        const existingPauseTime = this.animationState?.pauseTime ?? this.animation.props.pauseTime;
-
-        this.animationState = {
-          animationAsset: asset,
-          weight: existingWeight,
-          loop: existingLoop,
-          startTime: existingStartTime,
-          pauseTime: existingPauseTime,
-        };
+        this.animationState.animationAsset = asset;
 
         this.updateParentAnimation();
         this.loadingInstanceManager.finish();
@@ -89,72 +76,27 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
   }
 
   setWeight(weight: number): void {
-    if (this.animationState) {
-      this.animationState.weight = weight;
-      this.updateParentAnimation();
-    } else {
-      // anim state doesn't exist yet create a temp to be replaced when src loaded
-      this.animationState = {
-        animationAsset: null as any, // set when loaded
-        weight,
-        loop: this.animation.props.loop,
-        startTime: this.animation.props.startTime,
-        pauseTime: this.animation.props.pauseTime,
-      };
-      this.updateParentAnimation();
-    }
+    this.animationState.weight = weight;
+    this.updateParentAnimation();
   }
 
   setLoop(loop: boolean): void {
-    if (this.animationState) {
-      this.animationState.loop = loop;
-      this.updateParentAnimation();
-    } else {
-      this.animationState = {
-        animationAsset: null as any, // set when loaded
-        weight: this.animation.props.weight,
-        loop,
-        startTime: this.animation.props.startTime,
-        pauseTime: this.animation.props.pauseTime,
-      };
-      this.updateParentAnimation();
-    }
+    this.animationState.loop = loop;
+    this.updateParentAnimation();
   }
 
   setStartTime(startTime: number): void {
-    if (this.animationState) {
-      this.animationState.startTime = startTime;
-      this.updateParentAnimation();
-    } else {
-      this.animationState = {
-        animationAsset: null as any, // set when loaded
-        weight: this.animation.props.weight,
-        loop: this.animation.props.loop,
-        startTime,
-        pauseTime: this.animation.props.pauseTime,
-      };
-      this.updateParentAnimation();
-    }
+    this.animationState.startTime = startTime;
+    this.updateParentAnimation();
   }
 
   setPauseTime(pauseTime: number | null): void {
-    if (this.animationState) {
-      this.animationState.pauseTime = pauseTime;
-      this.updateParentAnimation();
-    } else {
-      this.animationState = {
-        animationAsset: null as any, // set when loaded
-        weight: this.animation.props.weight,
-        loop: this.animation.props.loop,
-        startTime: this.animation.props.startTime,
-        pauseTime,
-      };
-      this.updateParentAnimation();
-    }
+    this.animationState.pauseTime = pauseTime;
+    this.updateParentAnimation();
   }
 
   private updateParentAnimation() {
-    if (!this.parentModel || !this.animationState || !this.animationState.animationAsset) {
+    if (!this.parentModel || !this.animationState.animationAsset) {
       return;
     }
 
@@ -194,8 +136,10 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
     if (this.parentModel && this.parentModel.modelGraphics) {
       this.parentModel.modelGraphics.removeChildAnimation?.(this.animation);
     }
-
-    this.animationState = null;
+    if (this.animationState.animationAsset) {
+      this.animationState.animationAsset.unload();
+      this.animationState.animationAsset = null;
+    }
   }
 
   public getAnimationState(): PlayCanvasAnimationState | null {

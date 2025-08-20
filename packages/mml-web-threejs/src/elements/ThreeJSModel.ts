@@ -6,7 +6,7 @@ import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
-import { ThreeJSAnimationState } from "./ThreeJSAnimation";
+import { ThreeJSAnimation, ThreeJSAnimationState } from "./ThreeJSAnimation";
 
 type ThreeJSModelLoadState = {
   group: THREE.Object3D;
@@ -673,7 +673,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       if (this.model.props.animEnabled) {
         // Update each child animation based on its individual timing properties
         for (const [animation, action] of this.childAnimationActions) {
-          const animationState = (animation.animationGraphics as any)?.getAnimationState();
+          const animationState = (animation.animationGraphics as ThreeJSAnimation)?.getAnimationState();
           if (animationState && action) {
             // Check if this animation should be active based on timing
             let shouldBeActive = true;
