@@ -130,8 +130,4 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
 
     this.animationState.animationClip = null;
   }
-
-  public getAnimationState(): ThreeJSAnimationState | null {
-    return this.animationState;
-  }
 }

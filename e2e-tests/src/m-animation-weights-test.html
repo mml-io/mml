@@ -3,17 +3,28 @@
 
 <m-group id="labels"></m-group>
 
-<m-model id="body-model" y="3" z="6.5" src="/assets/Body.glb">
+<m-character id="body-model" y="3" z="6.5" src="/assets/Body.glb">
+  <m-model id="head-model" src="/assets/Head.glb"></m-model>
   <m-animation id="idle-mix" src="/assets/anim_idle.glb" weight="0.5">
-    <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp>
+    <!-- <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp> -->
   </m-animation>
   <m-animation id="air-mix" src="/assets/anim_air.glb" weight="0.5">
-    <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp>
+    <!-- <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp> -->
   </m-animation>
   <m-animation id="run-mix" src="/assets/anim_run.glb" weight="0.5">
-    <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp>
+    <!-- <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp> -->
   </m-animation>
-</m-model>
+</m-character>
+
+<m-character y="3" x="3" z="6.5" src="/assets/Body.glb">
+  <m-model src="/assets/Head.glb"></m-model>
+  <m-animation src="/assets/anim_idle.glb" weight="0.5">
+  </m-animation>
+  <m-animation src="/assets/anim_air.glb" weight="0.5">
+  </m-animation>
+  <m-animation src="/assets/anim_run.glb" weight="0.5" start-time="500">
+  </m-animation>
+</m-character>
 
 <script>
   const labels = document.getElementById("labels");

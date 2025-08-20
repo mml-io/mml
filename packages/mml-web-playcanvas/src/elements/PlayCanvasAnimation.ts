@@ -141,8 +141,4 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
       this.animationState.animationAsset = null;
     }
   }
-
-  public getAnimationState(): PlayCanvasAnimationState | null {
-    return this.animationState;
-  }
 }
