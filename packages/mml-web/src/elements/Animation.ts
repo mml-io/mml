@@ -33,7 +33,7 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
     pauseTime: defaultAnimationPauseTime,
   };
 
-  private animatedAttributeHelper: AnimatedAttributeHelper | null = null;
+  private animatedAttributeHelper: AnimatedAttributeHelper;
 
   private static attributeHandler = new AttributeHandler<Animation<GraphicsAdapter>>({
     src: (instance, newValue) => {
@@ -175,10 +175,9 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
     if (this.parentElement && Model.isModel(this.parentElement)) {
       this.parentElement.removeSideEffectChild(this);
     }
-
+    this.animatedAttributeHelper?.reset();
     this.animationGraphics?.dispose();
     this.animationGraphics = null;
-    this.animatedAttributeHelper = null;
     super.disconnectedCallback();
   }
 }

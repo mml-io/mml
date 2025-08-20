@@ -1,0 +1,88 @@
+<m-plane y="3" color="#8888AA" width="15" height="15" rx="-90"></m-plane>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+
+<m-group id="labels"></m-group>
+
+<m-model id="test-model" y="3" z="6.5" src="/assets/Body.glb"></m-model>
+
+<m-model id="reference-model" x="3" y="3" z="6.5" src="/assets/Body.glb">
+  <m-animation src="/assets/anim_run.glb" weight="1.0"></m-animation>
+</m-model>
+
+<script>
+  const labels = document.getElementById("labels");
+  const testModel = document.getElementById("test-model");
+
+  const runAnimUrl = "/assets/anim_run.glb";
+  const airAnimUrl = "/assets/anim_air.glb";
+  const idleAnimUrl = "/assets/anim_idle.glb";
+
+  const setAnimAttrLabel = createLabel("set_anim_attr", -3, 6.0, 3);
+  const removeAnimAttrLabel = createLabel("remove_anim_attr", -3, 5.6, 3);
+  const addChildAnimLabel = createLabel("add_child_anim", -3, 5.2, 3);
+  const removeChildAnimLabel = createLabel("remove_child_anim", -3, 4.8, 3);
+  const addSecondChildLabel = createLabel("add_second_child", -3, 4.4, 3);
+
+  function createLabel(text, x, y, z) {
+    const label = document.createElement("m-label");
+    label.setAttribute("id", `${text}-label`);
+    label.setAttribute("content", text);
+    label.setAttribute("x", x);
+    label.setAttribute("y", y);
+    label.setAttribute("z", z);
+    label.setAttribute("rx", 0);
+    label.setAttribute("width", 2.5)
+    label.setAttribute("height", 0.3);
+    label.setAttribute("alignment", "center");
+    label.setAttribute("padding", 0);
+    label.setAttribute("font-size", 18);
+    labels.appendChild(label);
+    return label;
+  }
+
+  let childAnimation = null;
+  let secondChildAnimation = null;
+
+  function createAnimation(src, weight) {
+    const animation = document.createElement("m-animation");
+    animation.setAttribute("src", src);
+    animation.setAttribute("weight", weight);
+    return animation;
+  }
+
+  setAnimAttrLabel.addEventListener("click", () => {
+    testModel.setAttribute("anim", idleAnimUrl);
+    console.log("Set model anim attribute");
+  });
+
+  removeAnimAttrLabel.addEventListener("click", () => {
+    testModel.removeAttribute("anim");
+    console.log("Removed model anim attribute");
+  });
+
+  addChildAnimLabel.addEventListener("click", () => {
+    if (!childAnimation) {
+      childAnimation = createAnimation(runAnimUrl, 1.0);
+      childAnimation.setAttribute("id", "child-run-anim");
+      testModel.appendChild(childAnimation);
+      console.log("Added child animation");
+    }
+  });
+
+  removeChildAnimLabel.addEventListener("click", () => {
+    if (childAnimation) {
+      childAnimation.remove();
+      childAnimation = null;
+      console.log("Removed child animation");
+    }
+  });
+
+  addSecondChildLabel.addEventListener("click", () => {
+    if (!secondChildAnimation) {
+      secondChildAnimation = createAnimation(airAnimUrl, 0.5);
+      secondChildAnimation.setAttribute("id", "child-air-anim");
+      testModel.appendChild(secondChildAnimation);
+      console.log("Added second child animation");
+    }
+  });
+</script>

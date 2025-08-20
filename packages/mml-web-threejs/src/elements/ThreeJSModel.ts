@@ -6,6 +6,7 @@ import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
+import { ThreeJSAnimationState } from "./ThreeJSAnimation";
 
 type ThreeJSModelLoadState = {
   group: THREE.Object3D;
@@ -66,8 +67,10 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   >();
 
   private pendingAnim: string | null = null;
-  private pendingAnimationUpdates = new Map<Animation<ThreeJSGraphicsAdapter>, any>();
-  private modelReady = false;
+  private pendingAnimationUpdates = new Map<
+    Animation<ThreeJSGraphicsAdapter>,
+    ThreeJSAnimationState
+  >();
 
   constructor(
     private model: Model<ThreeJSGraphicsAdapter>,
@@ -117,7 +120,10 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  updateChildAnimation(animation: Animation<ThreeJSGraphicsAdapter>, animationState: any) {
+  updateChildAnimation(
+    animation: Animation<ThreeJSGraphicsAdapter>,
+    animationState: ThreeJSAnimationState,
+  ) {
     if (!this.animationMixer || !this.loadedState) {
       // queue if model isn't loaded yet
       this.pendingAnimationUpdates.set(animation, animationState);
@@ -153,9 +159,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         animationState.animationClip.duration,
         compatibleTracks,
       );
-      const filteredCount = animationState.animationClip.tracks.length - compatibleTracks.length;
-      const tracks = `${filteredCount} incompatible track${filteredCount === 1 ? "" : "s"}`;
-      console.log(`Animation "${animation}": filtered ${tracks}`);
 
       action = this.animationMixer.clipAction(filteredClip, this.loadedState.group);
       action.enabled = true;
@@ -239,8 +242,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         }
       }
 
-      // restore document time tick listener for child animations if we have any
-      if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
+      // restore document time tick listener if model is loaded (for future child animations)
+      if (this.loadedState && !this.documentTimeTickListener) {
         this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
           (documentTime: number) => {
             this.updateAnimation(documentTime);
@@ -348,7 +351,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     this.animAttributeAction = null;
     this.childAnimationActions.clear();
     this.pendingAnimationUpdates.clear();
-    this.modelReady = false;
 
     if (!src) {
       this.latestSrcModelPromise = null;
@@ -443,7 +445,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         }
         this.srcLoadingInstanceManager.finish();
         this.updateDebugVisualisation();
-        this.modelReady = true;
 
         this.applyPendingAnimation();
 
@@ -549,8 +550,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       }
       this.animAttributeAction = null;
     }
-    // Reset model ready flag when resetting animation mixer
-    this.modelReady = false;
   }
 
   public registerSocketChild(
@@ -824,7 +823,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     this.animAttributeAction = null;
     this.childAnimationActions.clear();
     this.pendingAnimationUpdates.clear();
-    this.modelReady = false;
   }
 
   private static disposeOfGroup(group: THREE.Object3D) {

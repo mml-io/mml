@@ -1,4 +1,4 @@
-import { setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-animation", () => {
   test("pause and loop attributes", async () => {
@@ -6,7 +6,7 @@ describe("m-animation", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-animation-pause-test.html/reset");
+    await navigateToTestPage(page, "m-animation-pause-test.html/reset");
 
     await page.waitForSelector("m-model");
 

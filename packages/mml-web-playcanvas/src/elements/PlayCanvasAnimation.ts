@@ -1,13 +1,12 @@
-import { Animation } from "@mml-io/mml-web";
+import { Animation, Model } from "@mml-io/mml-web";
 import { AnimationGraphics } from "@mml-io/mml-web";
 import { LoadingInstanceManager } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 
-type PlayCanvasAnimationState = {
+export type PlayCanvasAnimationState = {
   animationAsset: playcanvas.Asset;
-  animationClip: playcanvas.Asset; // Alias for animationAsset to maintain compatibility
   weight: number;
   loop: boolean;
   startTime: number;
@@ -19,7 +18,7 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
   private latestSrcPromise: Promise<playcanvas.Asset> | null = null;
 
   private animationState: PlayCanvasAnimationState | null = null;
-  private parentModel: any = null;
+  private parentModel: Model<PlayCanvasGraphicsAdapter> | null = null;
 
   constructor(private animation: Animation<PlayCanvasGraphicsAdapter>) {
     super(animation);
@@ -30,7 +29,7 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
     let parent = this.animation.parentElement;
     while (parent) {
       if (parent.tagName === "M-MODEL" || parent.tagName === "M-CHARACTER") {
-        this.parentModel = parent;
+        this.parentModel = parent as Model<PlayCanvasGraphicsAdapter>;
         break;
       }
       parent = parent.parentElement;
@@ -51,7 +50,7 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
 
     const contentSrc = this.animation.contentSrcToContentAddress(src);
     this.loadingInstanceManager.start(this.animation.getLoadingProgressManager(), contentSrc);
-    let srcPromise: Promise<playcanvas.Asset>;
+    let srcPromise: Promise<playcanvas.Asset> | null = null;
     srcPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
       if (this.latestSrcPromise !== srcPromise) {
         return;
@@ -73,7 +72,6 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
 
         this.animationState = {
           animationAsset: asset,
-          animationClip: asset, // Alias for compatibility
           weight: existingWeight,
           loop: existingLoop,
           startTime: existingStartTime,
@@ -98,7 +96,6 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
       // anim state doesn't exist yet create a temp to be replaced when src loaded
       this.animationState = {
         animationAsset: null as any, // set when loaded
-        animationClip: null as any, // set when loaded
         weight,
         loop: this.animation.props.loop,
         startTime: this.animation.props.startTime,
@@ -115,7 +112,6 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
     } else {
       this.animationState = {
         animationAsset: null as any, // set when loaded
-        animationClip: null as any, // set when loaded
         weight: this.animation.props.weight,
         loop,
         startTime: this.animation.props.startTime,
@@ -132,7 +128,6 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
     } else {
       this.animationState = {
         animationAsset: null as any, // set when loaded
-        animationClip: null as any, // set when loaded
         weight: this.animation.props.weight,
         loop: this.animation.props.loop,
         startTime,
@@ -149,7 +144,6 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
     } else {
       this.animationState = {
         animationAsset: null as any, // set when loaded
-        animationClip: null as any, // set when loaded
         weight: this.animation.props.weight,
         loop: this.animation.props.loop,
         startTime: this.animation.props.startTime,
@@ -160,7 +154,7 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
   }
 
   private updateParentAnimation() {
-    if (!this.parentModel || !this.animationState) {
+    if (!this.parentModel || !this.animationState || !this.animationState.animationAsset) {
       return;
     }
 

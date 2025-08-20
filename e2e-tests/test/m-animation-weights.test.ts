@@ -1,4 +1,9 @@
-import { clickElement, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import {
+  clickElement,
+  navigateToTestPage,
+  setDocumentTime,
+  takeAndCompareScreenshot,
+} from "./testing-utils";
 
 describe("m-animation", () => {
   test("weight blending with lerp", async () => {
@@ -6,7 +11,7 @@ describe("m-animation", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-animation-weights-test.html/reset");
+    await navigateToTestPage(page, "m-animation-weights-test.html/reset");
 
     await page.waitForSelector("m-model");
 
@@ -49,48 +54,79 @@ describe("m-animation", () => {
     await clickElement(page, "#idle_0_0-label");
     await clickElement(page, "#air_0_0-label");
     await clickElement(page, "#run_0_0-label");
+
+    await page.waitForSelector("#idle-mix[weight='0']");
+    await page.waitForSelector("#air-mix[weight='0']");
+    await page.waitForSelector("#run-mix[weight='0']");
+
     await setDocumentTime(page, 1500);
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "#idle_1_0-label");
+    await page.waitForSelector("#idle-mix[weight='1']");
+
     await setDocumentTime(page, 2000);
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "#air_1_0-label");
+    await page.waitForSelector("#air-mix[weight='1']");
+
     await setDocumentTime(page, 2500);
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "#run_1_0-label");
+    await page.waitForSelector("#run-mix[weight='1']");
+
     await setDocumentTime(page, 3000);
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "#idle_1_0-label");
     await clickElement(page, "#air_0_0-label");
     await clickElement(page, "#run_0_0-label");
+    await page.waitForSelector("#idle-mix[weight='1']");
+    await page.waitForSelector("#air-mix[weight='0']");
+    await page.waitForSelector("#run-mix[weight='0']");
+
     await setDocumentTime(page, 3500);
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "#idle_0_0-label");
     await clickElement(page, "#air_1_0-label");
     await clickElement(page, "#run_0_0-label");
+    await page.waitForSelector("#idle-mix[weight='0']");
+    await page.waitForSelector("#air-mix[weight='1']");
+    await page.waitForSelector("#run-mix[weight='0']");
+
     await setDocumentTime(page, 4000);
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "#idle_0_0-label");
     await clickElement(page, "#air_0_0-label");
     await clickElement(page, "#run_1_0-label");
+    await page.waitForSelector("#idle-mix[weight='0']");
+    await page.waitForSelector("#air-mix[weight='0']");
+    await page.waitForSelector("#run-mix[weight='1']");
+
     await setDocumentTime(page, 4500);
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "#idle_0_0-label");
     await clickElement(page, "#air_0_0-label");
     await clickElement(page, "#run_0_5-label");
+    await page.waitForSelector("#idle-mix[weight='0']");
+    await page.waitForSelector("#air-mix[weight='0']");
+    await page.waitForSelector("#run-mix[weight='0.5']");
+
     await setDocumentTime(page, 5000);
     await takeAndCompareScreenshot(page);
 
     await clickElement(page, "#idle_0_0-label");
     await clickElement(page, "#air_0_0-label");
     await clickElement(page, "#run_0_0-label");
+    await page.waitForSelector("#idle-mix[weight='0']");
+    await page.waitForSelector("#air-mix[weight='0']");
+    await page.waitForSelector("#run-mix[weight='0']");
+
     await setDocumentTime(page, 5500);
     await takeAndCompareScreenshot(page);
 

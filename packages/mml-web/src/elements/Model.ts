@@ -134,11 +134,9 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     if (Animation.isAnimation(child)) {
       // When an animation is added, we need to wait for it to load and then update the model
       // The animation will call updateChildAnimation when it's ready via its graphics adapter
-      console.log("Animation added as side effect child:", child.id);
 
       // If the modelGraphics is already ready, notify it immediately
       if (this.modelGraphics && child.animationGraphics) {
-        console.log("Model graphics already ready, notifying immediately for animation:", child.id);
         const weight = child.props.weight;
         child.animationGraphics.setWeight(weight, child.props);
       }
@@ -152,7 +150,6 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     // Handle child animation removal
     if (Animation.isAnimation(child)) {
       // Notify the graphics adapter that this animation should be removed
-      console.log("Animation removed as side effect child:", child.id);
       this.modelGraphics?.removeChildAnimation?.(child);
     } else {
       // For other side effect children, delegate to parent
@@ -202,16 +199,13 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   private notifyChildAnimations() {
     // Find all child animations and notify them that the modelGraphics is ready
     const childAnimations = this.querySelectorAll("m-animation");
-    console.log(`Model graphics ready, notifying ${childAnimations.length} child animations`);
 
     childAnimations.forEach((animation) => {
       if (Animation.isAnimation(animation)) {
-        console.log("Notifying child animation that modelGraphics is ready:", animation.id);
         // The animation's graphics adapter will handle the notification
         if (animation.animationGraphics) {
           // Force a weight update to trigger the animation registration
           const weight = animation.props.weight;
-          console.log(`Forcing weight update for animation ${animation.id}: ${weight}`);
           animation.animationGraphics.setWeight(weight, animation.props);
         }
       }

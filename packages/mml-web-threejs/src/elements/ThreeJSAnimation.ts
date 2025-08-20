@@ -1,4 +1,4 @@
-import { Animation } from "@mml-io/mml-web";
+import { Animation, Model } from "@mml-io/mml-web";
 import { AnimationGraphics } from "@mml-io/mml-web";
 import { LoadingInstanceManager } from "@mml-io/mml-web";
 import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
@@ -6,9 +6,8 @@ import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
 
-type ThreeJSAnimationState = {
+export type ThreeJSAnimationState = {
   animationClip: THREE.AnimationClip;
-  animationAction: THREE.AnimationAction | null;
   weight: number;
   loop: boolean;
   startTime: number;
@@ -21,7 +20,7 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
   private latestSrcPromise: Promise<ModelLoadResult> | null = null;
 
   private animationState: ThreeJSAnimationState | null = null;
-  private parentModel: any = null;
+  private parentModel: Model<ThreeJSGraphicsAdapter> | null = null;
 
   constructor(private animation: Animation<ThreeJSGraphicsAdapter>) {
     super(animation);
@@ -32,7 +31,7 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     let parent = this.animation.parentElement;
     while (parent) {
       if (parent.tagName === "M-MODEL" || parent.tagName === "M-CHARACTER") {
-        this.parentModel = parent;
+        this.parentModel = parent as Model<ThreeJSGraphicsAdapter>;
         break;
       }
       parent = parent.parentElement;
@@ -41,7 +40,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
 
   setSrc(src: string | null): void {
     if (this.animationState) {
-      this.animationState.animationAction = null;
       this.animationState = null;
     }
 
@@ -76,7 +74,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
 
         this.animationState = {
           animationClip,
-          animationAction: null,
           weight: existingWeight,
           loop: existingLoop,
           startTime: existingStartTime,
@@ -101,7 +98,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
       // anim state doesn't exist yet create a temp to be replaced when src loaded
       this.animationState = {
         animationClip: null as any, // set when loaded
-        animationAction: null,
         weight,
         loop: this.animation.props.loop,
         startTime: this.animation.props.startTime,
@@ -118,7 +114,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     } else {
       this.animationState = {
         animationClip: null as any, // set when loaded
-        animationAction: null,
         weight: this.animation.props.weight,
         loop,
         startTime: this.animation.props.startTime,
@@ -135,7 +130,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     } else {
       this.animationState = {
         animationClip: null as any, // set when loaded
-        animationAction: null,
         weight: this.animation.props.weight,
         loop: this.animation.props.loop,
         startTime,
@@ -152,7 +146,6 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     } else {
       this.animationState = {
         animationClip: null as any, // set when loaded
-        animationAction: null,
         weight: this.animation.props.weight,
         loop: this.animation.props.loop,
         startTime: this.animation.props.startTime,
@@ -163,7 +156,7 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
   }
 
   private updateParentAnimation() {
-    if (!this.parentModel || !this.animationState) {
+    if (!this.parentModel || !this.animationState || !this.animationState.animationClip) {
       return;
     }
 

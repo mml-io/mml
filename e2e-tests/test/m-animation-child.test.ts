@@ -1,4 +1,9 @@
-import { clickElement, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import {
+  clickElement,
+  navigateToTestPage,
+  setDocumentTime,
+  takeAndCompareScreenshot,
+} from "./testing-utils";
 
 describe("m-animation", () => {
   test("child add and remove", async () => {
@@ -6,7 +11,7 @@ describe("m-animation", () => {
 
     await page.setViewport({ width: 1024, height: 1024 });
 
-    await page.goto("http://localhost:7079/m-animation-child-test.html/reset");
+    await navigateToTestPage(page, "m-animation-child-test.html/reset");
 
     await page.waitForSelector("m-model");
 
