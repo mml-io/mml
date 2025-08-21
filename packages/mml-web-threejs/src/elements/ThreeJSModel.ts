@@ -270,6 +270,10 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       const action = attachmentChildAnimation.action;
       if (action) {
         action.stop();
+        const attachmentLoadedState = (attachment.modelGraphics as ThreeJSModel).loadedState;
+        if (attachmentLoadedState) {
+          attachmentAnimState.childAnimations.animationMixer.uncacheAction(action.getClip(), attachmentLoadedState.group);
+        }
         attachmentChildAnimation.action = null;
       }
     }
@@ -282,6 +286,16 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     for (const [attachment, attachmentAnimState] of this.attachments) {
       if (attachmentAnimState) {
         attachmentAnimState.directAnimation?.animationMixer?.stopAllAction();
+        
+        // Reset attachment to default pose by clearing all animations and updating mixer
+        if (attachmentAnimState.directAnimation?.animationMixer) {
+          attachmentAnimState.directAnimation.animationMixer.update(0);
+        }
+        
+        // Also reset the child animation mixer to ensure clean state
+        attachmentAnimState.childAnimations.animationMixer.stopAllAction();
+        attachmentAnimState.childAnimations.animationMixer.update(0);
+        
         attachmentAnimState.directAnimation = null;
       }
     }
@@ -308,6 +322,14 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           },
         );
       }
+      
+      // Restore child animations for all attachments when anim attribute is removed
+      for (const [attachment, attachmentAnimState] of this.attachments) {
+        for (const [animation, childAnimation] of this.childAnimations) {
+          this.updateAnimationForAttachment(attachment, attachmentAnimState, animation, childAnimation.animationState);
+        }
+      }
+      
       return;
     }
 
@@ -366,6 +388,16 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       for (const [attachment, attachmentAnimState] of this.attachments) {
         if (attachmentAnimState) {
           attachmentAnimState.directAnimation?.animationMixer?.stopAllAction();
+          
+          // Reset attachment to default pose by clearing all animations and updating mixer
+          if (attachmentAnimState.directAnimation?.animationMixer) {
+            attachmentAnimState.directAnimation.animationMixer.update(0);
+          }
+          
+          // Also reset the child animation mixer to ensure clean state
+          attachmentAnimState.childAnimations.animationMixer.stopAllAction();
+          attachmentAnimState.childAnimations.animationMixer.update(0);
+          
           attachmentAnimState.directAnimation = null;
         }
         this.model.getContainer().add(attachment.getContainer());
@@ -787,9 +819,9 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
             if (shouldBeActive) {
               animationTimes.set(animation, animationTimeMs);
               action.enabled = true;
-              hasActiveAnimations = true;
               action.setEffectiveWeight(animationState.weight);
               if (animationState.weight > 0) {
+                hasActiveAnimations = true;
                 action.play();
               } else {
                 action.stop();
