@@ -30,11 +30,27 @@ type PlayCanvasAnimLoadState = {
 type PlayCanvasChildAnimationState = {
   animationAsset: playcanvas.Asset;
   animClip: playcanvas.AnimClip | null;
-  weight: number;
-  loop: boolean;
-  startTime: number;
-  pauseTime: number | null;
+  animationState: PlayCanvasAnimationState;
   clipName: string;
+};
+
+type AttachmentAnimState = {
+  directAnimation: {
+    animComponent: playcanvas.AnimComponent;
+  } | null,
+  childAnimations: {
+    directAnimationSystem: {
+      evaluator: playcanvas.AnimEvaluator;
+      binder: playcanvas.DefaultAnimBinder;
+      defaultPoseClip: playcanvas.AnimClip;
+    } | null;
+    animations: Map<Animation<PlayCanvasGraphicsAdapter>, {
+      animClip: playcanvas.AnimClip | null;
+      animationState: PlayCanvasAnimationState;
+      animationAsset: playcanvas.Asset | null;
+      clipName: string;
+    }>;
+  },
 };
 
 export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
@@ -49,9 +65,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
   private attachments = new Map<
     Model<PlayCanvasGraphicsAdapter>,
-    {
-      animComponent: playcanvas.AnimComponent;
-    } | null
+    AttachmentAnimState
   >();
   private registeredParentAttachment: Model<PlayCanvasGraphicsAdapter> | null = null;
 
@@ -134,28 +148,70 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   public registerAttachment(attachment: Model<PlayCanvasGraphicsAdapter>) {
-    let animState = null;
+    const attachmentLoadedState = (attachment.modelGraphics as PlayCanvasModel).loadedState;
+    if (!attachmentLoadedState) {
+      throw new Error("Attachment must be loaded before registering");
+    }
+
+    // Set up child animation system for the attachment
+    const attachmentRenderEntity = attachmentLoadedState.renderEntity;
+    const binder = new playcanvas.DefaultAnimBinder(attachmentRenderEntity);
+    const evaluator = new playcanvas.AnimEvaluator(binder);
+    const defaultPoseClip = createDefaultPoseClip(attachmentRenderEntity, attachmentLoadedState.bones);
+    evaluator.addClip(defaultPoseClip);
+    defaultPoseClip.play();
+
+    const attachmentDirectAnimationSystem = {
+      binder,
+      evaluator,
+      defaultPoseClip,
+    };
+
+    let animState: AttachmentAnimState = {
+      directAnimation: null,
+      childAnimations: {
+        directAnimationSystem: attachmentDirectAnimationSystem,
+        animations: new Map(),
+      },
+    };
+
+    // Set up existing child animations for this attachment
+    for (const [animation, childAnimation] of this.childAnimationActions) {
+      this.updateAnimationForAttachment(attachment, animState, animation, childAnimation.animationState);
+    }
+
+    // Handle direct animation (anim attribute) if it exists
     if (this.animState) {
-      const attachmentLoadedState = (attachment.modelGraphics as PlayCanvasModel).loadedState;
-      if (!attachmentLoadedState) {
-        throw new Error("Attachment must be loaded before registering");
-      }
-      const playcanvasEntity = attachmentLoadedState.renderEntity;
-      const animComponent = playcanvasEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
+      const animComponent = attachmentRenderEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
       animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
-      animState = {
+      animState.directAnimation = {
         animComponent,
       };
     }
+
     this.attachments.set(attachment, animState);
   }
 
   public unregisterAttachment(attachment: Model<PlayCanvasGraphicsAdapter>) {
-    const animState = this.attachments.get(attachment);
-    if (animState) {
-      animState.animComponent.reset();
-      animState.animComponent.unbind();
-      animState.animComponent.entity.removeComponent("anim");
+    const attachmentState = this.attachments.get(attachment);
+    if (attachmentState) {
+      // Clean up direct animation
+      if (attachmentState.directAnimation) {
+        attachmentState.directAnimation.animComponent.reset();
+        attachmentState.directAnimation.animComponent.unbind();
+        attachmentState.directAnimation.animComponent.entity.removeComponent("anim");
+      }
+
+      // Clean up child animations
+      if (attachmentState.childAnimations.directAnimationSystem) {
+        // Stop all clips in the evaluator
+        if (attachmentState.childAnimations.directAnimationSystem.evaluator.clips) {
+          for (const clip of attachmentState.childAnimations.directAnimationSystem.evaluator.clips) {
+            clip.stop();
+          }
+        }
+      }
+      attachmentState.childAnimations.animations.clear();
     }
     this.attachments.delete(attachment);
   }
@@ -180,14 +236,15 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       }
       this.animState = null;
 
-      // Clean up attachments
+      // Clean up attachments - only clean up direct animation, preserve child animations
       for (const [attachment, animState] of this.attachments) {
-        if (animState) {
-          animState.animComponent.reset();
-          animState.animComponent.unbind();
-          animState.animComponent.entity.removeComponent("anim");
+        if (animState && animState.directAnimation) {
+          // Clean up the direct animation component
+          animState.directAnimation.animComponent.reset();
+          animState.directAnimation.animComponent.unbind();
+          animState.directAnimation.animComponent.entity.removeComponent("anim");
+          animState.directAnimation = null;
         }
-        this.attachments.set(attachment, null);
       }
     }
 
@@ -249,15 +306,16 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         }
       }
     } else if (!this.model.props.animEnabled) {
-      // When disabling animation, reset all attachments to default pose
+      // When disabling animation, only clean up direct animations, preserve child animations
+      // Child animation enabling/disabling is handled in updateAnimation method
       for (const [attachment, animState] of this.attachments) {
-        if (animState) {
-          animState.animComponent.playing = false;
-          animState.animComponent.reset();
-          animState.animComponent.unbind();
-          animState.animComponent.entity.removeComponent("anim");
+        if (animState && animState.directAnimation) {
+          // Clean up the direct animation component
+          animState.directAnimation.animComponent.reset();
+          animState.directAnimation.animComponent.unbind();
+          animState.directAnimation.animComponent.entity.removeComponent("anim");
+          animState.directAnimation = null;
         }
-        this.attachments.set(attachment, null);
       }
     }
   }
@@ -396,22 +454,25 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
         // Set up attachments
         for (const [attachment] of this.attachments) {
-          const playcanvasEntity = attachment.getContainer() as playcanvas.Entity;
+          const attachmentState = this.attachments.get(attachment);
+          if (attachmentState) {
+            const playcanvasEntity = attachment.getContainer() as playcanvas.Entity;
 
-          // Check if entity already has an anim component
-          let animComponent = playcanvasEntity.anim;
-          if (!animComponent) {
-            animComponent = playcanvasEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
-          }
+            // Check if entity already has an anim component
+            let animComponent = playcanvasEntity.anim;
+            if (!animComponent) {
+              animComponent = playcanvasEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
+            }
 
-          if (animComponent) {
-            animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
-            const animState = {
-              animComponent,
-            };
-            this.attachments.set(attachment, animState);
-          } else {
-            console.warn("Failed to create anim component for attachment");
+            if (animComponent) {
+              animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
+              // Update the existing attachment state's directAnimation property
+              attachmentState.directAnimation = {
+                animComponent,
+              };
+            } else {
+              console.warn("Failed to create anim component for attachment");
+            }
           }
         }
 
@@ -483,13 +544,39 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       return;
     }
 
-    const existingAnimationState = this.childAnimationActions.get(animation);
+    let existingAnimationState = this.childAnimationActions.get(animation);
     if (existingAnimationState) {
-      if (existingAnimationState.animClip) {
-        existingAnimationState.weight = animationState.weight;
-        existingAnimationState.loop = animationState.loop;
-        existingAnimationState.startTime = animationState.startTime;
-        existingAnimationState.pauseTime = animationState.pauseTime;
+      // Check if the animation asset has changed (capture old asset before updating state)
+      const oldAnimationAsset = existingAnimationState.animationAsset;
+      if (existingAnimationState.animClip && oldAnimationAsset !== animationState.animationAsset) {
+        // Animation asset has changed, remove the old clip and recreate
+        if (this.directAnimationSystem) {
+          try {
+            const clipIndex = this.directAnimationSystem.evaluator.clips?.indexOf(existingAnimationState.animClip);
+            if (clipIndex !== undefined && clipIndex >= 0) {
+              this.directAnimationSystem.evaluator.removeClip(clipIndex);
+            }
+          } catch (error) {
+            console.warn(`Failed to remove old AnimClip for ${existingAnimationState.clipName}:`, error);
+          }
+        }
+        existingAnimationState.animClip = null;
+        existingAnimationState = undefined;
+      }
+    }
+
+    if (existingAnimationState) {
+      existingAnimationState.animationState = animationState;
+      
+      // Update animations for all attachments
+      for (const [attachment, attachmentAnimState] of this.attachments) {
+        this.updateAnimationForAttachment(attachment, attachmentAnimState, animation, animationState);
+      }
+      
+      // Trigger an immediate update to apply timing logic
+      if (this.documentTimeTickListener) {
+        const documentTime = this.model.getDocumentTime();
+        this.updateAnimation(documentTime);
       }
       return;
     }
@@ -534,12 +621,14 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     this.childAnimationActions.set(animation, {
       animationAsset: animationState.animationAsset,
       animClip,
-      weight: animationState.weight,
-      loop: animationState.loop,
-      startTime: animationState.startTime,
-      pauseTime: animationState.pauseTime,
+      animationState,
       clipName,
     });
+
+    // Update animations for all attachments
+    for (const [attachment, attachmentAnimState] of this.attachments) {
+      this.updateAnimationForAttachment(attachment, attachmentAnimState, animation, animationState);
+    }
 
     // Ensure document time tick listener is set up for child animations
     if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
@@ -554,6 +643,80 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     if (this.documentTimeTickListener) {
       const documentTime = this.model.getDocumentTime();
       this.updateAnimation(documentTime);
+    }
+  }
+
+  private updateAnimationForAttachment(
+    attachment: Model<PlayCanvasGraphicsAdapter>, 
+    attachmentAnimState: AttachmentAnimState, 
+    animation: Animation<PlayCanvasGraphicsAdapter>, 
+    animationState: PlayCanvasAnimationState
+  ) {
+    let attachmentChildAnimation = attachmentAnimState.childAnimations.animations.get(animation);
+    const attachmentDirectAnimationSystem = attachmentAnimState.childAnimations.directAnimationSystem;
+
+    const attachmentLoadedState = (attachment.modelGraphics as PlayCanvasModel).loadedState;
+    if (!attachmentLoadedState) {
+      throw new Error("Attachment must be loaded before registering");
+    }
+
+    if (attachmentChildAnimation && attachmentChildAnimation.animClip && attachmentDirectAnimationSystem) {
+      // if the animation asset has changed, remove the old clip and recreate (capture old asset before updating state)
+      const oldAnimationAsset = attachmentChildAnimation.animationAsset;
+      if (oldAnimationAsset !== animationState.animationAsset) {
+        try {
+          const clipIndex = attachmentDirectAnimationSystem.evaluator.clips?.indexOf(attachmentChildAnimation.animClip);
+          if (clipIndex !== undefined && clipIndex >= 0) {
+            attachmentDirectAnimationSystem.evaluator.removeClip(clipIndex);
+          }
+        } catch (error) {
+          console.warn(`Failed to remove old AnimClip for ${attachmentChildAnimation.clipName}:`, error);
+        }
+        attachmentChildAnimation.animClip = null;
+        attachmentChildAnimation = undefined;
+      }
+    }
+
+    if (!attachmentChildAnimation) {
+      attachmentChildAnimation = {
+        animClip: null,
+        animationState: animationState,
+        animationAsset: animationState.animationAsset,
+        clipName: `ChildAnimation_${animation.id}`,
+      };
+      attachmentAnimState.childAnimations.animations.set(animation, attachmentChildAnimation);
+    } else {
+      attachmentChildAnimation.animationState = animationState;
+      attachmentChildAnimation.animationAsset = animationState.animationAsset;
+    }
+
+    if (!attachmentChildAnimation.animClip && animationState && animationState.animationAsset && attachmentDirectAnimationSystem) {
+      try {
+        const animTrack = animationState.animationAsset.resource;
+        if (animTrack) {
+          const animClip = new playcanvas.AnimClip(
+            animTrack,
+            0.0,
+            1.0,
+            true,
+            animationState.loop,
+          );
+          animClip.name = attachmentChildAnimation.clipName;
+          animClip.blendWeight = 1;
+
+          attachmentDirectAnimationSystem.evaluator.addClip(animClip);
+          animClip.play();
+          
+          attachmentAnimState.childAnimations.animations.set(animation, {
+            animClip,
+            animationState,
+            animationAsset: animationState.animationAsset,
+            clipName: attachmentChildAnimation.clipName,
+          });
+        }
+      } catch (error) {
+        console.warn(`Failed to create AnimClip for attachment ${attachmentChildAnimation.clipName}:`, error);
+      }
     }
   }
 
@@ -580,9 +743,36 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
           console.warn(`Failed to remove AnimClip for ${animationState.clipName}:`, error);
         }
       }
+
+      // Remove animation from all attachments
+      for (const [attachment, attachmentAnimState] of this.attachments) {
+        this.removeAnimationForAttachment(attachment, attachmentAnimState, animation);
+      }
     }
 
     this.childAnimationActions.delete(animation);
+  }
+
+  private removeAnimationForAttachment(
+    attachment: Model<PlayCanvasGraphicsAdapter>, 
+    attachmentAnimState: AttachmentAnimState, 
+    animation: Animation<PlayCanvasGraphicsAdapter>
+  ) {
+    const attachmentChildAnimation = attachmentAnimState.childAnimations.animations.get(animation);
+    if (attachmentChildAnimation) {
+      const animClip = attachmentChildAnimation.animClip;
+      if (animClip && attachmentAnimState.childAnimations.directAnimationSystem) {
+        try {
+          const clipIndex = attachmentAnimState.childAnimations.directAnimationSystem.evaluator.clips?.indexOf(animClip);
+          if (clipIndex !== undefined && clipIndex >= 0) {
+            attachmentAnimState.childAnimations.directAnimationSystem.evaluator.removeClip(clipIndex);
+          }
+        } catch (error) {
+          console.warn(`Failed to remove AnimClip for attachment ${attachmentChildAnimation.clipName}:`, error);
+        }
+      }
+    }
+    attachmentAnimState.childAnimations.animations.delete(animation);
   }
 
   private updateAnimationActions() {
@@ -978,10 +1168,10 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
       // Update attachment animations (only when enabled, disabled case is handled in setAnimEnabled)
       for (const [model, animState] of this.attachments) {
-        if (animState && this.model.props.animEnabled) {
-          animState.animComponent.playing = true;
+        if (animState && animState.directAnimation && this.model.props.animEnabled) {
+          animState.directAnimation.animComponent.playing = true;
           // @ts-expect-error - accessing _controller private property
-          const clip = animState.animComponent.baseLayer._controller._animEvaluator.clips[0];
+          const clip = animState.directAnimation.animComponent.baseLayer._controller._animEvaluator.clips[0];
           if (clip) {
             clip.time = animationTimeMs / 1000;
           }
@@ -999,8 +1189,14 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         const activeAnimationToWeight = new Map<PlayCanvasChildAnimationState, number>();
         let totalWeight = 0;
 
+        // Map of animation to animationTimeMs for attachments
+        const animationTimes = new Map<Animation<PlayCanvasGraphicsAdapter>, number>();
+
+        let hasActiveAnimations = false;
+
         // Update each child animation based on its individual timing properties
-        for (const [, animationState] of this.childAnimationActions) {
+        for (const [animation, childAnimationState] of this.childAnimationActions) {
+          const animationState = childAnimationState.animationState;
           let shouldBeActive = true;
           let animationTimeMs = 0;
 
@@ -1018,6 +1214,15 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
             }
           }
 
+          // Apply speed multiplier
+          animationTimeMs = animationTimeMs * animationState.speed;
+
+          // Handle explicit ratio override
+          if (animationState.ratio !== null && animationState.animationAsset) {
+            const durationMs = animationState.animationAsset.resource.duration * 1000;
+            animationTimeMs = animationState.ratio * durationMs;
+          }
+
           // Handle loop and duration
           if (shouldBeActive && animationState.animationAsset) {
             const durationMs = animationState.animationAsset.resource.duration * 1000;
@@ -1028,30 +1233,32 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
           }
 
           // Control the animation state based on timing and weight
-          if (animationState.animClip) {
+          if (childAnimationState.animClip) {
             if (shouldBeActive && animationState.weight > 0) {
-              animationState.animClip.time = animationTimeMs / 1000;
-              activeAnimationToWeight.set(animationState, animationState.weight);
+              childAnimationState.animClip.time = animationTimeMs / 1000;
+              activeAnimationToWeight.set(childAnimationState, animationState.weight);
               totalWeight += animationState.weight;
+              animationTimes.set(animation, animationTimeMs);
+              hasActiveAnimations = true;
             } else {
               // Set weight to 0 for inactive animations but keep them playing
-              animationState.animClip.blendWeight = 0;
+              childAnimationState.animClip.blendWeight = 0;
 
               // Keep playing for proper timing - weight controls influence
-              if (!animationState.animClip._playing) {
-                animationState.animClip.play();
+              if (!childAnimationState.animClip._playing) {
+                childAnimationState.animClip.play();
               }
             }
           }
         }
 
         if (totalWeight > 0) {
-          for (const [animationState, weight] of activeAnimationToWeight) {
-            if (animationState.animClip) {
+          for (const [childAnimationState, weight] of activeAnimationToWeight) {
+            if (childAnimationState.animClip) {
               if (totalWeight > 1) {
-                animationState.animClip.blendWeight = weight / totalWeight;
+                childAnimationState.animClip.blendWeight = weight / totalWeight;
               } else {
-                animationState.animClip.blendWeight = weight;
+                childAnimationState.animClip.blendWeight = weight;
               }
             }
           }
@@ -1074,11 +1281,67 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         } else {
           console.warn("No animation system available - animation blending may not work correctly");
         }
+
+        // Update attachment child animations
+        for (const [model, attachmentAnimState] of this.attachments) {
+          if (attachmentAnimState && attachmentAnimState.childAnimations.directAnimationSystem) {
+            const attachmentActiveAnimationToWeight = new Map<{animClip: playcanvas.AnimClip}, number>();
+            let attachmentTotalWeight = 0;
+
+            for (const [animation, childAnimation] of attachmentAnimState.childAnimations.animations) {
+              const animationTimeMs = animationTimes.get(animation);
+              const animClip = childAnimation.animClip;
+              if (animClip) {
+                if (animationTimeMs !== undefined) {
+                  animClip.time = animationTimeMs / 1000;
+                  attachmentActiveAnimationToWeight.set({ animClip }, childAnimation.animationState.weight);
+                  attachmentTotalWeight += childAnimation.animationState.weight;
+                } else {
+                  animClip.blendWeight = 0;
+                  if (!animClip._playing) {
+                    animClip.play();
+                  }
+                }
+              }
+            }
+
+            if (attachmentTotalWeight > 0) {
+              for (const [animData, weight] of attachmentActiveAnimationToWeight) {
+                if (attachmentTotalWeight > 1) {
+                  animData.animClip.blendWeight = weight / attachmentTotalWeight;
+                } else {
+                  animData.animClip.blendWeight = weight;
+                }
+              }
+            }
+
+            // Set default pose weight for attachment
+            if (attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip) {
+              if (attachmentTotalWeight > 1) {
+                attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.blendWeight = 0;
+              } else {
+                const defaultPoseWeight = Math.max(0, 1.0 - attachmentTotalWeight);
+                attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.blendWeight = defaultPoseWeight;
+                if (!attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip._playing) {
+                  attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.play();
+                }
+              }
+            }
+
+            if (!hasActiveAnimations) {
+              attachmentAnimState.childAnimations.directAnimationSystem.evaluator.update(0);
+            } else {
+              attachmentAnimState.childAnimations.directAnimationSystem.evaluator.update(0);
+            }
+
+            (model.modelGraphics as PlayCanvasModel).triggerSocketedChildrenTransformed();
+          }
+        }
       } else {
         // When animations are disabled, set all child animation weights to 0
-        for (const [, animationState] of this.childAnimationActions) {
-          if (animationState.animClip) {
-            animationState.animClip.blendWeight = 0;
+        for (const [, childAnimationState] of this.childAnimationActions) {
+          if (childAnimationState.animClip) {
+            childAnimationState.animClip.blendWeight = 0;
           }
         }
 
@@ -1088,6 +1351,29 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
           // Ensure default pose is playing
           if (!this.directAnimationSystem.defaultPoseClip._playing) {
             this.directAnimationSystem.defaultPoseClip.play();
+          }
+        }
+
+        // Handle attachments when animations are disabled
+        for (const [model, attachmentAnimState] of this.attachments) {
+          if (attachmentAnimState && attachmentAnimState.childAnimations.directAnimationSystem) {
+            // Set all child animation weights to 0
+            for (const [, childAnimation] of attachmentAnimState.childAnimations.animations) {
+              if (childAnimation.animClip) {
+                childAnimation.animClip.blendWeight = 0;
+              }
+            }
+
+            // Set default pose to full weight
+            if (attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip) {
+              attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.blendWeight = 1.0;
+              if (!attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip._playing) {
+                attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.play();
+              }
+            }
+
+            attachmentAnimState.childAnimations.directAnimationSystem.evaluator.update(0);
+            (model.modelGraphics as PlayCanvasModel).triggerSocketedChildrenTransformed();
           }
         }
       }

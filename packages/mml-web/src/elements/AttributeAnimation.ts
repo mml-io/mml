@@ -67,7 +67,6 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
       defaultStart,
       (value: number) => {
         this.props.start = value;
-        console.log("start", value);
       },
     ],
     end: [
@@ -75,7 +74,6 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
       defaultEnd,
       (value: number) => {
         this.props.end = value;
-        console.log("end", value);
       },
     ],
     "start-time": [
@@ -97,7 +95,6 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
       defaultAnimDuration,
       (value: number) => {
         this.props.animDuration = value;
-        console.log("duration", value);
       },
     ],
     "ping-pong-delay": [

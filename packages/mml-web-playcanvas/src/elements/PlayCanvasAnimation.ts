@@ -32,6 +32,7 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
       weight: animation.props.weight,
       speed: animation.props.speed,
       loop: animation.props.loop,
+      ratio: animation.props.ratio,
       startTime: animation.props.startTime,
       pauseTime: animation.props.pauseTime,
     };
