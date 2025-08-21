@@ -237,6 +237,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       const filteredClip = createFilteredClip(animationState.animationClip, attachmentLoadedState.bones);
       const action = attachmentChildAnimationMixer.clipAction(filteredClip, attachmentLoadedState.group);
       action.enabled = true;
+      action.play();
       attachmentAnimState.childAnimations.animations.set(animation, {
         action,
         clip: animationState.animationClip,
@@ -258,12 +259,12 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.childAnimations.delete(animation);
 
       for (const [attachment, attachmentAnimState] of this.attachments) {
-        this.removeAnimationForAttachment(attachment, attachmentAnimState, animation, null);
+        this.removeAnimationForAttachment(attachment, attachmentAnimState, animation);
       }
     }
   }
 
-  private removeAnimationForAttachment(attachment: Model<ThreeJSGraphicsAdapter>, attachmentAnimState: AttachmentAnimState, animation: Animation<ThreeJSGraphicsAdapter>, animationState: ThreeJSAnimationState) {
+  private removeAnimationForAttachment(attachment: Model<ThreeJSGraphicsAdapter>, attachmentAnimState: AttachmentAnimState, animation: Animation<ThreeJSGraphicsAdapter>) {
     const attachmentChildAnimation = attachmentAnimState.childAnimations.animations.get(animation);
     if (attachmentChildAnimation) {
       const action = attachmentChildAnimation.action;
@@ -332,7 +333,13 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           return;
         }
         this.latestAnimPromise = null;
-        this.playAnimation(result.animations[0]);
+        const animationClip = result.animations[0];
+        if (this.loadedState) {
+          const filteredClip = createFilteredClip(animationClip, this.loadedState.bones);
+          this.playAnimation(filteredClip);
+        } else {
+          this.playAnimation(animationClip);
+        }
 
         for (const [model] of this.attachments) {
           this.registerAttachment(model);
@@ -513,7 +520,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   public registerAttachment(attachment: Model<ThreeJSGraphicsAdapter>) {
-
     const childAnimationGroup = new THREE.AnimationObjectGroup();
     const childAnimationMixer = new THREE.AnimationMixer(childAnimationGroup);
     let animState: AttachmentAnimState = {
@@ -730,6 +736,12 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     } else if (this.childAnimationMixer) {
       // Handle child animations
       if (this.model.props.animEnabled) {
+        
+        // Map of animation to animationTimeMs | null
+        const animationTimes = new Map<Animation<ThreeJSGraphicsAdapter>, number>();
+
+        let hasActiveAnimations = false;
+
         // Update each child animation based on its individual timing properties
         for (const [animation, childAnimation] of this.childAnimations) {
           const animationState = childAnimation.animationState;
@@ -753,11 +765,19 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
               }
             }
 
+            const durationMs = (animationState.animationClip?.duration ?? 1) * 1000;
+
+            animationTimeMs = animationTimeMs * animationState.speed;
+
+            if (animationState.ratio !== null) {
+              animationTimeMs = animationState.ratio * durationMs;
+            }
+
             // Handle loop and duration
             if (shouldBeActive && animationState.animationClip) {
               if (!animationState.loop) {
-                if (animationTimeMs > animationState.animationClip.duration * 1000) {
-                  animationTimeMs = animationState.animationClip.duration * 1000;
+                if (animationTimeMs > durationMs) {
+                  animationTimeMs = durationMs;
                   shouldBeActive = false; // Stop the animation when it reaches the end
                 }
               }
@@ -765,13 +785,16 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
             // Control the action based on timing
             if (shouldBeActive) {
+              animationTimes.set(animation, animationTimeMs);
               action.enabled = true;
+              hasActiveAnimations = true;
               action.setEffectiveWeight(animationState.weight);
               if (animationState.weight > 0) {
                 action.play();
               } else {
                 action.stop();
               }
+              action.time = (animationTimeMs % durationMs) / 1000;
             } else {
               action.enabled = false;
               action.stop();
@@ -779,41 +802,37 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           }
         }
 
-        // Check if any animations are active
-        let hasActiveAnimations = false;
-        for (const [, childAnimation] of this.childAnimations) {
-          if (childAnimation.action?.enabled) {
-            hasActiveAnimations = true;
-            break;
-          }
-        }
-
-        let animationTimeMs: number | null = null;
-        if (hasActiveAnimations) {
-          // TODO - need to update the time for each animation separately based on their timing properties
-          // Set the mixer time to the current document time for proper blending
-          const documentTime = this.model.getDocumentTime();
-          animationTimeMs = documentTime / 1000;
-          this.childAnimationMixer.setTime(animationTimeMs);
-        } else {
+        if (!hasActiveAnimations) {
           // No active animations, stop all actions and reset to t-pose
           this.childAnimationMixer.stopAllAction();
-          this.childAnimationMixer.setTime(0);
         }
+        this.childAnimationMixer.update(0);
 
         for (const [attachment, attachmentAnimState] of this.attachments) {
-          // TODO - need to update the time for each animation separately based on their timing properties
           for (const [animation, childAnimation] of attachmentAnimState.childAnimations.animations) {
-            childAnimation.action?.setEffectiveWeight(childAnimation.animationState.weight);
-            if (childAnimation.animationState.weight > 0) {
-              childAnimation.action?.play();
-            } else {
-              childAnimation.action?.stop();
+            const animationTimeMs = animationTimes.get(animation);
+            const action = childAnimation.action;
+            if (action) {
+              if (animationTimeMs !== undefined) {
+                action.enabled = true;
+                action.setEffectiveWeight(childAnimation.animationState.weight);
+                if (childAnimation.animationState.weight > 0) {
+                  action.play();
+                } else {
+                  action.stop();
+                }
+                action.time = animationTimeMs / 1000;
+              } else {
+                action.enabled = false;
+                action.stop();
+              }
             }
           }
-          if (animationTimeMs !== null) {
-            attachmentAnimState.childAnimations.animationMixer.setTime(animationTimeMs);
+
+          if (!hasActiveAnimations) {
+            attachmentAnimState.childAnimations.animationMixer.stopAllAction();
           }
+          attachmentAnimState.childAnimations.animationMixer.update(0.000000001);
         }
 
 

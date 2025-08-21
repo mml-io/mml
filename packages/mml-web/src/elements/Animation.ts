@@ -9,14 +9,18 @@ import { MElement } from "./MElement";
 import { Model } from "./Model";
 
 const defaultAnimationSrc = null;
-const defaultAnimationWeight = 0;
+const defaultAnimationWeight = 1;
+const defaultAnimationSpeed = 1;
 const defaultAnimationLoop = true;
 const defaultAnimationStartTime = 0;
 const defaultAnimationPauseTime = null;
+const defaultAnimationRatio = null;
 
 export type MAnimationProps = {
   src: string | null;
   weight: number;
+  speed: number;
+  ratio: number | null;
   loop: boolean;
   startTime: number;
   pauseTime: number | null;
@@ -28,12 +32,33 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
   public props: MAnimationProps = {
     src: defaultAnimationSrc,
     weight: defaultAnimationWeight,
+    speed: defaultAnimationSpeed,
+    ratio: defaultAnimationRatio,
     loop: defaultAnimationLoop,
     startTime: defaultAnimationStartTime,
     pauseTime: defaultAnimationPauseTime,
   };
 
-  private animatedAttributeHelper: AnimatedAttributeHelper;
+  private animatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    weight: [
+      AnimationType.Number,
+      defaultAnimationWeight,
+      (value: number | null) => {
+        if (value !== null) {
+          this.props.weight = value;
+          this.animationGraphics?.setWeight(value, this.props);
+        }
+      },
+    ],
+    ratio: [
+      AnimationType.Number,
+      defaultAnimationRatio,
+      (value: number | null) => {
+        this.props.ratio = value;
+        this.animationGraphics?.setRatio(value, this.props);
+      },
+    ],
+  });
 
   private static attributeHandler = new AttributeHandler<Animation<GraphicsAdapter>>({
     src: (instance, newValue) => {
@@ -41,16 +66,20 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
       instance.animationGraphics?.setSrc(newValue, instance.props);
     },
     weight: (instance, newValue) => {
-      if (instance.animatedAttributeHelper) {
-        instance.animatedAttributeHelper.elementSetAttribute(
-          "weight",
-          parseFloatAttribute(newValue, defaultAnimationWeight),
-        );
-      } else {
-        // fallback if AnimatedAttributeHelper isn't ready yet
-        instance.props.weight = parseFloatAttribute(newValue, defaultAnimationWeight);
-        instance.animationGraphics?.setWeight(instance.props.weight, instance.props);
-      }
+      instance.animatedAttributeHelper.elementSetAttribute(
+        "weight",
+        parseFloatAttribute(newValue, defaultAnimationWeight),
+      );
+    },
+    ratio: (instance, newValue) => {
+      instance.animatedAttributeHelper.elementSetAttribute(
+        "ratio",
+        parseFloatAttribute(newValue, defaultAnimationRatio),
+      );
+    },
+    speed: (instance, newValue) => {
+      instance.props.speed = parseFloatAttribute(newValue, defaultAnimationSpeed);
+      instance.animationGraphics?.setSpeed(instance.props.speed, instance.props);
     },
     loop: (instance, newValue) => {
       instance.props.loop = parseBoolAttribute(newValue, defaultAnimationLoop);
@@ -97,22 +126,12 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
   }
 
   public addSideEffectChild(child: MElement<G>): void {
-    if (AttributeLerp.isAttributeLerp(child)) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.animatedAttributeHelper?.addLerp(child, attr);
-      }
-    }
+    this.animatedAttributeHelper.addSideEffectChild(child);
     super.addSideEffectChild(child);
   }
 
   public removeSideEffectChild(child: MElement<G>): void {
-    if (AttributeLerp.isAttributeLerp(child)) {
-      const attr = child.getAnimatedAttributeName();
-      if (attr) {
-        this.animatedAttributeHelper?.removeLerp(child, attr);
-      }
-    }
+    this.animatedAttributeHelper.removeSideEffectChild(child);
     super.removeSideEffectChild(child);
   }
 
@@ -132,20 +151,6 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
     this.animationGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()
       .MMLAnimationGraphicsInterface(this);
-
-    // for weight lerp
-    this.animatedAttributeHelper = new AnimatedAttributeHelper(this, {
-      weight: [
-        AnimationType.Number,
-        defaultAnimationWeight,
-        (value: number | null) => {
-          if (value !== null) {
-            this.props.weight = value;
-            this.animationGraphics?.setWeight(value, this.props);
-          }
-        },
-      ],
-    });
 
     if (this.parentElement && Model.isModel(this.parentElement)) {
       this.parentElement.addSideEffectChild(this);

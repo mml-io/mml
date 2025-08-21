@@ -9,6 +9,8 @@ import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
 export type ThreeJSAnimationState = {
   animationClip: THREE.AnimationClip | null;
   weight: number;
+  speed: number;
+  ratio: number | null;
   loop: boolean;
   startTime: number;
   pauseTime: number | null;
@@ -31,6 +33,8 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     this.animationState = {
       animationClip: null,
       weight: animation.props.weight,
+      speed: animation.props.speed,
+      ratio: animation.props.ratio,
       loop: animation.props.loop,
       startTime: animation.props.startTime,
       pauseTime: animation.props.pauseTime,
@@ -80,6 +84,16 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
 
   setWeight(weight: number): void {
     this.animationState.weight = weight;
+    this.updateParentAnimation();
+  }
+
+  setSpeed(speed: number): void {
+    this.animationState.speed = speed;
+    this.updateParentAnimation();
+  }
+
+  setRatio(ratio: number | null): void {
+    this.animationState.ratio = ratio;
     this.updateParentAnimation();
   }
 

@@ -8,6 +8,8 @@ import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 export type PlayCanvasAnimationState = {
   animationAsset: playcanvas.Asset | null;
   weight: number;
+  speed: number;
+  ratio: number | null;
   loop: boolean;
   startTime: number;
   pauseTime: number | null;
@@ -28,6 +30,7 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
     this.animationState = {
       animationAsset: null,
       weight: animation.props.weight,
+      speed: animation.props.speed,
       loop: animation.props.loop,
       startTime: animation.props.startTime,
       pauseTime: animation.props.pauseTime,
@@ -77,6 +80,16 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
 
   setWeight(weight: number): void {
     this.animationState.weight = weight;
+    this.updateParentAnimation();
+  }
+
+  setSpeed(speed: number): void {
+    this.animationState.speed = speed;
+    this.updateParentAnimation();
+  }
+
+  setRatio(ratio: number | null): void {
+    this.animationState.ratio = ratio;
     this.updateParentAnimation();
   }
 
