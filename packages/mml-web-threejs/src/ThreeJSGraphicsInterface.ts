@@ -4,7 +4,6 @@ import * as ThreeJSElements from "./elements";
 import { ThreeJSGraphicsAdapter } from "./ThreeJSGraphicsAdapter";
 
 export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapter> = {
-  MMLAnimationGraphicsInterface: (element) => new ThreeJSElements.ThreeJSAnimation(element),
   MElementGraphicsInterface: (element) => new ThreeJSElements.ThreeJSMElement(element),
   MMLDebugHelperGraphicsInterface: (debugHelper) =>
     new ThreeJSElements.ThreeJSDebugHelper(debugHelper),
@@ -28,5 +27,6 @@ export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapt
   MMLTransformableGraphicsInterface: (element) => new ThreeJSElements.ThreeJSTransformable(element),
   MMLVideoGraphicsInterface: (element, updateMeshCallback: () => void) =>
     new ThreeJSElements.ThreeJSVideo(element, updateMeshCallback),
+  MMLAnimationGraphicsInterface: (element) => new ThreeJSElements.ThreeJSAnimation(element),
   RemoteDocumentGraphicsInterface: (element) => new ThreeJSElements.ThreeJSRemoteDocument(element),
 };
