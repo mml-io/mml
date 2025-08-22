@@ -154,8 +154,6 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
 
     if (this.parentElement && Model.isModel(this.parentElement)) {
       this.parentElement.addSideEffectChild(this);
-    } else {
-      console.warn("Animation connected, but no parent Model found:", this.id);
     }
 
     // Process attributes in the correct order: src first, then weight

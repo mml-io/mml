@@ -692,7 +692,7 @@
   <xs:element name="m-animation">
     <xs:annotation>
       <xs:documentation>
-        The `m-animation` element is used as a child of `m-model` or `m-character` elements to provide weighted animations. Multiple animations can be blended together using their weight attributes.
+        The `m-animation` element is used as a child of `m-model` or `m-character` elements to provide weighted animations. Multiple animations can be mixed together using their weight attributes.
       </xs:documentation>
     </xs:annotation>
     <xs:complexType mixed="true">
@@ -709,7 +709,7 @@
           <xs:attribute name="weight" type="xs:float">
             <xs:annotation>
               <xs:documentation>
-                The weight of this animation in the blend. Values range from 0 (no influence) to 1 (full influence). Default value is 0.
+                The weight of this animation in the mix. Values range from 0 (no influence) to 1 (full influence). If the sum of all weights is greater than 1, the sum of the weights will be normalized to 1. Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

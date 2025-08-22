@@ -117,23 +117,6 @@ describe("m-animation", () => {
     mockAnimationLoad.mockRestore();
   });
 
-  test("animation warns when not child of model", async () => {
-    const { scene, remoteDocument } = await createTestScene();
-    const animationElement = document.createElement("m-animation") as Animation;
-
-    const consoleSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-
-    // Append directly to document (not as child of model)
-    remoteDocument.appendChild(animationElement);
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "Animation connected, but no parent Model found:", 
-      animationElement.id
-    );
-
-    consoleSpy.mockRestore();
-  });
-
   test("observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-animation", Animation);
     expect(schema.name).toEqual(Animation.tagName);
