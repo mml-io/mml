@@ -5,6 +5,8 @@ export abstract class AnimationGraphics<G extends GraphicsAdapter = GraphicsAdap
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(element: Animation<G>) {}
 
+  abstract parentModelUpdated(): void;
+
   abstract setSrc(src: string | null, mAnimationProps: MAnimationProps): void;
 
   abstract setWeight(weight: number, mAnimationProps: MAnimationProps): void;

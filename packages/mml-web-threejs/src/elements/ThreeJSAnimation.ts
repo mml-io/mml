@@ -82,6 +82,10 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
       });
   }
 
+  parentModelUpdated(): void {
+    this.updateParentAnimation();
+  }
+
   setWeight(weight: number): void {
     this.animationState.weight = weight;
     this.updateParentAnimation();

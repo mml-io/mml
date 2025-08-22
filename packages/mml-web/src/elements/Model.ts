@@ -204,9 +204,7 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       if (Animation.isAnimation(animation)) {
         // The animation's graphics adapter will handle the notification
         if (animation.animationGraphics) {
-          // Force a weight update to trigger the animation registration
-          const weight = animation.props.weight;
-          animation.animationGraphics.setWeight(weight, animation.props);
+          animation.animationGraphics.parentModelUpdated();
         }
       }
     });

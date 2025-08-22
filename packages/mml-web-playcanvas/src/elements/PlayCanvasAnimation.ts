@@ -79,6 +79,10 @@ export class PlayCanvasAnimation extends AnimationGraphics<PlayCanvasGraphicsAda
       });
   }
 
+  parentModelUpdated(): void {
+    this.updateParentAnimation();
+  }
+
   setWeight(weight: number): void {
     this.animationState.weight = weight;
     this.updateParentAnimation();
