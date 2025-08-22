@@ -3,6 +3,8 @@
 
 <m-group id="labels"></m-group>
 
+<m-label id="state-label" x="0" y="6" z="0" content="Initial" rx="0" width="5" height="0.4" alignment="center" padding="0" font-size="24" background-color="rgba(0,0,0,0.7)"></m-label>
+
 <m-model id="test-model" y="3" z="6.5" src="/assets/Body.glb"></m-model>
 
 <m-model id="reference-model" x="3" y="3" z="6.5" src="/assets/Body.glb">
@@ -52,12 +54,10 @@
 
   setAnimAttrLabel.addEventListener("click", () => {
     testModel.setAttribute("anim", idleAnimUrl);
-    console.log("Set model anim attribute");
   });
 
   removeAnimAttrLabel.addEventListener("click", () => {
     testModel.removeAttribute("anim");
-    console.log("Removed model anim attribute");
   });
 
   addChildAnimLabel.addEventListener("click", () => {
@@ -65,7 +65,6 @@
       childAnimation = createAnimation(runAnimUrl, 1.0);
       childAnimation.setAttribute("id", "child-run-anim");
       testModel.appendChild(childAnimation);
-      console.log("Added child animation");
     }
   });
 
@@ -73,7 +72,6 @@
     if (childAnimation) {
       childAnimation.remove();
       childAnimation = null;
-      console.log("Removed child animation");
     }
   });
 
@@ -82,7 +80,6 @@
       secondChildAnimation = createAnimation(airAnimUrl, 0.5);
       secondChildAnimation.setAttribute("id", "child-air-anim");
       testModel.appendChild(secondChildAnimation);
-      console.log("Added second child animation");
     }
   });
 </script>

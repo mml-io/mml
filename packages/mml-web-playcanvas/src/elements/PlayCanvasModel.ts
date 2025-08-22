@@ -37,20 +37,23 @@ type PlayCanvasChildAnimationState = {
 type AttachmentAnimState = {
   directAnimation: {
     animComponent: playcanvas.AnimComponent;
-  } | null,
+  } | null;
   childAnimations: {
     directAnimationSystem: {
       evaluator: playcanvas.AnimEvaluator;
       binder: playcanvas.DefaultAnimBinder;
       defaultPoseClip: playcanvas.AnimClip;
     } | null;
-    animations: Map<Animation<PlayCanvasGraphicsAdapter>, {
-      animClip: playcanvas.AnimClip | null;
-      animationState: PlayCanvasAnimationState;
-      animationAsset: playcanvas.Asset | null;
-      clipName: string;
-    }>;
-  },
+    animations: Map<
+      Animation<PlayCanvasGraphicsAdapter>,
+      {
+        animClip: playcanvas.AnimClip | null;
+        animationState: PlayCanvasAnimationState;
+        animationAsset: playcanvas.Asset | null;
+        clipName: string;
+      }
+    >;
+  };
 };
 
 export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
@@ -63,10 +66,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   private latestAnimPromise: Promise<playcanvas.Asset> | null = null;
   private documentTimeTickListener: null | { remove: () => void } = null;
 
-  private attachments = new Map<
-    Model<PlayCanvasGraphicsAdapter>,
-    AttachmentAnimState
-  >();
+  private attachments = new Map<Model<PlayCanvasGraphicsAdapter>, AttachmentAnimState>();
   private registeredParentAttachment: Model<PlayCanvasGraphicsAdapter> | null = null;
 
   private childAnimationActions = new Map<
@@ -157,7 +157,10 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     const attachmentRenderEntity = attachmentLoadedState.renderEntity;
     const binder = new playcanvas.DefaultAnimBinder(attachmentRenderEntity);
     const evaluator = new playcanvas.AnimEvaluator(binder);
-    const defaultPoseClip = createDefaultPoseClip(attachmentRenderEntity, attachmentLoadedState.bones);
+    const defaultPoseClip = createDefaultPoseClip(
+      attachmentRenderEntity,
+      attachmentLoadedState.bones,
+    );
     evaluator.addClip(defaultPoseClip);
     defaultPoseClip.play();
 
@@ -167,7 +170,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       defaultPoseClip,
     };
 
-    let animState: AttachmentAnimState = {
+    const animState: AttachmentAnimState = {
       directAnimation: null,
       childAnimations: {
         directAnimationSystem: attachmentDirectAnimationSystem,
@@ -177,12 +180,20 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
     // Set up existing child animations for this attachment
     for (const [animation, childAnimation] of this.childAnimationActions) {
-      this.updateAnimationForAttachment(attachment, animState, animation, childAnimation.animationState);
+      this.updateAnimationForAttachment(
+        attachment,
+        animState,
+        animation,
+        childAnimation.animationState,
+      );
     }
 
     // Handle direct animation (anim attribute) if it exists
     if (this.animState) {
-      const animComponent = attachmentRenderEntity.addComponent("anim", {}) as playcanvas.AnimComponent;
+      const animComponent = attachmentRenderEntity.addComponent(
+        "anim",
+        {},
+      ) as playcanvas.AnimComponent;
       animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
       animState.directAnimation = {
         animComponent,
@@ -206,7 +217,8 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       if (attachmentState.childAnimations.directAnimationSystem) {
         // Stop all clips in the evaluator
         if (attachmentState.childAnimations.directAnimationSystem.evaluator.clips) {
-          for (const clip of attachmentState.childAnimations.directAnimationSystem.evaluator.clips) {
+          for (const clip of attachmentState.childAnimations.directAnimationSystem.evaluator
+            .clips) {
             clip.stop();
           }
         }
@@ -552,12 +564,17 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         // Animation asset has changed, remove the old clip and recreate
         if (this.directAnimationSystem) {
           try {
-            const clipIndex = this.directAnimationSystem.evaluator.clips?.indexOf(existingAnimationState.animClip);
+            const clipIndex = this.directAnimationSystem.evaluator.clips?.indexOf(
+              existingAnimationState.animClip,
+            );
             if (clipIndex !== undefined && clipIndex >= 0) {
               this.directAnimationSystem.evaluator.removeClip(clipIndex);
             }
           } catch (error) {
-            console.warn(`Failed to remove old AnimClip for ${existingAnimationState.clipName}:`, error);
+            console.warn(
+              `Failed to remove old AnimClip for ${existingAnimationState.clipName}:`,
+              error,
+            );
           }
         }
         existingAnimationState.animClip = null;
@@ -567,12 +584,17 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
     if (existingAnimationState) {
       existingAnimationState.animationState = animationState;
-      
+
       // Update animations for all attachments
       for (const [attachment, attachmentAnimState] of this.attachments) {
-        this.updateAnimationForAttachment(attachment, attachmentAnimState, animation, animationState);
+        this.updateAnimationForAttachment(
+          attachment,
+          attachmentAnimState,
+          animation,
+          animationState,
+        );
       }
-      
+
       // Trigger an immediate update to apply timing logic
       if (this.documentTimeTickListener) {
         const documentTime = this.model.getDocumentTime();
@@ -647,30 +669,40 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   private updateAnimationForAttachment(
-    attachment: Model<PlayCanvasGraphicsAdapter>, 
-    attachmentAnimState: AttachmentAnimState, 
-    animation: Animation<PlayCanvasGraphicsAdapter>, 
-    animationState: PlayCanvasAnimationState
+    attachment: Model<PlayCanvasGraphicsAdapter>,
+    attachmentAnimState: AttachmentAnimState,
+    animation: Animation<PlayCanvasGraphicsAdapter>,
+    animationState: PlayCanvasAnimationState,
   ) {
     let attachmentChildAnimation = attachmentAnimState.childAnimations.animations.get(animation);
-    const attachmentDirectAnimationSystem = attachmentAnimState.childAnimations.directAnimationSystem;
+    const attachmentDirectAnimationSystem =
+      attachmentAnimState.childAnimations.directAnimationSystem;
 
     const attachmentLoadedState = (attachment.modelGraphics as PlayCanvasModel).loadedState;
     if (!attachmentLoadedState) {
       throw new Error("Attachment must be loaded before registering");
     }
 
-    if (attachmentChildAnimation && attachmentChildAnimation.animClip && attachmentDirectAnimationSystem) {
+    if (
+      attachmentChildAnimation &&
+      attachmentChildAnimation.animClip &&
+      attachmentDirectAnimationSystem
+    ) {
       // if the animation asset has changed, remove the old clip and recreate (capture old asset before updating state)
       const oldAnimationAsset = attachmentChildAnimation.animationAsset;
       if (oldAnimationAsset !== animationState.animationAsset) {
         try {
-          const clipIndex = attachmentDirectAnimationSystem.evaluator.clips?.indexOf(attachmentChildAnimation.animClip);
+          const clipIndex = attachmentDirectAnimationSystem.evaluator.clips?.indexOf(
+            attachmentChildAnimation.animClip,
+          );
           if (clipIndex !== undefined && clipIndex >= 0) {
             attachmentDirectAnimationSystem.evaluator.removeClip(clipIndex);
           }
         } catch (error) {
-          console.warn(`Failed to remove old AnimClip for ${attachmentChildAnimation.clipName}:`, error);
+          console.warn(
+            `Failed to remove old AnimClip for ${attachmentChildAnimation.clipName}:`,
+            error,
+          );
         }
         attachmentChildAnimation.animClip = null;
         attachmentChildAnimation = undefined;
@@ -680,7 +712,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     if (!attachmentChildAnimation) {
       attachmentChildAnimation = {
         animClip: null,
-        animationState: animationState,
+        animationState,
         animationAsset: animationState.animationAsset,
         clipName: `ChildAnimation_${animation.id}`,
       };
@@ -690,23 +722,22 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       attachmentChildAnimation.animationAsset = animationState.animationAsset;
     }
 
-    if (!attachmentChildAnimation.animClip && animationState && animationState.animationAsset && attachmentDirectAnimationSystem) {
+    if (
+      !attachmentChildAnimation.animClip &&
+      animationState &&
+      animationState.animationAsset &&
+      attachmentDirectAnimationSystem
+    ) {
       try {
         const animTrack = animationState.animationAsset.resource;
         if (animTrack) {
-          const animClip = new playcanvas.AnimClip(
-            animTrack,
-            0.0,
-            1.0,
-            true,
-            animationState.loop,
-          );
+          const animClip = new playcanvas.AnimClip(animTrack, 0.0, 1.0, true, animationState.loop);
           animClip.name = attachmentChildAnimation.clipName;
           animClip.blendWeight = 1;
 
           attachmentDirectAnimationSystem.evaluator.addClip(animClip);
           animClip.play();
-          
+
           attachmentAnimState.childAnimations.animations.set(animation, {
             animClip,
             animationState,
@@ -715,7 +746,10 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
           });
         }
       } catch (error) {
-        console.warn(`Failed to create AnimClip for attachment ${attachmentChildAnimation.clipName}:`, error);
+        console.warn(
+          `Failed to create AnimClip for attachment ${attachmentChildAnimation.clipName}:`,
+          error,
+        );
       }
     }
   }
@@ -754,21 +788,29 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   private removeAnimationForAttachment(
-    attachment: Model<PlayCanvasGraphicsAdapter>, 
-    attachmentAnimState: AttachmentAnimState, 
-    animation: Animation<PlayCanvasGraphicsAdapter>
+    attachment: Model<PlayCanvasGraphicsAdapter>,
+    attachmentAnimState: AttachmentAnimState,
+    animation: Animation<PlayCanvasGraphicsAdapter>,
   ) {
     const attachmentChildAnimation = attachmentAnimState.childAnimations.animations.get(animation);
     if (attachmentChildAnimation) {
       const animClip = attachmentChildAnimation.animClip;
       if (animClip && attachmentAnimState.childAnimations.directAnimationSystem) {
         try {
-          const clipIndex = attachmentAnimState.childAnimations.directAnimationSystem.evaluator.clips?.indexOf(animClip);
+          const clipIndex =
+            attachmentAnimState.childAnimations.directAnimationSystem.evaluator.clips?.indexOf(
+              animClip,
+            );
           if (clipIndex !== undefined && clipIndex >= 0) {
-            attachmentAnimState.childAnimations.directAnimationSystem.evaluator.removeClip(clipIndex);
+            attachmentAnimState.childAnimations.directAnimationSystem.evaluator.removeClip(
+              clipIndex,
+            );
           }
         } catch (error) {
-          console.warn(`Failed to remove AnimClip for attachment ${attachmentChildAnimation.clipName}:`, error);
+          console.warn(
+            `Failed to remove AnimClip for attachment ${attachmentChildAnimation.clipName}:`,
+            error,
+          );
         }
       }
     }
@@ -1170,8 +1212,9 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       for (const [model, animState] of this.attachments) {
         if (animState && animState.directAnimation && this.model.props.animEnabled) {
           animState.directAnimation.animComponent.playing = true;
-          // @ts-expect-error - accessing _controller private property
-          const clip = animState.directAnimation.animComponent.baseLayer._controller._animEvaluator.clips[0];
+          const clip =
+            // @ts-expect-error - accessing _controller private property
+            animState.directAnimation.animComponent.baseLayer._controller._animEvaluator.clips[0];
           if (clip) {
             clip.time = animationTimeMs / 1000;
           }
@@ -1285,16 +1328,23 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         // Update attachment child animations
         for (const [model, attachmentAnimState] of this.attachments) {
           if (attachmentAnimState && attachmentAnimState.childAnimations.directAnimationSystem) {
-            const attachmentActiveAnimationToWeight = new Map<{animClip: playcanvas.AnimClip}, number>();
+            const attachmentActiveAnimationToWeight = new Map<
+              { animClip: playcanvas.AnimClip },
+              number
+            >();
             let attachmentTotalWeight = 0;
 
-            for (const [animation, childAnimation] of attachmentAnimState.childAnimations.animations) {
+            for (const [animation, childAnimation] of attachmentAnimState.childAnimations
+              .animations) {
               const animationTimeMs = animationTimes.get(animation);
               const animClip = childAnimation.animClip;
               if (animClip) {
                 if (animationTimeMs !== undefined) {
                   animClip.time = animationTimeMs / 1000;
-                  attachmentActiveAnimationToWeight.set({ animClip }, childAnimation.animationState.weight);
+                  attachmentActiveAnimationToWeight.set(
+                    { animClip },
+                    childAnimation.animationState.weight,
+                  );
                   attachmentTotalWeight += childAnimation.animationState.weight;
                 } else {
                   animClip.blendWeight = 0;
@@ -1321,8 +1371,12 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
                 attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.blendWeight = 0;
               } else {
                 const defaultPoseWeight = Math.max(0, 1.0 - attachmentTotalWeight);
-                attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.blendWeight = defaultPoseWeight;
-                if (!attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip._playing) {
+                attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.blendWeight =
+                  defaultPoseWeight;
+                if (
+                  !attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip
+                    ._playing
+                ) {
                   attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.play();
                 }
               }
@@ -1367,7 +1421,9 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
             // Set default pose to full weight
             if (attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip) {
               attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.blendWeight = 1.0;
-              if (!attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip._playing) {
+              if (
+                !attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip._playing
+              ) {
                 attachmentAnimState.childAnimations.directAnimationSystem.defaultPoseClip.play();
               }
             }

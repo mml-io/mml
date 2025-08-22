@@ -18,7 +18,7 @@ describe("m-animation anim removal", () => {
     await page.waitForFunction(
       () => {
         const labels = document.querySelectorAll("m-label");
-        return labels.length === 5;
+        return labels.length > 5;
       },
       { timeout: 30000, polling: 100 },
     );
@@ -39,46 +39,89 @@ describe("m-animation anim removal", () => {
     );
 
     // Step 1: Initial state - no anim attribute, no child animations
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "Initial: no anim, no children (default pose)");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
     // Step 2: Set model anim attribute (should play idle animation)
     await clickElement(page, "#set_anim_attr-label");
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "anim=idle set (test model animated)");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
     // Step 3: Remove model anim attribute (should return to no animation)
     await clickElement(page, "#remove_anim_attr-label");
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "anim removed (back to default pose)");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
-    // Step 4: Add child animation (this was the bug - should work now)
+    // Step 4: Add child animation
     await clickElement(page, "#add_child_anim-label");
+    await page.evaluate(() => {
+      document.getElementById("state-label")!.setAttribute("content", "child run anim added w=1");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
     // Step 5: Add second child animation (test multiple child animations)
     await clickElement(page, "#add_second_child-label");
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "two children: run w=1 + air w=0.5");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
     // Step 6: Remove first child animation (should keep second one)
     await clickElement(page, "#remove_child_anim-label");
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "first child removed (only air w=0.5 left)");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
     // Step 7: Add first child animation back (test robustness)
     await clickElement(page, "#add_child_anim-label");
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "child run re-added (run w=1 + air w=0.5)");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
     // Step 8: Test the problematic sequence again - set anim attr while child animations exist
     await clickElement(page, "#set_anim_attr-label");
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "anim=idle set (overrides children)");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
     // Step 9: Remove anim attr - child animations should be restored
     await clickElement(page, "#remove_anim_attr-label");
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "anim removed (children restored: run+air)");
+    });
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 

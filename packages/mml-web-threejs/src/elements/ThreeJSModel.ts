@@ -11,6 +11,7 @@ import { ThreeJSAnimationState } from "./ThreeJSAnimation";
 type ThreeJSModelLoadState = {
   group: THREE.Object3D;
   bones: Map<string, THREE.Bone>;
+  nodeNames: Set<string>;
   boundingBox: {
     size: THREE.Vector3;
     centerOffset: THREE.Vector3;
@@ -26,27 +27,24 @@ type ThreeJSModelAnimState = {
   } | null;
 };
 
-function createFilteredClip(clip: THREE.AnimationClip, bones: Map<string, THREE.Bone>): THREE.AnimationClip {
-  // filter out tracks that don't have corresponding bones
-  const availableBones = Array.from(bones.keys());
-  const unavailableBones = [];
-  const compatibleTracks = clip.tracks.filter(
-    (track: THREE.KeyframeTrack) => {
-      const trackName = track.name;
-      const boneName = trackName.split(".")[0];
-      const canBindTrack = availableBones.includes(boneName);
-      if (!canBindTrack) {
-        unavailableBones.push(boneName);
-      }
-      return canBindTrack;
-    },
-  );
+function createFilteredClip(
+  clip: THREE.AnimationClip,
+  nodeNames: Set<string>,
+): THREE.AnimationClip {
+  // filter out tracks that don't have corresponding nodes
+  const compatibleTracks = clip.tracks.filter((track: THREE.KeyframeTrack) => {
+    const trackName = track.name;
+    const nodeName = trackName.split(".")[0];
+    const canBindTrack = nodeNames.has(nodeName);
+    if (!canBindTrack) {
+      console.warn(
+        `Animation clip "${clip.name}" has track "${trackName}" which cannot be bound to any bone in the model and will be ignored.`,
+      );
+    }
+    return canBindTrack;
+  });
 
-  const filteredClip = new THREE.AnimationClip(
-    clip.name,
-    clip.duration,
-    compatibleTracks,
-  );
+  const filteredClip = new THREE.AnimationClip(clip.name, clip.duration, compatibleTracks);
 
   return filteredClip;
 }
@@ -55,15 +53,18 @@ type AttachmentAnimState = {
   directAnimation: {
     animationMixer: THREE.AnimationMixer | null;
     animationAction: THREE.AnimationAction | null;
-  } | null,
+  } | null;
   childAnimations: {
     animationMixer: THREE.AnimationMixer;
-    animations: Map<Animation<ThreeJSGraphicsAdapter>, {
-      action: THREE.AnimationAction | null;
-      clip: THREE.AnimationClip | null;
-      animationState: ThreeJSAnimationState;
-    }>;
-  },
+    animations: Map<
+      Animation<ThreeJSGraphicsAdapter>,
+      {
+        action: THREE.AnimationAction | null;
+        clip: THREE.AnimationClip | null;
+        animationState: ThreeJSAnimationState;
+      }
+    >;
+  };
 };
 
 export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
@@ -75,10 +76,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
   private socketChildrenByBone = new Map<string, Set<MElement<ThreeJSGraphicsAdapter>>>();
 
-  private attachments = new Map<
-    Model<ThreeJSGraphicsAdapter>,
-    AttachmentAnimState
-  >();
+  private attachments = new Map<Model<ThreeJSGraphicsAdapter>, AttachmentAnimState>();
   private registeredParentAttachment: Model<ThreeJSGraphicsAdapter> | null = null;
 
   private static DebugBoundingBoxGeometry = new THREE.BoxGeometry(1, 1, 1, 1, 1, 1);
@@ -93,7 +91,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   protected loadedState: ThreeJSModelLoadState | null = null;
   protected animState: ThreeJSModelAnimState | null = null;
 
-  private documentTimeTickListener: null | { remove: () => void; } = null;
+  private documentTimeTickListener: null | { remove: () => void } = null;
 
   private childAnimationMixer: THREE.AnimationMixer | null = null;
   private childAnimations = new Map<
@@ -120,11 +118,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     return !!this.animState?.appliedAnimation;
   }
 
-  disable(): void { }
+  disable(): void {}
 
-  enable(): void { }
+  enable(): void {}
 
-  getBoundingBox(): { centerOffset: IVect3; size: IVect3; } | null {
+  getBoundingBox(): { centerOffset: IVect3; size: IVect3 } | null {
     if (this.loadedState) {
       return {
         centerOffset: this.loadedState.boundingBox.centerOffset,
@@ -138,11 +136,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     return this.loadedState?.group ?? new THREE.Object3D();
   }
 
-  setDebug(debug: boolean, mModelProps: MModelProps): void {
+  setDebug(): void {
     this.updateDebugVisualisation();
   }
 
-  setCastShadows(castShadows: boolean, mModelProps: MModelProps): void {
+  setCastShadows(castShadows: boolean): void {
     if (this.loadedState) {
       this.loadedState.group.traverse((object) => {
         if ((object as THREE.Mesh).isMesh) {
@@ -166,10 +164,17 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         animationState,
       });
     } else {
-      if (childAnimation && childAnimation.action && childAnimation.clip !== animationState.animationClip) {
+      if (
+        childAnimation &&
+        childAnimation.action &&
+        childAnimation.clip !== animationState.animationClip
+      ) {
         // if the animation clip has changed, stop the old action and dispose it
         childAnimation.action.stop();
-        this.childAnimationMixer.uncacheAction(childAnimation.action.getClip(), this.loadedState.group);
+        this.childAnimationMixer.uncacheAction(
+          childAnimation.action.getClip(),
+          this.loadedState.group,
+        );
         childAnimation.action = null;
         childAnimation = undefined;
       }
@@ -186,7 +191,10 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       }
 
       if (!childAnimation.action && animationState && animationState.animationClip) {
-        const filteredClip = createFilteredClip(animationState.animationClip, this.loadedState.bones);
+        const filteredClip = createFilteredClip(
+          animationState.animationClip,
+          this.loadedState.nodeNames,
+        );
         const action = this.childAnimationMixer.clipAction(filteredClip, this.loadedState.group);
         action.enabled = true;
         this.childAnimations.set(animation, {
@@ -205,7 +213,12 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     this.updateAnimation(documentTime);
   }
 
-  private updateAnimationForAttachment(attachment: Model<ThreeJSGraphicsAdapter>, attachmentAnimState: AttachmentAnimState, animation: Animation<ThreeJSGraphicsAdapter>, animationState: ThreeJSAnimationState) {
+  private updateAnimationForAttachment(
+    attachment: Model<ThreeJSGraphicsAdapter>,
+    attachmentAnimState: AttachmentAnimState,
+    animation: Animation<ThreeJSGraphicsAdapter>,
+    animationState: ThreeJSAnimationState,
+  ) {
     let attachmentChildAnimation = attachmentAnimState.childAnimations.animations.get(animation);
     const attachmentChildAnimationMixer = attachmentAnimState.childAnimations.animationMixer;
 
@@ -214,10 +227,18 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       throw new Error("Attachment must be loaded before registering");
     }
 
-    if (attachmentChildAnimation && attachmentChildAnimation.action && attachmentChildAnimation.clip !== animationState.animationClip) {
+    if (
+      attachmentChildAnimation &&
+      attachmentChildAnimation.action &&
+      attachmentChildAnimation.clip &&
+      attachmentChildAnimation.clip !== animationState.animationClip
+    ) {
       // if the animation clip has changed, stop the old action and dispose it
       attachmentChildAnimation.action.stop();
-      attachmentChildAnimationMixer.uncacheAction(attachmentChildAnimation.clip!, attachmentLoadedState.group);
+      attachmentChildAnimationMixer.uncacheAction(
+        attachmentChildAnimation.clip,
+        attachmentLoadedState.group,
+      );
       attachmentChildAnimation.action = null;
       attachmentChildAnimation = undefined;
     }
@@ -234,8 +255,14 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
 
     if (!attachmentChildAnimation.action && animationState && animationState.animationClip) {
-      const filteredClip = createFilteredClip(animationState.animationClip, attachmentLoadedState.bones);
-      const action = attachmentChildAnimationMixer.clipAction(filteredClip, attachmentLoadedState.group);
+      const filteredClip = createFilteredClip(
+        animationState.animationClip,
+        attachmentLoadedState.nodeNames,
+      );
+      const action = attachmentChildAnimationMixer.clipAction(
+        filteredClip,
+        attachmentLoadedState.group,
+      );
       action.enabled = true;
       action.play();
       attachmentAnimState.childAnimations.animations.set(animation, {
@@ -264,7 +291,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  private removeAnimationForAttachment(attachment: Model<ThreeJSGraphicsAdapter>, attachmentAnimState: AttachmentAnimState, animation: Animation<ThreeJSGraphicsAdapter>) {
+  private removeAnimationForAttachment(
+    attachment: Model<ThreeJSGraphicsAdapter>,
+    attachmentAnimState: AttachmentAnimState,
+    animation: Animation<ThreeJSGraphicsAdapter>,
+  ) {
     const attachmentChildAnimation = attachmentAnimState.childAnimations.animations.get(animation);
     if (attachmentChildAnimation) {
       const action = attachmentChildAnimation.action;
@@ -272,7 +303,10 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         action.stop();
         const attachmentLoadedState = (attachment.modelGraphics as ThreeJSModel).loadedState;
         if (attachmentLoadedState) {
-          attachmentAnimState.childAnimations.animationMixer.uncacheAction(action.getClip(), attachmentLoadedState.group);
+          attachmentAnimState.childAnimations.animationMixer.uncacheAction(
+            action.getClip(),
+            attachmentLoadedState.group,
+          );
         }
         attachmentChildAnimation.action = null;
       }
@@ -280,22 +314,22 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     attachmentAnimState.childAnimations.animations.delete(animation);
   }
 
-  setAnim(anim: string | null, mModelProps: MModelProps): void {
+  setAnim(anim: string | null): void {
     this.resetAnimationMixer();
     this.animState = null;
-    for (const [attachment, attachmentAnimState] of this.attachments) {
+    for (const [, attachmentAnimState] of this.attachments) {
       if (attachmentAnimState) {
         attachmentAnimState.directAnimation?.animationMixer?.stopAllAction();
-        
+
         // Reset attachment to default pose by clearing all animations and updating mixer
         if (attachmentAnimState.directAnimation?.animationMixer) {
           attachmentAnimState.directAnimation.animationMixer.update(0);
         }
-        
+
         // Also reset the child animation mixer to ensure clean state
         attachmentAnimState.childAnimations.animationMixer.stopAllAction();
         attachmentAnimState.childAnimations.animationMixer.update(0);
-        
+
         attachmentAnimState.directAnimation = null;
       }
     }
@@ -322,14 +356,19 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           },
         );
       }
-      
+
       // Restore child animations for all attachments when anim attribute is removed
       for (const [attachment, attachmentAnimState] of this.attachments) {
         for (const [animation, childAnimation] of this.childAnimations) {
-          this.updateAnimationForAttachment(attachment, attachmentAnimState, animation, childAnimation.animationState);
+          this.updateAnimationForAttachment(
+            attachment,
+            attachmentAnimState,
+            animation,
+            childAnimation.animationState,
+          );
         }
       }
-      
+
       return;
     }
 
@@ -357,7 +396,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         this.latestAnimPromise = null;
         const animationClip = result.animations[0];
         if (this.loadedState) {
-          const filteredClip = createFilteredClip(animationClip, this.loadedState.bones);
+          const filteredClip = createFilteredClip(animationClip, this.loadedState.nodeNames);
           this.playAnimation(filteredClip);
         } else {
           this.playAnimation(animationClip);
@@ -388,16 +427,16 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       for (const [attachment, attachmentAnimState] of this.attachments) {
         if (attachmentAnimState) {
           attachmentAnimState.directAnimation?.animationMixer?.stopAllAction();
-          
+
           // Reset attachment to default pose by clearing all animations and updating mixer
           if (attachmentAnimState.directAnimation?.animationMixer) {
             attachmentAnimState.directAnimation.animationMixer.update(0);
           }
-          
+
           // Also reset the child animation mixer to ensure clean state
           attachmentAnimState.childAnimations.animationMixer.stopAllAction();
           attachmentAnimState.childAnimations.animationMixer.update(0);
-          
+
           attachmentAnimState.directAnimation = null;
         }
         this.model.getContainer().add(attachment.getContainer());
@@ -486,7 +525,9 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         this.latestSrcModelPromise = null;
         const group = result.group;
         const bones = new Map<string, THREE.Bone>();
+        const nodeNames = new Set<string>();
         group.traverse((object) => {
+          nodeNames.add(object.name);
           if (object instanceof THREE.Bone) {
             bones.set(object.name, object);
           }
@@ -499,6 +540,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         this.loadedState = {
           group,
           bones,
+          nodeNames,
           boundingBox: {
             size: boundingBox.getSize(new THREE.Vector3(0, 0, 0)),
             centerOffset: boundingBox.getCenter(new THREE.Vector3(0, 0, 0)),
@@ -554,7 +596,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   public registerAttachment(attachment: Model<ThreeJSGraphicsAdapter>) {
     const childAnimationGroup = new THREE.AnimationObjectGroup();
     const childAnimationMixer = new THREE.AnimationMixer(childAnimationGroup);
-    let animState: AttachmentAnimState = {
+    const animState: AttachmentAnimState = {
       directAnimation: null,
       childAnimations: {
         animationMixer: childAnimationMixer,
@@ -563,7 +605,12 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     };
 
     for (const [animation, childAnimation] of this.childAnimations) {
-      this.updateAnimationForAttachment(attachment, animState, animation, childAnimation.animationState);
+      this.updateAnimationForAttachment(
+        attachment,
+        animState,
+        animation,
+        childAnimation.animationState,
+      );
     }
 
     if (this.animState) {
@@ -768,7 +815,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     } else if (this.childAnimationMixer) {
       // Handle child animations
       if (this.model.props.animEnabled) {
-        
         // Map of animation to animationTimeMs | null
         const animationTimes = new Map<Animation<ThreeJSGraphicsAdapter>, number>();
 
@@ -841,7 +887,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         this.childAnimationMixer.update(0);
 
         for (const [attachment, attachmentAnimState] of this.attachments) {
-          for (const [animation, childAnimation] of attachmentAnimState.childAnimations.animations) {
+          for (const [animation, childAnimation] of attachmentAnimState.childAnimations
+            .animations) {
             const animationTimeMs = animationTimes.get(animation);
             const action = childAnimation.action;
             if (action) {
@@ -866,7 +913,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           }
           attachmentAnimState.childAnimations.animationMixer.update(0.000000001);
         }
-
 
         this.triggerSocketedChildrenTransformed();
       } else {

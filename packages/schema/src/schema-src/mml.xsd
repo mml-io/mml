@@ -354,6 +354,7 @@
       <xs:element ref="m-light"/>
       <xs:element ref="m-plane"/>
       <xs:element ref="m-model"/>
+      <xs:element ref="m-animation"/>
       <xs:element ref="m-character"/>
       <xs:element ref="m-audio"/>
       <xs:element ref="m-image"/>
@@ -730,6 +731,20 @@
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the animation should pause. If there is no value the animation will not be paused.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="speed" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The playback speed multiplier for the animation. Values greater than 1 play faster, values less than 1 play slower. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="ratio" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The specific time ratio (0-1) to set the animation to, overriding normal playback. When set, the animation will be positioned at this specific point regardless of time. If not specified, the animation plays normally based on time.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

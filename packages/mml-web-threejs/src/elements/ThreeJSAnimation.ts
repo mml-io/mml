@@ -26,7 +26,7 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
 
   constructor(private animation: Animation<ThreeJSGraphicsAdapter>) {
     super(animation);
-    
+
     if (animation.parentElement && Model.isModel(animation.parentElement)) {
       this.parentModel = animation.parentElement as Model<ThreeJSGraphicsAdapter>;
     }
@@ -101,7 +101,7 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     this.animationState.loop = loop;
     this.updateParentAnimation();
   }
-  
+
   setStartTime(startTime: number): void {
     this.animationState.startTime = startTime;
     this.updateParentAnimation();

@@ -35,22 +35,57 @@ describe("m-animation", () => {
       { timeout: 30000, polling: 100 },
     );
 
-    // consistent doc time for all screenshots
+    // Step 1: t=500ms - only air animations playing (run hasn't started yet)
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "t=500ms: all air only (run not started)");
+    });
     await setDocumentTime(page, 500);
     await takeAndCompareScreenshot(page);
 
+    // Step 2: t=1100ms - model-a air+run, others air only
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "t=1100ms: A=air+run, B&C=air only");
+    });
     await setDocumentTime(page, 1100);
     await takeAndCompareScreenshot(page);
 
+    // Step 3: t=2100ms - model-a&b air+run, model-c air only
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "t=2100ms: A&B=air+run, C=air only");
+    });
     await setDocumentTime(page, 2100);
     await takeAndCompareScreenshot(page);
 
+    // Step 4: t=3100ms - all models air+run
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "t=3100ms: all air+run active");
+    });
     await setDocumentTime(page, 3100);
     await takeAndCompareScreenshot(page);
 
+    // Step 5: t=3700ms - model-c run stopped (loop=false), others continue
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "t=3700ms: A&B=air+run, C=air (run stopped)");
+    });
     await setDocumentTime(page, 3700);
     await takeAndCompareScreenshot(page);
 
+    // Step 6: t=5100ms - model-b paused, others continue
+    await page.evaluate(() => {
+      document
+        .getElementById("state-label")!
+        .setAttribute("content", "t=5100ms: A=air+run, B=air (paused), C=air");
+    });
     await setDocumentTime(page, 5100);
     await takeAndCompareScreenshot(page);
 

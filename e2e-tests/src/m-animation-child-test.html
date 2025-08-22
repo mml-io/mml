@@ -3,12 +3,9 @@
 
 <m-group id="labels"></m-group>
 
-<m-model id="body-model" y="3" z="6.5" src="/assets/Body.glb"></m-model>
+<m-label id="state-label" x="0" y="6" z="0" content="Initial" rx="0" width="5" height="0.4" alignment="center" padding="0" font-size="24" background-color="rgba(0,0,0,0.7)"></m-label>
 
-<m-model id="body-model-b" x="1.5" y="3" z="6.5" src="/assets/Body.glb">
-  <m-animation src="/assets/anim_air.glb" weight="0.5"></m-animation>
-  <m-animation src="/assets/anim_run.glb" weight="0.5"></m-animation>
-</m-model>
+<m-model id="body-model" y="3" z="6.5" src="/assets/Body.glb"></m-model>
 
 <script>
   const labels = document.getElementById("labels");
