@@ -2,9 +2,8 @@ import { Animation, MAnimationProps } from "../elements";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class AnimationGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
-  constructor(element: Animation<G>) {
-    void element; // suppressing unused for linter
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  constructor(element: Animation<G>) {}
 
   abstract setSrc(src: string | null, mAnimationProps: MAnimationProps): void;
 

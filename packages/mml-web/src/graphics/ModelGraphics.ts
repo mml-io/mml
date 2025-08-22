@@ -3,10 +3,8 @@ import { IVect3 } from "../math/Vect3";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 
 export abstract class ModelGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
-  constructor(element: Model<G>, updateMeshCallback: () => void) {
-    void element; // suppressing unused for linter
-    void updateMeshCallback; // same
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  constructor(element: Model<G>, updateMeshCallback: () => void) {}
 
   abstract enable(): void;
 
