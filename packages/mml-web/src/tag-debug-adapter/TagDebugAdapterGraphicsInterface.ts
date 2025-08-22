@@ -251,6 +251,8 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
       setStartTime: "start-time",
       setPauseTime: "pause-time",
     },
-    {},
+    {
+      parentModelUpdated: () => {},
+    },
   ),
 };

@@ -15,34 +15,34 @@ beforeAll(() => {
 describe("m-animation", () => {
   test("test attachment as child of m-model", async () => {
     const { remoteDocument } = await createTestScene();
-    
+
     // Create a model element first
     const modelElement = document.createElement("m-model") as Model;
     const animationElement = document.createElement("m-animation") as Animation;
-    
+
     // Set up spy before adding to DOM
     const addSideEffectChildSpy = jest.spyOn(modelElement, "addSideEffectChild");
-    
+
     // Add the animation as a child of the model
     modelElement.appendChild(animationElement);
     remoteDocument.appendChild(modelElement);
 
     // The animation should have proper graphics adapter
     expect(animationElement.animationGraphics).toBeTruthy();
-    
+
     // The addSideEffectChild should have been called when the animation connected
     expect(addSideEffectChildSpy).toHaveBeenCalledWith(animationElement);
-    
+
     addSideEffectChildSpy.mockRestore();
   });
 
   test("animation attributes work correctly", async () => {
     const { scene, remoteDocument } = await createTestScene();
-    
+
     // Create model and animation
     const modelElement = document.createElement("m-model") as Model;
     const animationElement = document.createElement("m-animation") as Animation;
-    
+
     modelElement.appendChild(animationElement);
     remoteDocument.appendChild(modelElement);
 
@@ -51,7 +51,7 @@ describe("m-animation", () => {
     animationElement.setAttribute("weight", "0.5");
     expect(animationElement.props.weight).toBe(0.5);
 
-    // Test speed attribute  
+    // Test speed attribute
     expect(animationElement.props.speed).toBe(1); // default
     animationElement.setAttribute("speed", "2.0");
     expect(animationElement.props.speed).toBe(2.0);
@@ -69,33 +69,29 @@ describe("m-animation", () => {
 
   test("animation loading with parent model", async () => {
     const { scene, remoteDocument } = await createTestScene();
-    
+
     const modelElement = document.createElement("m-model") as Model;
     const animationElement = document.createElement("m-animation") as Animation;
 
     // Mock the model loader
     const testModelNode = new THREE.Group();
     testModelNode.name = "MY_LOADED_MODEL";
-    
+
     const mockModelLoad = jest
       .spyOn(ThreeJSModel.prototype, "asyncLoadSourceAsset")
       .mockResolvedValue({
-        animations: [
-          new THREE.AnimationClip("TestAnimation", 1.0, []),
-        ],
+        animations: [new THREE.AnimationClip("TestAnimation", 1.0, [])],
         group: testModelNode,
       });
 
     // Mock the animation loader
     const testAnimationNode = new THREE.Group();
     testAnimationNode.name = "MY_LOADED_ANIMATION";
-    
+
     const mockAnimationLoad = jest
       .spyOn(ThreeJSAnimation.prototype, "asyncLoadSourceAsset")
       .mockResolvedValue({
-        animations: [
-          new THREE.AnimationClip("TestAnimation", 1.0, []),
-        ],
+        animations: [new THREE.AnimationClip("TestAnimation", 1.0, [])],
         group: testAnimationNode,
       });
 
