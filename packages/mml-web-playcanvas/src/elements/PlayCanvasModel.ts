@@ -260,7 +260,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       }
     }
 
-    // Clear anim attribute component when resetting (like ThreeJS resetAnimationMixer)
+    // Clear anim attribute component when resetting
     if (this.animAttributeComponent) {
       this.animAttributeComponent.reset();
       this.animAttributeComponent.unbind();
@@ -558,10 +558,10 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
     let existingAnimationState = this.childAnimationActions.get(animation);
     if (existingAnimationState) {
-      // Check if the animation asset has changed (capture old asset before updating state)
+      // Compare animation asset with current state
       const oldAnimationAsset = existingAnimationState.animationAsset;
       if (existingAnimationState.animClip && oldAnimationAsset !== animationState.animationAsset) {
-        // Animation asset has changed, remove the old clip and recreate
+        // Remove the old clip and recreate when asset differs
         if (this.directAnimationSystem) {
           try {
             const clipIndex = this.directAnimationSystem.evaluator.clips?.indexOf(
@@ -688,7 +688,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       attachmentChildAnimation.animClip &&
       attachmentDirectAnimationSystem
     ) {
-      // if the animation asset has changed, remove the old clip and recreate (capture old asset before updating state)
+      // Remove the old clip and recreate when asset differs
       const oldAnimationAsset = attachmentChildAnimation.animationAsset;
       if (oldAnimationAsset !== animationState.animationAsset) {
         try {
@@ -938,7 +938,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     srcModelPromise
       .then((asset) => {
         if (this.latestSrcModelPromise !== srcModelPromise || !this.model.isConnected) {
-          // If we've loaded a different model since, or we're no longer connected, dispose of this one
+          // Dispose of old model when new model loads or connection ends
           asset.unload();
           return;
         }

@@ -105,7 +105,7 @@ describe("m-animation anim removal", () => {
     await setDocumentTime(page, 1000);
     await takeAndCompareScreenshot(page);
 
-    // Step 8: Test the problematic sequence again - set anim attr while child animations exist
+    // Step 8: Test setting anim attr while child animations exist
     await clickElement(page, "#set_anim_attr-label");
     await page.evaluate(() => {
       document
