@@ -37,7 +37,7 @@ describe("m-animation", () => {
   });
 
   test("animation attributes work correctly", async () => {
-    const { scene, remoteDocument } = await createTestScene();
+    const { remoteDocument } = await createTestScene();
 
     // Create model and animation
     const modelElement = document.createElement("m-model") as Model;
@@ -68,7 +68,7 @@ describe("m-animation", () => {
   });
 
   test("animation loading with parent model", async () => {
-    const { scene, remoteDocument } = await createTestScene();
+    const { remoteDocument } = await createTestScene();
 
     const modelElement = document.createElement("m-model") as Model;
     const animationElement = document.createElement("m-animation") as Animation;

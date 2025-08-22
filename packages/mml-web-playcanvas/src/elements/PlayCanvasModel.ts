@@ -3,7 +3,6 @@ import {
   IVect3,
   LoadingInstanceManager,
   MElement,
-  MModelProps,
   Model,
   ModelGraphics,
   TransformableElement,
@@ -249,7 +248,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       this.animState = null;
 
       // Clean up attachments - only clean up direct animation, preserve child animations
-      for (const [attachment, animState] of this.attachments) {
+      for (const [, animState] of this.attachments) {
         if (animState && animState.directAnimation) {
           // Clean up the direct animation component
           animState.directAnimation.animComponent.reset();
@@ -320,7 +319,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     } else if (!this.model.props.animEnabled) {
       // When disabling animation, only clean up direct animations, preserve child animations
       // Child animation enabling/disabling is handled in updateAnimation method
-      for (const [attachment, animState] of this.attachments) {
+      for (const [, animState] of this.attachments) {
         if (animState && animState.directAnimation) {
           // Clean up the direct animation component
           animState.directAnimation.animComponent.reset();

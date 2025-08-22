@@ -4,7 +4,6 @@ import { OrientedBoundingBox } from "../bounding-box";
 import { GraphicsAdapter } from "../graphics";
 import { AnimationGraphics } from "../graphics";
 import { AnimationType } from "./AttributeAnimation";
-import { AttributeLerp } from "./AttributeLerp";
 import { MElement } from "./MElement";
 import { Model } from "./Model";
 

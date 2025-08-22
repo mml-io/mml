@@ -12,13 +12,15 @@ describe("m-animation weight blending", () => {
     await page.waitForFunction(
       () => {
         const parentModel = document.getElementById("parent-model");
+        return parentModel && (parentModel as any).modelGraphics?.getBoundingBox() !== null;
+      },
+      { timeout: 30000, polling: 100 },
+    );
+
+    await page.waitForFunction(
+      () => {
         const attachmentModel = document.getElementById("attachment-model");
-        return (
-          parentModel &&
-          (parentModel as any).modelGraphics?.getBoundingBox() !== null &&
-          attachmentModel &&
-          (attachmentModel as any).modelGraphics?.getBoundingBox() !== null
-        );
+        return attachmentModel && (attachmentModel as any).modelGraphics?.getBoundingBox() !== null;
       },
       { timeout: 30000, polling: 100 },
     );

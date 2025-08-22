@@ -1,4 +1,4 @@
-import { Animation, MElement, MModelProps, Model, TransformableElement } from "@mml-io/mml-web";
+import { Animation, MElement, Model, TransformableElement } from "@mml-io/mml-web";
 import { ModelGraphics } from "@mml-io/mml-web";
 import { LoadingInstanceManager } from "@mml-io/mml-web";
 import { IVect3 } from "@mml-io/mml-web";
@@ -444,15 +444,15 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
   }
 
-  setAnimLoop(animLoop: boolean | null, mModelProps: MModelProps): void {
+  setAnimLoop(): void {
     // no-op - property is observed in animation tick
   }
 
-  setAnimStartTime(animStartTime: number | null, mModelProps: MModelProps): void {
+  setAnimStartTime(): void {
     // no-op - property is observed in animation tick
   }
 
-  setAnimPauseTime(animPauseTime: number | null, mModelProps: MModelProps): void {
+  setAnimPauseTime(): void {
     // no-op - property is observed in animation tick
   }
 
@@ -460,7 +460,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     // no-op
   }
 
-  setSrc(src: string | null, mModelProps: MModelProps): void {
+  setSrc(src: string | null): void {
     if (this.loadedState !== null) {
       this.loadedState.group.removeFromParent();
       if (this.registeredParentAttachment) {
@@ -886,7 +886,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         }
         this.childAnimationMixer.update(0);
 
-        for (const [attachment, attachmentAnimState] of this.attachments) {
+        for (const [, attachmentAnimState] of this.attachments) {
           for (const [animation, childAnimation] of attachmentAnimState.childAnimations
             .animations) {
             const animationTimeMs = animationTimes.get(animation);
