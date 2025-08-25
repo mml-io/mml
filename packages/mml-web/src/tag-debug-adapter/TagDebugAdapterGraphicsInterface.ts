@@ -241,4 +241,18 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
     },
     {},
   ),
+  MMLAnimationGraphicsInterface: TagDebugAdapterElement(
+    {
+      setSrc: "src",
+      setWeight: "weight",
+      setLoop: "loop",
+      setSpeed: "speed",
+      setRatio: "ratio",
+      setStartTime: "start-time",
+      setPauseTime: "pause-time",
+    },
+    {
+      parentModelUpdated: () => {},
+    },
+  ),
 };

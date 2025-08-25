@@ -30,6 +30,7 @@ export const PlayCanvasGraphicsInterface: MMLGraphicsInterface<PlayCanvasGraphic
     new PlayCanvasElements.PlayCanvasTransformable(element),
   MMLVideoGraphicsInterface: (element, updateMeshCallback: () => void) =>
     new PlayCanvasElements.PlayCanvasVideo(element, updateMeshCallback),
+  MMLAnimationGraphicsInterface: (element) => new PlayCanvasElements.PlayCanvasAnimation(element),
   RemoteDocumentGraphicsInterface: (element) =>
     new PlayCanvasElements.PlayCanvasRemoteDocument(element),
 };

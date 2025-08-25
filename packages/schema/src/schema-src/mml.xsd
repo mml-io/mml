@@ -354,6 +354,7 @@
       <xs:element ref="m-light"/>
       <xs:element ref="m-plane"/>
       <xs:element ref="m-model"/>
+      <xs:element ref="m-animation"/>
       <xs:element ref="m-character"/>
       <xs:element ref="m-audio"/>
       <xs:element ref="m-image"/>
@@ -680,6 +681,70 @@
             <xs:annotation>
               <xs:documentation>
                 The time in milliseconds since the start of the document lifecycle when the animation should pause. If there is no value the animation will not be paused.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-animation">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-animation` element is used as a child of `m-model` or `m-character` elements to provide weighted animations. Multiple animations can be mixed together using their weight attributes.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="src" type="URI">
+            <xs:annotation>
+              <xs:documentation>
+                The source URI of the animation file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="weight" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The weight of this animation in the mix. Values range from 0 (no influence) to 1 (full influence). If the sum of all weights is greater than 1, the sum of the weights will be normalized to 1. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="loop" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the animation should loop (true) or play once (false). Default value is true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="start-time" type="xs:integer">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the animation should begin. Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="pause-time" type="xs:integer">
+            <xs:annotation>
+              <xs:documentation>
+                The time in milliseconds since the start of the document lifecycle when the animation should pause. If there is no value the animation will not be paused.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="speed" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The playback speed multiplier for the animation. Values greater than 1 play faster, values less than 1 play slower. Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="ratio" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The specific time ratio (0-1) to set the animation to, overriding normal playback. When set, the animation will be positioned at this specific point regardless of time. If not specified, the animation plays normally based on time.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

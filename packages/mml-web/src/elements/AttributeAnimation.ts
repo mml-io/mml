@@ -1,4 +1,5 @@
 import {
+  AnimatedAttributeHelper,
   EndOfAnimationSymbol,
   getEasedRatioForTime,
   StartOfAnimationSymbol,
@@ -60,6 +61,51 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
 
   private registeredParentAttachment: MElement<G> | null = null;
 
+  private animatedAttributeHelper = new AnimatedAttributeHelper(this, {
+    start: [
+      AnimationType.Number,
+      defaultStart,
+      (value: number) => {
+        this.props.start = value;
+      },
+    ],
+    end: [
+      AnimationType.Number,
+      defaultEnd,
+      (value: number) => {
+        this.props.end = value;
+      },
+    ],
+    "start-time": [
+      AnimationType.Number,
+      defaultStartTime,
+      (value: number) => {
+        this.props.startTime = value;
+      },
+    ],
+    "pause-time": [
+      AnimationType.Number,
+      defaultPauseTime,
+      (value: number | null) => {
+        this.props.pauseTime = value;
+      },
+    ],
+    duration: [
+      AnimationType.Number,
+      defaultAnimDuration,
+      (value: number) => {
+        this.props.animDuration = value;
+      },
+    ],
+    "ping-pong-delay": [
+      AnimationType.Number,
+      defaultPingPongDelay,
+      (value: number) => {
+        this.props.pingPongDelay = value;
+      },
+    ],
+  });
+
   private static attributeHandler = new AttributeHandler<AttributeAnimation<GraphicsAdapter>>({
     attr: (instance, newValue) => {
       if (instance.registeredParentAttachment && instance.props.attr) {
@@ -99,19 +145,31 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
       instance.props.pingPong = parseBoolAttribute(newValue, defaultPingPong);
     },
     "ping-pong-delay": (instance, newValue) => {
-      instance.props.pingPongDelay = parseFloatAttribute(newValue, defaultPingPongDelay);
+      instance.animatedAttributeHelper.elementSetAttribute(
+        "ping-pong-delay",
+        parseFloatAttribute(newValue, defaultPingPongDelay),
+      );
     },
     easing: (instance, newValue) => {
       instance.props.easing = newValue || defaultEasing;
     },
     "start-time": (instance, newValue) => {
-      instance.props.startTime = parseFloatAttribute(newValue, defaultStartTime);
+      instance.animatedAttributeHelper.elementSetAttribute(
+        "start-time",
+        parseFloatAttribute(newValue, defaultStartTime),
+      );
     },
     "pause-time": (instance, newValue) => {
-      instance.props.pauseTime = parseFloatAttribute(newValue, defaultPauseTime);
+      instance.animatedAttributeHelper.elementSetAttribute(
+        "pause-time",
+        parseFloatAttribute(newValue, defaultPauseTime),
+      );
     },
     duration: (instance, newValue) => {
-      instance.props.animDuration = parseFloatAttribute(newValue, defaultAnimDuration);
+      instance.animatedAttributeHelper.elementSetAttribute(
+        "duration",
+        parseFloatAttribute(newValue, defaultAnimDuration),
+      );
     },
   });
 
@@ -152,6 +210,16 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
     return false;
   }
 
+  public addSideEffectChild(child: MElement<G>): void {
+    this.animatedAttributeHelper.addSideEffectChild(child);
+    super.addSideEffectChild(child);
+  }
+
+  public removeSideEffectChild(child: MElement<G>): void {
+    this.animatedAttributeHelper.removeSideEffectChild(child);
+    super.removeSideEffectChild(child);
+  }
+
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
     AttributeAnimation.attributeHandler.handle(this, name, newValue);
@@ -171,6 +239,7 @@ export class AttributeAnimation<G extends GraphicsAdapter = GraphicsAdapter> ext
     if (this.registeredParentAttachment && this.props.attr) {
       this.registeredParentAttachment.removeSideEffectChild(this);
     }
+    this.animatedAttributeHelper.reset();
     this.registeredParentAttachment = null;
     super.disconnectedCallback();
   }

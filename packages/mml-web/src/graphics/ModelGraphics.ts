@@ -1,4 +1,4 @@
-import { MModelProps, Model } from "../elements";
+import { Animation, MModelProps, Model } from "../elements";
 import { IVect3 } from "../math/Vect3";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 
@@ -38,6 +38,10 @@ export abstract class ModelGraphics<G extends GraphicsAdapter = GraphicsAdapter>
   abstract setDebug(debug: boolean, mModelProps: MModelProps): void;
 
   abstract setCastShadows(castShadows: boolean, mModelProps: MModelProps): void;
+
+  abstract updateChildAnimation?(animation: Animation<G>, animationState: any): void;
+
+  abstract removeChildAnimation?(animation: Animation<G>): void;
 
   abstract dispose(): void;
 }
