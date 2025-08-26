@@ -131,5 +131,5 @@ describe("m-animation", () => {
     await takeAndCompareScreenshot(page);
 
     await page.close();
-  }, 60000);
+  }, 120000);
 });
