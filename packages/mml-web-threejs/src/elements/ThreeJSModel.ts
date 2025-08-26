@@ -35,13 +35,7 @@ function createFilteredClip(
   const compatibleTracks = clip.tracks.filter((track: THREE.KeyframeTrack) => {
     const trackName = track.name;
     const nodeName = trackName.split(".")[0];
-    const canBindTrack = nodeNames.has(nodeName);
-    if (!canBindTrack) {
-      console.warn(
-        `Animation clip "${clip.name}" has track "${trackName}" which cannot be bound to any bone in the model and will be ignored.`,
-      );
-    }
-    return canBindTrack;
+    return nodeNames.has(nodeName);
   });
 
   const filteredClip = new THREE.AnimationClip(clip.name, clip.duration, compatibleTracks);

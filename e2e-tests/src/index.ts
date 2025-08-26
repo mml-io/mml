@@ -14,7 +14,14 @@ const port = process.env.PORT || 7079;
 const dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const srcPath = path.resolve(dirname, "../src");
 
-const documents: { [key: string]: { documentPath: string; document: EditableNetworkedDOM; contents: string; loaded: boolean } } = {};
+const documents: {
+  [key: string]: {
+    documentPath: string;
+    document: EditableNetworkedDOM;
+    contents: string;
+    loaded: boolean;
+  };
+} = {};
 
 // Lazy load a document on first access
 const ensureDocumentLoaded = (filename: string) => {
@@ -22,13 +29,13 @@ const ensureDocumentLoaded = (filename: string) => {
   if (!docData) {
     return null;
   }
-  
+
   if (!docData.loaded) {
     console.log("Loading document", filename, "on first access");
     docData.document.load(docData.contents);
     docData.loaded = true;
   }
-  
+
   return docData.document;
 };
 
@@ -127,7 +134,7 @@ app.ws("/:pathName", (ws, req) => {
 
 app.get("/:documentPath/", (req, res) => {
   const { documentPath } = req.params;
-  
+
   // Ensure document exists (but don't necessarily load it yet)
   if (!documents[documentPath]) {
     res.status(404).send(`Document not found: ${documentPath}`);
