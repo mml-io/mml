@@ -14,7 +14,23 @@ const port = process.env.PORT || 7079;
 const dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const srcPath = path.resolve(dirname, "../src");
 
-const documents: { [key: string]: { documentPath: string; document: EditableNetworkedDOM } } = {};
+const documents: { [key: string]: { documentPath: string; document: EditableNetworkedDOM; contents: string; loaded: boolean } } = {};
+
+// Lazy load a document on first access
+const ensureDocumentLoaded = (filename: string) => {
+  const docData = documents[filename];
+  if (!docData) {
+    return null;
+  }
+  
+  if (!docData.loaded) {
+    console.log("Loading document", filename, "on first access");
+    docData.document.load(docData.contents);
+    docData.loaded = true;
+  }
+  
+  return docData.document;
+};
 
 const watcher = chokidar.watch(srcPath, {
   ignored: (path: string, stats: Stats) => (stats?.isFile() || false) && !path.endsWith(".html"),
@@ -24,17 +40,19 @@ const watcher = chokidar.watch(srcPath, {
 watcher
   .on("add", (relativeFilePath) => {
     const filename = path.basename(relativeFilePath);
-    console.log("File", filename, "has been added");
+    console.log("File", filename, "has been added (lazy loading)");
     const contents = fs.readFileSync(relativeFilePath, { encoding: "utf8", flag: "r" });
     const document = new EditableNetworkedDOM(
       url.pathToFileURL(filename).toString(),
       LocalObservableDOMFactory,
     );
-    document.load(contents);
+    // Don't load contents immediately - wait for first access
 
     const currentData = {
       documentPath: filename,
       document,
+      contents,
+      loaded: false,
     };
     documents[filename] = currentData;
   })
@@ -42,8 +60,15 @@ watcher
     const filename = path.basename(relativeFilePath);
     console.log("File", filename, "has been changed");
     const contents = fs.readFileSync(relativeFilePath, { encoding: "utf8", flag: "r" });
-    const document = documents[filename].document;
-    document.load(contents);
+    const docData = documents[filename];
+    if (docData) {
+      docData.contents = contents;
+      // Only reload if document was already loaded
+      if (docData.loaded) {
+        console.log("Reloading already-loaded document", filename);
+        docData.document.load(contents);
+      }
+    }
   })
   .on("unlink", (relativeFilePath) => {
     const filename = path.basename(relativeFilePath);
@@ -87,7 +112,7 @@ app.use("/assets", expressStatic("./src/assets"));
 app.ws("/:pathName", (ws, req) => {
   const { pathName } = req.params;
 
-  const currentDocument = documents[pathName]?.document;
+  const currentDocument = ensureDocumentLoaded(pathName);
 
   if (!currentDocument) {
     ws.close();
@@ -101,6 +126,14 @@ app.ws("/:pathName", (ws, req) => {
 });
 
 app.get("/:documentPath/", (req, res) => {
+  const { documentPath } = req.params;
+  
+  // Ensure document exists (but don't necessarily load it yet)
+  if (!documents[documentPath]) {
+    res.status(404).send(`Document not found: ${documentPath}`);
+    return;
+  }
+
   const html = `<html><script src="${req.secure ? "https" : "http"}://${req.get(
     "host",
   )}/client/index.js?defineGlobals=true&url=${getWebsocketUrl(req)}"></script></html>`;
@@ -116,7 +149,7 @@ app.use(
 app.get("/:documentPath/reset", (req, res) => {
   const { documentPath } = req.params;
 
-  const currentDocument = documents[documentPath]?.document;
+  const currentDocument = ensureDocumentLoaded(documentPath);
 
   if (!currentDocument) {
     res.status(404).send(`Document not found: ${documentPath}`);

@@ -12,6 +12,8 @@
     "ci:e2e-tests": "npm run ci:e2e-tests:threejs && npm run ci:e2e-tests:playcanvas",
     "ci:e2e-tests:threejs": "concurrently --max-processes 2 --success command-1 --kill-others \"NX_CACHE=false lerna run serve --scope e2e-tests\" \"npm run wait-for-ports && RENDERER=threejs HEADLESS=true jest --runInBand\"",
     "ci:e2e-tests:playcanvas": "concurrently --max-processes 2 --success command-1 --kill-others \"NX_CACHE=false lerna run serve --scope e2e-tests\" \"npm run wait-for-ports && RENDERER=playcanvas HEADLESS=true jest --runInBand\"",
+    "ci:e2e-tests:threejs:shard": "concurrently --max-processes 2 --success command-1 --kill-others \"NX_CACHE=false lerna run serve --scope e2e-tests\" \"npm run wait-for-ports && RENDERER=threejs HEADLESS=true node ./shard-tests.js\"",
+    "ci:e2e-tests:playcanvas:shard": "concurrently --max-processes 2 --success command-1 --kill-others \"NX_CACHE=false lerna run serve --scope e2e-tests\" \"npm run wait-for-ports && RENDERER=playcanvas HEADLESS=true node ./shard-tests.js\"",
     "e2e-tests": "npm run e2e-tests:threejs && npm run e2e-tests:playcanvas",
     "e2e-tests:threejs": "npm run wait-for-ports && RENDERER=threejs HEADLESS=false jest --runInBand",
     "e2e-tests:playcanvas": "npm run wait-for-ports && RENDERER=playcanvas HEADLESS=false jest --runInBand",
