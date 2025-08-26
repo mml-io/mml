@@ -1,9 +1,7 @@
 import * as puppeteer from "puppeteer";
 
 // Patterns that if they occur within a log message cause the message to be ignored
-const ignoredMessages = new Set<string>([
-  "No target node found for track",
-])
+const ignoredMessages = new Set<string>(["No target node found for track"]);
 
 declare global {
   interface Window {
@@ -86,7 +84,7 @@ export function setupConsoleLogging(page: puppeteer.Page): void {
             console.error(`  Stack trace for arg ${index}:`);
             console.error(argValue.stack);
           }
-        } catch (e) {
+        } catch {
           // Ignore errors when trying to extract stack traces
         }
       });
