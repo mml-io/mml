@@ -1,0 +1,9 @@
+<m-plane color="white" width="30" height="30" rx="-90" y="-3" z="-10"></m-plane>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="15" y="10" z="15"></m-light>
+
+<!-- Test: start-time and pause-time with attachments -->
+<m-label id="state-label" x="0" y="6" z="0" content="Initial" width="6" height="1" alignment="center" font-size="20" padding="8"></m-label>
+<m-character id="parent-model" src="/assets/Body.glb" y="3" z="6.5">
+  <m-model id="attachment-model" src="/assets/Head.glb"></m-model>
+  <m-animation id="timing-animation" src="/assets/anim_run.glb" weight="1" start-time="1000" pause-time="3000"></m-animation>
+</m-character>

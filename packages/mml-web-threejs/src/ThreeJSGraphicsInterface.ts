@@ -27,5 +27,6 @@ export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapt
   MMLTransformableGraphicsInterface: (element) => new ThreeJSElements.ThreeJSTransformable(element),
   MMLVideoGraphicsInterface: (element, updateMeshCallback: () => void) =>
     new ThreeJSElements.ThreeJSVideo(element, updateMeshCallback),
+  MMLAnimationGraphicsInterface: (element) => new ThreeJSElements.ThreeJSAnimation(element),
   RemoteDocumentGraphicsInterface: (element) => new ThreeJSElements.ThreeJSRemoteDocument(element),
 };

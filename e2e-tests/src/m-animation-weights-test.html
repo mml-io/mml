@@ -1,0 +1,91 @@
+<m-plane y="3" color="#8888AA" width="15" height="15" rx="-90"></m-plane>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="15" y="10" z="15"></m-light>
+
+<m-group id="labels"></m-group>
+
+<m-model id="body-model" y="3" z="6.5" src="/assets/Body.glb">
+  <m-model src="/assets/Head.glb"></m-model>
+  <m-animation id="idle-mix" src="/assets/anim_idle.glb" weight="0.5">
+    <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp>
+  </m-animation>
+  <m-animation id="air-mix" src="/assets/anim_air.glb" weight="0.5">
+    <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp>
+  </m-animation>
+  <m-animation id="run-mix" src="/assets/anim_run.glb" weight="0.5">
+    <m-attr-lerp attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp>
+  </m-animation>
+</m-model>
+
+<script>
+  const labels = document.getElementById("labels");
+  const model = document.getElementById("body-model");
+
+  function createLabel(text, x, y, z) {
+    const label = document.createElement("m-label");
+    label.setAttribute("id", `${text}-label`);
+    label.setAttribute("content", text);
+    label.setAttribute("x", x);
+    label.setAttribute("y", y);
+    label.setAttribute("z", z);
+    label.setAttribute("rx", 0);
+    label.setAttribute("width", 2)
+    label.setAttribute("height", 0.3);
+    label.setAttribute("alignment", "center");
+    label.setAttribute("padding", 0);
+    label.setAttribute("font-size", 20);
+    labels.appendChild(label);
+    return label;
+  }
+
+  const idleMix = document.getElementById("idle-mix");
+  const airMix = document.getElementById("air-mix");
+  const runMix = document.getElementById("run-mix");
+
+  const idle00Label = createLabel("idle_0_0", -1.2, 6, 3);
+  const idle05Label = createLabel("idle_0_5", 0.9, 6, 3);
+  const idle10Label = createLabel("idle_1_0", 3, 6, 3);
+
+  const air00Label = createLabel("air_0_0", -1.2, 5.6, 3);
+  const air05Label = createLabel("air_0_5", 0.9, 5.6, 3);
+  const air10Label = createLabel("air_1_0", 3, 5.6, 3);
+
+  const run00Label = createLabel("run_0_0", -1.2, 5.2, 3);
+  const run05Label = createLabel("run_0_5", 0.9, 5.2, 3);
+  const run10Label = createLabel("run_1_0", 3, 5.2, 3);
+
+  idle00Label.addEventListener("click", () => {
+    idleMix.setAttribute("weight", 0.0);
+  });
+
+  idle05Label.addEventListener("click", () => {
+    idleMix.setAttribute("weight", 0.5);
+  });
+
+  idle10Label.addEventListener("click", () => {
+    idleMix.setAttribute("weight", 1.0);
+  });
+
+  air00Label.addEventListener("click", () => {
+    airMix.setAttribute("weight", 0.0);
+  });
+
+  air05Label.addEventListener("click", () => {
+    airMix.setAttribute("weight", 0.5);
+  });
+
+  air10Label.addEventListener("click", () => {
+    airMix.setAttribute("weight", 1.0);
+  });
+
+  run00Label.addEventListener("click", () => {
+    runMix.setAttribute("weight", 0.0);
+  });
+
+  run05Label.addEventListener("click", () => {
+    runMix.setAttribute("weight", 0.5);
+  });
+
+  run10Label.addEventListener("click", () => {
+    runMix.setAttribute("weight", 1.0);
+  });
+</script>

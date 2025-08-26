@@ -14,10 +14,6 @@ import {
   StatusUI,
 } from "@mml-io/mml-web";
 import {
-  StandalonePlayCanvasAdapter,
-  StandalonePlayCanvasAdapterControlsType,
-} from "@mml-io/mml-web-playcanvas-standalone";
-import {
   StandaloneThreeJSAdapter,
   StandaloneThreeJSAdapterControlsType,
 } from "@mml-io/mml-web-threejs-standalone";
@@ -35,8 +31,11 @@ declare global {
 }
 
 (function () {
-  function getGraphicsAdapter(element: HTMLElement): Promise<StandaloneGraphicsAdapter> {
+  async function getGraphicsAdapter(element: HTMLElement): Promise<StandaloneGraphicsAdapter> {
     if (window.location.search.includes("playcanvas")) {
+      const { StandalonePlayCanvasAdapter, StandalonePlayCanvasAdapterControlsType } = await import(
+        "@mml-io/mml-web-playcanvas-standalone"
+      );
       return StandalonePlayCanvasAdapter.create(element, {
         controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
       });

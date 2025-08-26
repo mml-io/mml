@@ -1,3 +1,4 @@
+export * from "./AnimationGraphics";
 export * from "./AudioGraphics";
 export * from "./ChatProbeGraphics";
 export * from "./CubeGraphics";

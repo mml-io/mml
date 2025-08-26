@@ -2,6 +2,8 @@ import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../at
 import { OrientedBoundingBox } from "../bounding-box";
 import { CollideableHelper } from "../collision";
 import { GraphicsAdapter, ModelGraphics } from "../graphics";
+import { Animation } from "./Animation";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 
 const defaultModelSrc = null;
@@ -127,6 +129,34 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     return true;
   }
 
+  public addSideEffectChild(child: MElement<G>): void {
+    // Handle child animations
+    if (Animation.isAnimation(child)) {
+      // When an animation is added, we need to wait for it to load and then update the model
+      // The animation will call updateChildAnimation when it's ready via its graphics adapter
+
+      // If the modelGraphics is already ready, notify it immediately
+      if (this.modelGraphics && child.animationGraphics) {
+        const weight = child.props.weight;
+        child.animationGraphics.setWeight(weight, child.props);
+      }
+    } else {
+      // For other side effect children, delegate to parent
+      super.addSideEffectChild(child);
+    }
+  }
+
+  public removeSideEffectChild(child: MElement<G>): void {
+    // Handle child animation removal
+    if (Animation.isAnimation(child)) {
+      // Notify the graphics adapter that this animation should be removed
+      this.modelGraphics?.removeChildAnimation?.(child);
+    } else {
+      // For other side effect children, delegate to parent
+      super.removeSideEffectChild(child);
+    }
+  }
+
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     if (!this.modelGraphics) {
       return;
@@ -155,12 +185,29 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
         this.collideableHelper.updateCollider(this.modelGraphics?.getCollisionElement());
       });
 
+    // Notify any existing child animations that the modelGraphics is now available
+    this.notifyChildAnimations();
+
     for (const name of Model.observedAttributes) {
       const value = this.getAttribute(name);
       if (value !== null) {
         this.attributeChangedCallback(name, null, value);
       }
     }
+  }
+
+  private notifyChildAnimations() {
+    // Find all child animations and notify them that the modelGraphics is ready
+    const childAnimations = this.querySelectorAll("m-animation");
+
+    childAnimations.forEach((animation) => {
+      if (Animation.isAnimation(animation)) {
+        // The animation's graphics adapter will handle the notification
+        if (animation.animationGraphics) {
+          animation.animationGraphics.parentModelUpdated();
+        }
+      }
+    });
   }
 
   disconnectedCallback() {

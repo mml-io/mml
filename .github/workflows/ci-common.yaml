@@ -84,10 +84,17 @@ jobs:
 
   # TODO: Re-enable (https://github.com/mml-io/mml/issues/241)
   # e2e-test-playcanvas:
-  #   name: End-to-end Test (PlayCanvas)
+  #   name: End-to-end Test (PlayCanvas) - Shard ${{ matrix.shard-index }}
   #   needs: build
   #   runs-on: ubuntu-latest
   #   timeout-minutes: 10
+  #   strategy:
+  #     matrix:
+  #       shard-index: [0, 1, 2, 3] # 4 shards, can be increased as needed
+  #     fail-fast: false
+  #   env:
+  #     JEST_SHARD_INDEX: ${{ matrix.shard-index }}
+  #     JEST_SHARD_COUNT: 4 # Must match the number of values in shard-index matrix
   #   steps:
   #     - uses: actions/cache@v4
   #       with:
@@ -105,21 +112,28 @@ jobs:
   #       id: retrieve-deps-and-build
   #       uses: ./.github/actions/retrieve-deps-and-build
 
-  #     - name: End to End Test
-  #       run: npm run ci:e2e-tests:playcanvas
+  #     - name: End to End Test (Sharded)
+  #       run: npm run ci:e2e-tests:playcanvas:shard
 
   #     - name: Upload End to End Test Images
   #       if: failure()
   #       uses: actions/upload-artifact@v4
   #       with:
-  #         name: images-playcanvas
+  #         name: images-playcanvas-shard-${{ matrix.shard-index }}
   #         path: e2e-tests/test/__image_snapshots__/__diff_output__/
 
   e2e-test-threejs:
-    name: End-to-end Test (ThreeJS)
+    name: End-to-end Test (ThreeJS) - Shard ${{ matrix.shard-index }}
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        shard-index: [0, 1, 2, 3] # 4 shards, can be increased as needed
+      fail-fast: false
+    env:
+      JEST_SHARD_INDEX: ${{ matrix.shard-index }}
+      JEST_SHARD_COUNT: 4 # Must match the number of values in shard-index matrix
     steps:
       - uses: actions/cache@v4
         with:
@@ -137,12 +151,12 @@ jobs:
         id: retrieve-deps-and-build
         uses: ./.github/actions/retrieve-deps-and-build
 
-      - name: End to End Test
-        run: npm run ci:e2e-tests:threejs
+      - name: End to End Test (Sharded)
+        run: npm run ci:e2e-tests:threejs:shard
 
       - name: Upload End to End Test Images
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: images-threejs
+          name: images-threejs-shard-${{ matrix.shard-index }}
           path: e2e-tests/test/__image_snapshots__/__diff_output__/
