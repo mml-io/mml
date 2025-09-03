@@ -75,6 +75,7 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       (newValue: number) => {
         this.props.width = newValue;
         this.labelGraphics?.setWidth(this.props.width, this.props);
+        this.collideableHelper.updateCollider(this.labelGraphics?.getCollisionElement());
       },
     ],
     height: [
@@ -83,6 +84,7 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       (newValue: number) => {
         this.props.height = newValue;
         this.labelGraphics?.setHeight(this.props.height, this.props);
+        this.collideableHelper.updateCollider(this.labelGraphics?.getCollisionElement());
       },
     ],
     padding: [
@@ -184,7 +186,11 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   static get observedAttributes(): Array<string> {
-    return [...TransformableElement.observedAttributes, ...Label.attributeHandler.getAttributes()];
+    return [
+      ...TransformableElement.observedAttributes,
+      ...Label.attributeHandler.getAttributes(),
+      ...CollideableHelper.observedAttributes,
+    ];
   }
 
   constructor() {
