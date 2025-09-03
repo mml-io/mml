@@ -1124,6 +1124,7 @@
         <xs:extension base="MMLContent">
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
           <xs:attributeGroup ref="colorable"/>
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="clickable"/>
