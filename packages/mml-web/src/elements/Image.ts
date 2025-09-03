@@ -1,6 +1,7 @@
 import { AnimatedAttributeHelper } from "../attribute-animation";
 import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
+import { ClickableHelper } from "../clickable/ClickableHelper";
 import { CollideableHelper } from "../collision";
 import { GraphicsAdapter } from "../graphics";
 import { ImageGraphics } from "../graphics/ImageGraphics";
@@ -73,6 +74,7 @@ export class Image<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   });
 
   private collideableHelper = new CollideableHelper(this);
+  private clickableHelper = new ClickableHelper();
 
   private static attributeHandler = new AttributeHandler<Image<GraphicsAdapter>>({
     width: (instance, newValue) => {
@@ -123,6 +125,7 @@ export class Image<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       ...TransformableElement.observedAttributes,
       ...Image.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...ClickableHelper.observedAttributes,
     ];
   }
 
@@ -156,7 +159,7 @@ export class Image<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public isClickable(): boolean {
-    return true;
+    return this.clickableHelper.isClickable();
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
@@ -166,6 +169,7 @@ export class Image<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     super.attributeChangedCallback(name, oldValue, newValue);
     Image.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.clickableHelper.handle(name, newValue);
   }
 
   connectedCallback(): void {

@@ -16,10 +16,6 @@ export class Character<G extends GraphicsAdapter = GraphicsAdapter> extends Mode
     super.parentTransformed();
   }
 
-  public isClickable(): boolean {
-    return true;
-  }
-
   public connectedCallback() {
     super.connectedCallback();
   }

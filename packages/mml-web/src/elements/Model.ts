@@ -1,5 +1,6 @@
 import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
+import { ClickableHelper } from "../clickable/ClickableHelper";
 import { CollideableHelper } from "../collision";
 import { GraphicsAdapter, ModelGraphics } from "../graphics";
 import { Animation } from "./Animation";
@@ -41,6 +42,7 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   };
 
   private collideableHelper = new CollideableHelper(this);
+  private clickableHelper = new ClickableHelper();
 
   private static attributeHandler = new AttributeHandler<Model<GraphicsAdapter>>({
     src: (instance, newValue) => {
@@ -98,6 +100,7 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       ...TransformableElement.observedAttributes,
       ...Model.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...ClickableHelper.observedAttributes,
     ];
   }
 
@@ -126,7 +129,7 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public isClickable(): boolean {
-    return true;
+    return this.clickableHelper.isClickable();
   }
 
   public addSideEffectChild(child: MElement<G>): void {
@@ -164,6 +167,7 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     super.attributeChangedCallback(name, oldValue, newValue);
     Model.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.clickableHelper.handle(name, newValue);
     if (TransformableElement.observedAttributes.includes(name)) {
       // The element might have moved/scaled, so we need to call transformed
       this.modelGraphics.transformed();

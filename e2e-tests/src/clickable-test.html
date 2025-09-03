@@ -1,0 +1,46 @@
+<m-label id="state-label" height="0.7" width="10" y="10" font-size="35" alignment="center"></m-label>
+<m-light type="spotlight" intensity="900" ry="45" rx="65" rz="-45" x="20" y="15" z="20"></m-light>
+
+<m-cube id="cube" y="1.5" z="1.5" color="gray"></m-cube>
+
+<m-label id="label" z="3" y="2" width="2" color="gray" font-color="white" collide="true" content="clickable='true'"></m-label>
+
+<m-cube id="toggle-button" y="1.5" x="3" z="1.5" color="green"></m-cube>
+
+<script>
+  const stateLabel = document.getElementById("state-label");
+  const toggleButton = document.getElementById("toggle-button");
+
+  let cubeClicks = 0;
+  let labelClicks = 0;
+
+  let colorsOnClick = ["green", "blue", "purple", "orange", "pink", "brown", "black", "gray"];
+
+  const label = document.getElementById("label");
+  const cube = document.getElementById("cube");
+
+  function updateStateLabel() {
+    stateLabel.setAttribute("content", `Cube Clicks: ${cubeClicks}, Label Clicks: ${labelClicks}`);
+  }
+
+  let toggle = true;
+  toggleButton.addEventListener("click", () => {
+    toggle = !toggle;
+    label.setAttribute("clickable", toggle ? "true" : "false");
+    label.setAttribute("content", toggle ? "clickable='true'" : "clickable='false'");
+  });
+
+  label.addEventListener("click", () => {
+    label.setAttribute("color", colorsOnClick[labelClicks % colorsOnClick.length]);
+    labelClicks++;
+    updateStateLabel();
+  });
+
+  cube.addEventListener("click", () => {
+    cube.setAttribute("color", colorsOnClick[cubeClicks % colorsOnClick.length]);
+    cubeClicks++;
+    updateStateLabel();
+  });
+
+  updateStateLabel();
+</script>
