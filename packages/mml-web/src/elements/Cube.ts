@@ -6,6 +6,7 @@ import {
   parseFloatAttribute,
 } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
+import { ClickableHelper } from "../clickable/ClickableHelper";
 import { CollideableHelper } from "../collision";
 import { MMLColor } from "../color";
 import { GraphicsAdapter } from "../graphics";
@@ -93,6 +94,7 @@ export class Cube<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
     ],
   });
   private collideableHelper = new CollideableHelper(this);
+  private clickableHelper = new ClickableHelper();
 
   private static attributeHandler = new AttributeHandler<Cube<GraphicsAdapter>>({
     width: (instance, newValue) => {
@@ -154,6 +156,7 @@ export class Cube<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
       ...TransformableElement.observedAttributes,
       ...Cube.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...ClickableHelper.observedAttributes,
     ];
   }
 
@@ -176,7 +179,7 @@ export class Cube<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
   }
 
   public isClickable(): boolean {
-    return true;
+    return this.clickableHelper.isClickable();
   }
 
   public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
@@ -186,6 +189,7 @@ export class Cube<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
     super.attributeChangedCallback(name, oldValue, newValue);
     Cube.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.clickableHelper.handle(name, newValue);
   }
 
   public connectedCallback(): void {

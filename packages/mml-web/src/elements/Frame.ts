@@ -206,7 +206,7 @@ export class Frame<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public isClickable(): boolean {
-    return true;
+    return false;
   }
 
   private startEmitting() {

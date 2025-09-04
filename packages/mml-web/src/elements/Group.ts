@@ -29,7 +29,7 @@ export class Group<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public isClickable(): boolean {
-    return true;
+    return false;
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
