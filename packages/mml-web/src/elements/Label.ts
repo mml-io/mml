@@ -1,5 +1,3 @@
-import * as THREE from "three";
-
 import { AnimatedAttributeHelper } from "../attribute-animation";
 import {
   AttributeHandler,
@@ -56,7 +54,7 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     color: [
       AnimationType.Color,
       defaultLabelColor,
-      (newValue: THREE.Color) => {
+      (newValue: MMLColor) => {
         this.props.color = newValue;
         this.labelGraphics?.setColor(this.props.color, this.props);
       },
@@ -64,7 +62,7 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     "font-color": [
       AnimationType.Color,
       defaultFontColor,
-      (newValue: THREE.Color) => {
+      (newValue: MMLColor) => {
         this.props.fontColor = newValue;
         this.labelGraphics?.setFontColor(this.props.fontColor, this.props);
       },
