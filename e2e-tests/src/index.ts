@@ -52,6 +52,7 @@ watcher
     const document = new EditableNetworkedDOM(
       url.pathToFileURL(filename).toString(),
       LocalObservableDOMFactory,
+      false,
     );
     // Don't load contents immediately - wait for first access
 

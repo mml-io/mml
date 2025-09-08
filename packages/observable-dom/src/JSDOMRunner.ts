@@ -1,4 +1,6 @@
 import { LogMessage, ObservableDOMRemoteEvent } from "@mml-io/observable-dom-common";
+import { foreignContent } from "parse5";
+foreignContent.SVG_TAG_NAMES_ADJUSTMENT_MAP.set("fedropshadow", "feDropShadow");
 import {
   AbortablePromise,
   DOMWindow,

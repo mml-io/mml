@@ -13,6 +13,7 @@ import {
   Link,
   MElement,
   Model,
+  Overlay,
   Plane,
   PositionProbe,
   Prompt,
@@ -37,6 +38,7 @@ import {
   LinkGraphics,
   MElementGraphics,
   ModelGraphics,
+  OverlayGraphics,
   PlaneGraphics,
   PositionProbeGraphics,
   PromptGraphics,
@@ -68,6 +70,7 @@ export interface MMLGraphicsInterface<C extends GraphicsAdapter> {
   MMLCubeGraphicsInterface: (element: Cube<C>) => CubeGraphics<C>;
   MMLLabelGraphicsInterface: (element: Label<C>) => LabelGraphics<C>;
   MMLLinkGraphicsInterface: (element: Link<C>) => LinkGraphics<C>;
+  MMLOverlayGraphicsInterface: (element: Overlay<C>) => OverlayGraphics<C>;
   MMLPlaneGraphicsInterface: (element: Plane<C>) => PlaneGraphics<C>;
   MMLPromptGraphicsInterface: (element: Prompt<C>) => PromptGraphics<C>;
   MMLInteractionGraphicsInterface: (element: Interaction<C>) => InteractionGraphics<C>;
@@ -133,6 +136,8 @@ export type IMMLScene<G extends GraphicsAdapter = GraphicsAdapter> = {
   addChatProbe?: (chatProbe: ChatProbe<G>) => void;
   updateChatProbe?: (chatProbe: ChatProbe<G>) => void;
   removeChatProbe?: (chatProbe: ChatProbe<G>) => void;
+
+  getOverlayElement?: () => HTMLElement | null;
 
   getUserPositionAndRotation(): PositionAndRotation;
 

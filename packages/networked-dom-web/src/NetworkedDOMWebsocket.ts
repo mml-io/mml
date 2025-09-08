@@ -40,6 +40,7 @@ export function NetworkedDOMWebsocketStatusToString(status: NetworkedDOMWebsocke
 export type NetworkedDOMWebsocketOptions = {
   tagPrefix?: string; // e.g. "m-" to restrict to only custom elements with a tag name starting with "m-"
   replacementTagPrefix?: string; // e.g. "x-" to replace non-prefixed tags with a new prefix (e.g. "div" -> "x-div")
+  allowSVGElements?: boolean; // Whether to allow SVG namespace elements to be created. Default is false.
 };
 
 export type NetworkedDOMWebsocketAdapter = {
@@ -229,7 +230,7 @@ export class NetworkedDOMWebsocket {
 }
 
 export function isHTMLElement(node: unknown, rootNode: HTMLElement): node is HTMLElement {
-  if (node instanceof HTMLElement) {
+  if (node instanceof HTMLElement || node instanceof Element) {
     return true;
   }
   if (!rootNode.ownerDocument.defaultView) {

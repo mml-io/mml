@@ -1,6 +1,7 @@
 import {
   configureWindowForMML,
   FullScreenMMLScene,
+  FullScreenMMLSceneOptions,
   GraphicsAdapter,
   IframeWrapper,
   MMLNetworkSource,
@@ -48,23 +49,34 @@ declare global {
     }
   }
 
+  const urlSearchParams = new URLSearchParams(window.location.search);
+
+  const useIframe =
+    scriptUrl.searchParams.get("iframe") === "true" || urlSearchParams.get("iframe") === "true";
+
+  const allowOverlay =
+    scriptUrl.searchParams.get("allowOverlay") === "true" ||
+    urlSearchParams.get("allowOverlay") === "true";
+
+  const fullScreenMMLSceneOptions: FullScreenMMLSceneOptions = {
+    allowOverlay,
+  };
+
   const url = scriptUrl.searchParams.get("url");
   if (!url) {
     // The custom elements are assumed to already be on the page after this script - register the custom elements
     // handler before the page loads. If any elements are already present then undefined behaviour may occur.
-    configureWindowForMML(window, getGraphicsAdapter);
+    configureWindowForMML(window, getGraphicsAdapter, fullScreenMMLSceneOptions);
     return;
   }
 
   window.addEventListener("load", async () => {
-    const fullScreenMMLScene = new FullScreenMMLScene();
+    const fullScreenMMLScene = new FullScreenMMLScene(fullScreenMMLSceneOptions);
     document.body.append(fullScreenMMLScene.element);
 
     const graphicsAdapter = await getGraphicsAdapter(fullScreenMMLScene.element);
 
     fullScreenMMLScene.init(graphicsAdapter);
-
-    const useIframe = new URL(window.location.href).searchParams.get("iframe") === "true";
 
     let targetForWrappers: HTMLElement;
     let windowTarget: Window;
@@ -94,6 +106,7 @@ declare global {
       },
       windowTarget,
       targetForWrappers,
+      allowOverlay,
     });
 
     const defineGlobals = scriptUrl.searchParams.get("defineGlobals") === "true";

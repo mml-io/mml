@@ -7,8 +7,12 @@ import { TestCaseNetworkedDOMClient } from "./TestCaseNetworkedDOMClient";
 export class TestCaseNetworkedDOMDocument {
   public doc: EditableNetworkedDOM;
 
-  constructor() {
-    this.doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+  constructor(ignoreTextNodes = true) {
+    this.doc = new EditableNetworkedDOM(
+      "file://test.html",
+      LocalObservableDOMFactory,
+      ignoreTextNodes,
+    );
   }
 
   createClient(useV01 = false) {

@@ -35,6 +35,8 @@ describe("JSDOMRunner", () => {
       "http://example.com/index.html",
       `
 <m-cube onclick="this.setAttribute('color', 'red');"></m-cube>
+<svg><defs><linearGradient><feDropShadow></feDropShadow></linearGradient></defs></svg>
+<svg><rect/></svg>
 <m-sphere id="my-sphere"></m-sphere>
 <m-group id="my-group"></m-group>
 <script>
@@ -73,6 +75,32 @@ describe("JSDOMRunner", () => {
                       childNodes: [
                         {
                           node: "M-CUBE onclick=\"this.setAttribute('color', 'red');\"",
+                        },
+                        {
+                          childNodes: [
+                            {
+                              childNodes: [
+                                {
+                                  childNodes: [
+                                    {
+                                      node: "fedropshadow",
+                                    },
+                                  ],
+                                  node: "linearGradient",
+                                },
+                              ],
+                              node: "defs",
+                            },
+                          ],
+                          node: "svg",
+                        },
+                        {
+                          childNodes: [
+                            {
+                              node: "rect",
+                            },
+                          ],
+                          node: "svg",
                         },
                         {
                           node: 'M-SPHERE id="my-sphere"',

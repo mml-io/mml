@@ -83,11 +83,7 @@ export class RemoteDocument<G extends GraphicsAdapter = GraphicsAdapter> extends
   }
 
   public dispatchEvent(event: CustomEvent): boolean {
-    if (this.contains(event.detail.element)) {
-      return HTMLElement.prototype.dispatchEvent.call(this, event);
-    } else {
-      return false;
-    }
+    return HTMLElement.prototype.dispatchEvent.call(this, event);
   }
 
   public init(mmlScene: IMMLScene<G>, documentAddress: string) {

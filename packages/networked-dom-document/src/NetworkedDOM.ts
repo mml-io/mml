@@ -1708,7 +1708,7 @@ export class NetworkedDOM {
       tag: staticVirtualDOMElement.tag,
       attributes: staticVirtualDOMElement.attributes,
       childNodes: staticVirtualDOMElement.childNodes.map((child) =>
-        this.reprojectStaticVirtualDOMElementWithMappings(child),
+        this.reprojectStaticVirtualDOMElementWithMappings(child, createIfCollided),
       ),
       textContent: staticVirtualDOMElement.textContent,
     };
