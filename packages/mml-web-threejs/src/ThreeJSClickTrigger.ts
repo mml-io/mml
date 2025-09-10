@@ -2,7 +2,6 @@ import {
   EventHandlerCollection,
   getRelativePositionAndRotationRelativeToObject,
   MElement,
-  TransformableElement,
 } from "@mml-io/mml-web";
 import * as THREE from "three";
 
