@@ -37,14 +37,7 @@ describe("clickable attribute", () => {
     // Click the label initially (default clickable=true)
     await clickElement(page, "#label");
 
-    await page.waitForFunction(
-      (prevContent) => {
-        const el = document.querySelector("#state-label");
-        return el?.getAttribute("content") !== prevContent;
-      },
-      {},
-      await stateLabel?.evaluate((el) => el.getAttribute("content")),
-    );
+    await page.waitForSelector("#state-label[content='Cube Clicks: 0, Label Clicks: 1']");
 
     const afterInitialClick = await getCounts();
     expect(afterInitialClick.cube).toBe(0);
@@ -62,14 +55,7 @@ describe("clickable attribute", () => {
     // Click where the label is; with clickable=false this should pass through to the cube
     await clickElement(page, "#label");
 
-    await page.waitForFunction(
-      (prevContent) => {
-        const el = document.querySelector("#state-label");
-        return el?.getAttribute("content") !== prevContent;
-      },
-      {},
-      await stateLabel?.evaluate((el) => el.getAttribute("content")),
-    );
+    await page.waitForSelector("#state-label[content='Cube Clicks: 1, Label Clicks: 1']");
 
     const afterClickthrough = await getCounts();
     expect(afterClickthrough.cube).toBe(1);
@@ -87,14 +73,7 @@ describe("clickable attribute", () => {
     // Click where the label is; with clickable=true this should hit the label
     await clickElement(page, "#label");
 
-    await page.waitForFunction(
-      (prevContent) => {
-        const el = document.querySelector("#state-label");
-        return el?.getAttribute("content") !== prevContent;
-      },
-      {},
-      await stateLabel?.evaluate((el) => el.getAttribute("content")),
-    );
+    await page.waitForSelector("#state-label[content='Cube Clicks: 1, Label Clicks: 2']");
 
     const afterToggleBack = await getCounts();
     expect(afterToggleBack.cube).toBe(1);
