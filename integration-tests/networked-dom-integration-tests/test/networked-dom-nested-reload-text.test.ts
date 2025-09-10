@@ -54,19 +54,19 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
         new CustomEvent("click"),
       );
 
-      await client1.waitForAllClientMessages(isV01 ? 2 : 2);
+      await client1.waitForAllClientMessages(isV01 ? 4 : 2);
 
       // Reload the document without any changes - this causes a node remapping
       testCase.doc.load(testDocument);
 
-      await client1.waitForAllClientMessages(isV01 ? 5 : 5);
+      await client1.waitForAllClientMessages(isV01 ? 7 : 5);
 
       client1.networkedDOMWebsocket.handleEvent(
         client1.clientElement.querySelector("#add-level-2")!,
         new CustomEvent("click"),
       );
 
-      await client1.waitForAllClientMessages(isV01 ? 6 : 6);
+      await client1.waitForAllClientMessages(isV01 ? 8 : 6);
     });
   },
 );
