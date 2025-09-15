@@ -78,6 +78,12 @@ declare global {
 
     fullScreenMMLScene.init(graphicsAdapter);
 
+    const searchParams = new URL(window.location.href).searchParams;
+
+    const useIframe = searchParams.get("iframe") === "true";
+
+    const connectionToken: string | null = searchParams.get("token") ?? null;
+
     let targetForWrappers: HTMLElement;
     let windowTarget: Window;
 
@@ -95,6 +101,7 @@ declare global {
 
     const mmlNetworkSource = MMLNetworkSource.create({
       url,
+      connectionToken,
       mmlScene: fullScreenMMLScene,
       statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
         if (status === NetworkedDOMWebsocketStatus.Connected) {

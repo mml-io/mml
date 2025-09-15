@@ -5,6 +5,8 @@ import {
   encodeBatchEnd,
   encodeBatchStart,
   encodeServerMessage,
+  getNetworkedDOMProtocolSubProtocol_v0_2SubversionOrThrow,
+  isNetworkedDOMProtocolSubProtocol_v0_2,
   NetworkedDOMV02ClientMessage,
   NetworkedDOMV02ServerMessage,
 } from "@mml-io/networked-dom-protocol";
@@ -16,6 +18,8 @@ export class NetworkedDOMV02Connection {
 
   public externalIdToInternalId = new Map<number, number>();
   public internalIdToExternalId = new Map<number, number>();
+  public internalIdToToken = new Map<number, string | null>();
+
   private batchMode: boolean = false;
   private batchMessages: Array<NetworkedDOMV02ServerMessage | Uint8Array> = [];
   public externalConnectionIds = new Set<number>();
@@ -24,9 +28,16 @@ export class NetworkedDOMV02Connection {
   private messagesAwaitingNetworkedDOM: Array<NetworkedDOMV02ClientMessage> = [];
 
   public constructor(public readonly webSocket: WebSocket) {
+    const protocol = webSocket.protocol;
+    if (!isNetworkedDOMProtocolSubProtocol_v0_2(protocol)) {
+      throw new Error(
+        `WebSocket protocol ${protocol} is not a supported networked-dom-v0.2 sub-protocol`,
+      );
+    }
+    const protocolSubversion = getNetworkedDOMProtocolSubProtocol_v0_2SubversionOrThrow(protocol);
     this.websocketListener = (messageEvent: MessageEvent) => {
       const buffer = new Uint8Array(messageEvent.data as ArrayBuffer);
-      const messages = decodeClientMessages(new BufferReader(buffer));
+      const messages = decodeClientMessages(new BufferReader(buffer), protocolSubversion);
       for (const parsed of messages) {
         if (this.networkedDOM) {
           this.handleClientMessage(parsed);
@@ -111,8 +122,13 @@ export class NetworkedDOMV02Connection {
   private handleClientMessage(parsed: NetworkedDOMV02ClientMessage) {
     switch (parsed.type) {
       case "connectUsers": {
+        const externalIdsToToken = new Map<number, string | null>();
         const addedExternalUserIds = new Set<number>();
-        for (const addingExternalId of parsed.connectionIds) {
+        for (let i = 0; i < parsed.connectionIds.length; i++) {
+          const addingExternalId = parsed.connectionIds[i];
+          const correspondingToken = parsed.connectionTokens[i];
+          externalIdsToToken.set(addingExternalId, correspondingToken);
+
           // Check if the connection ID is a positive integer
           if (!Number.isInteger(addingExternalId) || addingExternalId < 0) {
             this.sendMessage({
@@ -147,12 +163,15 @@ export class NetworkedDOMV02Connection {
             this,
             addedExternalUserIds,
           );
-          const internalIds = new Set(Array.from(connectionIdToExternalId.keys()));
+          const addingInternalIdsWithToken = new Map<number, string | null>();
           for (const [addingInternalId, addingExternalId] of connectionIdToExternalId) {
+            const token = externalIdsToToken.get(addingExternalId) ?? null;
+            addingInternalIdsWithToken.set(addingInternalId, token);
             this.externalIdToInternalId.set(addingExternalId, addingInternalId);
             this.internalIdToExternalId.set(addingInternalId, addingExternalId);
+            this.internalIdToToken.set(addingInternalId, token);
           }
-          this.networkedDOM.announceConnectedUsers(internalIds);
+          this.networkedDOM.announceConnectedUsers(addingInternalIdsWithToken);
         }
         return;
       }
@@ -199,6 +218,7 @@ export class NetworkedDOMV02Connection {
             this.externalConnectionIds.delete(removingExternalId);
             this.externalIdToInternalId.delete(removingExternalId);
             this.internalIdToExternalId.delete(removingInternalId);
+            this.internalIdToToken.delete(removingInternalId);
           }
         } else {
           const removalDiffs = this.networkedDOM.disconnectUsers(

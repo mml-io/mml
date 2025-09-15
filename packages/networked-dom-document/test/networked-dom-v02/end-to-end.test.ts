@@ -206,6 +206,7 @@ describe("end to end - v0.2", () => {
     clientWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1],
+      connectionTokens: [null],
     });
 
     clientWs.sendToServer({
@@ -1023,8 +1024,8 @@ setTimeout(() => {
               {
                 attributes: [
                   /*
-                   This value should be "1" and not "2" at the point the node 
-                   is added, but the mutation observer does not observe this 
+                   This value should be "1" and not "2" at the point the node
+                   is added, but the mutation observer does not observe this
                    value before it is overwritten.
                   */
                   ["y", "2"],

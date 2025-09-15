@@ -63,7 +63,9 @@ export class NetworkedDOMV01Connection {
     const internalConnectionIds = this.networkedDOM.connectUsers(this, new Set([1]));
     this.internalConnectionId = internalConnectionIds.entries().next().value[0] as number;
     this.internalIdToExternalId.set(this.internalConnectionId, 1);
-    this.networkedDOM.announceConnectedUsers(new Set([this.internalConnectionId]));
+    this.networkedDOM.announceConnectedUsers(
+      new Map<number, string | null>([[this.internalConnectionId, null]]),
+    );
   }
 
   public stringifyAndSendSingleMessage(message: NetworkedDOMV01ServerMessage) {

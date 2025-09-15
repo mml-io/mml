@@ -3,6 +3,9 @@ import {
   BufferWriter,
   decodeServerMessages,
   encodeClientMessage,
+  getNetworkedDOMProtocolSubProtocol_v0_2SubversionOrThrow,
+  networkedDOMProtocolSubProtocol_v0_2_Subversion,
+  networkedDOMProtocolSubProtocol_v0_2_SubversionNumber,
   NetworkedDOMV02AttributesChangedDiff,
   NetworkedDOMV02ChangeHiddenFromDiff,
   NetworkedDOMV02ChildrenAddedDiff,
@@ -49,6 +52,7 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
   private currentRoot: HTMLElement | null = null;
   private batchMode = false;
   private batchMessages: Array<NetworkedDOMV02ServerMessage> = [];
+  private readonly protocolSubversion: networkedDOMProtocolSubProtocol_v0_2_SubversionNumber;
 
   constructor(
     private websocket: WebSocket,
@@ -58,7 +62,14 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
     private options: NetworkedDOMWebsocketOptions = {},
   ) {
     this.websocket.binaryType = "arraybuffer";
-    this.send({ type: "connectUsers", connectionIds: [connectionId] });
+    this.protocolSubversion = getNetworkedDOMProtocolSubProtocol_v0_2SubversionOrThrow(
+      websocket.protocol as networkedDOMProtocolSubProtocol_v0_2_Subversion,
+    );
+    this.send({
+      type: "connectUsers",
+      connectionIds: [connectionId],
+      connectionTokens: [this.options.connectionToken ?? null],
+    });
   }
 
   public handleEvent(element: HTMLElement, event: CustomEvent<{ element: HTMLElement }>) {
@@ -87,7 +98,7 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
 
   private send(message: NetworkedDOMV02ClientMessage) {
     const writer = new BufferWriter(256);
-    encodeClientMessage(message, writer);
+    encodeClientMessage(message, writer, this.protocolSubversion);
     this.websocket.send(writer.getBuffer());
   }
 

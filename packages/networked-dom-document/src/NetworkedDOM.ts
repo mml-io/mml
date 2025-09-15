@@ -280,11 +280,11 @@ export class NetworkedDOM {
     }
 
     for (const networkedDOMConnection of this.networkedDOMV02Connections) {
-      for (const connectionId of networkedDOMConnection.internalIdToExternalId.keys()) {
+      for (const [connectionId, token] of networkedDOMConnection.internalIdToToken) {
         if (connectionId >= this.currentConnectionId) {
           this.currentConnectionId = connectionId + 1;
         }
-        this.observableDOM.addConnectedUserId(connectionId);
+        this.observableDOM.addConnectedUserId(connectionId, token);
       }
     }
 
@@ -294,7 +294,7 @@ export class NetworkedDOM {
         networkedDOMConnection.initAsNewV01Connection();
       }
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.observableDOM.addConnectedUserId(networkedDOMConnection.internalConnectionId!);
+      this.observableDOM.addConnectedUserId(networkedDOMConnection.internalConnectionId!, null);
     }
 
     for (const networkedDOMConnection of this.networkedDOMV02Connections) {
@@ -423,8 +423,8 @@ export class NetworkedDOM {
         networkedDOMConnection.webSocket,
         networkedDOMConnection,
       );
-      for (const connectionId of networkedDOMConnection.internalIdToExternalId.keys()) {
-        this.observableDOM.addConnectedUserId(connectionId);
+      for (const [connectionId, token] of networkedDOMConnection.internalIdToToken) {
+        this.observableDOM.addConnectedUserId(connectionId, token);
       }
       networkedDOMConnection.sendMessage(
         this.getInitialV02Snapshot(networkedDOMConnection, documentVirtualDOMElement),
@@ -476,9 +476,9 @@ export class NetworkedDOM {
   }
 
   // Called by the connections after storing the mapping of connected users ids
-  public announceConnectedUsers(userIds: Set<number>) {
-    for (const userId of userIds) {
-      this.observableDOM.addConnectedUserId(userId);
+  public announceConnectedUsers(userIds: Map<number, string | null>) {
+    for (const [userId, token] of userIds) {
+      this.observableDOM.addConnectedUserId(userId, token);
     }
   }
 
@@ -520,6 +520,7 @@ export class NetworkedDOM {
       networkedDOMConnection.externalConnectionIds.delete(removingExternalId);
       networkedDOMConnection.externalIdToInternalId.delete(removingExternalId);
       networkedDOMConnection.internalIdToExternalId.delete(removingInternalId);
+      networkedDOMConnection.internalIdToToken.delete(removingInternalId);
       this.connectionIdToNetworkedDOMConnection.delete(removingInternalId);
     }
 

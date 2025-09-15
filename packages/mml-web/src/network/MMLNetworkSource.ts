@@ -6,6 +6,7 @@ import { IMMLScene } from "../scene";
 
 export type MMLNetworkSourceOptions = {
   url: string;
+  connectionToken?: string | null;
   mmlScene: IMMLScene;
   statusUpdated: (status: NetworkedDOMWebsocketStatus) => void;
   windowTarget: Window;
@@ -66,6 +67,7 @@ export class MMLNetworkSource {
           tagPrefix: "m-",
           // If overlays are allowed, allow SVG elements to populate them
           allowSVGElements: this.options.allowOverlay,
+          connectionToken: this.options.connectionToken ?? null,
         },
       );
       this.websocket = websocket;

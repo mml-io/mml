@@ -330,6 +330,7 @@ describe("reloading - v0.2", () => {
     clientWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 1
+      connectionTokens: [null],
     });
 
     expect(await clientWs.waitForTotalMessageCount(1)).toEqual([

@@ -25,6 +25,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientOneWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 1
+      connectionTokens: [null],
     });
 
     const clientTwoWs = new MockWebsocketV02();
@@ -32,6 +33,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientTwoWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 2
+      connectionTokens: [null],
     });
 
     // Load only after the connections are established
@@ -202,6 +204,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientOneWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 1
+      connectionTokens: [null],
     });
 
     const clientTwoWs = new MockWebsocketV02();
@@ -209,6 +212,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientTwoWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 2
+      connectionTokens: [null],
     });
 
     // Load only after the connections are established
@@ -385,6 +389,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientOneWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 1
+      connectionTokens: [null],
     });
 
     const clientTwoWs = new MockWebsocketV02();
@@ -392,6 +397,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientTwoWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 2
+      connectionTokens: [null],
     });
 
     expect(await clientOneWs.waitForTotalMessageCount(1)).toEqual([
@@ -548,6 +554,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientOneWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 1
+      connectionTokens: [null],
     });
 
     const clientTwoWs = new MockWebsocketV02();
@@ -555,6 +562,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientTwoWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 2
+      connectionTokens: [null],
     });
 
     const clientThreeWs = new MockWebsocketV02();
@@ -562,6 +570,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientThreeWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 3
+      connectionTokens: [null],
     });
 
     expect(await clientOneWs.waitForTotalMessageCount(1)).toEqual([
@@ -758,6 +767,7 @@ describe("multi-client subjectivity - v0.2", () => {
     clientOneWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1, 2], // Should be internal id 1, 2
+      connectionTokens: [null, null],
     });
 
     // Load only after the connections are established

@@ -3,13 +3,17 @@ import {
   BufferWriter,
   decodeServerMessages,
   encodeClientMessage,
-  networkedDOMProtocolSubProtocol_v0_2,
+  getNetworkedDOMProtocolSubProtocol_v0_2SubversionOrThrow,
+  networkedDOMProtocolSubProtocol_v0_2_1,
   NetworkedDOMV02ClientMessage,
   NetworkedDOMV02ServerMessage,
 } from "@mml-io/networked-dom-protocol";
 
 export class MockWebsocketV02 {
-  public readonly protocol = networkedDOMProtocolSubProtocol_v0_2;
+  public readonly protocol = networkedDOMProtocolSubProtocol_v0_2_1;
+  private protocolSubversion = getNetworkedDOMProtocolSubProtocol_v0_2SubversionOrThrow(
+    this.protocol,
+  );
   private allMessages: Array<NetworkedDOMV02ServerMessage> = [];
   private messageTriggers = new Set<() => void>();
   private serverMessageListeners = new Set<(message: MessageEvent) => void>();
@@ -69,7 +73,7 @@ export class MockWebsocketV02 {
 
   sendToServer(toSend: NetworkedDOMV02ClientMessage) {
     const writer = new BufferWriter(32);
-    encodeClientMessage(toSend, writer);
+    encodeClientMessage(toSend, writer, this.protocolSubversion);
     this.serverMessageListeners.forEach((listener) => {
       listener(
         new MessageEvent("message", {

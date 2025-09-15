@@ -1,11 +1,7 @@
-import { BufferReader } from "../../src/networked-dom-v0.2/BufferReader";
-import { BufferWriter } from "../../src/networked-dom-v0.2/BufferWriter";
-import {
-  decodeSnapshot,
-  encodeSnapshot,
-  NetworkedDOMV02SnapshotMessage,
-} from "../../src/networked-dom-v0.2/messages/from-server/snapshot";
-import { SnapshotMessageType } from "../../src/networked-dom-v0.2/messageTypes";
+import { BufferReader } from "../../BufferReader";
+import { BufferWriter } from "../../BufferWriter";
+import { SnapshotMessageType } from "../../messageTypes";
+import { decodeSnapshot, encodeSnapshot, NetworkedDOMV02SnapshotMessage } from "./snapshot";
 
 const cases: Array<[string, NetworkedDOMV02SnapshotMessage, Array<number>]> = [
   [

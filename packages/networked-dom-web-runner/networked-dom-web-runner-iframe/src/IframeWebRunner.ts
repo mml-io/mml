@@ -44,7 +44,7 @@ export function setupIframeWebRunner(argsString: string) {
         observableDOM.dispatchRemoteEventFromConnectionId(parsed.connectionId, parsed.event);
         break;
       case ADD_CONNECTED_USER_ID_MESSAGE_TYPE:
-        observableDOM.addConnectedUserId(parsed.connectionId);
+        observableDOM.addConnectedUserId(parsed.connectionId, parsed.connectionToken ?? null);
         break;
       case REMOVE_CONNECTED_USER_ID_MESSAGE_TYPE:
         observableDOM.removeConnectedUserId(parsed.connectionId);

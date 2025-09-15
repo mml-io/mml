@@ -1,11 +1,11 @@
-import { BufferReader } from "../../src/networked-dom-v0.2/BufferReader";
-import { BufferWriter } from "../../src/networked-dom-v0.2/BufferWriter";
+import { BufferReader } from "../../BufferReader";
+import { BufferWriter } from "../../BufferWriter";
+import { AttributesChangedMessageType } from "../../messageTypes";
 import {
   decodeAttributesChanged,
   encodeAttributesChanged,
   NetworkedDOMV02AttributesChangedDiff,
-} from "../../src/networked-dom-v0.2/messages/from-server/attributesChanged";
-import { AttributesChangedMessageType } from "../../src/networked-dom-v0.2/messageTypes";
+} from "./attributesChanged";
 
 const cases: Array<[string, NetworkedDOMV02AttributesChangedDiff, Array<number>]> = [
   [

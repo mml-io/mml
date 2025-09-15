@@ -1,6 +1,9 @@
 import {
+  isNetworkedDOMProtocolSubProtocol_v0_2,
   networkedDOMProtocolSubProtocol_v0_1,
   networkedDOMProtocolSubProtocol_v0_2,
+  networkedDOMProtocolSubProtocol_v0_2_1,
+  networkedDOMProtocolSubProtocol_v0_2_SubVersionsList,
   NetworkedDOMV02ServerMessage,
 } from "@mml-io/networked-dom-protocol";
 
@@ -9,7 +12,7 @@ import { NetworkedDOMV02Connection } from "./NetworkedDOMV02Connection";
 
 // First to last in order of preference
 export const SupportedWebsocketSubProtocolsPreferenceOrder = [
-  networkedDOMProtocolSubProtocol_v0_2,
+  ...networkedDOMProtocolSubProtocol_v0_2_SubVersionsList,
   networkedDOMProtocolSubProtocol_v0_1,
 ] as const;
 
@@ -27,6 +30,7 @@ export function createNetworkedDOMConnectionForWebsocket(
   let assumedProtocol:
     | typeof networkedDOMProtocolSubProtocol_v0_1
     | typeof networkedDOMProtocolSubProtocol_v0_2
+    | typeof networkedDOMProtocolSubProtocol_v0_2_1
     | null = null;
   if (webSocket.protocol) {
     if (!IsRecognizedWebsocketSubProtocol(webSocket.protocol)) {
@@ -56,7 +60,7 @@ export function createNetworkedDOMConnectionForWebsocket(
     assumedProtocol = defaultWebsocketSubProtocol;
   }
 
-  const isV02 = assumedProtocol === networkedDOMProtocolSubProtocol_v0_2;
+  const isV02 = isNetworkedDOMProtocolSubProtocol_v0_2(assumedProtocol);
   if (isV02) {
     return new NetworkedDOMV02Connection(webSocket);
   }

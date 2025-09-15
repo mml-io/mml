@@ -33,7 +33,7 @@ export type StaticVirtualDOMMutationIdsRecord =
     };
 
 export type ObservableDOMInterface = {
-  addConnectedUserId(connectionId: number): void;
+  addConnectedUserId(connectionId: number, connectionToken: string | null): void;
   removeConnectedUserId(connectionId: number): void;
   dispatchRemoteEventFromConnectionId(
     connectionId: number,

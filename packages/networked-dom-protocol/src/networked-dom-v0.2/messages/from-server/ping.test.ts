@@ -1,11 +1,7 @@
-import { BufferReader } from "../../src/networked-dom-v0.2/BufferReader";
-import { BufferWriter } from "../../src/networked-dom-v0.2/BufferWriter";
-import {
-  decodePing,
-  encodePing,
-  NetworkedDOMV02PingMessage,
-} from "../../src/networked-dom-v0.2/messages/from-server/ping";
-import { PingMessageType } from "../../src/networked-dom-v0.2/messageTypes";
+import { BufferReader } from "../../BufferReader";
+import { BufferWriter } from "../../BufferWriter";
+import { PingMessageType } from "../../messageTypes";
+import { decodePing, encodePing, NetworkedDOMV02PingMessage } from "./ping";
 
 const cases: Array<[string, NetworkedDOMV02PingMessage, Array<number>]> = [
   [
