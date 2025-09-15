@@ -164,6 +164,8 @@ export class ThreeJSModeInternal {
       graphicsAdapter,
     );
 
+    fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
+
     this.loadedState = {
       mmlNetworkSource,
       graphicsAdapter,
