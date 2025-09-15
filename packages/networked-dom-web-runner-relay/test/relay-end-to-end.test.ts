@@ -107,6 +107,12 @@ test("relay end-to-end", async () => {
         console.info('relay-end-to-end-test-level-info'); 
         console.warn('relay-end-to-end-test-level-warn'); 
         console.error('relay-end-to-end-test-level-error'); 
+      "
+    ></div>
+
+    <div 
+      data-some-id="throwing-element" 
+      onclick="
         undef[1];
       "
     ></div>`,
@@ -137,6 +143,18 @@ test("relay end-to-end", async () => {
       level: "error",
       content: ["relay-end-to-end-test-level-error"],
     }),
+  ]);
+
+  logs.length = 0;
+
+  const throwingElement = client.element.querySelectorAll("[data-some-id='throwing-element']")[0];
+  throwingElement.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+  await waitFor(() => {
+    return logs.length > 0;
+  });
+
+  expect(logs).toEqual([
     expect.objectContaining({
       level: "system",
       content: [

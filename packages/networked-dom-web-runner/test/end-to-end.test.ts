@@ -52,6 +52,12 @@ test("networked-dom-web-runner end-to-end", async () => {
         console.info('level-info'); 
         console.warn('level-warn'); 
         console.error('level-error'); 
+      "
+    ></div>
+
+    <div 
+      data-some-id="throwing-element" 
+      onclick="
         undef[1];
       "
     ></div>`,
@@ -85,7 +91,18 @@ test("networked-dom-web-runner end-to-end", async () => {
       level: "error",
       content: ["level-error"],
     }),
+  ]);
 
+  logs.length = 0;
+
+  const throwingElement = client.element.querySelectorAll("[data-some-id='throwing-element']")[0];
+  throwingElement.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+  await waitFor(() => {
+    return logs.length > 0;
+  });
+
+  expect(logs).toEqual([
     expect.objectContaining({
       level: "system",
       content: [
