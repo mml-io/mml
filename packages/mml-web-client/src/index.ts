@@ -58,6 +58,8 @@ declare global {
     scriptUrl.searchParams.get("allowOverlay") === "true" ||
     urlSearchParams.get("allowOverlay") === "true";
 
+  const connectionToken: string | null = urlSearchParams.get("token") ?? null;
+
   const fullScreenMMLSceneOptions: FullScreenMMLSceneOptions = {
     allowOverlay,
   };
@@ -77,12 +79,6 @@ declare global {
     const graphicsAdapter = await getGraphicsAdapter(fullScreenMMLScene.element);
 
     fullScreenMMLScene.init(graphicsAdapter);
-
-    const searchParams = new URL(window.location.href).searchParams;
-
-    const useIframe = searchParams.get("iframe") === "true";
-
-    const connectionToken: string | null = searchParams.get("token") ?? null;
 
     let targetForWrappers: HTMLElement;
     let windowTarget: Window;
