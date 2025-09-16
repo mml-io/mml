@@ -255,4 +255,14 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
       parentModelUpdated: () => {},
     },
   ),
+  MMLOverlayGraphicsInterface: TagDebugAdapterElement(
+    {
+      setAnchor: "anchor",
+      setOffsetX: "offset-x",
+      setOffsetY: "offset-y",
+    },
+    {
+      dispose: () => {},
+    },
+  ),
 };

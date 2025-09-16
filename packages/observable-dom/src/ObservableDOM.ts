@@ -422,9 +422,16 @@ export class ObservableDOM implements ObservableDOMInterface {
     }
 
     const nodeId = this.nextNodeId++;
+    const localNameValue = (node as Element).localName;
+    const nodeNameValue = node.nodeName;
+    let tag = localNameValue || nodeNameValue;
+    if (tag !== "#text") {
+      tag = tag.toUpperCase();
+    }
+
     const virtualElement: LiveVirtualDOMElement = {
       nodeId,
-      tag: node.nodeName,
+      tag,
       attributes,
       childNodes: [],
       realElement: node,

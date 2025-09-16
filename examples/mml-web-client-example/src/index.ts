@@ -25,6 +25,7 @@ const getWebsocketUrl = (req: Request) =>
 const document = new EditableNetworkedDOM(
   url.pathToFileURL(filePath).toString(),
   LocalObservableDOMFactory,
+  false,
 );
 document.load(getMMLFileContents());
 chokidar.watch(filePath).on("change", () => {
@@ -69,7 +70,9 @@ app.ws("/mml-websocket", (ws: ws.WebSocket) => {
   });
 });
 app.get("/websocket-example/", (req, res) => {
-  res.send(`<html><script src="/client/index.js?url=${getWebsocketUrl(req)}"></script></html>`);
+  res.send(
+    `<html><script src="/client/index.js?iframe=true&url=${getWebsocketUrl(req)}"></script></html>`,
+  );
 });
 
 console.log("Serving on port:", port);

@@ -70,7 +70,7 @@ export class DOMSanitizer {
   }
 
   static IsASCIIAlpha(c: string) {
-    return c >= "a" && c <= "z";
+    return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z");
   }
 
   static IsValidAttributeName(characters: string): boolean {

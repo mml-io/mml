@@ -2,7 +2,6 @@ import {
   EventHandlerCollection,
   getRelativePositionAndRotationRelativeToObject,
   MElement,
-  TransformableElement,
 } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
@@ -90,28 +89,27 @@ export class PlayCanvasClickTrigger {
       console.warn("No rigidbody system found in the PlayCanvas app. Cannot raycast.");
       return;
     }
-    const result = rigidbodySystem.raycastFirst(from, to);
-
-    // If there was a hit, store the entity
-    if (result) {
-      const hitEntity = result.entity;
-      let mElement;
-      for (let entity: playcanvas.GraphNode = hitEntity; entity; entity = entity.parent) {
-        mElement = MElement.getMElementFromObject(entity);
-        if (mElement) {
-          break;
+    const intersections = rigidbodySystem.raycastAll(from, to);
+    // sort the intersections by distance
+    intersections.sort((a, b) => a.point.distance(from) - b.point.distance(from));
+    for (const intersection of intersections) {
+      let obj: playcanvas.GraphNode | null = intersection.entity;
+      currentIntersection: while (obj) {
+        const mElement = MElement.getMElementFromObject(obj);
+        if (!mElement) {
+          // The intersection object is not an MElement, so we move up to the parent recursively which may be an MElement
+          obj = obj.parent;
+          continue currentIntersection;
         }
-      }
-      if (
-        mElement &&
-        TransformableElement.isTransformableElement(mElement) &&
-        mElement.isClickable()
-      ) {
-        // let's get the intersection point relative to the element origin
+
+        if (!mElement.isClickable()) {
+          // This is not a clickable element (or it is explicitly set to not be clickable), so we ignore it and pass through to the next intersection
+          break currentIntersection;
+        }
 
         const elementRelative = getRelativePositionAndRotationRelativeToObject(
           {
-            position: result.point,
+            position: intersection.point,
             rotation: {
               x: 0,
               y: 0,

@@ -5,6 +5,7 @@ import { MMLScene } from "./MMLScene";
 export type FullScreenMMLSceneOptions = {
   showDebugLoading?: boolean;
   loadingStyle?: "bar" | "spinner";
+  allowOverlay?: boolean;
 };
 
 export class FullScreenMMLScene<G extends StandaloneGraphicsAdapter> extends MMLScene<G> {
@@ -41,6 +42,13 @@ export class FullScreenMMLScene<G extends StandaloneGraphicsAdapter> extends MML
   public resetLoadingProgressBar() {
     this.loadingProgressBar.dispose();
     this.createLoadingProgressBar();
+  }
+
+  public getOverlayElement(): HTMLElement | null {
+    if (this.options.allowOverlay) {
+      return this.element;
+    }
+    return null;
   }
 
   private configureWindowStyling() {

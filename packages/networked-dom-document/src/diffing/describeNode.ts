@@ -61,7 +61,7 @@ export function describeNodeWithChildrenForV01Connection(
     return null;
   }
   let emittedTagName = virtualDOMElement.tag;
-  if (emittedTagName === "#document") {
+  if (emittedTagName === "#DOCUMENT") {
     emittedTagName = "DIV";
   }
   if (emittedTagName === "#text") {
@@ -110,7 +110,7 @@ export function describeNodeWithChildrenForV02Connection(
     return null;
   }
   let emittedTagName = virtualDOMElement.tag;
-  if (emittedTagName === "#document") {
+  if (emittedTagName === "#DOCUMENT") {
     emittedTagName = "DIV";
   }
   if (emittedTagName === "#text") {
