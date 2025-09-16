@@ -85,6 +85,9 @@ export class TagsMode implements GraphicsMode {
       mmlScene: fullScreenMMLScene,
       remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper,
     });
+
+    fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
+
     this.loadedState = {
       mmlNetworkSource,
       graphicsAdapter,

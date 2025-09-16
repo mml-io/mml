@@ -161,6 +161,8 @@ export class PlayCanvasModeInternal {
       graphicsAdapter,
     );
 
+    fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
+
     this.loadedState = {
       mmlNetworkSource,
       graphicsAdapter,

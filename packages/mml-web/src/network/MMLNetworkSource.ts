@@ -1,5 +1,6 @@
 import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 
+import { createWrappedScene } from "../frame";
 import { LoadingProgressManager } from "../loading";
 import { fetchRemoteStaticMML, RemoteDocumentWrapper } from "../remote-document";
 import { IMMLScene } from "../scene";
@@ -34,17 +35,25 @@ export class MMLNetworkSource {
       overriddenHandler(element, event);
     };
 
+    const loadingProgressManager = new LoadingProgressManager();
+
+    const wrappedScene = createWrappedScene(this.options.mmlScene, loadingProgressManager);
+
     const src = this.options.url;
     this.remoteDocumentWrapper = new RemoteDocumentWrapper(
       src,
       this.options.windowTarget,
-      this.options.mmlScene,
+      wrappedScene,
       eventHandler,
     );
     this.options.targetForWrappers.append(this.remoteDocumentWrapper.remoteDocument);
-    let loadingProgressManager: LoadingProgressManager | null;
+
+    let sceneLoadingProgressManager: LoadingProgressManager | null = null;
     if (this.options.mmlScene.getLoadingProgressManager) {
-      loadingProgressManager = this.options.mmlScene.getLoadingProgressManager();
+      sceneLoadingProgressManager = this.options.mmlScene.getLoadingProgressManager();
+      loadingProgressManager.addProgressCallback(() => {
+        sceneLoadingProgressManager?.updateDocumentProgress(this);
+      });
     }
 
     const isWebsocket = src.startsWith("ws://") || src.startsWith("wss://");
@@ -57,8 +66,14 @@ export class MMLNetworkSource {
           this.remoteDocumentWrapper.setDocumentTime(time);
         },
         (status: NetworkedDOMWebsocketStatus) => {
-          if (status === NetworkedDOMWebsocketStatus.Connected) {
-            loadingProgressManager?.setInitialLoad(true);
+          if (status === NetworkedDOMWebsocketStatus.Reconnecting) {
+            this.remoteDocumentWrapper.remoteDocument.showError(true);
+            loadingProgressManager.setInitialLoad(new Error("Failed to connect"));
+          } else if (status === NetworkedDOMWebsocketStatus.Connected) {
+            this.remoteDocumentWrapper.remoteDocument.showError(false);
+            loadingProgressManager.setInitialLoad(true);
+          } else {
+            this.remoteDocumentWrapper.remoteDocument.showError(false);
           }
           this.options.statusUpdated(status);
         },
@@ -85,6 +100,8 @@ export class MMLNetworkSource {
         // Do nothing
       };
     }
+
+    sceneLoadingProgressManager?.addLoadingDocument(this, this.options.url, loadingProgressManager);
   }
 
   dispose() {
@@ -92,6 +109,7 @@ export class MMLNetworkSource {
       this.websocket.stop();
       this.websocket = null;
     }
+    this.options.mmlScene.getLoadingProgressManager?.()?.removeLoadingDocument(this);
     this.remoteDocumentWrapper.remoteDocument.remove();
   }
 }

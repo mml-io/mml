@@ -3,9 +3,12 @@ import { GraphicsAdapter } from "../graphics";
 import { RemoteDocumentGraphics } from "../graphics";
 import { IMMLScene } from "../scene";
 import { MMLDocumentTimeManager } from "../time";
-import { consumeEventEventName, MElement } from "./MElement";
+import { consumeEventEventName } from "./MElement";
+import { TransformableElement } from "./TransformableElement";
 
-export class RemoteDocument<G extends GraphicsAdapter = GraphicsAdapter> extends MElement<G> {
+export class RemoteDocument<
+  G extends GraphicsAdapter = GraphicsAdapter,
+> extends TransformableElement<G> {
   static tagName = "m-remote-document";
 
   private scene: IMMLScene<G> | null = null;
