@@ -15,7 +15,7 @@ import {
   rendererField,
   setDebugGlobals,
   urlField
-} from "./chunk-KL7CA3SB.js";
+} from "./chunk-6SQ6N7L3.js";
 
 // src/ui/setUrlParam.ts
 function setUrlParam(name, value) {
@@ -306,7 +306,7 @@ var PlayCanvasMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-N6NXYUHT.js");
+      const { PlayCanvasModeInternal } = await import("./PlayCanvasModeInternal-P6EHDUFQ.js");
       return new PlayCanvasModeInternal(
         this.windowTarget,
         this.targetForWrappers,
@@ -435,6 +435,7 @@ var TagsMode = class {
       mmlScene: fullScreenMMLScene,
       remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper
     });
+    fullScreenMMLScene.getLoadingProgressManager().setInitialLoad(true);
     this.loadedState = {
       mmlNetworkSource,
       graphicsAdapter,
@@ -479,7 +480,7 @@ var ThreeJSMode = class {
   }
   async init() {
     this.internalMode = await (async () => {
-      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-X4ODHT23.js");
+      const { ThreeJSModeInternal } = await import("./ThreeJSModeInternal-JUU6PTX4.js");
       return new ThreeJSModeInternal(
         this.windowTarget,
         this.targetForWrappers,
