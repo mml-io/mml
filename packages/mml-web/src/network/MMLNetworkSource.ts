@@ -10,6 +10,7 @@ export type MMLNetworkSourceOptions = {
   statusUpdated: (status: NetworkedDOMWebsocketStatus) => void;
   windowTarget: Window;
   targetForWrappers: HTMLElement;
+  allowOverlay?: boolean;
 };
 
 export class MMLNetworkSource {
@@ -63,6 +64,8 @@ export class MMLNetworkSource {
         },
         {
           tagPrefix: "m-",
+          // If overlays are allowed, allow SVG elements to populate them
+          allowSVGElements: this.options.allowOverlay,
         },
       );
       this.websocket = websocket;

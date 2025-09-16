@@ -584,4 +584,223 @@ describe("reloading - v0.2", () => {
       },
     ]);
   });
+
+  test("svg elements with self-closing tags", async () => {
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory, false);
+    currentDoc = doc;
+    doc.load(`
+<m-overlay anchor="center">
+  <svg width="100" height="200" xmlns="http://www.w3.org/2000/svg">
+    <rect id="one-button" />
+    <text id="one-text">One</text>
+
+    <rect id="two-button" />
+  </svg>
+</m-overlay>
+`);
+
+    const clientWs = new MockWebsocketV02();
+    doc.addWebSocket(clientWs as unknown as WebSocket);
+
+    expect(await clientWs.waitForTotalMessageCount(1)).toEqual([
+      {
+        documentTime: expect.any(Number),
+        snapshot: {
+          attributes: [],
+          children: [
+            {
+              attributes: [],
+              children: [
+                {
+                  attributes: [],
+                  children: [],
+                  nodeId: 3,
+                  tag: "HEAD",
+                  type: "element",
+                },
+                {
+                  attributes: [],
+                  children: [
+                    {
+                      attributes: [["anchor", "center"]],
+                      children: [
+                        {
+                          nodeId: 6,
+                          text: "\n  ",
+                          type: "text",
+                        },
+                        {
+                          attributes: [
+                            ["width", "100"],
+                            ["height", "200"],
+                            ["xmlns", "http://www.w3.org/2000/svg"],
+                          ],
+                          children: [
+                            {
+                              nodeId: 8,
+                              text: "\n    ",
+                              type: "text",
+                            },
+                            {
+                              attributes: [["id", "one-button"]],
+                              children: [],
+                              nodeId: 9,
+                              tag: "RECT",
+                              type: "element",
+                            },
+                            {
+                              nodeId: 10,
+                              text: "\n    ",
+                              type: "text",
+                            },
+                            {
+                              attributes: [["id", "one-text"]],
+                              children: [
+                                {
+                                  nodeId: 12,
+                                  text: "One",
+                                  type: "text",
+                                },
+                              ],
+                              nodeId: 11,
+                              tag: "TEXT",
+                              type: "element",
+                            },
+                            {
+                              nodeId: 13,
+                              text: "\n\n    ",
+                              type: "text",
+                            },
+                            {
+                              attributes: [["id", "two-button"]],
+                              children: [],
+                              nodeId: 14,
+                              tag: "RECT",
+                              type: "element",
+                            },
+                            {
+                              nodeId: 15,
+                              text: "\n  ",
+                              type: "text",
+                            },
+                          ],
+                          nodeId: 7,
+                          tag: "SVG",
+                          type: "element",
+                        },
+                        {
+                          nodeId: 16,
+                          text: "\n",
+                          type: "text",
+                        },
+                      ],
+                      nodeId: 5,
+                      tag: "M-OVERLAY",
+                      type: "element",
+                    },
+                    {
+                      nodeId: 17,
+                      text: "\n",
+                      type: "text",
+                    },
+                  ],
+                  nodeId: 4,
+                  tag: "BODY",
+                  type: "element",
+                },
+              ],
+              nodeId: 2,
+              tag: "HTML",
+              type: "element",
+            },
+          ],
+          nodeId: 1,
+          tag: "DIV",
+          type: "element",
+        },
+        type: "snapshot",
+      },
+    ]);
+
+    doc.load(`
+<m-overlay anchor="center">
+  <svg width="100" height="200" xmlns="http://www.w3.org/2000/svg">
+    <text id="one-text">One</text>
+
+    <rect id="two-button" />
+  </svg>
+</m-overlay>
+`);
+
+    expect(await clientWs.waitForTotalMessageCount(10, 1)).toEqual([
+      {
+        documentTime: expect.any(Number),
+        type: "documentTime",
+      },
+      {
+        nodeId: 7,
+        removedNodes: [9],
+        type: "childrenRemoved",
+      },
+      {
+        addedNodes: [
+          {
+            attributes: [["id", "one-text"]],
+            children: [
+              {
+                nodeId: 18,
+                text: "One",
+                type: "text",
+              },
+            ],
+            nodeId: 9,
+            tag: "TEXT",
+            type: "element",
+          },
+        ],
+        nodeId: 7,
+        previousNodeId: 8,
+        type: "childrenAdded",
+      },
+      {
+        nodeId: 10,
+        text: "\n\n    ",
+        type: "textChanged",
+      },
+      {
+        nodeId: 7,
+        removedNodes: [11],
+        type: "childrenRemoved",
+      },
+      {
+        addedNodes: [
+          {
+            attributes: [["id", "two-button"]],
+            children: [],
+            nodeId: 12,
+            tag: "RECT",
+            type: "element",
+          },
+        ],
+        nodeId: 7,
+        previousNodeId: 10,
+        type: "childrenAdded",
+      },
+      {
+        nodeId: 13,
+        text: "\n  ",
+        type: "textChanged",
+      },
+      {
+        nodeId: 7,
+        removedNodes: [14],
+        type: "childrenRemoved",
+      },
+      {
+        nodeId: 7,
+        removedNodes: [15],
+        type: "childrenRemoved",
+      },
+    ]);
+  });
 });

@@ -9,7 +9,12 @@ import {
   NetworkedDOMV01TextChangedDiff,
 } from "@mml-io/networked-dom-protocol";
 
-import { DOMSanitizer } from "./DOMSanitizer";
+import {
+  createElementWithSVGSupport,
+  getChildrenTarget,
+  getRemovalTarget,
+  setElementAttribute,
+} from "./ElementUtils";
 import {
   isHTMLElement,
   isText,
@@ -147,6 +152,9 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
     if (!isHTMLElement(parent, this.parentElement)) {
       throw new Error("Parent is not an HTMLElement (that supports children)");
     }
+
+    const targetForChildren = getChildrenTarget(parent);
+
     let nextElement = null;
     let previousElement = null;
     if (previousNodeId) {
@@ -170,14 +178,14 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
           // There is a previous and next element - insertBefore the next element
           const docFrag = new DocumentFragment();
           docFrag.append(...elementsToAdd);
-          parent.insertBefore(docFrag, nextElement);
+          targetForChildren.insertBefore(docFrag, nextElement);
         } else {
           // No next element - must be the last children
-          parent.append(...elementsToAdd);
+          targetForChildren.append(...elementsToAdd);
         }
       } else {
         // No previous element - must be the first children
-        parent.prepend(...elementsToAdd);
+        targetForChildren.prepend(...elementsToAdd);
       }
     }
     for (const removedNode of removedNodes) {
@@ -187,7 +195,8 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
       }
       this.elementToId.delete(childElement);
       this.idToElement.delete(removedNode);
-      parent.removeChild(childElement);
+      const targetForRemoval = getRemovalTarget(parent);
+      targetForRemoval.removeChild(childElement);
       if (isHTMLElement(childElement, this.parentElement)) {
         // If child is capable of supporting children then remove any that exist
         this.removeChildElementIds(childElement);
@@ -196,8 +205,13 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
   }
 
   private removeChildElementIds(parent: HTMLElement) {
-    for (let i = 0; i < parent.children.length; i++) {
-      const child = parent.children[i];
+    // If portal element, remove from portal element
+    const portal = getChildrenTarget(parent);
+    if (portal !== parent) {
+      this.removeChildElementIds(portal as HTMLElement);
+    }
+    for (let i = 0; i < parent.childNodes.length; i++) {
+      const child = parent.childNodes[i];
       const childId = this.elementToId.get(child as HTMLElement);
       if (!childId) {
         console.error("Inner child of removed element had no id", child);
@@ -244,9 +258,7 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
         if (newValue === null) {
           element.removeAttribute(attribute);
         } else {
-          if (DOMSanitizer.shouldAcceptAttribute(attribute)) {
-            element.setAttribute(attribute, newValue);
-          }
+          setElementAttribute(element, attribute, newValue);
         }
       } else {
         console.error("Element is not an HTMLElement and cannot support attributes", element);
@@ -287,15 +299,7 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
 
     let element;
     try {
-      let filteredTag = tag;
-      if (this.options.tagPrefix) {
-        if (!tag.toLowerCase().startsWith(this.options.tagPrefix.toLowerCase())) {
-          filteredTag = this.options.replacementTagPrefix
-            ? this.options.replacementTagPrefix + tag
-            : `x-${tag}`;
-        }
-      }
-      element = document.createElement(filteredTag);
+      element = createElementWithSVGSupport(tag, this.options);
     } catch (e) {
       console.error(`Error creating element: (${tag})`, e);
       element = document.createElement("x-div");
@@ -303,10 +307,8 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
     this.idToElement.set(nodeId, element);
     this.elementToId.set(element, nodeId);
     for (const key in attributes) {
-      if (DOMSanitizer.shouldAcceptAttribute(key)) {
-        const value = attributes[key];
-        element.setAttribute(key, value);
-      }
+      const value = attributes[key];
+      setElementAttribute(element, key, value);
     }
     if (children) {
       for (const child of children) {
