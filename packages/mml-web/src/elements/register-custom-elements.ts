@@ -15,6 +15,7 @@ import { Light } from "./Light";
 import { Link } from "./Link";
 import { MElement } from "./MElement";
 import { Model } from "./Model";
+import { Overlay } from "./Overlay";
 import { Plane } from "./Plane";
 import { PositionProbe } from "./PositionProbe";
 import { Prompt } from "./Prompt";
@@ -38,6 +39,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Group.tagName, Group);
   targetWindow.customElements.define(Prompt.tagName, Prompt);
   targetWindow.customElements.define(Link.tagName, Link);
+  targetWindow.customElements.define(Overlay.tagName, Overlay);
   targetWindow.customElements.define(Sphere.tagName, Sphere);
   targetWindow.customElements.define(Image.tagName, Image);
   targetWindow.customElements.define(Video.tagName, Video);

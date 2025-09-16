@@ -6,6 +6,7 @@ import {
   parseFloatAttribute,
 } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
+import { ClickableHelper } from "../clickable/ClickableHelper";
 import { CollideableHelper } from "../collision";
 import { MMLColor } from "../color";
 import { GraphicsAdapter, PlaneGraphics } from "../graphics";
@@ -79,6 +80,7 @@ export class Plane<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     ],
   });
   private collideableHelper = new CollideableHelper(this);
+  private clickableHelper = new ClickableHelper();
 
   private static attributeHandler = new AttributeHandler<Plane<GraphicsAdapter>>({
     width: (instance, newValue) => {
@@ -134,6 +136,7 @@ export class Plane<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       ...TransformableElement.observedAttributes,
       ...Plane.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...ClickableHelper.observedAttributes,
     ];
   }
 
@@ -156,7 +159,7 @@ export class Plane<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public isClickable(): boolean {
-    return true;
+    return this.clickableHelper.isClickable();
   }
 
   public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
@@ -166,6 +169,7 @@ export class Plane<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     super.attributeChangedCallback(name, oldValue, newValue);
     Plane.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.clickableHelper.handle(name, newValue);
   }
 
   public connectedCallback(): void {

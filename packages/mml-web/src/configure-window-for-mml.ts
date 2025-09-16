@@ -1,14 +1,15 @@
 import { MElement, registerCustomElementsToWindow } from "./elements";
 import { setGlobalDocumentTimeManager, setGlobalMMLScene } from "./global";
 import { StandaloneGraphicsAdapter } from "./graphics";
-import { FullScreenMMLScene } from "./scene";
+import { FullScreenMMLScene, FullScreenMMLSceneOptions } from "./scene";
 import { MMLDocumentTimeManager } from "./time";
 
 export function configureWindowForMML(
   window: Window,
   getGraphicsAdapter: (element: HTMLElement) => Promise<StandaloneGraphicsAdapter>,
+  options?: FullScreenMMLSceneOptions,
 ) {
-  const fullScreenMMLScene = new FullScreenMMLScene();
+  const fullScreenMMLScene = new FullScreenMMLScene(options);
   const mmlDocumentTimeManager = new MMLDocumentTimeManager();
   setGlobalMMLScene(fullScreenMMLScene);
   setGlobalDocumentTimeManager(mmlDocumentTimeManager);

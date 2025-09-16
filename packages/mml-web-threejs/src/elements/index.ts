@@ -12,6 +12,7 @@ export * from "./ThreeJSLight";
 export * from "./ThreeJSLink";
 export * from "./ThreeJSMElement";
 export * from "./ThreeJSModel";
+export * from "./ThreeJSOverlay";
 export * from "./ThreeJSPlane";
 export * from "./ThreeJSPositionProbe";
 export * from "./ThreeJSPrompt";

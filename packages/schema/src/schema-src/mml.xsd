@@ -84,6 +84,13 @@
         This attribute group indicates that this element is clickable. The onclick attribute is a script expression that is executed when the element is clicked. Events are also dispatched to "click" listeners.
       </xs:documentation>
     </xs:annotation>
+    <xs:attribute name="clickable" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the element is clickable (true) or not (false). Default value is true. If false, any click will pass through as if the element was not present.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="onclick" type="Script">
       <xs:annotation>
         <xs:appinfo>click|MMLClickEvent</xs:appinfo>
@@ -333,7 +340,6 @@
       <xs:complexContent>
         <xs:extension base="MMLContent">
           <xs:attributeGroup ref="coreattrs"/>
-          <xs:attributeGroup ref="clickable"/>
           <xs:attribute name="onload" type="Script"/>
           <xs:attribute name="onunload" type="Script"/>
         </xs:extension>
@@ -369,6 +375,7 @@
       <xs:element ref="m-frame"/>
       <xs:element ref="m-cylinder"/>
       <xs:element ref="m-group"/>
+      <xs:element ref="m-overlay"/>
       <xs:element ref="script"/>
     </xs:choice>
   </xs:complexType>
@@ -391,7 +398,6 @@
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
           <xs:attributeGroup ref="coreattrs"/>
-          <xs:attributeGroup ref="clickable"/>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>
@@ -536,7 +542,6 @@
           <xs:attributeGroup ref="transformable"/>
           <xs:attributeGroup ref="colorable"/>
           <xs:attributeGroup ref="coreattrs"/>
-          <xs:attributeGroup ref="clickable"/>
           <xs:attribute name="intensity" type="xs:float">
             <xs:annotation>
               <xs:documentation>
@@ -986,6 +991,7 @@
         <xs:extension base="MMLContent">
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="collideable"/>
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="shadows"/>
@@ -1040,6 +1046,7 @@
         <xs:extension base="MMLContent">
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="collideable"/>
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="shadows"/>
@@ -1325,6 +1332,59 @@
             <xs:annotation>
               <xs:documentation>
                 Where the address should be opened. "_self" opens in the current context / tab / window (if the content is in a context in which that is valid). "_blank" opens in a new tab / window. Default value is "_blank".
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-overlay">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-overlay` element is used to display a 2D element on top of the 3D scene.
+
+        It is expected that the child elements to display in the overlay are SVG elements.
+
+        Not all clients will support this element or choose to allow all documents to use it.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attribute name="anchor">
+            <xs:annotation>
+              <xs:documentation>
+                The anchor point on the screen for the overlay element. Default value is "top-left".
+              </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="top-left"/>
+                <xs:enumeration value="top-center"/>
+                <xs:enumeration value="top-right"/>
+                <xs:enumeration value="center-left"/>
+                <xs:enumeration value="center"/>
+                <xs:enumeration value="center-right"/>
+                <xs:enumeration value="bottom-left"/>
+                <xs:enumeration value="bottom-center"/>
+                <xs:enumeration value="bottom-right"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="offset-x" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The horizontal offset of the overlay element in pixels. Default value is 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="offset-y" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The vertical offset of the overlay element in pixels. Default value is 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

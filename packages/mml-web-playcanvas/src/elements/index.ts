@@ -12,6 +12,7 @@ export * from "./PlayCanvasLight";
 export * from "./PlayCanvasLink";
 export * from "./PlayCanvasMElement";
 export * from "./PlayCanvasModel";
+export * from "./PlayCanvasOverlay";
 export * from "./PlayCanvasPlane";
 export * from "./PlayCanvasPositionProbe";
 export * from "./PlayCanvasPrompt";

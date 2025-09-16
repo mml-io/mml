@@ -13,6 +13,7 @@ export * from "./LightGraphics";
 export * from "./LinkGraphics";
 export * from "./MElementGraphics";
 export * from "./ModelGraphics";
+export * from "./OverlayGraphics";
 export * from "./PlaneGraphics";
 export * from "./PositionProbeGraphics";
 export * from "./PromptGraphics";

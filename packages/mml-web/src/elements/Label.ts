@@ -7,6 +7,7 @@ import {
   parseFloatAttribute,
 } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
+import { ClickableHelper } from "../clickable/ClickableHelper";
 import { CollideableHelper } from "../collision";
 import { MMLColor } from "../color";
 import { GraphicsAdapter } from "../graphics";
@@ -49,6 +50,7 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   static tagName = "m-label";
   private labelGraphics: LabelGraphics<G> | null;
   private collideableHelper = new CollideableHelper(this);
+  private clickableHelper = new ClickableHelper();
 
   private labelAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     color: [
@@ -188,6 +190,7 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       ...TransformableElement.observedAttributes,
       ...Label.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...ClickableHelper.observedAttributes,
     ];
   }
 
@@ -223,7 +226,7 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public isClickable(): boolean {
-    return true;
+    return this.clickableHelper.isClickable();
   }
 
   public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
@@ -233,6 +236,7 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     super.attributeChangedCallback(name, oldValue, newValue);
     Label.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.clickableHelper.handle(name, newValue);
   }
 
   public connectedCallback(): void {
