@@ -6,6 +6,7 @@ import {
   parseFloatAttribute,
 } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
+import { ClickableHelper } from "../clickable/ClickableHelper";
 import { CollideableHelper } from "../collision";
 import { MMLColor } from "../color";
 import { GraphicsAdapter } from "../graphics";
@@ -80,6 +81,7 @@ export class Cylinder<G extends GraphicsAdapter = GraphicsAdapter> extends Trans
     ],
   });
   private collideableHelper = new CollideableHelper(this);
+  private clickableHelper = new ClickableHelper();
 
   private static attributeHandler = new AttributeHandler<Cylinder<GraphicsAdapter>>({
     radius: (instance, newValue) => {
@@ -135,6 +137,7 @@ export class Cylinder<G extends GraphicsAdapter = GraphicsAdapter> extends Trans
       ...TransformableElement.observedAttributes,
       ...Cylinder.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...ClickableHelper.observedAttributes,
     ];
   }
 
@@ -157,7 +160,7 @@ export class Cylinder<G extends GraphicsAdapter = GraphicsAdapter> extends Trans
   }
 
   public isClickable(): boolean {
-    return true;
+    return this.clickableHelper.isClickable();
   }
 
   public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
@@ -167,6 +170,7 @@ export class Cylinder<G extends GraphicsAdapter = GraphicsAdapter> extends Trans
     super.attributeChangedCallback(name, oldValue, newValue);
     Cylinder.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.clickableHelper.handle(name, newValue);
   }
 
   public connectedCallback(): void {

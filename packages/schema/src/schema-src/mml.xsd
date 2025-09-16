@@ -84,6 +84,13 @@
         This attribute group indicates that this element is clickable. The onclick attribute is a script expression that is executed when the element is clicked. Events are also dispatched to "click" listeners.
       </xs:documentation>
     </xs:annotation>
+    <xs:attribute name="clickable" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the element is clickable (true) or not (false). Default value is true. If false, any click will pass through as if the element was not present.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="onclick" type="Script">
       <xs:annotation>
         <xs:appinfo>click|MMLClickEvent</xs:appinfo>
@@ -333,7 +340,6 @@
       <xs:complexContent>
         <xs:extension base="MMLContent">
           <xs:attributeGroup ref="coreattrs"/>
-          <xs:attributeGroup ref="clickable"/>
           <xs:attribute name="onload" type="Script"/>
           <xs:attribute name="onunload" type="Script"/>
         </xs:extension>
@@ -392,7 +398,6 @@
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
           <xs:attributeGroup ref="coreattrs"/>
-          <xs:attributeGroup ref="clickable"/>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>
@@ -537,7 +542,6 @@
           <xs:attributeGroup ref="transformable"/>
           <xs:attributeGroup ref="colorable"/>
           <xs:attributeGroup ref="coreattrs"/>
-          <xs:attributeGroup ref="clickable"/>
           <xs:attribute name="intensity" type="xs:float">
             <xs:annotation>
               <xs:documentation>
@@ -987,6 +991,7 @@
         <xs:extension base="MMLContent">
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="collideable"/>
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="shadows"/>
@@ -1041,6 +1046,7 @@
         <xs:extension base="MMLContent">
           <xs:attributeGroup ref="debuggable"/>
           <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="clickable"/>
           <xs:attributeGroup ref="collideable"/>
           <xs:attributeGroup ref="coreattrs"/>
           <xs:attributeGroup ref="shadows"/>

@@ -2,7 +2,6 @@ import {
   EventHandlerCollection,
   getRelativePositionAndRotationRelativeToObject,
   MElement,
-  TransformableElement,
 } from "@mml-io/mml-web";
 import * as THREE from "three";
 
@@ -86,47 +85,49 @@ export class ThreeJSClickTrigger {
     if (intersections.length > 0) {
       for (const intersection of intersections) {
         let obj: THREE.Object3D | null = intersection.object;
-        while (obj) {
+        currentIntersection: while (obj) {
           /*
              Ignore scene objects that have a transparent or wireframe material
             */
           if (this.isMaterialIgnored(obj)) {
-            break;
+            break currentIntersection;
           }
 
           const mElement = MElement.getMElementFromObject(obj);
-          if (
-            mElement &&
-            TransformableElement.isTransformableElement(mElement) &&
-            mElement.isClickable()
-          ) {
-            // let's get the intersection point relative to the element origin
+          if (!mElement) {
+            // The intersection object is not an MElement, so we move up to the parent recursively which may be an MElement
+            obj = obj.parent;
+            continue currentIntersection;
+          }
 
-            const elementRelative = getRelativePositionAndRotationRelativeToObject(
-              {
-                position: intersection.point,
-                rotation: {
-                  x: 0,
-                  y: 0,
-                  z: 0,
+          if (!mElement.isClickable()) {
+            // This is not a clickable element (or it is explicitly set to not be clickable), so we ignore it and pass through to the next intersection
+            break currentIntersection;
+          }
+
+          // This is a clickable element, so we dispatch the click event to it
+          const elementRelative = getRelativePositionAndRotationRelativeToObject(
+            {
+              position: intersection.point,
+              rotation: {
+                x: 0,
+                y: 0,
+                z: 0,
+              },
+            },
+            mElement,
+          );
+          mElement.dispatchEvent(
+            new CustomEvent("click", {
+              bubbles: true,
+              detail: {
+                position: {
+                  ...elementRelative.position,
                 },
               },
-              mElement,
-            );
-
-            mElement.dispatchEvent(
-              new CustomEvent("click", {
-                bubbles: true,
-                detail: {
-                  position: {
-                    ...elementRelative.position,
-                  },
-                },
-              }),
-            );
-            return;
-          }
-          obj = obj.parent;
+            }),
+          );
+          return;
         }
       }
     }
@@ -140,9 +141,6 @@ export class ThreeJSClickTrigger {
     const mesh = obj as THREE.Mesh;
     if (mesh) {
       if (
-        ((mesh.material as THREE.Material) &&
-          (mesh.material as THREE.Material).transparent &&
-          (mesh.material as THREE.Material).opacity < 1) ||
         ((mesh.material as THREE.MeshLambertMaterial) &&
           (mesh.material as THREE.MeshLambertMaterial).wireframe) ||
         ((mesh.material as THREE.MeshPhongMaterial) &&

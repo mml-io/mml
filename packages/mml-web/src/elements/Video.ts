@@ -1,6 +1,7 @@
 import { AnimatedAttributeHelper } from "../attribute-animation";
 import { AttributeHandler, parseBoolAttribute, parseFloatAttribute } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
+import { ClickableHelper } from "../clickable/ClickableHelper";
 import { CollideableHelper } from "../collision";
 import { GraphicsAdapter, VideoGraphics } from "../graphics";
 import { Vect3 } from "../math";
@@ -67,11 +68,13 @@ export class Video<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       ...TransformableElement.observedAttributes,
       ...Video.attributeHandler.getAttributes(),
       ...CollideableHelper.observedAttributes,
+      ...ClickableHelper.observedAttributes,
     ];
   }
 
   private documentTimeListener: { remove: () => void };
   private collideableHelper = new CollideableHelper(this);
+  private clickableHelper = new ClickableHelper();
 
   // Parsed attribute values
   public props: MVideoProps = {
@@ -175,7 +178,7 @@ export class Video<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   }
 
   public isClickable(): boolean {
-    return true;
+    return this.clickableHelper.isClickable();
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
@@ -185,6 +188,7 @@ export class Video<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     super.attributeChangedCallback(name, oldValue, newValue);
     Video.attributeHandler.handle(this, name, newValue);
     this.collideableHelper.handle(name, newValue);
+    this.clickableHelper.handle(name, newValue);
   }
 
   private documentTimeChanged() {
