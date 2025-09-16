@@ -1,4 +1,5 @@
 import { BufferReader } from "./BufferReader";
+import { networkedDOMProtocolSubProtocol_v0_2_SubversionNumber } from "./constants";
 import { NetworkedDOMV02ClientMessage } from "./messages";
 import { decodeConnectUsers } from "./messages/from-client/connectUsers";
 import { decodeDisconnectUsers } from "./messages/from-client/disconnectUsers";
@@ -11,13 +12,16 @@ import {
   PongMessageType,
 } from "./messageTypes";
 
-export function decodeClientMessages(buffer: BufferReader): Array<NetworkedDOMV02ClientMessage> {
+export function decodeClientMessages(
+  buffer: BufferReader,
+  protocolSubversion: networkedDOMProtocolSubProtocol_v0_2_SubversionNumber,
+): Array<NetworkedDOMV02ClientMessage> {
   const messages: NetworkedDOMV02ClientMessage[] = [];
   while (!buffer.isEnd()) {
     const messageType = buffer.readUInt8();
     switch (messageType) {
       case ConnectUsersMessageType:
-        messages.push(decodeConnectUsers(buffer));
+        messages.push(decodeConnectUsers(buffer, protocolSubversion));
         break;
       case DisconnectUsersMessageType:
         messages.push(decodeDisconnectUsers(buffer));

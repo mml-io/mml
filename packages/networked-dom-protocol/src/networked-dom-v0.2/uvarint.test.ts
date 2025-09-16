@@ -1,5 +1,5 @@
-import { BufferReader } from "../../src/networked-dom-v0.2/BufferReader";
-import { BufferWriter } from "../../src/networked-dom-v0.2/BufferWriter";
+import { BufferReader } from "./BufferReader";
+import { BufferWriter } from "./BufferWriter";
 
 describe("uvarint", () => {
   const uvarintCases: Array<[number, Array<number>]> = [

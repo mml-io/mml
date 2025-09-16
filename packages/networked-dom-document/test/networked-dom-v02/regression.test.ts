@@ -37,6 +37,7 @@ describe("regression tests - v0.2", () => {
     clientOneWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1], // Should be internal id 1
+      connectionTokens: [null],
     });
 
     expect(await clientOneWs.waitForTotalMessageCount(1)).toEqual([

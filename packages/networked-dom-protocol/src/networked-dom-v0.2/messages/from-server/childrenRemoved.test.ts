@@ -1,11 +1,11 @@
-import { BufferReader } from "../../src/networked-dom-v0.2/BufferReader";
-import { BufferWriter } from "../../src/networked-dom-v0.2/BufferWriter";
+import { BufferReader } from "../../BufferReader";
+import { BufferWriter } from "../../BufferWriter";
+import { ChildrenRemovedMessageType } from "../../messageTypes";
 import {
   decodeChildrenRemoved,
   encodeChildrenRemoved,
   NetworkedDOMV02ChildrenRemovedDiff,
-} from "../../src/networked-dom-v0.2/messages/from-server/childrenRemoved";
-import { ChildrenRemovedMessageType } from "../../src/networked-dom-v0.2/messageTypes";
+} from "./childrenRemoved";
 
 const cases: Array<[string, NetworkedDOMV02ChildrenRemovedDiff, Array<number>]> = [
   [

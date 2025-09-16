@@ -136,10 +136,10 @@ export class ObservableDOM implements ObservableDOMInterface {
     );
   }
 
-  public addConnectedUserId(connectionId: number): void {
+  public addConnectedUserId(connectionId: number, connectionToken: string | null): void {
     this.domRunner.getWindow().dispatchEvent(
       new (this.domRunner.getWindow().CustomEvent)("connected", {
-        detail: { connectionId },
+        detail: { connectionId, connectionToken },
       }),
     );
   }

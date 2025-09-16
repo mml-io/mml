@@ -2,7 +2,7 @@ import {
   BufferReader,
   decodeServerMessages,
   networkedDOMProtocolSubProtocol_v0_1,
-  networkedDOMProtocolSubProtocol_v0_2,
+  networkedDOMProtocolSubProtocol_v0_2_1,
   NetworkedDOMV01ServerMessage,
   NetworkedDOMV02ServerMessage,
 } from "@mml-io/networked-dom-protocol";
@@ -20,7 +20,7 @@ export class TestCaseNetworkedDOMClient {
 
   constructor(useV01 = false) {
     this.fakeWebSocket = new FakeWebsocket(
-      useV01 ? networkedDOMProtocolSubProtocol_v0_1 : networkedDOMProtocolSubProtocol_v0_2,
+      useV01 ? networkedDOMProtocolSubProtocol_v0_1 : networkedDOMProtocolSubProtocol_v0_2_1,
     );
     this.fakeWebSocket.clientSideWebsocket.addEventListener("message", (evt: MessageEvent) => {
       this.allClientMessages.push(evt.data);

@@ -215,7 +215,7 @@ describe("broadcast", function () {
     });
 
     expect(broadcastRunnerOneHandlerSpy).toHaveBeenCalledWith({
-      message: { connectionId: 1, type: "addConnectedUserId" },
+      message: { connectionId: 1, connectionToken: null, type: "addConnectedUserId" },
       revisionId: 1,
       type: "instance",
     });
@@ -238,13 +238,13 @@ describe("broadcast", function () {
     });
 
     expect(broadcastRunnerOneHandlerSpy).toHaveBeenCalledWith({
-      message: { connectionId: 1, type: "addConnectedUserId" },
+      message: { connectionId: 1, connectionToken: null, type: "addConnectedUserId" },
       revisionId: 1,
       type: "instance",
     });
 
     expect(broadcastRunnerTwoHandlerSpy).toHaveBeenNthCalledWith(1, {
-      message: { connectionId: 1, type: "addConnectedUserId" },
+      message: { connectionId: 1, connectionToken: null, type: "addConnectedUserId" },
       revisionId: 1,
       type: "instance",
     });

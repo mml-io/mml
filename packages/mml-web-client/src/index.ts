@@ -58,6 +58,8 @@ declare global {
     scriptUrl.searchParams.get("allowOverlay") === "true" ||
     urlSearchParams.get("allowOverlay") === "true";
 
+  const connectionToken: string | null = urlSearchParams.get("token") ?? null;
+
   const fullScreenMMLSceneOptions: FullScreenMMLSceneOptions = {
     allowOverlay,
   };
@@ -95,6 +97,7 @@ declare global {
 
     const mmlNetworkSource = MMLNetworkSource.create({
       url,
+      connectionToken,
       mmlScene: fullScreenMMLScene,
       statusUpdated: (status: NetworkedDOMWebsocketStatus) => {
         if (status === NetworkedDOMWebsocketStatus.Connected) {

@@ -1,8 +1,8 @@
-import { BufferReader } from "../../src/networked-dom-v0.2/BufferReader";
-import { BufferWriter } from "../../src/networked-dom-v0.2/BufferWriter";
-import { decodeError, encodeError } from "../../src/networked-dom-v0.2/messages/from-server/error";
-import { NetworkedDOMV02ErrorMessage } from "../../src/networked-dom-v0.2/messages/from-server/error";
-import { ErrorMessageType } from "../../src/networked-dom-v0.2/messageTypes";
+import { BufferReader } from "../../BufferReader";
+import { BufferWriter } from "../../BufferWriter";
+import { ErrorMessageType } from "../../messageTypes";
+import { decodeError, encodeError } from "./error";
+import { NetworkedDOMV02ErrorMessage } from "./error";
 
 const cases: Array<[string, NetworkedDOMV02ErrorMessage, Array<number>]> = [
   [

@@ -2,6 +2,7 @@ import { LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import { LogMessage } from "@mml-io/observable-dom-common";
 
 import { EditableNetworkedDOM } from "../src";
+import { waitUntil } from "./waitUntil";
 
 let currentDoc: EditableNetworkedDOM | null = null;
 afterEach(() => {
@@ -10,28 +11,6 @@ afterEach(() => {
     currentDoc = null;
   }
 });
-
-function waitUntil(checkFn: () => boolean) {
-  return new Promise((resolve) => {
-    if (checkFn()) {
-      resolve(null);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      if (checkFn()) {
-        clearInterval(interval);
-        clearTimeout(maxTimeout);
-        resolve(null);
-      }
-    }, 10);
-
-    const maxTimeout = setTimeout(() => {
-      clearInterval(interval);
-      resolve(null);
-    }, 3000);
-  });
-}
 
 describe("logging", () => {
   test("buffered console logging during document init", async () => {

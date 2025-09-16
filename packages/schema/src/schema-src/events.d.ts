@@ -7,6 +7,10 @@ export interface RemoteEvent extends Event {
      * The unique numeric id of the connection that sent the event.
      */
     readonly connectionId: number;
+    /**
+     * The optional token string that a user may have provided when connecting.
+     */
+    readonly connectionToken: string | null;
   };
 }
 

@@ -53,7 +53,7 @@ export class NetworkedDOMBroadcastRunner {
     }
     const toDOMMessage: ToObservableDOMInstanceMessage = message.message;
     if (toDOMMessage.type === "addConnectedUserId") {
-      this.currentDOM.addConnectedUserId(toDOMMessage.connectionId);
+      this.currentDOM.addConnectedUserId(toDOMMessage.connectionId, toDOMMessage.connectionToken);
     } else if (toDOMMessage.type === "removeConnectedUserId") {
       this.currentDOM.removeConnectedUserId(toDOMMessage.connectionId);
     } else if (toDOMMessage.type === "dispatchRemoteEventFromConnectionId") {

@@ -146,6 +146,7 @@ describe("filtering - v0.2", () => {
     clientWs.sendToServer({
       type: "connectUsers",
       connectionIds: [1],
+      connectionTokens: [null],
     });
 
     const clickRedEvent: NetworkedDOMV02RemoteEvent = {

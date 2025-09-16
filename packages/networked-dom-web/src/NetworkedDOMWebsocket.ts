@@ -1,6 +1,7 @@
 import {
+  isNetworkedDOMProtocolSubProtocol_v0_2,
   networkedDOMProtocolSubProtocol_v0_1,
-  networkedDOMProtocolSubProtocol_v0_2,
+  networkedDOMProtocolSubProtocol_v0_2_SubVersionsList,
 } from "@mml-io/networked-dom-protocol";
 
 import { NetworkedDOMWebsocketV01Adapter } from "./NetworkedDOMWebsocketV01Adapter";
@@ -41,6 +42,7 @@ export type NetworkedDOMWebsocketOptions = {
   tagPrefix?: string; // e.g. "m-" to restrict to only custom elements with a tag name starting with "m-"
   replacementTagPrefix?: string; // e.g. "x-" to replace non-prefixed tags with a new prefix (e.g. "div" -> "x-div")
   allowSVGElements?: boolean; // Whether to allow SVG namespace elements to be created. Default is false.
+  connectionToken?: string | null; // Optional token to send to the server for authentication/authorization
 };
 
 export type NetworkedDOMWebsocketAdapter = {
@@ -65,7 +67,7 @@ export class NetworkedDOMWebsocket {
 
   public static createWebSocket(url: string): WebSocket {
     return new WebSocket(url, [
-      networkedDOMProtocolSubProtocol_v0_2,
+      ...networkedDOMProtocolSubProtocol_v0_2_SubVersionsList,
       networkedDOMProtocolSubProtocol_v0_1,
     ]);
   }
@@ -103,7 +105,7 @@ export class NetworkedDOMWebsocket {
         clearTimeout(timeoutId);
 
         this.websocket = websocket;
-        const isV02 = websocket.protocol === networkedDOMProtocolSubProtocol_v0_2;
+        const isV02 = isNetworkedDOMProtocolSubProtocol_v0_2(websocket.protocol);
         let websocketAdapter: NetworkedDOMWebsocketAdapter;
         if (isV02) {
           websocketAdapter = new NetworkedDOMWebsocketV02Adapter(

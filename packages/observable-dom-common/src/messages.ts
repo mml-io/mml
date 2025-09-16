@@ -13,6 +13,7 @@ export const DOM_MESSAGE_TYPE = "dom";
 export type AddConnectedUserIdMessage = {
   type: typeof ADD_CONNECTED_USER_ID_MESSAGE_TYPE;
   connectionId: number;
+  connectionToken: string | null;
 };
 
 export type RemoveConnectedUserIdMessage = {
@@ -43,7 +44,7 @@ export function applyMessageToObservableDOMInstance(
   instance: ObservableDOMInterface,
 ) {
   if (message.type === ADD_CONNECTED_USER_ID_MESSAGE_TYPE) {
-    instance.addConnectedUserId(message.connectionId);
+    instance.addConnectedUserId(message.connectionId, message.connectionToken);
   } else if (message.type === REMOVE_CONNECTED_USER_ID_MESSAGE_TYPE) {
     instance.removeConnectedUserId(message.connectionId);
   } else if (message.type === DISPATCH_REMOTE_EVENT_FROM_CONNECTION_ID_MESSAGE_TYPE) {
@@ -58,10 +59,11 @@ export function observableDOMInterfaceToMessageSender(
   dispose: () => void,
 ) {
   const remoteObservableDOM: ObservableDOMInterface = {
-    addConnectedUserId(connectionId: number): void {
+    addConnectedUserId(connectionId: number, connectionToken: string | null): void {
       sender({
         type: ADD_CONNECTED_USER_ID_MESSAGE_TYPE,
         connectionId,
+        connectionToken,
       });
     },
     dispatchRemoteEventFromConnectionId(
