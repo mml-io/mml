@@ -9,7 +9,7 @@
     "serve": "node --enable-source-maps ./build/index.js"
   },
   "dependencies": {
-    "@mml-io/networked-dom-server": "^0.21.0",
+    "@mml-io/networked-dom-server": "^0.21.1",
     "chokidar": "4.0.3",
     "express": "5.1.0",
     "express-ws": "5.0.2",
@@ -20,5 +20,5 @@
     "@types/express": "5.0.3",
     "@types/express-ws": "3.0.5"
   },
-  "version": "0.21.0"
+  "version": "0.21.1"
 }
