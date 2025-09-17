@@ -94,6 +94,12 @@ export class NodeManager {
   }
 
   public addRemappedNodeId(clientFacingNodeId: number, internalNodeId: number) {
+    if (this.internalNodeIdToClientNodeId.has(internalNodeId)) {
+      throw new Error("Node already exists with internal node id " + internalNodeId);
+    }
+    if (this.clientNodeIdToInternalNodeId.has(clientFacingNodeId)) {
+      throw new Error("Node already exists with client id " + clientFacingNodeId);
+    }
     this.internalNodeIdToClientNodeId.set(internalNodeId, clientFacingNodeId);
     this.clientNodeIdToInternalNodeId.set(clientFacingNodeId, internalNodeId);
     this.maximumNodeId = Math.max(this.maximumNodeId, Math.max(clientFacingNodeId, internalNodeId));
@@ -110,10 +116,10 @@ export class NodeManager {
     }
     if (createIfCollided) {
       // If a node already exists with this id, we need to create a new id and return that instead, otherwise we can use the id
-      if (this.nodeIdToNode.has(nodeId)) {
+      if (this.nodeIdToNode.has(nodeId) || this.clientNodeIdToInternalNodeId.has(nodeId)) {
         // Collision - need to create a new id
         const newId2 = ++this.maximumNodeId;
-        this.internalNodeIdToClientNodeId.set(nodeId, newId2);
+        this.addRemappedNodeId(newId2, nodeId);
         return newId2;
       }
       return nodeId;
