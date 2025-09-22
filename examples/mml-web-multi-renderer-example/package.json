@@ -1,6 +1,6 @@
 {
   "name": "mml-web-multi-renderer-example",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "private": true,
   "scripts": {
     "type-check": "tsc --noEmit",
@@ -11,10 +11,10 @@
     "lint-fix": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.21.1",
-    "@mml-io/mml-web-playcanvas-standalone": "^0.21.1",
-    "@mml-io/mml-web-runner": "^0.21.1",
-    "@mml-io/mml-web-threejs-standalone": "^0.21.1",
+    "@mml-io/mml-web": "^0.21.2",
+    "@mml-io/mml-web-playcanvas-standalone": "^0.21.2",
+    "@mml-io/mml-web-runner": "^0.21.2",
+    "@mml-io/mml-web-threejs-standalone": "^0.21.2",
     "playcanvas": "1.73.5",
     "three": "0.178.0"
   }

@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-schema-validator",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "publishConfig": {
     "access": "public"
   },
@@ -17,7 +17,7 @@
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
-    "@mml-io/mml-schema": "^0.21.1",
+    "@mml-io/mml-schema": "^0.21.2",
     "libxml2-wasm": "0.5.0"
   }
 }

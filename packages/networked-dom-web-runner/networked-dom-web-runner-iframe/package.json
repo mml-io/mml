@@ -1,7 +1,7 @@
 {
   "name": "@mml-io/networked-dom-web-runner-iframe",
   "private": true,
-  "version": "0.21.1",
+  "version": "0.21.2",
   "files": [
     "/build"
   ],
@@ -14,9 +14,9 @@
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/networked-dom-document": "^0.21.1",
-    "@mml-io/observable-dom": "^0.21.1",
-    "@mml-io/observable-dom-common": "^0.21.1",
+    "@mml-io/networked-dom-document": "^0.21.2",
+    "@mml-io/observable-dom": "^0.21.2",
+    "@mml-io/observable-dom-common": "^0.21.2",
     "assert": "2.1.0"
   }
 }
