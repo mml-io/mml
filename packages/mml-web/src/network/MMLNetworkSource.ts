@@ -106,6 +106,28 @@ export class MMLNetworkSource {
     sceneLoadingProgressManager?.addLoadingDocument(this, this.options.url, loadingProgressManager);
   }
 
+  /**
+   * Returns a URL relative to the given host if the src starts with "ws:///" or "wss:///".
+   * If the src does not start with either prefix, it is returned unchanged.
+   *
+   * @param {string} host - The host to use for constructing the potentially relative URL.
+   * @param {string} src - The URL, which may be relative (starting with "ws:///" or "wss:///") or absolute.
+   * @returns {string} The absolute URL (if it were previously relative ws:/// or wss:///).
+   */
+  public static resolveRelativeUrl(host: string, src: string): string {
+    const insecurePrefix = "ws:///";
+    const securePrefix = "wss:///";
+    if (src.startsWith(insecurePrefix)) {
+      // Relative insecure websocket path
+      return `ws://${host}/${src.substring(insecurePrefix.length)}`;
+    } else if (src.startsWith(securePrefix)) {
+      // Relative secure websocket path
+      return `wss://${host}/${src.substring(securePrefix.length)}`;
+    } else {
+      return src;
+    }
+  }
+
   dispose() {
     if (this.websocket) {
       this.websocket.stop();

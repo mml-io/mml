@@ -3,6 +3,7 @@ import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/netw
 import { consumeEventEventName, MElement } from "../elements";
 import { GraphicsAdapter } from "../graphics";
 import { LoadingProgressManager } from "../loading";
+import { MMLNetworkSource } from "../network";
 import { RemoteDocumentWrapper } from "../remote-document";
 import { IMMLScene } from "../scene";
 import { createWrappedScene } from "./CreateWrappedScene";
@@ -36,7 +37,7 @@ export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter>
       scene.getLoadingProgressManager?.()?.updateDocumentProgress(this);
     });
 
-    const websocketAddress = this.srcToAddress(this.src);
+    const websocketAddress = MMLNetworkSource.resolveRelativeUrl(this.getDocumentHost(), this.src);
 
     scene
       .getLoadingProgressManager?.()
@@ -88,20 +89,6 @@ export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter>
     overriddenHandler = (element: MElement<G>, event: CustomEvent) => {
       this.domWebsocket.handleEvent(element, event);
     };
-  }
-
-  private srcToAddress(src: string): string {
-    const insecurePrefix = "ws:///";
-    const securePrefix = "wss:///";
-    if (src.startsWith(insecurePrefix)) {
-      // Relative insecure websocket path
-      return `ws://${this.getDocumentHost()}/${src.substring(insecurePrefix.length)}`;
-    } else if (src.startsWith(securePrefix)) {
-      // Relative secure websocket path
-      return `wss://${this.getDocumentHost()}/${src.substring(securePrefix.length)}`;
-    } else {
-      return src;
-    }
   }
 
   private getDocumentHost(): string {
