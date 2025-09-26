@@ -834,7 +834,7 @@ export class NetworkedDOM {
             true,
           );
         if (!canSeeParent) {
-          break;
+          continue;
         }
         let projectedPreviousNodeId: number | null = null;
         if (previousNode != null) {
@@ -924,7 +924,7 @@ export class NetworkedDOM {
             false,
           );
         if (!canSeeParent) {
-          break;
+          continue;
         }
         let projectedPreviousNodeId: number | null = null;
         if (previousNode != null) {

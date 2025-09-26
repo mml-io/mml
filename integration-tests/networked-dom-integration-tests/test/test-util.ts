@@ -1,17 +1,20 @@
-export function waitFor(condition: () => boolean, timeout = 1000) {
+export function waitFor(condition: () => true | string, timeout = 1000) {
+  const stack = new Error().stack;
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
-      if (condition()) {
+      const result = condition();
+      if (result === true) {
         clearInterval(interval);
         resolve();
       }
     }, 10);
     setTimeout(() => {
       clearInterval(interval);
-      if (condition()) {
+      const result = condition();
+      if (result === true) {
         resolve();
       } else {
-        reject(new Error("waitFor timeout"));
+        reject(new Error(`waitFor timeout. ${result}. Stack: ${stack}`));
       }
     }, timeout);
   });

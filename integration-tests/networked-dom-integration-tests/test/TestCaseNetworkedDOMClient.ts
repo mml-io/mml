@@ -18,7 +18,7 @@ export class TestCaseNetworkedDOMClient {
   public fakeWebSocket: FakeWebsocket;
   private statusListeners: Set<(status: NetworkedDOMWebsocketStatus) => void> = new Set();
 
-  constructor(useV01 = false) {
+  constructor(private useV01 = false) {
     this.fakeWebSocket = new FakeWebsocket(
       useV01 ? networkedDOMProtocolSubProtocol_v0_1 : networkedDOMProtocolSubProtocol_v0_2_1,
     );
@@ -47,24 +47,47 @@ export class TestCaseNetworkedDOMClient {
     return formatHTML(this.clientElement.innerHTML);
   }
 
-  async waitForAllClientMessages(count: number) {
-    await waitFor(() => this.allClientMessages.length >= count, 1000);
-    if (this.allClientMessages.length !== count) {
-      throw new Error(`Expected ${count} messages, got ${this.allClientMessages.length}`);
+  private getClientMessageCount(ignorePing = true): number {
+    if (this.useV01) {
+      const messages = this.getV01DecodedMessages(0, ignorePing);
+      return messages.length;
+    } else {
+      const messages = this.getV02DecodedMessages(0, ignorePing);
+      return messages.length;
     }
   }
 
-  getV01DecodedMessages(startFrom = 0): Array<NetworkedDOMV01ServerMessage> {
+  async waitForAllClientMessages(count: number, timeout = 1000, ignorePing = true) {
+    // Get current stack trace (before async) to aid debugging
+    const stack = new Error().stack;
+    await waitFor(() => {
+      const haveCount = this.getClientMessageCount(ignorePing);
+      if (haveCount < count) {
+        return `Have ${haveCount} messages, waiting for ${count}`;
+      }
+      return true;
+    }, timeout);
+    const messageLength = this.getClientMessageCount(ignorePing);
+    if (messageLength !== count) {
+      throw new (Error as any)(`Expected ${count} messages, got ${messageLength}. Stack: ${stack}`);
+    }
+  }
+
+  getV01DecodedMessages(startFrom = 0, ignorePing = true): Array<NetworkedDOMV01ServerMessage> {
     const allMessages = this.allClientMessages as string[];
-    const messages: Array<NetworkedDOMV01ServerMessage> = [];
+    let messages: Array<NetworkedDOMV01ServerMessage> = [];
     for (const msg of allMessages) {
       const parsed = JSON.parse(msg);
       messages.push(parsed);
     }
-    return messages.slice(startFrom);
+    messages = messages.slice(startFrom);
+    if (ignorePing) {
+      return messages.filter((msg) => msg.type !== "ping");
+    }
+    return messages;
   }
 
-  getV02DecodedMessages(startFrom = 0): Array<NetworkedDOMV02ServerMessage> {
+  getV02DecodedMessages(startFrom = 0, ignorePing = true): Array<NetworkedDOMV02ServerMessage> {
     const allMessages = this.allClientMessages as Uint8Array[];
     const buffer = new Uint8Array(allMessages.reduce((acc, msg) => acc + msg.byteLength, 0));
     let offset = 0;
@@ -73,7 +96,11 @@ export class TestCaseNetworkedDOMClient {
       offset += msg.length;
     }
     const reader = new BufferReader(buffer);
-    return decodeServerMessages(reader).slice(startFrom);
+    const decoded = decodeServerMessages(reader).slice(startFrom);
+    if (ignorePing) {
+      return decoded.filter((msg) => msg.type !== "ping");
+    }
+    return decoded;
   }
 
   async onConnectionOpened() {
