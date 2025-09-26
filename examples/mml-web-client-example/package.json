@@ -12,7 +12,7 @@
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/networked-dom-server": "^0.21.2",
+    "@mml-io/networked-dom-server": "^0.21.3",
     "chokidar": "4.0.3",
     "express": "5.1.0",
     "express-ws": "5.0.2",
@@ -23,5 +23,5 @@
     "@types/express": "5.0.3",
     "@types/express-ws": "3.0.5"
   },
-  "version": "0.21.2"
+  "version": "0.21.3"
 }

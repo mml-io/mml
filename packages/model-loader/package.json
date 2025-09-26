@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/model-loader",
-  "version": "0.21.2",
+  "version": "0.21.3",
   "publishConfig": {
     "access": "public"
   },
