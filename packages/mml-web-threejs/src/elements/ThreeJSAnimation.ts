@@ -9,7 +9,7 @@ import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
 
 export type ThreeJSAnimationState = {
   animationClip: THREE.AnimationClip | null;
-  weight: number;
+  effectiveWeight: number;
   speed: number;
   ratio: number | null;
   loop: boolean;
@@ -32,7 +32,7 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     }
     this.animationState = {
       animationClip: null,
-      weight: animation.props.weight,
+      effectiveWeight: animation.props.effectiveWeight,
       speed: animation.props.speed,
       ratio: animation.props.ratio,
       loop: animation.props.loop,
@@ -100,8 +100,8 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
     this.updateParentAnimation();
   }
 
-  setWeight(weight: number): void {
-    this.animationState.weight = weight;
+  setEffectiveWeight(effectiveWeight: number): void {
+    this.animationState.effectiveWeight = effectiveWeight;
     this.updateParentAnimation();
   }
 

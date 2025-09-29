@@ -47,7 +47,7 @@ describe("m-animation", () => {
     remoteDocument.appendChild(modelElement);
 
     // Test weight attribute
-    expect(animationElement.props.weight).toBe(1); // default
+    expect(animationElement.props.weight).toBe(null); // default
     animationElement.setAttribute("weight", "0.5");
     expect(animationElement.props.weight).toBe(0.5);
 

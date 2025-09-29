@@ -1,0 +1,9 @@
+{
+  "schema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+  },
+  "attributes": []
+}

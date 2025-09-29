@@ -1,0 +1,237 @@
+.appContainer {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  position: relative;
+}
+
+.harness {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  width: 300px;
+  transition: transform 0.3s ease;
+}
+
+.harnessHidden {
+  display: none;
+}
+
+.header {
+  padding: 1rem;
+  color: white;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.headerTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.headerSubtitle {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.examplesList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.exampleItem {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.exampleItem:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.exampleItemActive {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.exampleName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.exampleDescription {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  line-height: 1.3;
+}
+
+.restartBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  width: calc(100% - 2rem);
+}
+
+.restartBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.hideHarnessBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 1rem;
+  margin-top: 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  width: calc(100% - 2rem);
+}
+
+.hideHarnessBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.gameContainer {
+  flex: 1;
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.gameContainerFullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+}
+
+.mmlClient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.2rem;
+  z-index: 10;
+}
+
+.error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid #ff6b6b;
+  color: #ff6b6b;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 400px;
+  z-index: 10;
+}
+
+.errorTitle {
+  margin-bottom: 1rem;
+}
+
+.clientsArea {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.clientWrapper {
+  position: relative;
+  height: 100%;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  flex: 1;
+  min-width: 300px;
+}
+
+.addClientBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #007acc;
+  background-color: #007acc;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.addClientBtn:hover {
+  background-color: #005a9e;
+  border-color: #005a9e;
+  transform: scale(1.05);
+}
+
+.closeClientBtn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #dc3545;
+  background-color: #dc3545;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.closeClientBtn:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+  transform: scale(1.05);
+}

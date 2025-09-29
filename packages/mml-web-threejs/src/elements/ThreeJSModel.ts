@@ -874,8 +874,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
             if (shouldBeActive) {
               animationTimes.set(animation, animationTimeMs);
               action.enabled = true;
-              action.setEffectiveWeight(animationState.weight);
-              if (animationState.weight > 0) {
+              action.setEffectiveWeight(animationState.effectiveWeight);
+              if (animationState.effectiveWeight > 0) {
                 hasActiveAnimations = true;
                 action.play();
               } else {
@@ -903,8 +903,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
             if (action) {
               if (animationTimeMs !== undefined) {
                 action.enabled = true;
-                action.setEffectiveWeight(childAnimation.animationState.weight);
-                if (childAnimation.animationState.weight > 0) {
+                action.setEffectiveWeight(childAnimation.animationState.effectiveWeight);
+                if (childAnimation.animationState.effectiveWeight > 0) {
                   action.play();
                 } else {
                   action.stop();

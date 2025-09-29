@@ -212,6 +212,10 @@ export class MMLScene<G extends StandaloneGraphicsAdapter> implements IMMLScene<
     return this.graphicsAdapter !== null;
   }
 
+  public getOverlayElement(): HTMLElement | null {
+    return this.element;
+  }
+
   public getGraphicsAdapter(): G {
     if (!this.graphicsAdapter) {
       throw new Error("MMLScene not initialized with a graphics adapter. Call init() first.");

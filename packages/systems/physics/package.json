@@ -1,0 +1,33 @@
+{
+  "name": "ai-game-creator-physics-system",
+  "displayName": "Physics System",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Physics system using Rapier physics engine for realistic 3D physics simulation",
+  "type": "module",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "files": [
+    "/build"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "pre:build": "npm run build",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "0.18.0-beta.0",
+    "ai-game-creator-math-system": "*",
+    "ai-game-creator-systems-common": "file:../systems-common"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.10",
+    "esbuild": "^0.20.2",
+    "esbuild-plugin-copy": "^2.1.1",
+    "tsx": "^4.8.2",
+    "typescript": "^5.4.5"
+  }
+}

@@ -1,0 +1,183 @@
+<m-light y="10" intensity="1000" type="point"></m-light>
+
+<m-cube x="-2" y="1" z="-5" color="orange"></m-cube>
+<m-cube x="2" y="1" z="-5" color="purple"></m-cube>
+
+<m-label id="status-label" content="Status:" z="-4" y="6" width="5" height="1.5"></m-label>
+
+<script>
+  const cameraVariants = [
+    { priority: 1, variant: 'A' }, { priority: 1, variant: 'B' }, { priority: 1, variant: 'C' },
+    { priority: 2, variant: 'A' }, { priority: 2, variant: 'B' }, { priority: 2, variant: 'C' },
+    { priority: 3, variant: 'A' }, { priority: 3, variant: 'B' }, { priority: 3, variant: 'C' },
+    { priority: 4, variant: 'A' }, { priority: 4, variant: 'B' }, { priority: 4, variant: 'C' },
+  ];
+
+  function createLabels() {
+    let xPosition = -5;
+    
+    for (const camVariant of cameraVariants) {
+      const { priority, variant } = camVariant;
+      const label = document.createElement("m-label");
+      
+      label.setAttribute("id", labelIdForVariant(priority, variant));
+      label.setAttribute("x", String(xPosition));
+      label.setAttribute("y", "4");
+      label.setAttribute("z", "-2");
+      label.setAttribute("width", "1");
+      label.setAttribute("height", "0.6");
+      label.setAttribute("color", "rgba(255, 255, 255, 0.2)");
+      label.setAttribute("font-size", "32");
+      label.setAttribute("alignment", "center");
+      label.setAttribute("font-color", "black");
+      label.setAttribute("content", `${priority}${variant}`);
+      
+      document.body.appendChild(label);
+      
+      xPosition += 1;
+      if (variant === 'C') {
+        xPosition += 0.5; // Extra space between priority groups
+      }
+    }
+  }
+
+  function setEnabledVisual(labelEl, enabled) {
+    labelEl.setAttribute("color", enabled ? "rgba(0, 180, 0, 0.8)" : "rgba(255, 255, 255, 0.2)");
+    labelEl.setAttribute("font-color", enabled ? "white" : "black");
+  }
+
+  function cameraIdForVariant(priority, variant) {
+    return "camera-" + priority + variant;
+  }
+  function groupIdForVariant(priority, variant) {
+    return "camera-" + priority + variant + "-group";
+  }
+  function labelIdForVariant(priority, variant) {
+    return "label-" + priority + variant;
+  }
+
+  function createAllCameras() {
+    const perspectives = {
+      1: { az: -30, el: 10, dist: 4,  fov: 50 },
+      2: { az: 0,   el: 15, dist: 8,  fov: 60 },
+      3: { az: 60,  el: 5,  dist: 12, fov: 55 },
+      4: { az: -60, el: 15, dist: 16, fov: 35 },
+    };
+
+    const heightOffsets = { A: -1, B: 0, C: 1 };
+
+    for (const camVariant of cameraVariants) {
+      const { priority, variant } = camVariant;
+      const cfg = perspectives[priority];
+
+      const label = document.getElementById(labelIdForVariant(priority, variant));
+      const target = {
+        x: parseFloat(label.getAttribute("x") || "0"),
+        y: parseFloat(label.getAttribute("y") || "0"),
+        z: parseFloat(label.getAttribute("z") || "0"),
+      };
+
+      const azRad = cfg.az * Math.PI / 180;
+      const elRad = cfg.el * Math.PI / 180;
+      const offX = 0;
+      const offZ = Math.cos(elRad) * cfg.dist;
+      const offY = Math.sin(elRad) * cfg.dist + heightOffsets[variant];
+
+      const camX = target.x + offX;
+      const camY = target.y + offY;
+      const camZ = target.z + offZ;
+
+      const yaw = cfg.az;
+      const pitch = -cfg.el;
+
+      const group = document.createElement("m-group");
+      group.setAttribute("id", groupIdForVariant(priority, variant));
+      group.setAttribute("ry", String(yaw));
+
+      const camera = document.createElement("m-camera");
+      camera.setAttribute("id", cameraIdForVariant(priority, variant));
+      camera.setAttribute("priority", String(priority));
+      camera.setAttribute("x", String(camX));
+      camera.setAttribute("y", String(camY));
+      camera.setAttribute("z", String(camZ));
+      camera.setAttribute("rx", String(pitch));
+      camera.setAttribute("fov", String(cfg.fov));
+      camera.setAttribute("visible-to", "-1");
+
+      group.appendChild(camera);
+      document.body.appendChild(group);
+    }
+  }
+
+  function enableCamera(priority, variant) {
+    const camera = document.getElementById(cameraIdForVariant(priority, variant));
+    if (camera) {
+      camera.removeAttribute("visible-to");
+      updateStatus();
+    }
+  }
+
+  function disableCamera(priority, variant) {
+    const camera = document.getElementById(cameraIdForVariant(priority, variant));
+    if (camera) {
+      camera.setAttribute("visible-to", "-1");
+      updateStatus();
+    }
+  }
+
+  function isCameraEnabled(priority, variant) {
+    const camera = document.getElementById(cameraIdForVariant(priority, variant));
+    return camera && !camera.hasAttribute("visible-to");
+  }
+
+  function updateStatus() {
+    const enabledCameras = [];
+    for (const camVariant of cameraVariants) {
+      const { priority, variant } = camVariant;
+      if (isCameraEnabled(priority, variant)) {
+        enabledCameras.push({ priority, variant, id: `${priority}${variant}` });
+      }
+    }
+
+    const statusLabel = document.getElementById("status-label");
+    if (enabledCameras.length === 0) {
+      statusLabel.setAttribute("content", "Status: No cameras enabled");
+    } else {
+      enabledCameras.sort((a, b) => {
+        if (a.priority !== b.priority) {
+          return b.priority - a.priority;
+        }
+        return a.variant.localeCompare(b.variant);
+      });
+      
+      const activeCamera = enabledCameras[0]; // Highest precedence
+      const cameraList = enabledCameras.map(cam => 
+        cam === activeCamera ? `[${cam.id}]` : cam.id
+      ).join(", ");
+      statusLabel.setAttribute("content", `Status: Cameras ${cameraList}\nActive: ${activeCamera.id}`);
+    }
+  }
+
+  createLabels();
+  createAllCameras();
+
+  for (const camVariant of cameraVariants) {
+    const { priority, variant } = camVariant;
+    const label = document.getElementById(labelIdForVariant(priority, variant));
+    setEnabledVisual(label, isCameraEnabled(priority, variant));
+    label.addEventListener("click", () => {
+      const enabled = isCameraEnabled(priority, variant);
+      if (enabled) {
+        disableCamera(priority, variant);
+        setEnabledVisual(label, false);
+      } else {
+        enableCamera(priority, variant);
+        setEnabledVisual(label, true);
+      }
+    });
+  }
+
+  updateStatus();
+</script>
+
+

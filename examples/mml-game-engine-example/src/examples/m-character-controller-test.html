@@ -1,0 +1,145 @@
+<m-group id="scene-group">
+  <m-plane x="0" y="0" z="0" width="400" height="400" rx="-90" color="#808080"></m-plane>
+  <m-light type="point" y="20" intensity="750" cast-shadows="true"></m-light>
+  
+  <!-- Camera toggle cubes -->
+  <m-cube id="blue-cube" x="-3" y="0.75" z="0" width="1.5" height="1.5" depth="1.5" color="rgb(0, 0, 25)"></m-cube>
+  <m-cube id="red-cube" x="3" y="0.75" z="0" width="1.5" height="1.5" depth="1.5" color="rgb(25, 0, 0)"></m-cube>
+  
+  <!-- Cameras -->
+  <m-camera id="top-down-camera" x="0" y="25" z="0" rx="-90" priority="2" visible-to="-1" fov="60">
+    <m-attr-anim start="0" end="360" duration="10000" loop="true" attr="rz"></m-attr-anim>
+  </m-camera>
+  <m-group ry="45" x="15" y="15" z="15"><m-camera id="angle-camera" visible-to="-1" priority="1" fov="70" rx="-45"></m-camera></m-group>
+</m-group>
+
+<script>
+  const sceneGroup = document.getElementById("scene-group");
+  const connectedPlayers = new Map();
+
+  function setTransform(element, x, y, z, ry) {
+    ["x", "y", "z"].forEach(attr => element.setAttribute(attr, attr === "x" ? x : attr === "y" ? y : z));
+    element.setAttribute("ry", ry);
+  }
+
+  function assignAnimationLerp(element, duration, attrs) {
+    const lerp = document.createElement("m-attr-lerp");
+    lerp.setAttribute("attr", attrs);
+    lerp.setAttribute("duration", duration);
+    element.appendChild(lerp);
+  }
+
+  function createPlayer() {
+    const player = document.createElement("m-model");
+    player.setAttribute("src", "/assets/models/bot.glb");
+    assignAnimationLerp(player, 100, "x,y,z,ry");
+    setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
+    sceneGroup.appendChild(player);
+    return player;
+  }
+
+  function assignPlayerAnimation(player, state) {
+    const animation = document.createElement("m-animation");
+    animation.setAttribute("src", `/assets/models/anim_${state}.glb`);
+    animation.setAttribute("state", state);
+    assignAnimationLerp(animation, 150, "weight");
+    player.appendChild(animation);
+    return animation;
+  }
+
+  function assignPlayerController(player, id) {
+    const controller = document.createElement("m-character-controller");
+    controller.setAttribute("visible-to", id.toString());
+    player.appendChild(controller);
+    return controller;
+  }
+
+  function spawnPlayer(connectionId) {
+    if (connectedPlayers.has(connectionId)) return;
+    const player = createPlayer();
+    const controller = assignPlayerController(player, connectionId);
+
+    const idleAnimation = assignPlayerAnimation(player, "idle");
+    const runAnimation = assignPlayerAnimation(player, "run");
+    const airAnimation = assignPlayerAnimation(player, "air");
+
+    connectedPlayers.set(connectionId, {
+      character: { model: player, idleAnim: idleAnimation, runAnim: runAnimation, airAnim: airAnimation }
+    });
+
+    controller.addEventListener("character-move", (event) => {
+      const { position, rotation, state, connectionId } = event.detail;
+      const character = connectedPlayers.get(connectionId).character;
+      setTransform(character.model, position.x, position.y, position.z, rotation.ry);
+      character.model.setAttribute("state", state);
+    });
+  }
+
+  function removePlayer(connectionId) {
+    if (!connectedPlayers.has(connectionId)) return;
+    const user = connectedPlayers.get(connectionId);
+    sceneGroup.removeChild(user.character.model);
+    connectedPlayers.delete(connectionId);
+  }
+
+  // Camera management functions
+  function enableCamera(cameraId) {
+    const camera = document.getElementById(cameraId);
+    if (camera) {
+      camera.removeAttribute("visible-to");
+    }
+  }
+
+  function disableCamera(cameraId) {
+    const camera = document.getElementById(cameraId);
+    if (camera) {
+      camera.setAttribute("visible-to", "-1");
+    }
+  }
+
+  function isCameraEnabled(cameraId) {
+    const camera = document.getElementById(cameraId);
+    return camera && !camera.hasAttribute("visible-to");
+  }
+
+  function setCubeVisual(cubeId, activated) {
+    const cube = document.getElementById(cubeId);
+    if (!cube) return;
+    
+    if (cubeId === "blue-cube") {
+      cube.setAttribute("color", activated ? "rgb(0, 0, 255)" : "rgb(0, 0, 25)");
+    } else if (cubeId === "red-cube") {
+      cube.setAttribute("color", activated ? "rgb(255, 0, 0)" : "rgb(25, 0, 0)");
+    }
+  }
+
+  function toggleCamera(cameraId, cubeId) {
+    const enabled = isCameraEnabled(cameraId);
+    if (enabled) {
+      disableCamera(cameraId);
+      setCubeVisual(cubeId, false);
+    } else {
+      enableCamera(cameraId);
+      setCubeVisual(cubeId, true);
+    }
+  }
+
+  // Set up cube click handlers
+  const blueCube = document.getElementById("blue-cube");
+  const redCube = document.getElementById("red-cube");
+
+  blueCube.addEventListener("click", () => {
+    toggleCamera("top-down-camera", "blue-cube");
+  });
+
+  redCube.addEventListener("click", () => {
+    toggleCamera("angle-camera", "red-cube");
+  });
+
+  // Initialize cube visuals
+  setCubeVisual("blue-cube", isCameraEnabled("top-down-camera"));
+  setCubeVisual("red-cube", isCameraEnabled("angle-camera"));
+
+  window.addEventListener("connected", (event) => spawnPlayer(event.detail.connectionId));
+  window.addEventListener("disconnected", (event) => removePlayer(event.detail.connectionId));
+</script>

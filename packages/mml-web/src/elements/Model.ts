@@ -15,6 +15,7 @@ const defaultModelAnimStartTime = 0;
 const defaultModelAnimPauseTime = null;
 const defaultModelCastShadows = true;
 const defaultModelDebug = false;
+const defaultModelState = null;
 
 export type MModelProps = {
   src: string | null;
@@ -24,6 +25,8 @@ export type MModelProps = {
   animStartTime: number;
   animPauseTime: number | null;
   castShadows: boolean;
+  state: string | null;
+  localStateOverride: string | null;
   debug: boolean;
 };
 
@@ -38,6 +41,8 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     animLoop: defaultModelAnimLoop,
     animEnabled: defaultModelAnimEnabled,
     castShadows: defaultModelCastShadows,
+    state: defaultModelState,
+    localStateOverride: null,
     debug: defaultModelDebug,
   };
 
@@ -77,7 +82,30 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       instance.props.animPauseTime = parseFloatAttribute(newValue, defaultModelAnimPauseTime);
       instance.modelGraphics?.setAnimPauseTime(instance.props.animPauseTime, instance.props);
     },
+    state: (instance, newValue) => {
+      instance.props.state = newValue;
+      // Notify any direct children animations
+      instance.notifyChildAnimations();
+    },
   });
+
+  public getState(): string | null {
+    if (this.props.localStateOverride !== null) {
+      // local state overrides the state attribute so that a local controller can update the state without waiting for the server to sync
+      return this.props.localStateOverride;
+    }
+    return this.props.state;
+  }
+
+  public setLocalStateOverride(localStateOverride: string | null) {
+    this.props.localStateOverride = localStateOverride;
+    // Notify any direct children animations
+    for (const child of (this.childNodes as any)) {
+      if (Animation.isAnimation(child)) {
+        child.applyState();
+      }
+    }
+  }
 
   public modelGraphics: ModelGraphics<G> | null = null;
 
@@ -140,8 +168,7 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
 
       // If the modelGraphics is already ready, notify it immediately
       if (this.modelGraphics && child.animationGraphics) {
-        const weight = child.props.weight;
-        child.animationGraphics.setWeight(weight, child.props);
+        child.animationGraphics.parentModelUpdated();
       }
     } else {
       // For other side effect children, delegate to parent
@@ -202,16 +229,11 @@ export class Model<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
 
   private notifyChildAnimations() {
     // Find all child animations and notify them that the modelGraphics is ready
-    const childAnimations = this.querySelectorAll("m-animation");
-
-    childAnimations.forEach((animation) => {
-      if (Animation.isAnimation(animation)) {
-        // The animation's graphics adapter will handle the notification
-        if (animation.animationGraphics) {
-          animation.animationGraphics.parentModelUpdated();
-        }
+    for (const child of (this.childNodes as any)) {
+      if (Animation.isAnimation(child)) {
+        child.applyState();
       }
-    });
+    }
   }
 
   disconnectedCallback() {

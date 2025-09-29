@@ -1,8 +1,3 @@
-import { PlayCanvasGraphicsAdapter } from "@mml-io/mml-web-playcanvas";
-import {
-  StandalonePlayCanvasAdapter,
-  StandalonePlayCanvasAdapterControlsType,
-} from "@mml-io/mml-web-playcanvas-standalone";
 import { ThreeJSGraphicsAdapter } from "@mml-io/mml-web-threejs";
 import {
   StandaloneThreeJSAdapter,
@@ -11,13 +6,11 @@ import {
 
 import { FullScreenMMLScene, RemoteDocument } from "../build/index";
 
-const useThree = true;
-
 export async function createSceneAttachedElement<T extends HTMLElement>(
   elementTag: string,
   documentAddress?: string,
 ): Promise<{
-  scene: FullScreenMMLScene<StandaloneThreeJSAdapter | StandalonePlayCanvasAdapter>;
+  scene: FullScreenMMLScene<StandaloneThreeJSAdapter>;
   remoteDocument: RemoteDocument;
   element: T;
 }> {
@@ -29,24 +22,17 @@ export async function createSceneAttachedElement<T extends HTMLElement>(
 }
 
 export async function createTestScene(documentAddress?: string): Promise<{
-  scene: FullScreenMMLScene<StandaloneThreeJSAdapter | StandalonePlayCanvasAdapter>;
+  scene: FullScreenMMLScene<StandaloneThreeJSAdapter>;
   remoteDocument: RemoteDocument;
 }> {
   const scene = new FullScreenMMLScene<typeof graphicsAdapter>();
   document.body.append(scene.element);
-  let graphicsAdapter: StandaloneThreeJSAdapter | StandalonePlayCanvasAdapter;
-  if (useThree) {
-    graphicsAdapter = await StandaloneThreeJSAdapter.create(scene.element, {
-      controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
-    });
-  } else {
-    graphicsAdapter = await StandalonePlayCanvasAdapter.create(scene.element, {
-      controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
-    });
-  }
-  const remoteDocument = document.createElement("m-remote-document") as RemoteDocument<
-    ThreeJSGraphicsAdapter | PlayCanvasGraphicsAdapter
-  >;
+  const graphicsAdapter = await StandaloneThreeJSAdapter.create(scene.element, {
+    controlsType: StandaloneThreeJSAdapterControlsType.DragFly,
+  });
+  const remoteDocument = document.createElement(
+    "m-remote-document",
+  ) as RemoteDocument<ThreeJSGraphicsAdapter>;
   scene.init(graphicsAdapter);
   remoteDocument.init(scene, documentAddress || "ws://localhost:8080");
   document.body.append(remoteDocument);

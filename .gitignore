@@ -6,5 +6,4 @@ build/
 .vscode/
 coverage/
 .nx/
-__diff_output__
-.turbo
+.tsbuildinfo

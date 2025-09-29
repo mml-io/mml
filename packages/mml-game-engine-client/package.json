@@ -1,0 +1,38 @@
+{
+  "name": "mml-game-engine-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "files": [
+    "/build"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit -p ./tsconfig.json",
+    "pre:build": "npm run build",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@mml-io/mml-schema": "0.21.1",
+    "@mml-io/mml-web": "0.21.1",
+    "@mml-io/mml-web-runner": "0.21.1",
+    "@mml-io/mml-web-threejs": "0.21.1",
+    "@mml-io/mml-web-threejs-standalone": "0.21.1",
+    "@mml-io/model-loader": "0.21.1",
+    "@mml-io/networked-dom-document": "0.21.1",
+    "@mml-io/networked-dom-web": "0.21.1",
+    "@mml-io/networked-dom-web-runner": "0.21.1",
+    "@mml-io/networked-dom-web-runner-broadcast": "0.21.1",
+    "@mml-io/observable-dom-common": "0.21.1",
+    "three": "0.178.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.10",
+    "@types/three": "0.178.1"
+  }
+}

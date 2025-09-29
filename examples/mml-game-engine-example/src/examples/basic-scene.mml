@@ -1,0 +1,13 @@
+<m-light y="10" intensity="1000" type="point"></m-light>
+
+<m-cube id="clickable-cube" y="1" color="red" collide="true" z="-2"></m-cube>
+
+<m-cube id="color-cube" x="4" y="1" width="1" color="green" collide="true" z="-2" castshadow="true"></m-cube>
+
+<script>
+  const clickableCube = document.getElementById("clickable-cube");
+  clickableCube.addEventListener("click", () => {
+    console.log("clicked");
+    clickableCube.setAttribute("color", "#" + Math.floor(Math.random() * 16777215).toString(16));
+  });
+</script>

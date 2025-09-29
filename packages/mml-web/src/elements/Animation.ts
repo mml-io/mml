@@ -8,18 +8,22 @@ import { MElement } from "./MElement";
 import { Model } from "./Model";
 
 const defaultAnimationSrc = null;
-const defaultAnimationWeight = 1;
+const defaultAnimationWeight = null;
+const defaultAnimationEffectiveWeight = 1;
 const defaultAnimationSpeed = 1;
 const defaultAnimationLoop = true;
 const defaultAnimationStartTime = 0;
 const defaultAnimationPauseTime = null;
 const defaultAnimationRatio = null;
+const defaultAnimationState = null;
 
 export type MAnimationProps = {
   src: string | null;
-  weight: number;
+  weight: number | null;
+  effectiveWeight: number;
   speed: number;
   ratio: number | null;
+  state: string | null;
   loop: boolean;
   startTime: number;
   pauseTime: number | null;
@@ -31,8 +35,10 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
   public props: MAnimationProps = {
     src: defaultAnimationSrc,
     weight: defaultAnimationWeight,
+    effectiveWeight: defaultAnimationEffectiveWeight,
     speed: defaultAnimationSpeed,
     ratio: defaultAnimationRatio,
+    state: defaultAnimationState,
     loop: defaultAnimationLoop,
     startTime: defaultAnimationStartTime,
     pauseTime: defaultAnimationPauseTime,
@@ -44,8 +50,8 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
       defaultAnimationWeight,
       (value: number | null) => {
         if (value !== null) {
-          this.props.weight = value;
-          this.animationGraphics?.setWeight(value, this.props);
+          this.props.effectiveWeight = value;
+          this.animationGraphics?.setEffectiveWeight(value, this.props);
         }
       },
     ],
@@ -65,16 +71,18 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
       instance.animationGraphics?.setSrc(newValue, instance.props);
     },
     weight: (instance, newValue) => {
-      instance.animatedAttributeHelper.elementSetAttribute(
-        "weight",
-        parseFloatAttribute(newValue, defaultAnimationWeight),
-      );
+      instance.props.weight = parseFloatAttribute(newValue, defaultAnimationWeight);
+      instance.applyState();
     },
     ratio: (instance, newValue) => {
       instance.animatedAttributeHelper.elementSetAttribute(
         "ratio",
         parseFloatAttribute(newValue, defaultAnimationRatio),
       );
+    },
+    state: (instance, newValue) => {
+      instance.props.state = newValue;
+      instance.animationGraphics?.setEffectiveWeight(instance.getEffectiveWeight(), instance.props);
     },
     speed: (instance, newValue) => {
       instance.props.speed = parseFloatAttribute(newValue, defaultAnimationSpeed);
@@ -93,6 +101,38 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
       instance.animationGraphics?.setPauseTime(instance.props.pauseTime, instance.props);
     },
   });
+
+  private getEffectiveWeight(): number {
+    if (this.props.weight !== null) {
+      // This m-animation element has a weight attribute so it should use that weight
+      return this.props.weight;
+    }
+    if (this.props.state === null) {
+      // This m-animation element has no state attribute so it does not participate in the state-based weight calculation from the m-character/m-model parent
+      return 1;
+    }
+    if (this.parentElement && Model.isModel(this.parentElement)) {
+      const model = this.parentElement as Model<G>;
+      const modelState = model.getState();
+      if (modelState !== null) {
+        if (modelState === this.props.state) {
+          // This m-animation element has the same state as the m-character/m-model parent so it should have full weight
+          return 1;
+        }
+        // This m-animation element has a different state than the m-character/m-model parent so it should have no weight
+        return 0;
+      }
+    }
+    // This m-animation element has a state attribute, but the parent model does not have a state attribute or is not a model. Return no weight.
+    return 0;
+  }
+
+  public applyState() {
+    this.animatedAttributeHelper.elementSetAttribute(
+      "weight",
+      this.getEffectiveWeight(),
+    );
+  }
 
   public animationGraphics: AnimationGraphics<G> | null = null;
 
@@ -163,14 +203,7 @@ export class Animation<G extends GraphicsAdapter = GraphicsAdapter> extends MEle
       }
     }
 
-    // Ensure the initial weight is set immediately after src is processed
-    const weightValue = this.getAttribute("weight");
-    if (weightValue !== null) {
-      const parsedWeight = parseFloatAttribute(weightValue, defaultAnimationWeight);
-      this.props.weight = parsedWeight;
-      // Set the weight directly on the graphics adapter to ensure immediate application
-      this.animationGraphics?.setWeight(parsedWeight, this.props);
-    }
+    this.applyState();
   }
 
   disconnectedCallback() {

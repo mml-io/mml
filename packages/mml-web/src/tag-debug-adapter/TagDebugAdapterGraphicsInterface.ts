@@ -255,6 +255,7 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
     },
     {
       parentModelUpdated: () => {},
+      setEffectiveWeight: () => {},
     },
   ),
   MMLOverlayGraphicsInterface: TagDebugAdapterElement(

@@ -12,14 +12,12 @@ export function base64Plugin(options: Base64PluginOptions = {}) {
     name: "base64",
 
     setup(build) {
-      // Intercept imports starting with "base64:"
-      build.onResolve({ filter: /^base64:/ }, (args: OnResolveArgs) => {
-        const importPath = args.path.substring(7); // Remove the "base64:" prefix
-
+      // Helper function to resolve the actual file path
+      const resolveFilePath = (importPath: string, resolveDir: string) => {
         // Attempt to resolve as a module in node_modules
         try {
           const modulePath = resolve.sync(importPath, {
-            basedir: args.resolveDir,
+            basedir: resolveDir,
             extensions: [".js", ".jsx", ".ts", ".tsx"],
           });
           return { path: modulePath, namespace: "base64" };
@@ -27,10 +25,22 @@ export function base64Plugin(options: Base64PluginOptions = {}) {
           // If not found in node_modules, fallback to resolve as a regular file path
           const filePath = path.isAbsolute(importPath)
             ? importPath
-            : path.join(args.resolveDir, importPath);
+            : path.join(resolveDir, importPath);
 
           return { path: filePath, namespace: "base64" };
         }
+      };
+
+      // Intercept imports starting with "base64:"
+      build.onResolve({ filter: /^base64:/ }, (args: OnResolveArgs) => {
+        const importPath = args.path.substring(7); // Remove the "base64:" prefix
+        return resolveFilePath(importPath, args.resolveDir);
+      });
+
+      // Intercept imports ending with "?base64"
+      build.onResolve({ filter: /.*\?base64$/ }, (args: OnResolveArgs) => {
+        const importPath = args.path.substring(0, args.path.length - 7); // Remove the "?base64" suffix
+        return resolveFilePath(importPath, args.resolveDir);
       });
 
       // Load the file and encode it in Base64

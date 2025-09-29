@@ -1,0 +1,35 @@
+{
+  "name": "ai-game-creator-project-bundler",
+  "displayName": "Project Bundler",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Helpers for bundling a project into a single file",
+  "type": "module",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "files": [
+    "/build"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "pre:build": "npm run build",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "lodash": "4.17.21",
+    "esbuild-wasm": "0.25.8",
+    "ai-game-creator-systems-common": "file:../systems/systems-common",
+    "ai-game-creator-physics-system": "file:../systems/physics",
+    "ai-game-creator-math-system": "file:../systems/math"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.10",
+    "esbuild": "^0.20.2",
+    "esbuild-plugin-copy": "^2.1.1",
+    "tsx": "^4.8.2",
+    "typescript": "^5.4.5"
+  }
+}

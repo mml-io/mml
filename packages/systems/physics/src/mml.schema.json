@@ -1,0 +1,175 @@
+{
+  "schema": {
+    "type": "object",
+    "properties": {
+      "debug": {
+        "type": "boolean",
+        "description": "Show Rapier debug lines (wireframes, contacts) in the scene",
+        "default": false
+      },
+      "gravity": {
+        "type": "number",
+        "description": "Global gravity strength (m/s^2)",
+        "default": 9.81,
+        "minimum": -50,
+        "maximum": 50
+      },
+      "enableCollisions": {
+        "type": "boolean",
+        "description": "Enable or disable collision detection globally",
+        "default": true
+      },
+      "maxSubsteps": {
+        "type": "integer",
+        "description": "Maximum number of physics substeps per frame for stability",
+        "default": 5,
+        "minimum": 1,
+        "maximum": 10
+      },
+      "timeStep": {
+        "type": "number",
+        "description": "Fixed timestep for physics simulation (seconds)",
+        "default": 0.016666,
+        "minimum": 0.001,
+        "maximum": 0.1
+      }
+    },
+    "required": [
+      "gravity"
+    ],
+    "additionalProperties": false
+  },
+  "attributes": [
+    {
+      "name": "rigidbody",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "boolean",
+        "description": "Whether this element has a rigidbody (physics body) attached",
+        "default": true
+      }
+    },
+    {
+      "name": "mass",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "number",
+        "description": "The mass of the rigidbody in kilograms",
+        "default": 1.0,
+        "minimum": 0.0001,
+        "maximum": 1000
+      }
+    },
+    {
+      "name": "gravity",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": [
+          "number",
+          "string"
+        ],
+        "description": "Override gravity strength for this specific rigidbody (m/s^2). Use a number for a custom value, or \"inherit\" to use the global gravity.",
+        "default": "inherit",
+        "enum": [
+          "inherit"
+        ]
+      }
+    },
+    {
+      "name": "kinematic",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "boolean",
+        "description": "Make this rigidbody kinematic (position controlled, not physics driven)",
+        "default": false
+      }
+    },
+    {
+      "name": "sensor",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "boolean",
+        "description": "Make this collider a sensor (triggers events but doesn't block movement)",
+        "default": false
+      }
+    },
+    {
+      "name": "friction",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "number",
+        "description": "Surface friction coefficient",
+        "default": 0.5,
+        "minimum": 0,
+        "maximum": 2
+      }
+    },
+    {
+      "name": "restitution",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "number",
+        "description": "Bounciness/elasticity of the surface (0 = no bounce, 1 = perfect bounce)",
+        "default": 0.1,
+        "minimum": 0,
+        "maximum": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,696 @@
+<m-light y="80" intensity="5000"></m-light>
+  <m-model id="controllable-character" x="0" y="0" z="0" ry="180" src="/assets/models/bot.glb" collide="false">
+  <m-attr-lerp attr="x,y,z,ry" duration="100"></m-attr-lerp>
+  <m-animation id="idle-anim" src="/assets/models/anim_idle.glb" weight="1.0">
+    <m-attr-lerp id="idle-lerp" attr="all" duration="1000" easing="easeInOutCubic"></m-attr-lerp>
+  </m-animation>
+  <m-animation id="run-anim" src="/assets/models/anim_run.glb" weight="0.0">
+    <m-attr-lerp id="run-lerp" attr="all" duration="1000" easing="easeInOutCubic"></m-attr-lerp>
+  </m-animation>
+  <m-animation id="air-anim" src="/assets/models/anim_air.glb" weight="0.0">
+    <m-attr-lerp id="air-lerp" attr="all" duration="1000" easing="easeInOutCubic"></m-attr-lerp>
+  </m-animation>
+  <m-animation id="slide-anim" src="/assets/models/anim_slide.glb" weight="0.0">
+    <m-attr-lerp id="slide-lerp" attr="all" duration="500" easing="easeInOutCubic"></m-attr-lerp>
+  </m-animation>
+</m-model>
+
+<m-control id="movement-control" type="axis" axis="0,1" hint="Move"></m-control>
+
+<m-control id="jump-control" type="button" button="0" hint="Jump"></m-control>
+<m-control id="slide-control" type="button" button="1" hint="Slide"></m-control>
+
+<m-cube id="lane-left" x="+2.51" width="2.5" depth="5000" height="0.05" color="#ddeeff" collide="false"></m-cube>
+<m-cube id="lane-center" x="+0.00" width="2.5" depth="5000" height="0.05" color="#ddeeff" collide="false"></m-cube>
+<m-cube id="lane-right" x="-2.51" width="2.5" depth="5000" height="0.05" color="#ddeeff" collide="false"></m-cube>
+
+<m-label id="countdown-label" x="0" y="15" z="-5" width="5" height="3" sx="0" sy="0" sz="0" collide="false" color="rgba(0, 0, 0, 0)" font-size="210" alignment="center" font-color="blue" emissive="5" cast-shadows="false" content=" ">
+  <m-attr-lerp attr="all" duration="750" easing="easeInOutCubic"></m-attr-lerp>
+</m-label>
+
+<m-label
+  id="score-label"
+  x="0" y="8" z="-3"
+  width="6" height="3"
+  sx="1" sy="1" sz="1"
+  collide="false"
+  color="rgba(0, 0, 0, 0)"
+  font-size="80"
+  alignment="center"
+  font-color="white"
+  emissive="5"
+  cast-shadows="false"
+  content="score: 0"
+>
+  <m-attr-lerp attr="x" duration="750" easing="easeInOutCubic"></m-attr-lerp>
+</m-label>
+
+<m-group id="obstacles-group"></m-group>
+
+<m-camera id="my-camera" x="0" y="4" z="3.5" rx="5" ry="0" fov="70">
+  <m-attr-lerp attr="x" duration="750" easing="easeInOutCubic"></m-attr-lerp>
+</m-camera>
+<script>
+  // Input constants
+  const INPUT_BUTTON_THRESHOLD = 0.5;
+  const INPUT_MOVEMENT_THRESHOLD = 0.1;
+
+  // Physics constants
+  const PHYSICS_JUMP_FORCE = 1.3;
+  const PHYSICS_GRAVITY = 0.3;
+  const PHYSICS_GROUND_Y = 0;
+
+  // Animation constants
+  const ANIMATION_SLIDE_DURATION = 700;
+  const ANIMATION_LERP_DURATION = 1000;
+  const ANIMATION_SLIDE_LERP_DURATION = 500;
+
+  // Movement constants
+  const MOVEMENT_MAX_SPEED = 0.7;
+  const MOVEMENT_SPEED_INCREASE_LERP_RATE = 0.2;
+  const MOVEMENT_SPEED_DECREASE_LERP_RATE = 0.4;
+  const MOVEMENT_UPDATE_INTERVAL = 100;
+
+  // Camera constants
+  const CAMERA_DISTANCE = 6;
+  const CAMERA_HEIGHT = 3.3;
+  const CAMERA_LERP_RATE = 0.9;
+
+  // Lane constants
+  const LANE_MAX_CHANGE_ROTATION = 45;
+
+  // Player constants
+  const PLAYER_WIDTH = 0.8;
+  const PLAYER_HEIGHT = 1.8;
+  const PLAYER_DEPTH = 0.5;
+
+  // Obstacle constants
+  const OBSTACLE_VELOCITY = 4;
+  const OBSTACLE_MAX_ON_SCREEN = 20;
+  const OBSTACLE_Z_START = -200;
+  const OBSTACLE_Z_END = 10;
+  const OBSTACLE_DIRECTION = 1;
+  const OBSTACLE_SMALL_HEIGHT = 1;
+  const OBSTACLE_LARGE_HEIGHT = 3;
+  const OBSTACLE_WIDE_HEIGHT = 3;
+  const OBSTACLE_WIDE_WIDTH = 8;
+  const OBSTACLE_SPAWN_INTERVAL = 1000;
+  const OBSTACLE_VELOCITY_INCREASE_RATE = 0.005;
+
+  const GAME_ELEMENTS = {
+    animations: {
+      idle: document.getElementById('idle-anim'),
+      run: document.getElementById('run-anim'),
+      air: document.getElementById('air-anim'),
+      slide: document.getElementById('slide-anim')
+    },
+    lerps: {
+      idle: document.getElementById('idle-lerp'),
+      run: document.getElementById('run-lerp'),
+      air: document.getElementById('air-lerp'),
+      slide: document.getElementById('slide-lerp')
+    },
+    camera: {
+      main: document.getElementById("my-camera")
+    },
+    lanes: {
+      left: document.getElementById('lane-left'),
+      center: document.getElementById('lane-center'),
+      right: document.getElementById('lane-right'),
+      obstacles: document.getElementById('obstacles-group')
+    },
+    ui: {
+      countdown: document.getElementById('countdown-label'),
+      score: document.getElementById('score-label')
+    },
+    controls: {
+      movement: document.getElementById('movement-control'),
+      jump: document.getElementById('jump-control'),
+      slide: document.getElementById('slide-control')
+    },
+    character: document.getElementById('controllable-character')
+  };
+
+  const ANIMATIONS_MIX = {
+    IDLE: { idle: '1.0', run: '0.0', air: '0.0', slide: '0.0' },
+    RUNNING: { idle: '0.0', run: '1.0', air: '0.0', slide: '0.0' },
+    JUMPING: { idle: '0.0', run: '0.0', air: '1.0', slide: '0.0' },
+    SLIDING: { idle: '0.0', run: '0.0', air: '0.0', slide: '1.0' }
+  };
+
+  const LANE_POSITIONS = {
+    left: parseFloat(GAME_ELEMENTS.lanes.left.getAttribute('x')),
+    center: parseFloat(GAME_ELEMENTS.lanes.center.getAttribute('x')),
+    right: parseFloat(GAME_ELEMENTS.lanes.right.getAttribute('x'))
+  };
+
+  const movementMap = new Map();
+
+  const jumpMap = new Map();
+  const jumpPreviousStateMap = new Map();
+  const slideMap = new Map();
+  const slidePreviousStateMap = new Map();
+  let isControllableWalking = false;
+
+  let currentSpeed = 0;
+  let targetSpeed = 0;
+  let lastMovementDirection = { x: 0, y: 0 };
+
+  let currentY = 0;
+  let currentVelocityY = 0;
+  let isJumping = false;
+  let isSliding = false;
+
+  GAME_ELEMENTS.camera.main.setAttribute("x", 0);
+  GAME_ELEMENTS.camera.main.setAttribute("z", CAMERA_DISTANCE);
+  GAME_ELEMENTS.camera.main.setAttribute("y", CAMERA_HEIGHT);
+
+  GAME_ELEMENTS.lerps.idle.setAttribute('duration', MOVEMENT_UPDATE_INTERVAL * 4);
+  GAME_ELEMENTS.lerps.run.setAttribute('duration', MOVEMENT_UPDATE_INTERVAL * 4);
+  GAME_ELEMENTS.lerps.air.setAttribute('duration', MOVEMENT_UPDATE_INTERVAL * 2);
+
+  function lerp(current, target, deltaTime) {
+    const rate = target > current ? MOVEMENT_SPEED_INCREASE_LERP_RATE : MOVEMENT_SPEED_DECREASE_LERP_RATE;
+    const lerpFactor = rate * (deltaTime / MOVEMENT_UPDATE_INTERVAL);
+    return current + (target - current) * lerpFactor;
+  }
+
+  function getLanePosition(laneIndex) {
+    if (laneIndex === 0) return LANE_POSITIONS.left;
+    if (laneIndex === 1) return LANE_POSITIONS.center;
+    if (laneIndex === 2) return LANE_POSITIONS.right;
+    return LANE_POSITIONS.center;
+  }
+
+  function setAnimationWeights(idle, run, air, slide) {
+    GAME_ELEMENTS.animations.idle.setAttribute('weight', idle);
+    GAME_ELEMENTS.animations.run.setAttribute('weight', run);
+    GAME_ELEMENTS.animations.air.setAttribute('weight', air);
+    GAME_ELEMENTS.animations.slide.setAttribute('weight', slide);
+  }
+
+  GAME_ELEMENTS.controls.movement.addEventListener("input", (event) => {
+    const { connectionId, value } = event.detail;
+    const { x, y } = value;
+    movementMap.set(connectionId, { x: x, y });
+    if (Math.abs(x) > INPUT_MOVEMENT_THRESHOLD || Math.abs(y) > INPUT_MOVEMENT_THRESHOLD) {
+    }
+  });
+
+  GAME_ELEMENTS.controls.jump.addEventListener("input", (event) => {
+    const { connectionId, value } = event.detail;
+    const previousState = jumpPreviousStateMap.get(connectionId) || 0;
+
+    jumpMap.set(connectionId, value);
+    jumpPreviousStateMap.set(connectionId, value);
+
+    const buttonPressed = value > INPUT_BUTTON_THRESHOLD;
+    const buttonWasReleased = previousState < INPUT_BUTTON_THRESHOLD;
+
+    if (buttonPressed && buttonWasReleased && !isJumping && currentY <= PHYSICS_GROUND_Y + 0.1) {
+      currentVelocityY = PHYSICS_JUMP_FORCE;
+      isJumping = true;
+    }
+  });
+
+  GAME_ELEMENTS.controls.slide.addEventListener("input", (event) => {
+    const { connectionId, value } = event.detail;
+    const previousState = slidePreviousStateMap.get(connectionId) || 0;
+
+    slideMap.set(connectionId, value);
+    slidePreviousStateMap.set(connectionId, value);
+
+    const buttonPressed = value > INPUT_BUTTON_THRESHOLD;
+    const buttonWasReleased = previousState < INPUT_BUTTON_THRESHOLD;
+
+    if (buttonPressed && buttonWasReleased && !isJumping && !isSliding && currentY <= PHYSICS_GROUND_Y + 0.1) {
+      isSliding = true;
+      setTimeout(() => {
+        isSliding = false;
+      }, ANIMATION_SLIDE_DURATION);
+    }
+  });
+
+  window.addEventListener("disconnected", (event) => {
+    const { connectionId } = event.detail;
+    if (movementMap.has(connectionId)) movementMap.delete(connectionId);
+    if (jumpMap.has(connectionId)) jumpMap.delete(connectionId);
+    if (jumpPreviousStateMap.has(connectionId)) jumpPreviousStateMap.delete(connectionId);
+    if (slideMap.has(connectionId)) slideMap.delete(connectionId);
+    if (slidePreviousStateMap.has(connectionId)) slidePreviousStateMap.delete(connectionId);
+  });
+
+  let lastUpdateTime = Date.now();
+
+  let gameRunning = false;
+  let currentLane = 1; // 0 = left, 1 = center, 2 = right
+  let targetLaneX = LANE_POSITIONS.center; // start in center lane
+  let lastInputState = { left: false, right: false };
+
+  // Lane change rotation settings
+  let isChangingLanes = false;
+  let laneChangeDirection = 0;
+
+  const obstacles = new Map();
+
+  let obstacleIdCounter = 0;
+  let lastObstacleTime = 0;
+
+  // Score tracking
+  let playerScore = 0;
+
+  // Dynamic obstacle spawn interval
+  let currentObstacleSpawnInterval = OBSTACLE_SPAWN_INTERVAL;
+
+  function setLabelVisibility(isVisible) {
+    GAME_ELEMENTS.ui.countdown.setAttribute("sx", isVisible ? "1" : "0");
+    GAME_ELEMENTS.ui.countdown.setAttribute("sy", isVisible ? "1" : "0");
+    GAME_ELEMENTS.ui.countdown.setAttribute("sz", isVisible ? "1" : "0");
+    GAME_ELEMENTS.ui.countdown.setAttribute("y", isVisible ? "4" : "15");
+    if (!isVisible) {
+      setTimeout(() => GAME_ELEMENTS.ui.countdown.setAttribute("content", " "), 1000)
+    }
+  }
+
+  function countDown() {
+    setLabelVisibility(true);
+    let seconds = 4;
+    GAME_ELEMENTS.ui.countdown.setAttribute("content", (seconds > 3 ? 3 : seconds).toString());
+    const interval = setInterval(() => {
+      seconds--;
+      GAME_ELEMENTS.ui.countdown.setAttribute("content", (seconds < 1 ? "GO!" : seconds).toString());
+      if (seconds <= 0) {
+        gameRunning = true;
+        setTimeout(() => setLabelVisibility(false), 1000);
+        clearInterval(interval);
+      }
+    }, 1000);
+  }
+
+  function startGame() {
+    setTimeout(() => countDown(), 1000);
+  }
+
+  function resetGame() {
+    gameRunning = false;
+    currentLane = 1;
+    targetLaneX = LANE_POSITIONS.center;
+    lastInputState = {
+      left: false,
+      right: false
+    };
+    isChangingLanes = false;
+    laneChangeDirection = 0;
+
+    GAME_ELEMENTS.character.setAttribute('x', LANE_POSITIONS.center);
+    GAME_ELEMENTS.character.setAttribute('y', PHYSICS_GROUND_Y);
+    GAME_ELEMENTS.character.setAttribute('z', 0);
+    GAME_ELEMENTS.character.setAttribute('ry', 180);
+    GAME_ELEMENTS.ui.countdown.setAttribute("x", LANE_POSITIONS.center);
+    GAME_ELEMENTS.ui.score.setAttribute("x", LANE_POSITIONS.center);
+
+    currentY = PHYSICS_GROUND_Y;
+    currentVelocityY = 0;
+    isJumping = false;
+
+    obstacles.forEach((obstacle, id) => {
+      if (obstacle && obstacle.element) {
+        obstacle.element.remove();
+      }
+    });
+    obstacles.clear();
+
+    obstacleIdCounter = 0;
+    lastObstacleTime = 0;
+
+    GAME_ELEMENTS.camera.main.setAttribute("x", 0);
+    GAME_ELEMENTS.camera.main.setAttribute("z", CAMERA_DISTANCE);
+    GAME_ELEMENTS.camera.main.setAttribute("y", CAMERA_HEIGHT);
+
+    playerScore = 0;
+    GAME_ELEMENTS.ui.score.setAttribute('content', 'score: 0');
+
+    // Reset obstacle spawn interval
+    currentObstacleSpawnInterval = OBSTACLE_SPAWN_INTERVAL;
+  }
+
+  function gameOver() {
+    gameRunning = false;
+    GAME_ELEMENTS.ui.countdown.setAttribute("font-size", "100");
+    GAME_ELEMENTS.ui.countdown.setAttribute("content", "GAME OVER");
+    setLabelVisibility(true);
+
+    setTimeout(() => {
+      setTimeout(() => GAME_ELEMENTS.ui.countdown.setAttribute("font-size", "210"), 1000)
+      setLabelVisibility(false);
+      resetGame();
+      startGame();
+    }, 3000);
+  }
+
+  function randomHexColor() {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16);
+  }
+
+  function createObstacle(id, type, lane) {
+    let obstaclePos, width, height;
+
+    if (type === "wide") {
+      const isLeftCenter = lane === 0;
+      obstaclePos = isLeftCenter ?
+        (LANE_POSITIONS.left + LANE_POSITIONS.center) / 2 :
+        (LANE_POSITIONS.center + LANE_POSITIONS.right) / 2;
+      width = OBSTACLE_WIDE_WIDTH;
+      height = OBSTACLE_WIDE_HEIGHT;
+    } else {
+      obstaclePos = getLanePosition(lane);
+      width = 1;
+      height = type === "large" ? OBSTACLE_LARGE_HEIGHT : OBSTACLE_SMALL_HEIGHT;
+    }
+
+    const obstacle = document.createElement('m-cube');
+    obstacle.setAttribute("width", width);
+    obstacle.setAttribute("height", height);
+    obstacle.setAttribute("depth", "1");
+    obstacle.setAttribute("x", obstaclePos);
+    obstacle.setAttribute("y", type === "wide" ? height / 2 + 1 : height / 2);
+    obstacle.setAttribute("z", OBSTACLE_Z_START);
+    obstacle.setAttribute("color", randomHexColor());
+    obstacle.setAttribute("collide", "false");
+
+    const lerp = document.createElement("m-attr-lerp");
+    lerp.setAttribute("attr", "y,z");
+    lerp.setAttribute("duration", "100");
+    obstacle.appendChild(lerp);
+
+    GAME_ELEMENTS.lanes.obstacles.appendChild(obstacle);
+
+    obstacles.set(id, {
+      element: obstacle,
+      type: type,
+      lane: lane,
+      zPosition: OBSTACLE_Z_START,
+      lerp: lerp,
+      aabb: {
+        minX: obstaclePos - (width / 2),
+        maxX: obstaclePos + (width / 2),
+        minY: type === "wide" ? (height / 2 + 1) - (height / 2) : (type === "large" ? 0 : -0.5),
+        maxY: type === "wide" ? (height / 2 + 1) + (height / 2) : (type === "large" ? height : height),
+        minZ: OBSTACLE_Z_START - 0.5,
+        maxZ: OBSTACLE_Z_START + 0.5
+      }
+    });
+  }
+
+  function getPlayerAABB(playerX, playerY, playerZ, isSliding) {
+    const playerMinY = playerY;
+    const playerMaxY = playerY + PLAYER_HEIGHT;
+    if (isSliding) {
+      return {
+        minX: playerX - PLAYER_WIDTH / 2,
+        maxX: playerX + PLAYER_WIDTH / 2,
+        minY: playerY - PLAYER_DEPTH / 2,
+        maxY: playerY + PLAYER_DEPTH / 2,
+        minZ: playerMinY,
+        maxZ: playerMaxY
+      };
+    }
+    return {
+      minX: playerX - PLAYER_WIDTH / 2,
+      maxX: playerX + PLAYER_WIDTH / 2,
+      minY: playerMinY,
+      maxY: playerMaxY,
+      minZ: playerZ - PLAYER_DEPTH / 2,
+      maxZ: playerZ + PLAYER_DEPTH / 2
+    };
+  }
+
+  function checkForCollision(a, b) {
+    return (
+      a.minX < b.maxX &&
+      a.maxX > b.minX &&
+      a.minY < b.maxY &&
+      a.maxY > b.minY &&
+      a.minZ < b.maxZ &&
+      a.maxZ > b.minZ
+    );
+  }
+
+  function destroyObstacle(obstacle) {
+    const duration = 1000;
+    const newZPosition = OBSTACLE_Z_START / 2;
+    obstacle.lerp.setAttribute('duration', duration);
+    obstacle.lerp.setAttribute('easing', 'easeOutCubic');
+    obstacle.element.setAttribute('y', 10);
+    obstacle.element.setAttribute('z', newZPosition);
+    obstacle.aabb.minZ = newZPosition - 0.5;
+    obstacle.aabb.maxZ = newZPosition + 0.5;
+    setTimeout(() => {
+      obstacle.element.remove();
+      obstacles.delete(obstacle.id);
+    }, duration * 2);
+  }
+
+  function updateObstacles() {
+    if (!gameRunning) return;
+
+    const currentTime = Date.now();
+
+    // Decrease spawn interval over time (spawn more frequently)
+    // We multiply by a factor to make the effect more noticeable
+    const intervalDecrease = OBSTACLE_VELOCITY_INCREASE_RATE * 100; // Convert to milliseconds
+    currentObstacleSpawnInterval = Math.max(200, currentObstacleSpawnInterval - intervalDecrease); // Minimum 200ms
+
+    const withinLimit = obstacles.size < OBSTACLE_MAX_ON_SCREEN
+    const shouldSpawn = currentTime - lastObstacleTime > currentObstacleSpawnInterval
+
+    if (withinLimit && shouldSpawn) {
+      const spawnChance = Math.random();
+
+      if (spawnChance < 0.05) {
+        // 5% chance: two large obstacles in different random lanes
+        const lane1 = Math.floor(Math.random() * 3);
+        let lane2 = Math.floor(Math.random() * 3);
+        // lane2 must be different from lane1
+        while (lane2 === lane1) {
+          lane2 = Math.floor(Math.random() * 3);
+        }
+
+        obstacleIdCounter++;
+        createObstacle(obstacleIdCounter, "large", lane1);
+        obstacleIdCounter++;
+        createObstacle(obstacleIdCounter, "large", lane2);
+
+      } else if (spawnChance < 0.15) {
+        const widePosition = Math.random() < 0.5 ? 0 : 1;
+        obstacleIdCounter++;
+        createObstacle(obstacleIdCounter, "wide", widePosition);
+
+      } else if (spawnChance < 0.55) {
+        const lane1 = Math.floor(Math.random() * 3);
+        let lane2 = Math.floor(Math.random() * 3);
+        while (lane2 === lane1) {
+          lane2 = Math.floor(Math.random() * 3);
+        }
+
+        obstacleIdCounter++;
+        createObstacle(obstacleIdCounter, "large", lane1);
+        obstacleIdCounter++;
+        createObstacle(obstacleIdCounter, "small", lane2);
+
+      } else {
+        const obstacleType = Math.random() < 0.3 ? "large" : "small";
+        const obstacleLane = Math.floor(Math.random() * 3);
+
+        obstacleIdCounter++;
+        createObstacle(obstacleIdCounter, obstacleType, obstacleLane);
+      }
+
+      lastObstacleTime = currentTime;
+    }
+
+    // Update player AABB
+    const playerX = parseFloat(GAME_ELEMENTS.character.getAttribute('x'));
+    const playerY = parseFloat(GAME_ELEMENTS.character.getAttribute('y'));
+    const playerZ = parseFloat(GAME_ELEMENTS.character.getAttribute('z'));
+    const playerAABB = getPlayerAABB(playerX, playerY, playerZ, isSliding);
+
+    const obstaclesToRemove = [];
+
+    obstacles.forEach((obstacle, id) => {
+      // move obstacle
+      obstacle.zPosition += OBSTACLE_DIRECTION * OBSTACLE_VELOCITY;
+      obstacle.element.setAttribute('z', obstacle.zPosition);
+
+      // update AABB
+      obstacle.aabb.minZ = obstacle.zPosition - 0.5;
+      obstacle.aabb.maxZ = obstacle.zPosition + 0.5;
+
+      // Check for collision with player
+      if (checkForCollision(playerAABB, obstacle.aabb)) {
+        destroyObstacle(obstacle);
+        gameOver();
+        return;
+      }
+
+      // check if should be removed
+      if (obstacle.zPosition >= OBSTACLE_Z_END) {
+        obstaclesToRemove.push(id);
+        // Add score for obstacle that passed by
+        playerScore += 10;
+        GAME_ELEMENTS.ui.score.setAttribute('content', `score: ${playerScore}`);
+      }
+    });
+
+    obstaclesToRemove.forEach(id => {
+      const obstacle = obstacles.get(id);
+      if (obstacle && obstacle.element) {
+        obstacle.element.remove();
+      }
+      obstacles.delete(id);
+    });
+  }
+
+  startGame();
+
+  // main game loop
+  setInterval(() => {
+    const currentTime = Date.now();
+    const deltaTime = currentTime - lastUpdateTime;
+    lastUpdateTime = currentTime;
+
+    const currentX = parseFloat(GAME_ELEMENTS.character.getAttribute('x'));
+    const currentZ = parseFloat(GAME_ELEMENTS.character.getAttribute('z'));
+    const currentRotation = parseFloat(GAME_ELEMENTS.character.getAttribute('ry'));
+    currentY = parseFloat(GAME_ELEMENTS.character.getAttribute('y'));
+
+    let hasMovement = false;
+    let targetX = currentX;
+    let targetZ = currentZ;
+    let targetRotation = currentRotation;
+
+    if (gameRunning) {
+      // infinite runner mode: character stays in place, only moves left/right
+      hasMovement = true;
+      // targetZ stays the same
+      targetRotation = 0;
+
+      let currentInputState = {
+        left: false,
+        right: false
+      };
+
+      movementMap.forEach((value, connectionId) => {
+        const { x, y } = value;
+                 if (Math.abs(x) > INPUT_MOVEMENT_THRESHOLD) {
+          const inputX = x;
+
+          if (inputX > INPUT_MOVEMENT_THRESHOLD) currentInputState.right = true;
+          if (inputX < -INPUT_MOVEMENT_THRESHOLD) currentInputState.left = true;
+
+          if (inputX > INPUT_MOVEMENT_THRESHOLD && !lastInputState.right && currentLane > 0) {
+            currentLane--;
+            isChangingLanes = true;
+            laneChangeDirection = -1; // moving left
+            targetLaneX = getLanePosition(currentLane);
+          } else if (inputX < -INPUT_MOVEMENT_THRESHOLD && !lastInputState.left && currentLane < 2) {
+            currentLane++;
+            isChangingLanes = true;
+            laneChangeDirection = 1; // moving right
+            targetLaneX = getLanePosition(currentLane);
+          }
+        }
+      });
+
+      lastInputState = currentInputState;
+      targetX = lerp(currentX, targetLaneX, deltaTime);
+
+      // calculate lane change rotation
+      if (isChangingLanes) {
+        const distanceToTarget = Math.abs(targetLaneX - currentX);
+        const totalLaneDistance = Math.abs(LANE_POSITIONS.left - LANE_POSITIONS.right) / 2;
+        const progress = 1 - (distanceToTarget / totalLaneDistance);
+
+        let rotationProgress;
+        if (progress <= 0.5) {
+          rotationProgress = progress * 2;
+        } else {
+          GAME_ELEMENTS.camera.main.setAttribute("x", targetLaneX * 0.5);
+          GAME_ELEMENTS.ui.score.setAttribute("x", targetLaneX * 0.5);
+          GAME_ELEMENTS.ui.countdown.setAttribute("x", targetLaneX * 0.5);
+          rotationProgress = (1 - progress) * 2;
+        }
+
+        const targetRotationOffset = laneChangeDirection * LANE_MAX_CHANGE_ROTATION * rotationProgress;
+        targetRotation = 180 + targetRotationOffset;
+
+        if (Math.abs(currentX - targetLaneX) < INPUT_MOVEMENT_THRESHOLD) {
+          isChangingLanes = false;
+          laneChangeDirection = 0;
+          targetRotation = 180;
+        }
+      } else {
+        targetRotation = 180;
+      }
+
+    } else {
+      movementMap.forEach((value, connectionId) => {
+        const { x, y } = value;
+        if (Math.abs(x) > INPUT_MOVEMENT_THRESHOLD || Math.abs(y) > INPUT_MOVEMENT_THRESHOLD) {
+          hasMovement = true;
+          const inputX = x;
+          const inputY = -y;
+          lastMovementDirection = {
+            x: inputX,
+            y: inputY
+          };
+          if (Math.abs(inputX) > INPUT_MOVEMENT_THRESHOLD || Math.abs(inputY) > INPUT_MOVEMENT_THRESHOLD) {
+            targetRotation = Math.atan2(inputX, inputY) * (180 / Math.PI);
+          }
+        }
+      });
+    }
+
+    targetSpeed = hasMovement ? MOVEMENT_MAX_SPEED : 0;
+    currentSpeed = lerp(currentSpeed, targetSpeed, deltaTime);
+
+    currentVelocityY -= PHYSICS_GRAVITY;
+    currentY += currentVelocityY;
+
+    if (currentY <= PHYSICS_GROUND_Y) {
+      currentY = PHYSICS_GROUND_Y;
+      currentVelocityY = 0;
+      isJumping = false;
+    }
+
+    if (hasMovement || currentSpeed > 0.01) {
+      GAME_ELEMENTS.character.setAttribute('x', targetX);
+      GAME_ELEMENTS.character.setAttribute('z', targetZ);
+      GAME_ELEMENTS.character.setAttribute('ry', targetRotation);
+    }
+    GAME_ELEMENTS.character.setAttribute('y', currentY);
+
+    updateObstacles();
+
+    function setAnimationState(state) {
+      setAnimationWeights(state.idle, state.run, state.air, state.slide);
+    }
+
+    if (isJumping) {
+      setAnimationState(ANIMATIONS_MIX.JUMPING);
+      isControllableWalking = false;
+    } else if (isSliding) {
+      setAnimationState(ANIMATIONS_MIX.SLIDING);
+      isControllableWalking = false;
+    } else if (gameRunning) {
+      setAnimationState(ANIMATIONS_MIX.RUNNING);
+      isControllableWalking = true;
+    } else if (hasMovement) {
+      setAnimationState(ANIMATIONS_MIX.RUNNING);
+      isControllableWalking = true;
+    } else {
+      setAnimationState(ANIMATIONS_MIX.IDLE);
+      isControllableWalking = false;
+    }
+  }, MOVEMENT_UPDATE_INTERVAL);
+</script>

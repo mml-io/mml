@@ -2,6 +2,7 @@ import { MMLColor } from "../color";
 import { AnimationType, AttributeAnimation } from "../elements/AttributeAnimation";
 import { AttributeLerp } from "../elements/AttributeLerp";
 import { MElement } from "../elements/MElement";
+import { Model } from "../elements/Model";
 import { GraphicsAdapter } from "../graphics";
 
 type AttributeTuple<T extends AnimationType> = T extends AnimationType.Number
@@ -97,6 +98,10 @@ function isNumberAttribute(
   return attributeState.type === AnimationType.Number;
 }
 
+type Position = { x: number; y: number; z: number }
+type RotationY = { ry: number }
+type Transform = Position & RotationY
+
 /**
  * The AnimatedAttributeHelper is a utility class that manages the application of attribute animations to an element.
  *
@@ -117,12 +122,129 @@ export class AnimatedAttributeHelper {
   // Track if this helper has ticked at least once.
   private hasTicked = false;
 
+  // Track character controllers for client-side authority
+  private characterControllers: any[] = []
+  private characterControllersInOrder: any[] = []
+
+  private previousImmediateAppliedTransform: { x: number; y: number; z: number; ry: number } | null = null;
+  private previousAnimationState: string | null = null;
+  private appliedCharacterController: any | null = null;
+
   constructor(
     private element: MElement<GraphicsAdapter>,
     private handlers: AttributeHandlerRecord,
   ) {
     this.element = element;
     this.reset();
+  }
+
+  private isCharacterController(child: MElement<GraphicsAdapter>): boolean {
+    return child.tagName?.toLowerCase() === "m-character-controller"
+  }
+
+  private checkForCharacterControllers(): void {
+    if (!this.element.children) return
+
+    let foundNew = false;
+    for (let i = 0; i < this.element.children.length; i++) {
+      const child = this.element.children[i] as MElement<GraphicsAdapter>
+      if (this.isCharacterController(child) && !this.characterControllers.includes(child)) {
+        this.characterControllers.push(child)
+        foundNew = true;
+      }
+    }
+
+    if (foundNew) {
+      this.rebuildCharacterControllersOrder();
+    }
+  }
+
+  private shouldHaveDocumentTimeListener(): boolean {
+    return this.allAnimations.size > 0 ||
+           this.allLerps.size > 0 ||
+           this.characterControllers.length > 0;
+  }
+
+  private ensureDocumentTimeListener(): void {
+    if (this.shouldHaveDocumentTimeListener() && !this.documentTimeTickListener) {
+      this.documentTimeTickListener = this.element.addDocumentTimeTickListener((documentTime) => {
+        this.updateTime(documentTime);
+      });
+    }
+  }
+
+  private cleanupDocumentTimeListener(): void {
+    if (!this.shouldHaveDocumentTimeListener() && this.documentTimeTickListener) {
+      this.documentTimeTickListener.remove();
+      this.documentTimeTickListener = null;
+    }
+  }
+
+  private rebuildCharacterControllersOrder(): void {
+    this.characterControllersInOrder = [];
+    if (!this.element.children) return;
+
+    const elementChildren = Array.from(this.element.children);
+    for (const child of elementChildren) {
+      if (this.characterControllers.includes(child)) {
+        this.characterControllersInOrder.push(child);
+      }
+    }
+  }
+
+  private updateStateForImmediate(attribute: string, value: number): void {
+    const state = this.stateByAttribute[attribute]
+    if (state) {
+      const currentValue = state.attributeState.latestValue
+      if (currentValue !== value) {
+        state.attributeState.latestValue = value
+        state.attributeState.previousValue = value
+        state.attributeState.handler(value)
+      }
+    }
+  }
+
+  private needsImmediateUpdate(currentTransform: Transform): boolean {
+    if (!this.previousImmediateAppliedTransform) {
+      return true;
+    }
+    return (
+      this.previousImmediateAppliedTransform.x !== currentTransform.x ||
+      this.previousImmediateAppliedTransform.y !== currentTransform.y ||
+      this.previousImmediateAppliedTransform.z !== currentTransform.z ||
+      this.previousImmediateAppliedTransform.ry !== currentTransform.ry
+    )
+  }
+
+  private applyImmediateTransform(controller: any): void {
+    this.appliedCharacterController = controller;
+    const position = controller.getClientPredictedPosition()
+    const rotation = controller.getClientPredictedRotation()
+    const currentTransform: Transform = {
+      x: position.x,
+      y: position.y,
+      z: position.z,
+      ry: rotation.ry * 180 / Math.PI
+    }
+    const animationState = controller.getClientAuthoritativeAnimationState()
+
+    if (this.needsImmediateUpdate(currentTransform)) {
+      this.updateStateForImmediate("x", position.x)
+      this.updateStateForImmediate("y", position.y)
+      this.updateStateForImmediate("z", position.z)
+      this.updateStateForImmediate("ry", rotation.ry * 180 / Math.PI)
+      this.previousImmediateAppliedTransform = currentTransform
+    }
+
+    if (this.previousAnimationState === animationState) {
+      return
+    }
+
+    if (Model.isModel(this.element)) {
+      this.element.setLocalStateOverride(animationState);
+    }
+
+    this.previousAnimationState = animationState
   }
 
   public addSideEffectChild(child: MElement<GraphicsAdapter>): void {
@@ -136,11 +258,15 @@ export class AnimatedAttributeHelper {
       if (attr) {
         this.addLerp(child, attr);
       }
+    } else if (this.isCharacterController(child)) {
+      this.addCharacterController(child)
     }
   }
 
   public removeSideEffectChild(child: MElement<GraphicsAdapter>): void {
-    if (AttributeAnimation.isAttributeAnimation(child)) {
+    if (this.isCharacterController(child)) {
+      this.removeCharacterController(child)
+    } else if (AttributeAnimation.isAttributeAnimation(child)) {
       const attr = child.getAnimatedAttributeName();
       if (attr) {
         this.removeAnimation(child, attr);
@@ -162,6 +288,9 @@ export class AnimatedAttributeHelper {
       return;
     }
     state.attributeState.elementValue = newValue;
+    if (state.attributeState.previousValue === null && state.attributeState.elementValue !== null) {
+      state.attributeState.previousValue = state.attributeState.elementValue;
+    }
     if (this.hasTicked) {
       state.attributeState.previousValue = state.attributeState.latestValue;
     } else {
@@ -174,6 +303,7 @@ export class AnimatedAttributeHelper {
     } else {
       state.attributeState.elementValueSetTime = null;
     }
+
     if (state.animationsSet.size > 0 || state.lerpsSet.size > 0) {
       return;
     }
@@ -198,15 +328,11 @@ export class AnimatedAttributeHelper {
       if (!state) {
         return;
       }
-      if (state.animationsSet.size === 0 && state.lerpsSet.size === 0) {
-        // start listening to document time
-        this.documentTimeTickListener = this.element.addDocumentTimeTickListener((documentTime) => {
-          this.updateTime(documentTime);
-        });
-      }
       this.allLerps.add(lerp);
       state.lerpsSet.add(lerp);
       state.lerpsInOrder = [];
+      // start listening to document time
+      this.ensureDocumentTimeListener();
       const elementChildren = Array.from(this.element.children);
       for (const child of elementChildren) {
         if (state.lerpsSet.has(child as AttributeLerp<GraphicsAdapter>)) {
@@ -229,13 +355,7 @@ export class AnimatedAttributeHelper {
         updateIfChangedValue(state, state.attributeState.elementValue);
       }
       this.allLerps.delete(lerp);
-      if (this.allLerps.size === 0) {
-        // stop listening to document time
-        if (this.documentTimeTickListener) {
-          this.documentTimeTickListener.remove();
-          this.documentTimeTickListener = null;
-        }
-      }
+      this.cleanupDocumentTimeListener();
     }
   }
 
@@ -244,15 +364,11 @@ export class AnimatedAttributeHelper {
     if (!state) {
       return;
     }
-    if (state.animationsSet.size === 0 && state.lerpsSet.size === 0) {
-      // start listening to document time
-      this.documentTimeTickListener = this.element.addDocumentTimeTickListener((documentTime) => {
-        this.updateTime(documentTime);
-      });
-    }
     this.allAnimations.add(animation);
     state.animationsSet.add(animation);
     state.animationsInOrder = [];
+    // start listening to document time
+    this.ensureDocumentTimeListener();
     const elementChildren = Array.from(this.element.children);
     for (const child of elementChildren) {
       if (state.animationsSet.has(child as AttributeAnimation<GraphicsAdapter>)) {
@@ -272,17 +388,27 @@ export class AnimatedAttributeHelper {
       updateIfChangedValue(state, state.attributeState.elementValue);
     }
     this.allAnimations.delete(animation);
-    if (this.allAnimations.size === 0) {
-      // stop listening to document time
-      if (this.documentTimeTickListener) {
-        this.documentTimeTickListener.remove();
-        this.documentTimeTickListener = null;
-      }
-    }
+    this.cleanupDocumentTimeListener();
   }
 
   public updateTime(documentTime: number) {
     this.hasTicked = true;
+
+    if (this.characterControllers.length === 0) {
+      this.checkForCharacterControllers()
+    }
+
+    if (this.characterControllersInOrder.length > 0) {
+      const controller = this.characterControllersInOrder[0] as any
+      this.applyImmediateTransform(controller)
+      return
+    } else if (this.appliedCharacterController) {
+      // Undo the applied character controller
+      if (Model.isModel(this.element)) {
+        this.element.setLocalStateOverride(null);
+      }
+      this.appliedCharacterController = null;
+    }
 
     for (const key in this.stateByAttribute) {
       let stale: { value: number | MMLColor; state: number } | null = null;
@@ -320,6 +446,7 @@ export class AnimatedAttributeHelper {
       if (state.lerpsInOrder.length > 0) {
         const lerp = state.lerpsInOrder[0];
         const config = state.attributeState;
+
         if (
           config.elementValueSetTime !== null &&
           config.previousValue !== null &&
@@ -360,6 +487,35 @@ export class AnimatedAttributeHelper {
           }
         }
       }
+    }
+  }
+
+  public addCharacterController(controller: MElement<GraphicsAdapter>): void {
+    if (!this.isCharacterController(controller)) {
+      console.warn('Attempted to add non-character-controller element as character controller');
+      return;
+    }
+
+    if (!this.characterControllers.includes(controller)) {
+      this.characterControllers.push(controller);
+      this.rebuildCharacterControllersOrder();
+      this.ensureDocumentTimeListener();
+    }
+  }
+
+  public removeCharacterController(controller: MElement<GraphicsAdapter>): void {
+    const index = this.characterControllers.indexOf(controller);
+    if (index !== -1) {
+      this.characterControllers.splice(index, 1);
+      this.rebuildCharacterControllersOrder();
+
+      // Clean up animation state if no character controllers remain
+      if (this.characterControllers.length === 0) {
+        this.previousAnimationState = null;
+        this.previousImmediateAppliedTransform = null;
+      }
+
+      this.cleanupDocumentTimeListener();
     }
   }
 

@@ -1,3 +1,3 @@
-import { handleLibraryBuild } from "../../utils/build-library";
+import { handleLibraryBuild } from "../../utils/build-library"
 
-handleLibraryBuild();
+handleLibraryBuild()

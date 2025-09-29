@@ -1,0 +1,79 @@
+<m-group id="scene-group">
+  <!-- Ground plane -->
+  <m-plane x="0" y="0" z="0" width="20" height="20" rx="-90" color="#606060"></m-plane>
+  
+  <!-- Lighting -->
+  <m-light type="point" y="15" intensity="750" cast-shadows="true"></m-light>
+  
+  <!-- Character -->
+  <m-character id="demo-character" x="0" y="0" z="0" state="idle" src="/assets/models/bot.glb">
+    <!-- Animation definitions -->
+    <m-animation id="idle-anim" src="/assets/models/anim_idle.glb" state="idle">
+      <m-attr-lerp attr="weight" duration="150"></m-attr-lerp>
+    </m-animation>
+    <m-animation id="run-anim" src="/assets/models/anim_run.glb" state="run">
+      <m-attr-lerp attr="weight" duration="150"></m-attr-lerp>
+    </m-animation>
+    <m-animation id="air-anim" src="/assets/models/anim_air.glb" state="air">
+      <m-attr-lerp attr="weight" duration="150"></m-attr-lerp>
+    </m-animation>
+  </m-character>
+  
+  <!-- Control buttons -->
+  <m-cube id="idle-button" x="-4" y="1" z="-6" width="2" height="0.8" depth="1" color="rgb(100, 200, 255)">
+    <m-label content="IDLE" font-size="30" y="1"></m-label>
+  </m-cube>
+  
+  <m-cube id="run-button" x="0" y="1" z="-6" width="2" height="0.8" depth="1" color="rgb(255, 200, 100)">
+    <m-label content="RUN" font-size="30" y="1"></m-label>
+  </m-cube>
+  
+  <m-cube id="air-button" x="4" y="1" z="-6" width="2" height="0.8" depth="1" color="rgb(200, 255, 100)">
+    <m-label content="AIR" font-size="30" y="1"></m-label>
+  </m-cube>
+  
+  <!-- State indicator -->
+  <m-label id="state-label" content="Current State: idle" x="0" y="3" z="-5" font-size="30" width="5" height="0.5"></m-label>
+</m-group>
+
+<script>
+  const character = document.getElementById("demo-character");
+  const idleButton = document.getElementById("idle-button");
+  const runButton = document.getElementById("run-button");
+  const airButton = document.getElementById("air-button");
+  const stateLabel = document.getElementById("state-label");
+  
+  // Button colors for active/inactive states
+  const buttonColors = {
+    idle: { active: "rgb(50, 150, 255)", inactive: "rgb(100, 200, 255)" },
+    run: { active: "rgb(255, 150, 50)", inactive: "rgb(255, 200, 100)" },
+    air: { active: "rgb(150, 255, 50)", inactive: "rgb(200, 255, 100)" }
+  };
+  
+  // Update character state and UI
+  function setCharacterState(state) {
+    character.setAttribute("state", state);
+    stateLabel.setAttribute("content", `Current State: ${state}`);
+    
+    // Update button colors
+    idleButton.setAttribute("color", state === "idle" ? buttonColors.idle.active : buttonColors.idle.inactive);
+    runButton.setAttribute("color", state === "run" ? buttonColors.run.active : buttonColors.run.inactive);
+    airButton.setAttribute("color", state === "air" ? buttonColors.air.active : buttonColors.air.inactive);
+    
+    console.log(`Character state changed to: ${state}`);
+  }
+  
+  // Button event listeners
+  idleButton.addEventListener("click", () => setCharacterState("idle"));
+  runButton.addEventListener("click", () => setCharacterState("run"));
+  airButton.addEventListener("click", () => setCharacterState("air"));
+  
+  // Initialize with idle state
+  setCharacterState("idle");
+  
+  console.log("Character State Demo loaded");
+  console.log("Click the buttons to change character animation state:");
+  console.log("- Blue button: IDLE state");
+  console.log("- Orange button: RUN state");
+  console.log("- Green button: AIR state");
+</script>

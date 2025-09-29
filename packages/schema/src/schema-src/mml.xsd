@@ -654,6 +654,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="state" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The animation state of the model. If specified, this affects the weights of child `m-animation` elements. If the `state` attribute of the model matches the `state` attribute of the `m-animation` then the `m-animation` weight is 1, otherwise 0.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="anim" type="URI">
             <xs:annotation>
               <xs:documentation>
@@ -708,6 +715,13 @@
             <xs:annotation>
               <xs:documentation>
                 The source URI of the animation file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="state" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The animation state of a parent `m-model` or `m-character` that this is an animation for. If specified, this affects the weight of the animation based on the parent model's `state` attribute. If the `state` attribute of the parent model matches the `state` attribute of this `m-animation`, then the weight is 1, otherwise 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -777,6 +791,13 @@
             <xs:annotation>
               <xs:documentation>
                 The source URI of the 3D character model file. Supported formats may vary depending on the rendering engine used.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="state" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The animation state of the character. If specified, this affects the weights of child `m-animation` elements. If the `state` attribute of the character matches the `state` attribute of the `m-animation` then the `m-animation` weight is 1, otherwise 0.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

@@ -9,7 +9,7 @@ export abstract class AnimationGraphics<G extends GraphicsAdapter = GraphicsAdap
 
   abstract setSrc(src: string | null, mAnimationProps: MAnimationProps): void;
 
-  abstract setWeight(weight: number, mAnimationProps: MAnimationProps): void;
+  abstract setEffectiveWeight(weight: number, mAnimationProps: MAnimationProps): void;
 
   abstract setRatio(ratio: number | null, mAnimationProps: MAnimationProps): void;
 

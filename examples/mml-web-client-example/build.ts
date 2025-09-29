@@ -1,6 +1,6 @@
 import * as esbuild from "esbuild";
 
-import { rebuildOnDependencyChangesPlugin } from "../../build-utils/rebuildOnDependencyChangesPlugin";
+import { rebuildOnDependencyChangesPlugin } from "../../utils/rebuildOnDependencyChangesPlugin";
 
 const buildMode = "--build";
 const watchMode = "--watch";
@@ -26,7 +26,14 @@ const buildOptions: esbuild.BuildOptions = {
   packages: "external",
   sourcemap: true,
   target: "node14",
-  plugins: mode === watchMode ? [rebuildOnDependencyChangesPlugin] : [],
+  plugins:
+    mode === watchMode
+      ? [
+          rebuildOnDependencyChangesPlugin({
+            startCommand: "npm run start-server",
+          }),
+        ]
+      : [],
 };
 
 switch (mode) {

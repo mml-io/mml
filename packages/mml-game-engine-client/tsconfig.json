@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "tsconfig.tsbuildinfo",
+    "incremental": true,
+    "skipLibCheck": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "preserveConstEnums": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "target": "esnext",
+    "types": ["jest"]
+  },
+  "include": [
+    "./src",
+    "./test"
+  ],
+  "exclude": [
+    "**/node_modules/**"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+    "compilerOptions": {
+        "tsBuildInfoFile": "tsconfig.tsbuildinfo",
+        "incremental": true,
+        "skipLibCheck": true,
+        "downlevelIteration": true,
+        "esModuleInterop": true,
+        "jsx": "react",
+        "lib": [
+            "esnext",
+            "dom"
+        ],
+        "module": "esnext",
+        "moduleResolution": "node",
+        "preserveConstEnums": true,
+        "resolveJsonModule": true,
+        "noImplicitAny": true,
+        "sourceMap": true,
+        "strict": true,
+        "strictNullChecks": true,
+        "target": "es2020",
+        "types": [
+            "node"
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "text:*": ["./src/text.d.ts"],
+            "text:ai-game-creator-math-system/*": ["../systems/math/*"],
+            "text:ai-game-creator-physics-system/*": ["../systems/physics/*"]
+        }
+    },
+    "include": [
+        "./src/**/*"
+    ],
+    "exclude": [
+        "**/build/*"
+    ]
+}
