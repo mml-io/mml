@@ -32,9 +32,7 @@
   "workspaces": [
     "packages/**/*",
     "examples/**/*",
-    "e2e-tests",
-    "integration-tests/**/*",
-    "github-pages-publisher"
+    "e2e-tests"
   ],
   "devDependencies": {
     "@babel/preset-typescript": "7.28.5",
