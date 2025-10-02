@@ -1,5 +1,5 @@
 {
-  "name": "ai-game-creator-physics-system",
+  "name": "mml-game-physics-system",
   "displayName": "Physics System",
   "private": true,
   "version": "0.1.0",
@@ -7,6 +7,14 @@
   "type": "module",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.js",
+      "require": "./build/index.js",
+      "types": "./build/index.d.ts"
+    },
+    "./build/mml.schema.json": "./build/mml.schema.json"
+  },
   "files": [
     "/build"
   ],
@@ -20,8 +28,8 @@
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.18.0-beta.0",
-    "ai-game-creator-math-system": "*",
-    "ai-game-creator-systems-common": "file:../systems-common"
+    "mml-game-math-system": "*",
+    "mml-game-systems-common": "file:../systems-common"
   },
   "devDependencies": {
     "@types/node": "20.19.10",

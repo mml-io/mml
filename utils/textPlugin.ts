@@ -18,14 +18,14 @@ export function textPlugin() {
             basedir: args.resolveDir,
             extensions: [".js", ".jsx", ".ts", ".tsx"],
           });
-          return { path: modulePath, namespace: "text" };
+          return { path: modulePath, watchFiles: [modulePath], namespace: "text" };
         } catch {
           // If not found in node_modules, fallback to resolve as a regular file path
           const filePath = path.isAbsolute(importPath)
             ? importPath
             : path.join(args.resolveDir, importPath);
 
-          return { path: filePath, namespace: "text" };
+          return { path: filePath, watchFiles: [filePath], namespace: "text" };
         }
       });
 

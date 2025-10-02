@@ -17,41 +17,97 @@ if (args.length !== 1) {
 
 const mode = args[0];
 
-const buildOptions: esbuild.BuildOptions = {
+const commonPlugins = [
+  ...(mode === watchMode ? [
+    rebuildOnDependencyChangesPlugin()
+  ] : []),
+  copy({
+    resolveFrom: 'cwd',
+    assets: [
+      { from: ['./src/mml.schema.json'], to: ['./build/mml.schema.json'] },
+    ],
+  }),
+];
+
+// ESM build for module imports
+const esmBuildOptions: esbuild.BuildOptions = {
   entryPoints: ["src/index.ts"],
   write: true,
   bundle: true,
   format: "esm",
   outdir: "build",
-  outbase: "./src",
   platform: "browser",
   sourcemap: true,
   target: "es2020",
-  minify: true,
   plugins: [
-    ...(mode === watchMode ? [
-      rebuildOnDependencyChangesPlugin()
-    ] : []),
+    ...commonPlugins,
+    dtsPlugin({
+      outDir: "build",
+    }),
+    // Only need to copy these files once (skipped in UMD)
     copy({
       resolveFrom: 'cwd',
       assets: [
         { from: ['./src/mml.schema.json'], to: ['./build/mml.schema.json'] },
       ],
     }),
-    dtsPlugin(),
   ],
   external: [],
 };
 
+// UMD build for direct browser usage
+const umdBuildOptions: esbuild.BuildOptions = {
+  entryPoints: ["src/index.ts"],
+  write: true,
+  bundle: true,
+  format: "iife",
+  globalName: "MMLMathSystem",
+  outfile: "build/index.umd.js",
+  platform: "browser",
+  sourcemap: true,
+  target: "es2020",
+  plugins: commonPlugins,
+  external: [],
+};
+
+async function buildAll() {
+  try {
+    await Promise.all([
+      esbuild.build(esmBuildOptions),
+      esbuild.build(umdBuildOptions)
+    ]);
+    console.log("Built both ESM and UMD formats successfully");
+  } catch (error) {
+    console.error("Build failed:", error);
+    process.exit(1);
+  }
+}
+
+async function watchAll() {
+  try {
+    const [esmContext, umdContext] = await Promise.all([
+      esbuild.context(esmBuildOptions),
+      esbuild.context(umdBuildOptions)
+    ]);
+    
+    await Promise.all([
+      esmContext.watch(),
+      umdContext.watch()
+    ]);
+    
+    console.log("Watching both ESM and UMD builds...");
+  } catch (error) {
+    console.error("Watch setup failed:", error);
+    process.exit(1);
+  }
+}
+
 switch (mode) {
   case buildMode:
-    esbuild.build(buildOptions).catch(() => process.exit(1));
+    buildAll();
     break;
   case watchMode:
-    esbuild
-      .context({ ...buildOptions })
-      .then((context) => context.watch())
-      .catch(() => process.exit(1));
+    watchAll();
     break;
   default:
     console.error(helpString);

@@ -1,4 +1,4 @@
-import { SystemPackage } from "ai-game-creator-systems-common";
+import { SystemPackage } from "mml-game-systems-common";
 
 export function generateSystemScripts(
   systemName: string,

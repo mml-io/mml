@@ -137,7 +137,6 @@ export const dtsPlugin = (opts: DTSPluginOpts = {}) =>
 
         const start = Date.now();
         const emit = finalprogram.emit();
-
         let final = "";
         if (emit.emitSkipped || typeof emit.emittedFiles === "undefined") {
           if (l.includes("warning")) console.warn(`Typescript did not emit anything`);

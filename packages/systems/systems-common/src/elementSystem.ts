@@ -41,6 +41,8 @@ export async function initElementSystem(
   (window as any)[systemName] = system;
   window.systems[systemName] = system;
 
+  console.log("Exposed system API globally under namespace", { systemName, system });
+
   // Initialize system
   if (system.init) {
     await system.init(config);
@@ -125,7 +127,7 @@ export async function initElementSystem(
       if (lastTime === null) {
         // First frame - skip step and just set lastTime
         lastTime = currentTime;
-        requestAnimationFrame(updateLoop);
+        setTimeout(updateLoop, 16);
         return;
       }
 
@@ -135,8 +137,8 @@ export async function initElementSystem(
       // Cap deltaTime to prevent huge time steps
       const cappedDeltaTime = Math.min(deltaTime, 1 / 30); // Max 30fps equivalent
       system.step(cappedDeltaTime);
-      requestAnimationFrame(updateLoop);
+      setTimeout(updateLoop, 16);
     };
-    requestAnimationFrame(updateLoop);
+    setTimeout(updateLoop, 16);
   }
 }

@@ -25,8 +25,8 @@
         "baseUrl": ".",
         "paths": {
             "text:*": ["./src/text.d.ts"],
-            "text:ai-game-creator-math-system/*": ["../systems/math/*"],
-            "text:ai-game-creator-physics-system/*": ["../systems/physics/*"]
+            "text:mml-game-math-system/*": ["../systems/math/*"],
+            "text:mml-game-physics-system/*": ["../systems/physics/*"]
         }
     },
     "include": [

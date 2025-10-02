@@ -1,0 +1,23 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./build",
+    "rootDir": "./src",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "src/**/*",
+    "build.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
+  ]
+}

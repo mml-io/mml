@@ -20,6 +20,8 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   }
 
   private mElementGraphics: MElementGraphics<G> | null = null;
+  private cachedScene: IMMLScene<G> | null = null;
+  private cachedRemoteDocument: RemoteDocument<G> | null = null;
 
   constructor() {
     super();
@@ -53,12 +55,16 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   public attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
     // no-op
   }
-
+  
   public getScene(): IMMLScene<G> {
+    if (this.cachedScene) {
+      return this.cachedScene;
+    }
     const remoteDocumentElement = this.getInitiatedRemoteDocument();
     if (remoteDocumentElement) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return (remoteDocumentElement as RemoteDocument<G>).getMMLScene()!;
+      this.cachedScene = (remoteDocumentElement as RemoteDocument<G>).getMMLScene()!;
+      return this.cachedScene;
     }
     const globalScene = getGlobalMMLScene() as IMMLScene<G>;
     if (!globalScene) {
@@ -68,6 +74,9 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   }
 
   public getInitiatedRemoteDocument(): RemoteDocument<G> | null {
+    if (this.cachedRemoteDocument) {
+      return this.cachedRemoteDocument;
+    }
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     for (let parentNode: ParentNode | null = this; parentNode; parentNode = parentNode.parentNode) {
       if (
@@ -75,7 +84,8 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
         (parentNode as RemoteDocument<G>).getMMLScene()
       ) {
         // Return the first remote document that has an explicit scene set
-        return parentNode as RemoteDocument<G>;
+        this.cachedRemoteDocument = parentNode as RemoteDocument<G>;
+        return this.cachedRemoteDocument;
       }
     }
     return null;

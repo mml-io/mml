@@ -16,8 +16,10 @@
   },
   "dependencies": {
     "mml-game-engine-client": "^0.1.0",
-    "ai-game-creator-systems-common": "file:../systems/systems-common",
-    "ai-game-creator-project-bundler": "file:../project-bundler",
+    "mml-game-systems-common": "file:../systems/systems-common",
+    "mml-game-math-system": "file:../systems/math",
+    "mml-game-physics-system": "file:../systems/physics",
+    "mml-game-project-bundler": "file:../project-bundler",
     "@mml-io/networked-dom-document": "0.21.1",
     "@mml-io/networked-dom-web-runner": "0.21.1"
   },

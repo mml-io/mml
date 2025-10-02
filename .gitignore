@@ -6,4 +6,4 @@ build/
 .vscode/
 coverage/
 .nx/
-.tsbuildinfo
+tsconfig.tsbuildinfo

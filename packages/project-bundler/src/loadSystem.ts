@@ -1,6 +1,6 @@
-import mathSystemSchemaJson from "ai-game-creator-math-system/build/mml.schema.json";
-import physicsSystemSchemaJson from "ai-game-creator-physics-system/build/mml.schema.json";
-import { SystemPackage, SystemSchema } from "ai-game-creator-systems-common";
+import mathSystemSchemaJson from "mml-game-math-system/build/mml.schema.json";
+import physicsSystemSchemaJson from "mml-game-physics-system/build/mml.schema.json";
+import { SystemPackage, SystemSchema } from "mml-game-systems-common";
 
 const physicsSystemSchema: SystemSchema = {
   name: "physics",
@@ -39,7 +39,7 @@ const builtInSystems = new Map<
       schema: physicsSystemSchema,
       loadPackage: async () => {
         const physicsSystemModule = (
-          await import("ai-game-creator-physics-system/build/index.js?text")
+          await import("mml-game-physics-system/build/index.js?text")
         ).default;
         const physicsSystemPackage: SystemPackage = {
           schema: physicsSystemSchema,
@@ -54,7 +54,7 @@ const builtInSystems = new Map<
     {
       schema: mathSystemSchema,
       loadPackage: async () => {
-        const mathSystemModule = (await import("ai-game-creator-math-system/build/index.js?text"))
+        const mathSystemModule = (await import("mml-game-math-system/build/index.umd.js?text"))
           .default;
         const mathSystemPackage: SystemPackage = {
           schema: mathSystemSchema,

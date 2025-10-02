@@ -1,0 +1,7 @@
+{
+  "scripts": [
+    {
+      "src": "./utils/game1-helper.js"
+    }
+  ]
+}

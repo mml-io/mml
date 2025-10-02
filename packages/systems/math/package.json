@@ -1,12 +1,21 @@
 {
-  "name": "ai-game-creator-math-system",
+  "name": "mml-game-math-system",
   "displayName": "Math System",
   "private": true,
   "version": "0.1.0",
   "description": "Math utilities for vectors, quaternions, and DOM transforms",
   "type": "module",
-  "main": "./build/index.js",
+  "main": "./build/index.umd.js",
+  "module": "./build/index.js",
   "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.js",
+      "require": "./build/index.umd.js",
+      "types": "./build/index.d.ts"
+    },
+    "./build/mml.schema.json": "./build/mml.schema.json"
+  },
   "files": [
     "/build"
   ],
@@ -19,7 +28,7 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "ai-game-creator-systems-common": "file:../systems-common"
+    "mml-game-systems-common": "file:../systems-common"
   },
   "devDependencies": {
     "@types/node": "20.19.10",

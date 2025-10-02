@@ -1,5 +1,5 @@
 {
-  "name": "ai-game-creator-project-bundler",
+  "name": "mml-game-project-bundler",
   "displayName": "Project Bundler",
   "private": true,
   "version": "0.1.0",
@@ -21,9 +21,9 @@
   "dependencies": {
     "lodash": "4.17.21",
     "esbuild-wasm": "0.25.8",
-    "ai-game-creator-systems-common": "file:../systems/systems-common",
-    "ai-game-creator-physics-system": "file:../systems/physics",
-    "ai-game-creator-math-system": "file:../systems/math"
+    "mml-game-systems-common": "file:../systems/systems-common",
+    "mml-game-physics-system": "file:../systems/physics",
+    "mml-game-math-system": "file:../systems/math"
   },
   "devDependencies": {
     "@types/node": "20.19.10",

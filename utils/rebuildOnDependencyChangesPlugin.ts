@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 import { PluginBuild } from "esbuild";
 import { readFileSync } from "fs";
 import { dirname, resolve } from "path";
+import resolveSync from "resolve";
 import kill from "tree-kill";
 
 let runningProcess: ReturnType<typeof spawn> | undefined;
@@ -16,6 +17,63 @@ export type RebuildOnDependencyChangesPluginOptions = {
 
 // Cache to avoid re-resolving the same dependencies
 const dependencyCache = new Map<string, string[]>();
+
+function resolveWithESMConfig(
+  moduleName: string,
+  resolveDir: string,
+  mainFields: string[] = ["module", "main"],
+  conditions: string[] = ["import", "module", "default"]
+): string | null {
+  try {
+    // Use the resolve package with ESM-aware configuration
+    return resolveSync.sync(moduleName, {
+      basedir: resolveDir,
+      packageFilter: (pkg) => {
+        // Handle conditional exports if they exist
+        if (pkg.exports && typeof pkg.exports === 'object') {
+          // Try to resolve using conditions
+          for (const condition of conditions) {
+            if (pkg.exports[condition]) {
+              pkg.main = pkg.exports[condition];
+              return pkg;
+            }
+          }
+          // If no condition matches, try default export
+          if (pkg.exports['.']) {
+            if (typeof pkg.exports['.'] === 'string') {
+              pkg.main = pkg.exports['.'];
+            } else if (typeof pkg.exports['.'] === 'object') {
+              // Try conditions on the default export
+              for (const condition of conditions) {
+                if (pkg.exports['.'][condition]) {
+                  pkg.main = pkg.exports['.'][condition];
+                  return pkg;
+                }
+              }
+            }
+          }
+        }
+        
+        // Respect mainFields priority order for traditional package.json fields
+        for (const field of mainFields) {
+          if (pkg[field]) {
+            pkg.main = pkg[field];
+            break;
+          }
+        }
+        return pkg;
+      },
+    });
+  } catch {
+    // Fallback to require.resolve if the resolve package fails
+    try {
+      const require = createRequire(resolveDir);
+      return require.resolve(moduleName);
+    } catch {
+      return null;
+    }
+  }
+}
 
 function findPackageJsonPath(startPath: string): string | null {
   let currentPath = startPath;
@@ -100,6 +158,8 @@ function resolveTransitiveDependencies(
     return dependencyCache.get(packagePath)!;
   }
 
+  // For transitive dependency resolution, we still use require.resolve
+  // since we're just tracking files for watching, not affecting the build resolution
   const require = createRequire(resolveDir);
   const watchFiles: string[] = [packagePath];
 
@@ -155,19 +215,24 @@ export const rebuildOnDependencyChangesPlugin = (
   return {
     name: "watch-dependencies",
     setup(build: PluginBuild) {
+      // Extract mainFields and conditions from build options
+      const mainFields = build.initialOptions.mainFields || ["module", "main"];
+      const conditions = build.initialOptions.conditions || ["import", "module", "default"];
+
       build.onResolve({ filter: /.*/ }, (args) => {
         // Only watch files from other packages in this repo (not node_modules)
         if (args.kind === "import-statement") {
           if (!args.path.startsWith(".")) {
-            const require = createRequire(args.resolveDir);
-            let resolved;
-            try {
-              resolved = require.resolve(args.path);
-            } catch {
-              return;
-            }
-            if (!resolved.includes("/")) {
-              // This could be a built-in package
+            // Use custom ESM-aware resolution to respect mainFields and conditions
+            const resolved = resolveWithESMConfig(
+              args.path,
+              args.resolveDir,
+              mainFields,
+              conditions
+            );
+            
+            if (!resolved || !resolved.includes("/")) {
+              // This could be a built-in package or resolution failed
               return;
             }
 
@@ -184,6 +249,7 @@ export const rebuildOnDependencyChangesPlugin = (
                   0,
                   maxDepth,
                 );
+                console.log("Transitive dependencies", transitiveDeps);
                 watchFiles = [...new Set(transitiveDeps)]; // Remove duplicates
               }
 

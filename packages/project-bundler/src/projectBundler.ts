@@ -1,4 +1,4 @@
-import { SystemPackage } from "ai-game-creator-systems-common";
+import { SystemPackage } from "mml-game-systems-common";
 import * as esbuild from "esbuild-wasm";
 import esbuildWasmModuleBase64 from "esbuild-wasm/esbuild.wasm?base64";
 

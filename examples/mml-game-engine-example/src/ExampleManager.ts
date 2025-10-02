@@ -1,5 +1,5 @@
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
-import { ProjectBundler } from "ai-game-creator-project-bundler";
+import { ProjectBundler } from "mml-game-project-bundler";
 
 import { defaultExample, ExampleDefinition, examples } from "./examples";
 

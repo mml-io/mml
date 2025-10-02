@@ -5,8 +5,8 @@ import {
   Quat,
   quaternionToEulerXYZ,
   Vec3,
-} from "ai-game-creator-math-system";
-import { ElementSystem, initElementSystem } from "ai-game-creator-systems-common";
+} from "mml-game-math-system";
+import { ElementSystem, initElementSystem } from "mml-game-systems-common";
 
 export type PhysicsConfig = {
   gravity?: number;
@@ -32,12 +32,18 @@ export type CollisionEvent = {
   normal?: { x: number; y: number; z: number };
 };
 
+type PhysicsElementState = {
+  rigidbody: RAPIER.RigidBody;
+  collider: RAPIER.Collider;
+  element: Element;
+  lerpElement: Element;
+}
+
 class PhysicsSystem implements ElementSystem {
   private world: RAPIER.World | null = null;
-  private elementToBody = new Map<Element, RAPIER.RigidBody>();
-  private bodyToElement = new Map<number, Element>();
-  private colliderToElement = new Map<RAPIER.ColliderHandle, Element>();
-  private elementToCollider = new Map<Element, RAPIER.Collider>();
+  private elementToBody = new Map<Element, PhysicsElementState>();
+  private bodyToElement = new Map<number, PhysicsElementState>();
+  private colliderToElement = new Map<RAPIER.ColliderHandle, PhysicsElementState>();
   private config: Required<PhysicsConfig> = {
     gravity: 9.81,
     enableCollisions: true,
@@ -45,6 +51,7 @@ class PhysicsSystem implements ElementSystem {
     timeStep: 1 / 60,
     debug: false,
   };
+  private lastNetworkTime = 0;
   private isRunning = false;
   private eventQueue: RAPIER.EventQueue | null = null;
   private collisionEventListeners = new Set<(event: CollisionEvent) => void>();
@@ -54,7 +61,10 @@ class PhysicsSystem implements ElementSystem {
 
   private computeWorldTransformFor(element: Element | null) {
     return mathComputeWorldTransformFor(element, {
-      getBodyForElement: (el: Element) => this.elementToBody.get(el) || null,
+      getBodyForElement: (el: Element) => {
+        const state = this.elementToBody.get(el);
+        return state?.rigidbody || null;
+      },
     });
   }
 
@@ -254,11 +264,22 @@ class PhysicsSystem implements ElementSystem {
 
     const collider = this.world.createCollider(colliderDesc, rigidBody);
 
+    const lerpElement = document.createElement("m-attr-lerp");
+    lerpElement.setAttribute("attr", "x,y,z,rx,ry,rz");
+    lerpElement.setAttribute("duration", "100");
+    element.appendChild(lerpElement);
+
+    const state: PhysicsElementState = {
+      rigidbody: rigidBody,
+      collider: collider,
+      element: element,
+      lerpElement: lerpElement,
+    };
+
     // Store mappings
-    this.elementToBody.set(element, rigidBody);
-    this.bodyToElement.set(rigidBody.handle, element);
-    this.elementToCollider.set(element, collider);
-    this.colliderToElement.set(collider.handle, element);
+    this.elementToBody.set(element, state);
+    this.bodyToElement.set(rigidBody.handle, state);
+    this.colliderToElement.set(collider.handle, state);
   }
 
   /**
@@ -270,17 +291,15 @@ class PhysicsSystem implements ElementSystem {
   removeRigidbody(element: Element) {
     if (!this.world) return;
 
-    const rigidBody = this.elementToBody.get(element);
-    if (rigidBody) {
-      const collider = this.elementToCollider.get(element);
-      if (collider !== undefined) {
-        this.colliderToElement.delete(collider.handle);
-        this.elementToCollider.delete(element);
-        this.world?.removeCollider(collider, true);
+    const physicsState = this.elementToBody.get(element);
+    if (physicsState) {
+      if (physicsState.collider !== undefined) {
+        this.colliderToElement.delete(physicsState.collider.handle);
+        this.world?.removeCollider(physicsState.collider, true);
       }
-      this.bodyToElement.delete(rigidBody.handle);
+      this.bodyToElement.delete(physicsState.rigidbody.handle);
       this.elementToBody.delete(element);
-      this.world.removeRigidBody(rigidBody);
+      this.world.removeRigidBody(physicsState.rigidbody);
     }
   }
 
@@ -315,13 +334,13 @@ class PhysicsSystem implements ElementSystem {
 
     if (hit) {
       const hitPoint = ray.pointAt(hit.timeOfImpact);
-      const element = this.bodyToElement.get(hit.collider.parent()?.handle || -1);
+      const physicsState = this.bodyToElement.get(hit.collider.parent()?.handle || -1);
 
       return {
         hit: true,
         distance: hit.timeOfImpact,
         point: { x: hitPoint.x, y: hitPoint.y, z: hitPoint.z },
-        element,
+        element: physicsState?.element,
       };
     }
 
@@ -335,10 +354,10 @@ class PhysicsSystem implements ElementSystem {
    * physics.applyForce(cube, { x: 10, y: 0, z: 0 }); // Push right
    */
   applyForce(element: Element, force: { x: number; y: number; z: number }) {
-    const rigidBody = this.elementToBody.get(element);
-    if (rigidBody) {
+    const physicsState = this.elementToBody.get(element);
+    if (physicsState) {
       const forceVector = new RAPIER.Vector3(force.x, force.y, force.z);
-      rigidBody.addForce(forceVector, true);
+      physicsState.rigidbody.addForce(forceVector, true);
     }
   }
 
@@ -349,10 +368,10 @@ class PhysicsSystem implements ElementSystem {
    * physics.applyImpulse(cube, { x: 5, y: 10, z: 0 }); // Launch up and right
    */
   applyImpulse(element: Element, impulse: { x: number; y: number; z: number }) {
-    const rigidBody = this.elementToBody.get(element);
-    if (rigidBody) {
+    const physicsState = this.elementToBody.get(element);
+    if (physicsState) {
       const impulseVector = new RAPIER.Vector3(impulse.x, impulse.y, impulse.z);
-      rigidBody.applyImpulse(impulseVector, true);
+      physicsState.rigidbody.applyImpulse(impulseVector, true);
     }
   }
 
@@ -363,10 +382,10 @@ class PhysicsSystem implements ElementSystem {
    * physics.setVelocity(cube, { x: 5, y: 0, z: 0 }); // Move right at 5 units/sec
    */
   setVelocity(element: Element, velocity: { x: number; y: number; z: number }) {
-    const rigidBody = this.elementToBody.get(element);
-    if (rigidBody) {
+    const physicsState = this.elementToBody.get(element);
+    if (physicsState) {
       const velocityVector = new RAPIER.Vector3(velocity.x, velocity.y, velocity.z);
-      rigidBody.setLinvel(velocityVector, true);
+      physicsState.rigidbody.setLinvel(velocityVector, true);
     }
   }
 
@@ -380,9 +399,9 @@ class PhysicsSystem implements ElementSystem {
    * }
    */
   getVelocity(element: Element): { x: number; y: number; z: number } | null {
-    const rigidBody = this.elementToBody.get(element);
-    if (rigidBody) {
-      const velocity = rigidBody.linvel();
+    const physicsState = this.elementToBody.get(element);
+    if (physicsState) {
+      const velocity = physicsState.rigidbody.linvel();
       return { x: velocity.x, y: velocity.y, z: velocity.z };
     }
     return null;
@@ -408,14 +427,14 @@ class PhysicsSystem implements ElementSystem {
     if (!this.eventQueue || !this.world) return;
 
     this.eventQueue.drainCollisionEvents((handle1, handle2, started) => {
-      const elementA = this.colliderToElement.get(handle1);
-      const elementB = this.colliderToElement.get(handle2);
+      const physicsStateA = this.colliderToElement.get(handle1);
+      const physicsStateB = this.colliderToElement.get(handle2);
 
-      if (elementA && elementB) {
+      if (physicsStateA && physicsStateB) {
         const event: CollisionEvent = {
           type: started ? "collision_start" : "collision_end",
-          elementA,
-          elementB,
+          elementA: physicsStateA.element,
+          elementB: physicsStateB.element ,
         };
 
         this.collisionEventListeners.forEach((callback) => callback(event));
@@ -451,8 +470,10 @@ class PhysicsSystem implements ElementSystem {
         this.processCollisionEvents();
       }
 
-      // Update element positions based on physics bodies
-      this.updateElementPositions();
+      if ((document.timeline.currentTime! as number) > this.lastNetworkTime + 100) {
+        this.lastNetworkTime = document.timeline.currentTime as number;
+        this.updateElementPositions();
+      }
 
       // Emit debug buffers to any registered consumer
       if (this.config.debug) {
@@ -484,16 +505,16 @@ class PhysicsSystem implements ElementSystem {
     // Create array to track invalid bodies for cleanup
     const invalidBodies: Element[] = [];
 
-    this.elementToBody.forEach((rigidBody, element) => {
+    this.elementToBody.forEach((physicsState, element) => {
       try {
         // Check if rigid body is still valid
-        if (!rigidBody.isValid()) {
+        if (!physicsState.rigidbody.isValid()) {
           invalidBodies.push(element);
           return;
         }
 
-        const translation = rigidBody.translation();
-        const rotation = rigidBody.rotation();
+        const translation = physicsState.rigidbody.translation();
+        const rotation = physicsState.rigidbody.rotation();
 
         // Validate translation values
         if (!isFinite(translation.x) || !isFinite(translation.y) || !isFinite(translation.z)) {
@@ -544,9 +565,9 @@ class PhysicsSystem implements ElementSystem {
     // Clean up invalid bodies
     invalidBodies.forEach((element) => {
       console.warn("Removing invalid rigid body for element:", element);
-      const rigidBody = this.elementToBody.get(element);
-      if (rigidBody) {
-        this.bodyToElement.delete(rigidBody.handle);
+      const physicsState = this.elementToBody.get(element);
+      if (physicsState) {
+        this.bodyToElement.delete(physicsState.rigidbody.handle);
       }
       this.elementToBody.delete(element);
     });
@@ -567,25 +588,23 @@ class PhysicsSystem implements ElementSystem {
       }
 
       for (const el of elementsToCheck) {
-        const body = this.elementToBody.get(el);
-        if (!body) {
+        const physicsState = this.elementToBody.get(el);
+        if (!physicsState) {
           continue;
         }
 
         // Remove mappings first
         this.elementToBody.delete(el);
-        this.bodyToElement.delete(body.handle);
-        const colliderHandle = this.elementToCollider.get(el);
-        if (colliderHandle !== undefined) {
-          this.colliderToElement.delete(colliderHandle.handle);
-          this.elementToCollider.delete(el);
-          this.world?.removeCollider(colliderHandle, true);
+        this.bodyToElement.delete(physicsState.rigidbody.handle);
+        if (physicsState.collider !== undefined) {
+          this.colliderToElement.delete(physicsState.collider.handle);
+          this.world?.removeCollider(physicsState.collider, true);
         }
 
         // Remove from the world if still valid
-        if (this.world && body.isValid()) {
+        if (this.world && physicsState.rigidbody.isValid()) {
           try {
-            this.world.removeRigidBody(body);
+            this.world.removeRigidBody(physicsState.rigidbody);
           } catch (e) {
             console.warn("Failed to remove rigid body for element:", el, e);
           }
@@ -613,7 +632,6 @@ class PhysicsSystem implements ElementSystem {
       this.elementToBody.clear();
       this.bodyToElement.clear();
       this.colliderToElement.clear();
-      this.elementToCollider.clear();
 
       // If world exists, remove all bodies
       if (this.world) {
@@ -636,13 +654,12 @@ class PhysicsSystem implements ElementSystem {
     this.elementToBody.clear();
     this.bodyToElement.clear();
     this.colliderToElement.clear();
-    this.elementToCollider.clear();
     this.collisionEventListeners.clear();
   }
 
   // Generic interface method for SystemsManager compatibility
   processElement(element: Element, attributes: Array<{ attributeName: string; value: any }>) {
-    if (this.elementToCollider.has(element)) {
+    if (this.elementToBody.has(element)) {
       return;
     }
 

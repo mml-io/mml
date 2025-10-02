@@ -21,13 +21,15 @@ const buildOptions: esbuild.BuildOptions = {
     entryPoints: ["src/index.ts"],
     write: true,
     bundle: true,
-    format: "esm",
+    format: "iife",
     outdir: "build",
     outbase: "./src",
     platform: "browser",
     // Remove packages: "external" to bundle everything
     sourcemap: true,
     target: "es2020",
+    mainFields: ["module", "main"],
+    conditions: ["import", "module", "default"],
     plugins: [
         ...(mode === watchMode ? [
             rebuildOnDependencyChangesPlugin()

@@ -35,9 +35,12 @@
     "e2e-tests"
   ],
   "devDependencies": {
-    "@babel/preset-typescript": "7.28.5",
-    "@eslint/js": "9.39.2",
-    "@swc/core": "1.15.10",
+    "@babel/preset-typescript": "7.27.1",
+    "@eslint/js": "9.31.0",
+    "@swc/core": "1.12.14",
+    "@swc/jest": "0.2.39",
+    "@types/express-ws": "^3.0.5",
+    "@types/jest": "29.5.13",
     "@types/jju": "1.4.5",
     "@types/node": "25.0.9",
     "@types/resolve": "1.20.6",
@@ -51,6 +54,8 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-simple-import-sort": "12.1.1",
+    "express-ws": "^5.0.2",
+    "jest": "29.7.0",
     "jju": "1.4.0",
     "lerna": "9.0.3",
     "prettier": "3.8.0",
@@ -58,11 +63,9 @@
     "resolve": "1.22.11",
     "tmp": "0.2.5",
     "ts-node": "10.9.2",
-    "turbo": "2.7.5",
-    "typescript": "5.9.3",
-    "tsx": "4.21.0",
-    "typescript-eslint": "8.53.1",
-    "vitest": "4.0.17"
+    "tsx": "4.20.3",
+    "typescript": "5.5.4",
+    "typescript-eslint": "8.36.0"
   },
   "optionalDependencies": {
     "@nrwl/nx-linux-x64-gnu": "15.9.3"

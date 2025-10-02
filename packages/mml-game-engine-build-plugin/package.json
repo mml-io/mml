@@ -1,0 +1,28 @@
+{
+  "name": "@mml-io/mml-game-engine-build-plugin",
+  "version": "0.21.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "type": "module",
+  "files": [
+    "/build"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "pre:build": "npm run build",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "lint": "echo 'Linting disabled'",
+    "lint-fix": "echo 'Linting disabled'"
+  },
+  "dependencies": {
+    "esbuild": "0.20.2"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.10"
+  }
+}
+

@@ -1,0 +1,22 @@
+<m-light y="10" z="5" x="5" intensity="500" type="point"></m-light>
+
+<m-cube 
+  id="clickable-cube" 
+  color="blue" 
+  width="2" 
+  height="2" 
+  depth="2" 
+  x="0"
+  y="1"
+  onclick="this.setAttribute('color', '#' + Math.floor(Math.random() * 16777215).toString(16))">
+</m-cube>
+
+<m-label 
+  content="Click the cube to change its color!" 
+  y="3" 
+  width="5">
+</m-label>
+
+<script>
+  console.log("Example Game 1 MML script loaded");
+</script>
