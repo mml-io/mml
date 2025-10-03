@@ -1,5 +1,6 @@
 import mathSystemSchemaJson from "mml-game-math-system/build/mml.schema.json";
 import physicsSystemSchemaJson from "mml-game-physics-system/build/mml.schema.json";
+import navigationSystemSchemaJson from "mml-game-navigation-system/build/mml.schema.json";
 import { SystemPackage, SystemSchema } from "mml-game-systems-common";
 
 const physicsSystemSchema: SystemSchema = {
@@ -22,9 +23,9 @@ const mathSystemSchema: SystemSchema = {
   attributes: mathSystemSchemaJson.attributes,
 };
 
-export type BuiltInSystemNames = "physics" | "math";
+export type BuiltInSystemNames = "physics" | "math" | "navigation";
 
-export const builtInSystemNameSet: Set<BuiltInSystemNames> = new Set(["physics", "math"]);
+export const builtInSystemNameSet: Set<BuiltInSystemNames> = new Set(["physics", "math", "navigation"]);
 
 const builtInSystems = new Map<
   BuiltInSystemNames,
@@ -61,6 +62,38 @@ const builtInSystems = new Map<
           module: mathSystemModule,
         };
         return mathSystemPackage;
+      },
+    },
+  ],
+  [
+    "navigation",
+    {
+      schema: {
+        name: "navigation",
+        displayName: "Navigation System",
+        description: "Navigation system using recast-navigation for pathfinding",
+        script: "index.js",
+        version: "0.1.0",
+        schema: navigationSystemSchemaJson.schema,
+        attributes: navigationSystemSchemaJson.attributes,
+      },
+      loadPackage: async () => {
+        const navigationSystemModule = (
+          await import("mml-game-navigation-system/build/index.js?text")
+        ).default;
+        const navigationSystemPackage: SystemPackage = {
+          schema: {
+            name: "navigation",
+            displayName: "Navigation System",
+            description: "Navigation system using recast-navigation for pathfinding",
+            script: "index.js",
+            version: "0.1.0",
+            schema: navigationSystemSchemaJson.schema,
+            attributes: navigationSystemSchemaJson.attributes,
+          },
+          module: navigationSystemModule,
+        };
+        return navigationSystemPackage;
       },
     },
   ],

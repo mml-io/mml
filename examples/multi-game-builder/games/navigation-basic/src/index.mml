@@ -1,0 +1,28 @@
+<m-light y="50" x="-50" z="50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="50" z="50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="-50" z="-50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="50" z="-50" intensity="10000" type="point"></m-light>
+
+<m-cube id="floor" kinematic="true" width="60" depth="60" y="0" opacity="1"></m-cube>
+
+
+<script>
+  const agent = document.createElement('m-cube');
+  agent.setAttribute('id', 'agent');
+  agent.setAttribute('color', '#6a0dad');
+  agent.setAttribute('height', '2');
+  agent.setAttribute('y', '1.5');
+  agent.setAttribute('x', '0');
+  agent.setAttribute('z', '0');
+  agent.setAttribute('nav-agent', 'true');
+  agent.setAttribute('nav-speed', '5')
+  document.body.appendChild(agent);
+
+  const moveAgent = async () => {
+      // todo fix the systems/user code integration so user code is only executed once all systems have initialized
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      navigation.goTo(agent, { x: 18, y: 1, z: 18 });
+      console.log("goto")
+  };
+  moveAgent();
+</script>

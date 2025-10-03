@@ -1,0 +1,83 @@
+{
+  "schema": {
+    "name": "navigation",
+    "displayName": "Navigation System",
+    "description": "Provides navmesh generation and simple navigation APIs",
+    "version": "0.1.0",
+    "type": "object",
+    "properties": {
+      "debug": {
+        "type": "boolean",
+        "description": "Show NavMesh debug lines in the scene",
+        "default": false
+      },
+      "debugDrawMode": {
+        "type": "string",
+        "description": "Nav debug draw mode",
+        "default": "navmesh",
+        "enum": [
+          "navmesh",
+          "heightfieldWalkable",
+          "heightfieldSolid",
+          "compactHeightfieldSolid",
+          "compactHeightfieldRegions",
+          "compactHeightfieldDistance",
+          "navmeshBVTree",
+          "staticGeometry"
+        ]
+      },
+      "tileSize": {
+        "type": "integer",
+        "description": "Navmesh tile size",
+        "default": 16,
+        "minimum": 0,
+        "maximum": 256
+      },
+      "cellSize": {
+        "type": "number",
+        "description": "Recast cell size",
+        "default": 0.2,
+        "minimum": 0.05,
+        "maximum": 2
+      },
+      "cellHeight": {
+        "type": "number",
+        "description": "Recast cell height",
+        "default": 0.2,
+        "minimum": 0.05,
+        "maximum": 2
+      },
+      "agentHeight": {
+        "type": "number",
+        "description": "Agent height",
+        "default": 2
+      },
+      "agentRadius": {
+        "type": "number",
+        "description": "Agent radius",
+        "default": 0.5
+      },
+      "agentMaxClimb": {
+        "type": "number",
+        "description": "Agent max climb height",
+        "default": 2
+      },
+      "agentMaxSlope": {
+        "type": "number",
+        "description": "Agent max slope degrees",
+        "default": 60
+      }
+    },
+    "additionalProperties": false
+  },
+  "attributes": [
+    "nav-obstacle",
+    "nav-agent",
+    "nav-speed",
+    "nav-goal-x",
+    "nav-goal-y",
+    "nav-goal-z",
+    "nav-waypoints"
+  ]
+}
+

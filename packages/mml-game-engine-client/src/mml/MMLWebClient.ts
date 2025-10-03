@@ -4,6 +4,7 @@ import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/netw
 import { FakeWebsocket } from "@mml-io/networked-dom-web-runner";
 
 import { PhysicsDebugOverlay } from "../physics/PhysicsDebugOverlay";
+import { NavMeshDebugOverlay } from "../navigation/NavMeshDebugOverlay";
 import { ControlManager, ControlManagerConfig } from "./control-manager";
 import { GameThreeJSAdapter, GameThreeJSAdapterControlsType } from "./GameThreeJSAdapter";
 import { NonInteractiveMMLScene } from "./NonInteractiveMMLScene";
@@ -17,6 +18,7 @@ export class MMLWebClient {
   mScene: MMLScene<GameThreeJSAdapter> | NonInteractiveMMLScene;
   private controlManager?: ControlManager;
   private debugOverlay?: PhysicsDebugOverlay;
+  private navmeshOverlay?: NavMeshDebugOverlay;
   private debugMessageHandler?: (event: MessageEvent) => void;
 
   private connectedState: {
@@ -78,6 +80,7 @@ export class MMLWebClient {
     try {
       const threeScene = graphicsAdapter.getThreeScene();
       this.debugOverlay = new PhysicsDebugOverlay(threeScene);
+      this.navmeshOverlay = new NavMeshDebugOverlay(threeScene);
       this.debugMessageHandler = (event: MessageEvent) => {
         let data: any = event.data;
         if (typeof data === "string") {
@@ -92,6 +95,11 @@ export class MMLWebClient {
           const verts = new Float32Array(data.vertices);
           const cols = new Float32Array(data.colors);
           this.debugOverlay?.updateBuffers(verts, cols);
+          event.stopImmediatePropagation();
+        } else if (data.type === "navmesh-debug-buffers") {
+          const verts = new Float32Array(data.vertices);
+          const cols = new Float32Array(data.colors);
+          this.navmeshOverlay?.updateBuffers(verts, cols);
           event.stopImmediatePropagation();
         }
       };
@@ -156,6 +164,10 @@ export class MMLWebClient {
     if (this.debugOverlay) {
       this.debugOverlay.dispose();
       this.debugOverlay = undefined;
+    }
+    if (this.navmeshOverlay) {
+      this.navmeshOverlay.dispose();
+      this.navmeshOverlay = undefined;
     }
     this.disconnect();
 

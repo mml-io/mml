@@ -1,0 +1,42 @@
+{
+  "name": "mml-game-navigation-system",
+  "displayName": "Navigation System",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Navigation system using recast-navigation-js for pathfinding and navmesh",
+  "type": "module",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.js",
+      "require": "./build/index.js",
+      "types": "./build/index.d.ts"
+    },
+    "./build/mml.schema.json": "./build/mml.schema.json"
+  },
+  "files": [
+    "/build"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "pre:build": "npm run build",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "mml-game-math-system": "*",
+    "mml-game-systems-common": "file:../systems-common",
+    "recast-navigation": "^0.43.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.10",
+    "esbuild": "^0.20.2",
+    "esbuild-plugin-copy": "^2.1.1",
+    "tsx": "^4.8.2",
+    "typescript": "^5.4.5"
+  }
+}
+
