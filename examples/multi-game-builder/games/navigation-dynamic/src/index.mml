@@ -1,0 +1,87 @@
+<m-light y="50" x="-50" z="50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="50" z="50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="-50" z="-50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="50" z="-50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="0" z="0" intensity="10000" type="point"></m-light>
+
+<m-cube id="floor" kinematic="true" width="60" depth="60" y="0" opacity="1"></m-cube>
+
+
+<script>
+  const agent = document.createElement('m-cylinder');
+  agent.setAttribute('id', 'agent');
+  agent.setAttribute('color', '#6a0dad');
+  agent.setAttribute('height', '2');
+  agent.setAttribute('y', '1.5');
+  agent.setAttribute('x', '0');
+  agent.setAttribute('z', '0');
+  agent.setAttribute('nav-agent', 'true');
+  // Patrol between two waypoints along the X axis
+  agent.setAttribute('nav-waypoints', '-18,1,0; 18,1,0');
+  agent.setAttribute('nav-speed', '6');
+  document.body.appendChild(agent);
+
+  // Build a corridor using static walls baked into the navmesh
+  const wallTop = document.createElement('m-cube');
+  wallTop.setAttribute('width', '60');
+  wallTop.setAttribute('height', '3');
+  wallTop.setAttribute('depth', '1');
+  wallTop.setAttribute('y', '1.5');
+  wallTop.setAttribute('z', '2.2');
+  document.body.appendChild(wallTop);
+
+  const wallBottom = document.createElement('m-cube');
+  wallBottom.setAttribute('width', '60');
+  wallBottom.setAttribute('height', '3');
+  wallBottom.setAttribute('depth', '1');
+  wallBottom.setAttribute('y', '1.5');
+  wallBottom.setAttribute('z', '-2.2');
+  document.body.appendChild(wallBottom);
+
+  // A sliding door that dynamically blocks/unblocks the corridor.
+  // Marked with nav-obstacle so it becomes a temporary obstacle via TileCache
+  const door = document.createElement('m-cube');
+  door.setAttribute('id', 'door');
+  door.setAttribute('color', '#cc3333');
+  door.setAttribute('width', '2');
+  door.setAttribute('height', '3');
+  door.setAttribute('depth', '1');
+  door.setAttribute('x', '0');
+  door.setAttribute('y', '1.5');
+  door.setAttribute('z', '0');
+  door.setAttribute('nav-obstacle', 'true');
+  document.body.appendChild(door);
+
+  // Toggle the door between blocking the corridor (z≈0)
+  // and moved out of the way (z≈3). This will cause
+  // the navmesh TileCache to update and agents to repath.
+  let open = false;
+  //setInterval(() => {
+  //  open = !open;
+   // door.setAttribute('z', open ? '3' : '0');
+  //}, 1800);
+
+  // A second door that moves up and down slowly using an attribute animation
+  const liftDoor = document.createElement('m-cube');
+  liftDoor.setAttribute('id', 'lift-door');
+  liftDoor.setAttribute('color', '#3388cc');
+  liftDoor.setAttribute('width', '2');
+  liftDoor.setAttribute('height', '3');
+  liftDoor.setAttribute('depth', '2');
+  liftDoor.setAttribute('x', '-12');
+  liftDoor.setAttribute('y', '1.5');
+  liftDoor.setAttribute('z', '0');
+  liftDoor.setAttribute('nav-obstacle', 'true');
+  const anim = document.createElement('m-attr-anim');
+  anim.setAttribute('attr', 'y');
+  // Ensure the box intersects the navmesh when low, and clears it when high
+  anim.setAttribute('start', '0.5');
+  anim.setAttribute('end', '4.0');
+  anim.setAttribute('easing', 'easeInOutQuint');
+  anim.setAttribute('ping-pong', 'true');
+  anim.setAttribute('loop', 'true');
+  anim.setAttribute('start-time', '0');
+  anim.setAttribute('duration', '6000');
+  liftDoor.appendChild(anim);
+  document.body.appendChild(liftDoor);
+</script>

@@ -1,5 +1,5 @@
 import { ElementSystem, initElementSystem } from "mml-game-systems-common";
-import { computeWorldTransformFor as mathComputeWorldTransformFor, Vec3 } from "mml-game-math-system";
+import { computeWorldTransformFor as mathComputeWorldTransformFor, Vec3, quaternionToEulerXYZ } from "mml-game-math-system";
 import {
   init as recastInit,
   NavMesh,
@@ -35,6 +35,8 @@ type AgentState = {
   element: Element;
   agentId: number;
   speed: number;
+  radius: number;
+  height: number;
 };
 
 class NavigationSystem implements ElementSystem {
@@ -47,7 +49,17 @@ class NavigationSystem implements ElementSystem {
   private debugColors: Float32Array | null = null;
   private lastNetworkTime = 0;
   private elementToAgent = new Map<Element, AgentState>();
-  private obstacles = new Map<Element, unknown>();
+  private obstacles = new Map<
+    Element,
+    {
+      obstacle: unknown;
+      lastCenter: { x: number; y: number; z: number };
+      lastHalfExtents: { x: number; y: number; z: number };
+      lastAngle: number;
+    }
+  >();
+  private tileCacheDirty = false;
+  private lastDebugRebuildMs = 0;
   private agentWaypoints = new Map<number, Array<{ x: number; y: number; z: number }>>();
   private agentCurrentTarget = new Map<number, { x: number; y: number; z: number }>();
   private agentDebugLastLog = new Map<number, number>();
@@ -71,6 +83,42 @@ class NavigationSystem implements ElementSystem {
     });
   }
 
+  private deriveAgentDimensionsFromElement(element: Element): { radius: number; height: number } {
+    const tag = element.tagName.toLowerCase();
+    const world = this.computeWorldTransformFor(element);
+
+    if (tag === "m-cube" || tag === "m-plane") {
+      const width = parseFloat(element.getAttribute("width") || (tag === "m-plane" ? "10" : "1"));
+      const height = parseFloat(element.getAttribute("height") || "1");
+      const depth = parseFloat(element.getAttribute("depth") || (tag === "m-plane" ? "10" : "1"));
+      const worldWidth = width * world.scale.x;
+      const worldDepth = depth * world.scale.z;
+      const worldHeight = height * world.scale.y;
+      const radius = Math.max(0.1, Math.min(worldWidth, worldDepth) / 2);
+      return { radius, height: Math.max(0.5, worldHeight) };
+    }
+
+    if (tag === "m-cylinder") {
+      const radius = parseFloat(element.getAttribute("radius") || "0.5");
+      const height = parseFloat(element.getAttribute("height") || "1");
+      console.log("[navigation] agent:dimensions", { radius, height });
+      const worldRadius = radius * Math.max(world.scale.x, world.scale.z);
+      const worldHeight = height * world.scale.y;
+      console.log("radius", worldRadius, "height", worldHeight);
+      return { radius: worldRadius*2, height: worldHeight };
+    }
+
+    if (tag === "m-sphere") {
+      const r = parseFloat(element.getAttribute("radius") || "0.5");
+      const worldRadius = r * Math.max(world.scale.x, world.scale.y, world.scale.z);
+      const height = worldRadius * 2;
+      return { radius: Math.max(0.1, worldRadius), height: Math.max(0.5, height) };
+    }
+
+    // Fallback to configured defaults
+    return { radius: this.config.agentRadius, height: this.config.agentHeight };
+  }
+
   async init(config: NavigationConfig = {}) {
     console.log("[navigation] init:start", config);
     await recastInit();
@@ -90,9 +138,8 @@ class NavigationSystem implements ElementSystem {
     let vertexOffset = 0;
 
     elements.forEach((element) => {
-      // Only include elements explicitly marked as nav obstacles
-      if (element.hasAttribute("nav-agent")) {
-        console.log("[navigation] obstacle:skipped", element);
+      // Skip agents and explicitly dynamic nav obstacles; they are handled via TileCache
+      if (element.hasAttribute("nav-agent") || element.hasAttribute("nav-obstacle")) {
         return;
       }
 
@@ -223,7 +270,14 @@ class NavigationSystem implements ElementSystem {
 
     this.navMesh = navMesh;
     this.navQuery = new NavMeshQuery(navMesh);
-    this.crowd = new Crowd(navMesh, { maxAgents: 128, maxAgentRadius: this.config.agentRadius });
+    // Derive a max agent radius across declared agents
+    const agentElements = Array.from(document.querySelectorAll("[nav-agent]"));
+    let maxDerivedRadius = this.config.agentRadius;
+    for (const el of agentElements) {
+      const dims = this.deriveAgentDimensionsFromElement(el);
+      if (dims.radius > maxDerivedRadius) maxDerivedRadius = dims.radius;
+    }
+    this.crowd = new Crowd(navMesh, { maxAgents: 128, maxAgentRadius: maxDerivedRadius });
     this.tileCache = tileCache as any;
     this.generatorIntermediates = intermediates as any;
 
@@ -239,18 +293,19 @@ class NavigationSystem implements ElementSystem {
       const pos = { x: world.position.x, y: world.position.y, z: world.position.z };
       const speedAttr = parseFloat(el.getAttribute("nav-speed") || "");
       const maxSpeed = isFinite(speedAttr) && speedAttr > 0 ? speedAttr : 3.5;
+      const dims = this.deriveAgentDimensionsFromElement(el);
       const params = {
-        radius: this.config.agentRadius,
-        height: this.config.agentHeight,
+        radius: dims.radius,
+        height: dims.height,
         maxAcceleration: 8.0,
         maxSpeed,
-        collisionQueryRange: this.config.agentRadius * 12.0,
-        pathOptimizationRange: this.config.agentRadius * 30.0,
+        collisionQueryRange: dims.radius * 12.0,
+        pathOptimizationRange: dims.radius * 30.0,
         separationWeight: 0.5,
       } as any;
       const agent = this.crowd!.addAgent(pos, params) as any;
       const agentId: number = agent.agentIndex;
-      this.elementToAgent.set(el, { element: el, agentId, speed: maxSpeed });
+      this.elementToAgent.set(el, { element: el, agentId, speed: maxSpeed, radius: dims.radius, height: dims.height });
       console.log("[navigation] agent:readded", { agentId, pos });
       this.setupPatrolIfDeclared(el, agentId);
     });
@@ -266,6 +321,67 @@ class NavigationSystem implements ElementSystem {
     // Advance crowd simulation at ~60Hz
     const dt = Math.max(1 / 240, Math.min(_deltaTime || 1 / 60, 1 / 30));
     this.crowd.update(dt);
+
+    // Update dynamic obstacles bound to elements with `nav-obstacle`
+    if (this.tileCache && this.navMesh) {
+      let anyChanged = false;
+      this.obstacles.forEach((state, element) => {
+        const box = this.computeBoxObstacleFromElement(element);
+        if (!box) return;
+        const { center, halfExtents, angle } = box;
+        const moved =
+          Math.abs(center.x - state.lastCenter.x) > 1e-3 ||
+          Math.abs(center.y - state.lastCenter.y) > 1e-3 ||
+          Math.abs(center.z - state.lastCenter.z) > 1e-3;
+        const resized =
+          Math.abs(halfExtents.x - state.lastHalfExtents.x) > 1e-3 ||
+          Math.abs(halfExtents.y - state.lastHalfExtents.y) > 1e-3 ||
+          Math.abs(halfExtents.z - state.lastHalfExtents.z) > 1e-3;
+        const rotated = Math.abs(angle - state.lastAngle) > 1e-3;
+        if (moved || resized || rotated) {
+          try {
+            (this.tileCache as any).removeObstacle(state.obstacle);
+          } catch {}
+          const res = (this.tileCache as any).addBoxObstacle(center, halfExtents, angle);
+          const newObstacle = res?.obstacle ?? null;
+          if (newObstacle) {
+            state.obstacle = newObstacle;
+            state.lastCenter = center;
+            state.lastHalfExtents = halfExtents;
+            state.lastAngle = angle;
+            anyChanged = true;
+          }
+        }
+      });
+      if (anyChanged) {
+        this.tileCacheDirty = true;
+      }
+      // Drain TileCache requests quickly if many animation ticks occur
+      let updateRes = (this.tileCache as any).update(this.navMesh);
+      if (anyChanged && updateRes && !updateRes.upToDate) {
+        for (let i = 0; i < 4; i++) {
+          updateRes = (this.tileCache as any).update(this.navMesh);
+          if (!updateRes || updateRes.upToDate) break;
+        }
+      }
+      if (this.tileCacheDirty && updateRes && updateRes.upToDate) {
+        // Re-issue current move targets so Detour recomputes paths on the updated mesh
+        this.elementToAgent.forEach((state) => {
+          const tgt = this.agentCurrentTarget.get(state.agentId);
+          if (!tgt) return;
+          const ag = this.crowd!.getAgent(state.agentId);
+          ag?.requestMoveTarget(tgt);
+        });
+      }
+      if (this.config.debug && this.tileCacheDirty) {
+        const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+        if (nowMs - this.lastDebugRebuildMs > 300) {
+          this.lastDebugRebuildMs = nowMs;
+          this.buildDebugBuffers();
+          this.tileCacheDirty = false;
+        }
+      }
+    }
 
     // Sync agent positions to DOM (position only)
     this.elementToAgent.forEach((state) => {
@@ -445,8 +561,32 @@ class NavigationSystem implements ElementSystem {
   processElement(element: Element, attributes: Array<{ attributeName: string; value: any }>) {
     if (!this.navMesh) return;
     const isAgent = attributes.some((a) => a.attributeName === "nav-agent");
+    const isObstacle = attributes.some((a) => a.attributeName === "nav-obstacle");
     const speedAttr = attributes.find((a) => a.attributeName === "nav-speed");
     const waypointsAttr = attributes.find((a) => a.attributeName === "nav-waypoints");
+
+    // Dynamic obstacle support using TileCache temporary obstacles
+    if (isObstacle && this.tileCache) {
+      if (!this.obstacles.has(element)) {
+        const box = this.computeBoxObstacleFromElement(element);
+        if (box) {
+          const res = (this.tileCache as any).addBoxObstacle(box.center, box.halfExtents, box.angle);
+          const obstacle = res?.obstacle ?? null;
+          if (obstacle) {
+            this.obstacles.set(element, {
+              obstacle,
+              lastCenter: box.center,
+              lastHalfExtents: box.halfExtents,
+              lastAngle: box.angle,
+            });
+            (this.tileCache as any).update(this.navMesh);
+            this.tileCacheDirty = true;
+          }
+        }
+      }
+      // Obstacles don't fall through to agent handling
+      if (!isAgent) return;
+    }
 
     if (!isAgent) {
       return;
@@ -457,18 +597,20 @@ class NavigationSystem implements ElementSystem {
       const pos = { x: world.position.x, y: world.position.y, z: world.position.z };
       const parsedSpeed = typeof speedAttr?.value === "number" ? speedAttr!.value as number : parseFloat(String(speedAttr?.value ?? ""));
       const maxSpeed = isFinite(parsedSpeed) && parsedSpeed > 0 ? parsedSpeed : 3.5;
+      const dims = this.deriveAgentDimensionsFromElement(element);
+      console.log("[navigation] agent:dimensions", { radius: dims.radius, height: dims.height });
       const params = {
-        radius: this.config.agentRadius,
-        height: this.config.agentHeight,
+        radius: dims.radius,
+        height: dims.height,
         maxAcceleration: 8.0,
         maxSpeed,
-        collisionQueryRange: this.config.agentRadius * 12.0,
-        pathOptimizationRange: this.config.agentRadius * 30.0,
+        collisionQueryRange: dims.radius * 12.0,
+        pathOptimizationRange: dims.radius * 30.0,
         separationWeight: 0.5,
       } as any;
       const agent = this.crowd!.addAgent(pos, params) as any;
       const agentId: number = agent.agentIndex;
-      this.elementToAgent.set(element, { element, agentId, speed: maxSpeed });
+      this.elementToAgent.set(element, { element, agentId, speed: maxSpeed, radius: dims.radius, height: dims.height });
       console.log("[navigation] agent:added", { agentId, pos });
 
       // If waypoints are defined declaratively, start patrol without window APIs
@@ -527,6 +669,15 @@ class NavigationSystem implements ElementSystem {
       this.agentWaypointIndex.delete(agent.agentId);
       this.agentWaitUntil.delete(agent.agentId);
     }
+    const obs = this.obstacles.get(element);
+    if (obs && this.tileCache && this.navMesh) {
+      try {
+        (this.tileCache as any).removeObstacle(obs.obstacle);
+      } catch {}
+      (this.tileCache as any).update(this.navMesh);
+      this.obstacles.delete(element);
+      this.tileCacheDirty = true;
+    }
   }
 
   // Public API (simplified): no dynamic repath/intervals
@@ -544,6 +695,54 @@ class NavigationSystem implements ElementSystem {
     ag?.requestMoveTarget(result.point);
     this.agentCurrentTarget.set(agentState.agentId, result.point);
     console.log("[navigation] goTo", { agentId: agentState.agentId, target: result.point });
+  }
+
+  private computeBoxObstacleFromElement(element: Element):
+    | { center: { x: number; y: number; z: number }; halfExtents: { x: number; y: number; z: number }; angle: number }
+    | null {
+    const tag = element.tagName.toLowerCase();
+    const world = this.computeWorldTransformFor(element);
+    const euler = quaternionToEulerXYZ(world.rotation);
+    const yaw = euler.y; // radians
+
+    // Defaults
+    let width = 1;
+    let height = 1;
+    let depth = 1;
+
+    if (tag === "m-cube" || tag === "m-plane") {
+      width = parseFloat(element.getAttribute("width") || (tag === "m-plane" ? "10" : "1"));
+      height = parseFloat(element.getAttribute("height") || "1");
+      depth = parseFloat(element.getAttribute("depth") || (tag === "m-plane" ? "10" : "1"));
+    } else if (tag === "m-cylinder") {
+      const radius = parseFloat(element.getAttribute("radius") || "0.5");
+      height = parseFloat(element.getAttribute("height") || "1");
+      const rx = radius * 2;
+      width = rx;
+      depth = rx;
+    } else {
+      // Unsupported element type for obstacle box
+      return null;
+    }
+
+    const halfExtents = {
+      x: (width * world.scale.x) / 2,
+      y: (height * world.scale.y) / 2,
+      z: (depth * world.scale.z) / 2,
+    };
+    // Prefer live world position from MML runtime (animated), fallback to attribute-derived world
+    let center = { x: world.position.x, y: world.position.y, z: world.position.z };
+    try {
+      const anyEl: any = element as any;
+      if (anyEl && typeof anyEl.getWorldPosition === "function") {
+        const p = anyEl.getWorldPosition();
+        if (p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z)) {
+          center = { x: p.x, y: p.y, z: p.z };
+        }
+      }
+    } catch {}
+
+    return { center, halfExtents, angle: yaw };
   }
 
   addBoxObstacle(center: { x: number; y: number; z: number }, halfExtents: { x: number; y: number; z: number }, angleRad = 0) {
