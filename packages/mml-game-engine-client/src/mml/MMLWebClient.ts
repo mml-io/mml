@@ -113,19 +113,6 @@ export class MMLWebClient {
     } catch (e) {
       console.warn("Failed to initialize physics debug overlay:", e);
     }
-
-    // Create document wrapper to contain MML source
-    const remoteDocumentWrapper = new RemoteDocumentWrapper(
-      `${location.protocol}//${location.host}`,
-      this.windowTarget,
-      this.mScene,
-      (element, event) => {
-        this.connectedState?.domWebsocket?.handleEvent(element, event);
-      },
-    );
-    this.remoteDocumentWrapper = remoteDocumentWrapper;
-    this.remoteDocumentHolder = remoteDocumentWrapper.remoteDocument;
-    this.remoteHolderElement.append(this.remoteDocumentHolder);
     this.fitContainer();
 
     if (this.interactive) {
@@ -213,6 +200,20 @@ export class MMLWebClient {
   }
 
   private connectToWebSocket(url: string, factory: (url: string) => WebSocket) {
+    console.log("🔗 Connecting to web socket...", url);
+    // Create document wrapper to contain MML source
+    const remoteDocumentWrapper = new RemoteDocumentWrapper(
+      url,
+      this.windowTarget,
+      this.mScene,
+      (element, event) => {
+        this.connectedState?.domWebsocket?.handleEvent(element, event);
+      },
+    );
+    this.remoteDocumentWrapper = remoteDocumentWrapper;
+    this.remoteDocumentHolder = remoteDocumentWrapper.remoteDocument;
+    this.remoteHolderElement.append(this.remoteDocumentHolder);
+
     return new NetworkedDOMWebsocket(
       url,
       factory,
@@ -244,7 +245,7 @@ export class MMLWebClient {
     };
   }
 
-  public connectToDocument(document?: NetworkedDOM | EditableNetworkedDOM) {
+  public connectToDocument(document: NetworkedDOM | EditableNetworkedDOM, url: string) {
     if (!document) return;
     if (this.disposed) {
       console.warn("MMLWebClient already disposed", this);
@@ -257,7 +258,7 @@ export class MMLWebClient {
     const fakeWebsocket = new FakeWebsocket("networked-dom-v0.1");
 
     const domWebsocket = this.connectToWebSocket(
-      `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`,
+      url,
       () => {
         setTimeout(() => {
           document.addWebSocket(fakeWebsocket.serverSideWebsocket as unknown as WebSocket);

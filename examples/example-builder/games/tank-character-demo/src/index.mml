@@ -1,0 +1,686 @@
+<m-group id="scene-group">
+  <!-- Environment lighting -->
+  <m-light type="point" y="20" intensity="1500" cast-shadows="true"></m-light>
+  
+  <!-- Tank positioned at origin -->
+  <m-group id="tank-group" x="0" y="0" z="10" rx="0" ry="90" rz="0">
+    <m-model
+      id="tank-body"
+      src="https://mml.mgz.me/assets/playground/tron_tank_body.glb"
+      collide="false"
+    >
+      <m-light y="30" intensity="3000" color="#77aaff"></m-light>
+    </m-model>
+
+    <m-model
+      id="tank-turret"
+      src="https://mml.mgz.me/assets/playground/tron_tank_turret.glb"
+      x="0" y="0" z="0"
+      rx="0" ry="0" rz="0"
+      collide="false"
+    >
+      <m-attr-lerp attr="x,y,z,rx,ry,rz" duration="100"></m-attr-lerp>
+      <m-camera
+        id="tank-camera"
+        x="7" y="3.5" z="0"
+        rx="0" ry="90" rz="0"
+        fov="70"
+        visible-to="-1"
+      >
+        <m-attr-lerp attr="all" duration="200"></m-attr-lerp>
+      </m-camera>
+      <m-light
+        y="10"
+        x="-5"
+        rz="-90"
+        intensity="140000"
+        distance="500"
+        type="spotlight"
+        color="#77aaff"
+      ></m-light>
+      <m-cube id="turret-back" x="+2" y="1.3" z="1.28" rx="0" ry="0" rz="0" width="0.3" height="0.3" depth="0.3" color="red"></m-cube>
+      <m-cube id="turret-front" x="-3.8" y="1.25" z="1.28" rx="0" ry="0" rz="0" width="0.3" height="0.3" depth="0.3" color="red"></m-cube>
+    </m-model>
+
+    <m-attr-lerp attr="x,y,z,rx,ry,rz" duration="100"></m-attr-lerp>
+  </m-group>
+
+  <!-- Tank Entry Indicators will be created dynamically per player -->
+
+  <!-- Environment tunnel -->
+  <m-model
+    id="tunnel"
+    sx="0.5" sy="0.5" sz="0.5"
+    ry="180"
+    z="50"
+    src="https://mml.mgz.me/assets/playground/tron_tunnel.glb"
+  >
+  </m-model>
+
+  <!-- Some obstacles/targets -->
+  <m-cube x="15" y="1" z="15" width="2" height="2" depth="2" color="#ff7777"></m-cube>
+  <m-cube x="-15" y="1" z="-15" width="2" height="2" depth="2" color="#7777ff"></m-cube>
+  <m-cube x="20" y="1" z="-10" width="2" height="2" depth="2" color="#77ff77"></m-cube>
+</m-group>
+
+<!-- Tank Controls (initially hidden, visible when in tank) -->
+<m-control id="movement-control" type="axis" axis="0,1" hint="Move Tank" visible-to="-1"></m-control>
+<m-control id="turret-control" type="axis" axis="2" hint="Aim Turret" visible-to="-1"></m-control>
+<m-control id="fire-control" type="button" button="0" hint="Fire" visible-to="-1"></m-control>
+<m-control id="aim-control" type="button" button="1" hint="Zoom Aim" visible-to="-1"></m-control>
+
+<!-- Tank Entry/Exit Control (always visible) -->
+<m-control id="tank-entry-control" type="button" button="2" hint="Enter/Exit Tank"></m-control>
+
+<script>
+  // Tank battle code (from original tank-battle.html)
+  const bulletSpeed = 3.0;
+  const fireRateTicks = 2;
+  const shootingSoundDuration = 1000;
+  const cameraDefaultFOV = 70;
+  const cameraAimFOV = 30;
+  let currentFOV = 70;
+
+  let isAiming = false;
+  let lastUpdateTime = Date.now();
+
+  const movementControl = document.getElementById("movement-control");
+  const turretControl = document.getElementById("turret-control");
+  const fireControl = document.getElementById("fire-control");
+  const aimControl = document.getElementById("aim-control");
+  const tankEntryControl = document.getElementById("tank-entry-control");
+
+  const tankCamera = document.getElementById("tank-camera");
+
+  const movementMap = new Map();
+  const turretMap = new Map();
+  const fireMap = new Map();
+  const entryMap = new Map();
+
+  const tankGroup = document.getElementById("tank-group");
+  const tankTurret = document.getElementById("tank-turret");
+  const turretBack = document.getElementById("turret-back");
+  const turretFront = document.getElementById("turret-front");
+  const worldGroup = document.getElementById("scene-group");
+
+  const bullets = [];
+  let bulletIdCounter = 0;
+  let lastFireTick = -999;
+
+  // Player management system
+  class Player {
+    constructor(connectionId) {
+      this.connectionId = connectionId;
+      this.state = "character"; // "character" or "tank"
+      this.lastModeSwitch = 0; // Timestamp of last mode switch
+      this.position = { x: 0, y: 0, z: 0 };
+      
+      // Create character elements
+      this.character = {
+        model: this.createPlayerModel(),
+        controller: null,
+        idleAnim: null,
+        runAnim: null,
+        airAnim: null
+      };
+      
+      // Create tank entry indicator for this player
+      this.entryIndicator = this.createEntryIndicator();
+      
+      this.setupCharacter();
+    }
+    
+    createPlayerModel() {
+      const player = document.createElement("m-character");
+      player.setAttribute("src", "/assets/models/bot.glb");
+      player.dataset.connectionId = this.connectionId.toString();
+      this.assignAnimationLerp(player, 100, "x,y,z,ry");
+      player.setAttribute("state", "idle");
+      this.setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
+      worldGroup.appendChild(player);
+      return player;
+    }
+    
+    createEntryIndicator() {
+      const indicator = document.createElement("m-cube");
+      indicator.setAttribute("width", "1");
+      indicator.setAttribute("height", "0.2");
+      indicator.setAttribute("depth", "1");
+      indicator.setAttribute("color", "#00ff00");
+      indicator.setAttribute("visible-to", this.connectionId.toString());
+      indicator.setAttribute("visible", "false");
+      
+      const animation = document.createElement("m-attr-anim");
+      animation.setAttribute("start", "0");
+      animation.setAttribute("end", "360");
+      animation.setAttribute("duration", "2000");
+      animation.setAttribute("loop", "true");
+      animation.setAttribute("attr", "ry");
+      indicator.appendChild(animation);
+      
+      worldGroup.appendChild(indicator);
+      return indicator;
+    }
+    
+    setupCharacter() {
+      this.character.controller = this.assignPlayerController(this.character.model, this.connectionId);
+      this.character.idleAnim = this.assignPlayerAnimation(this.character.model, "idle");
+      this.character.runAnim = this.assignPlayerAnimation(this.character.model, "run");
+      this.character.airAnim = this.assignPlayerAnimation(this.character.model, "air");
+      
+      // Add character-move event listener
+      this.character.model.addEventListener("character-move", (event) => {
+        const { position, rotation, state } = event.detail;
+        
+        this.setTransform(this.character.model, position.x, position.y, position.z, rotation.ry);
+        this.character.model.setAttribute("state", state);
+        
+        // Update player position for proximity check
+        this.position = position;
+        this.updateTankEntry();
+      });
+    }
+    
+    assignAnimationLerp(element, duration, attrs) {
+      const lerp = document.createElement("m-attr-lerp");
+      lerp.setAttribute("attr", attrs);
+      lerp.setAttribute("duration", duration);
+      element.appendChild(lerp);
+    }
+    
+    setTransform(element, x, y, z, ry) {
+      ["x", "y", "z"].forEach(attr => element.setAttribute(attr, attr === "x" ? x : attr === "y" ? y : z));
+      element.setAttribute("ry", ry);
+    }
+    
+    assignPlayerController(player, id) {
+      const controller = document.createElement("m-character-controller");
+      controller.setAttribute("visible-to", id.toString());
+      player.appendChild(controller);
+      return controller;
+    }
+    
+    assignPlayerAnimation(player, state) {
+      const animation = document.createElement("m-animation");
+      animation.setAttribute("src", `/assets/models/anim_${state}.glb`);
+      animation.setAttribute("state", state);
+      this.assignAnimationLerp(animation, 150, "weight");
+      player.appendChild(animation);
+      return animation;
+    }
+    
+    canSwitchMode() {
+      const now = Date.now();
+      return (now - this.lastModeSwitch) >= modeSwitchCooldown;
+    }
+    
+    updateTankEntry() {
+      if (this.state === "tank") {
+        this.entryIndicator.setAttribute("visible", "false");
+        return;
+      }
+      
+      const tankPos = getTankPosition();
+      const distance = calculateDistance(this.position, tankPos);
+      
+      // Show indicator only if tank is available and player is close enough
+      if (distance <= tankEntryDistance && !currentTankPlayer) {
+        // Position indicator above the tank
+        this.entryIndicator.setAttribute("x", tankPos.x);
+        this.entryIndicator.setAttribute("y", tankPos.y + 3);
+        this.entryIndicator.setAttribute("z", tankPos.z);
+        this.entryIndicator.setAttribute("visible", "true");
+      } else {
+        this.entryIndicator.setAttribute("visible", "false");
+      }
+    }
+    
+    enterTank() {
+      // Check cooldown
+      if (!this.canSwitchMode()) {
+        console.log(`Player ${this.connectionId} must wait before switching modes`);
+        return false;
+      }
+
+      // Check if tank is already occupied
+      if (currentTankPlayer) {
+        console.log("Tank is already occupied");
+        return false;
+      }
+      
+      // Set player state to tank and update cooldown
+      this.state = "tank";
+      this.lastModeSwitch = Date.now();
+      currentTankPlayer = this.connectionId;
+      
+      // Remove character controller for this player
+      if (this.character.controller) {
+        this.character.model.removeChild(this.character.controller);
+        this.character.controller = null;
+      }
+      // Hide character model
+      this.character.model.setAttribute("visible", "false");
+
+      // Show tank controls to this player
+      movementControl.setAttribute("visible-to", this.connectionId.toString());
+      turretControl.setAttribute("visible-to", this.connectionId.toString());
+      fireControl.setAttribute("visible-to", this.connectionId.toString());
+      aimControl.setAttribute("visible-to", this.connectionId.toString());
+      
+      // Enable tank camera
+      tankCamera.setAttribute("visible-to", this.connectionId.toString());
+      
+      // Hide entry indicator
+      this.entryIndicator.setAttribute("visible", "false");
+      
+      console.log(`Player ${this.connectionId} entered tank mode`);
+      return true;
+    }
+    
+    exitTank() {
+      // Check cooldown
+      if (!this.canSwitchMode()) {
+        console.log(`Player ${this.connectionId} must wait before switching modes`);
+        return false;
+      }
+      
+      // Get tank position for character placement
+      const tankPos = getTankPosition();
+      
+      // Set player state back to character and update cooldown
+      this.state = "character";
+      this.lastModeSwitch = Date.now();
+      currentTankPlayer = null;
+      
+      // Hide tank controls
+      movementControl.setAttribute("visible-to", "-1");
+      turretControl.setAttribute("visible-to", "-1");
+      fireControl.setAttribute("visible-to", "-1");
+      aimControl.setAttribute("visible-to", "-1");
+      
+      // Hide tank camera
+      tankCamera.setAttribute("visible-to", "-1");
+      
+      // Show character model
+      this.character.model.setAttribute("visible", "true");
+      
+      // Position character next to tank (to the side based on tank rotation)
+      const tankRotation = parseFloat(tankGroup.getAttribute("ry") || "0");
+      const tankRad = (tankRotation * Math.PI) / 180;
+      const exitDistance = 4; // Distance from tank center
+      
+      // Position to the right side of the tank relative to its orientation
+      const rightX = Math.cos(tankRad) * exitDistance;
+      const rightZ = -Math.sin(tankRad) * exitDistance;
+      
+      const exitX = tankPos.x + rightX;
+      const exitZ = tankPos.z + rightZ;
+      this.setTransform(this.character.model, exitX, 0, exitZ, 0);
+
+      // Recreate character controller for this player
+      this.character.controller = this.assignPlayerController(this.character.model, this.connectionId);
+      
+      // Update the player's position data
+      this.position = { x: exitX, y: 0, z: exitZ };
+      
+      // Update tank entry indicator for all players
+      connectedPlayers.forEach(player => player.updateTankEntry());
+      
+      console.log(`Player ${this.connectionId} exited tank mode`);
+      return true;
+    }
+    
+    destroy() {
+      // If this player was in the tank, exit them first
+      if (currentTankPlayer === this.connectionId) {
+        this.exitTank();
+      }
+      
+      worldGroup.removeChild(this.character.model);
+      worldGroup.removeChild(this.entryIndicator);
+    }
+  }
+
+  // Player management
+  const connectedPlayers = new Map();
+  const tankEntryDistance = 3.0;
+  const modeSwitchCooldown = 1000; // 1 second cooldown in milliseconds
+  let currentTankPlayer = null; // Only one player can be in tank at a time
+
+  function spawnPlayer(connectionId) {
+    if (connectedPlayers.has(connectionId)) return;
+    
+    const player = new Player(connectionId);
+    connectedPlayers.set(connectionId, player);
+  }
+
+  function removePlayer(connectionId) {
+    if (!connectedPlayers.has(connectionId)) return;
+    
+    const player = connectedPlayers.get(connectionId);
+    player.destroy();
+    connectedPlayers.delete(connectionId);
+  }
+
+  // Tank proximity and entry system
+  function getTankPosition() {
+    return {
+      x: parseFloat(tankGroup.getAttribute("x") || "0"),
+      y: parseFloat(tankGroup.getAttribute("y") || "0"),
+      z: parseFloat(tankGroup.getAttribute("z") || "0")
+    };
+  }
+
+  function calculateDistance(pos1, pos2) {
+    const dx = pos1.x - pos2.x;
+    const dy = pos1.y - pos2.y;
+    const dz = pos1.z - pos2.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
+
+  // Tank entry control
+  tankEntryControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    entryMap.set(connectionId, value);
+    
+    if (value > 0) {
+      const player = connectedPlayers.get(connectionId);
+      if (!player) return;
+      
+      if (player.state === "character") {
+        const tankPos = getTankPosition();
+        const distance = calculateDistance(player.position, tankPos);
+        
+        if (distance <= tankEntryDistance) {
+          player.enterTank();
+        }
+      } else if (player.state === "tank" && currentTankPlayer === connectionId) {
+        player.exitTank();
+      }
+    }
+  });
+
+  // Tank control handlers
+  movementControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    movementMap.set(connectionId, value);
+  });
+
+  turretControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    turretMap.set(connectionId, value);
+  });
+
+  fireControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    fireMap.set(connectionId, value);
+
+    // Only allow the current tank player to fire
+    if (value > 0 && connectionId === currentTankPlayer && (tickCounter - lastFireTick) >= fireRateTicks) {
+      shoot();
+      lastFireTick = tickCounter;
+    }
+  });
+
+  aimControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    // Only allow the current tank player to aim
+    if (connectionId === currentTankPlayer) {
+      isAiming = value > 0;
+    }
+  });
+
+  // Tank utility functions from original tank-battle.html
+  const sfxArray = [];
+
+  function createSFXArray() {
+    for (let i = 0; i < 20; i++) {
+      const sfx = document.createElement("m-audio");
+      sfx.setAttribute("src", "https://mml.mgz.me/assets/playground/sfx_tank_shoot.mp3");
+      sfx.setAttribute("loop", "false");
+      sfx.setAttribute("volume", "0");
+      sfx.setAttribute("start-time", -2000);
+      sfx.setAttribute("end-time", 0);
+      worldGroup.appendChild(sfx);
+      sfxArray.push(sfx);
+    }
+  }
+  createSFXArray();
+
+  function lerp(current, target, deltaTime) {
+    const rate = 0.5;
+    const lerpFactor = rate * (deltaTime / 100);
+    return current + (target - current) * lerpFactor;
+  }
+
+  function calculateWorldPosition(element) {
+    const transforms = [];
+    let currentElement = element;
+
+    while (currentElement && currentElement.tagName && currentElement.tagName.startsWith('M-')) {
+      transforms.push({
+        x: parseFloat(currentElement.getAttribute("x") || "0"),
+        y: parseFloat(currentElement.getAttribute("y") || "0"),
+        z: parseFloat(currentElement.getAttribute("z") || "0"),
+        rx: parseFloat(currentElement.getAttribute("rx") || "0"),
+        ry: parseFloat(currentElement.getAttribute("ry") || "0"),
+        rz: parseFloat(currentElement.getAttribute("rz") || "0"),
+        sx: parseFloat(currentElement.getAttribute("sx") || "1"),
+        sy: parseFloat(currentElement.getAttribute("sy") || "1"),
+        sz: parseFloat(currentElement.getAttribute("sz") || "1")
+      });
+      currentElement = currentElement.parentElement;
+    }
+
+    let pos = {
+      x: transforms[0].x,
+      y: transforms[0].y,
+      z: transforms[0].z
+    };
+
+    let rot = {
+      x: transforms[0].rx,
+      y: transforms[0].ry,
+      z: transforms[0].rz
+    };
+
+    for (let i = 1; i < transforms.length; i++) {
+      const parent = transforms[i];
+
+      if (parent.ry !== 0) {
+        const ryRad = (parent.ry * Math.PI) / 180;
+        const cosY = Math.cos(ryRad);
+        const sinY = Math.sin(ryRad);
+        const newX = pos.x * cosY + pos.z * sinY;
+        const newZ = -pos.x * sinY + pos.z * cosY;
+        pos.x = newX;
+        pos.z = newZ;
+      }
+
+      if (parent.rx !== 0) {
+        const rxRad = (parent.rx * Math.PI) / 180;
+        const cosX = Math.cos(rxRad);
+        const sinX = Math.sin(rxRad);
+        const newY = pos.y * cosX - pos.z * sinX;
+        const newZ = pos.y * sinX + pos.z * cosX;
+        pos.y = newY;
+        pos.z = newZ;
+      }
+
+      if (parent.rz !== 0) {
+        const rzRad = (parent.rz * Math.PI) / 180;
+        const cosZ = Math.cos(rzRad);
+        const sinZ = Math.sin(rzRad);
+        const newX = pos.x * cosZ - pos.y * sinZ;
+        const newY = pos.x * sinZ + pos.y * cosZ;
+        pos.x = newX;
+        pos.y = newY;
+      }
+
+      rot.x += parent.rx;
+      rot.y += parent.ry;
+      rot.z += parent.rz;
+
+      pos.x *= parent.sx;
+      pos.y *= parent.sy;
+      pos.z *= parent.sz;
+
+      pos.x += parent.x;
+      pos.y += parent.y;
+      pos.z += parent.z;
+    }
+
+    return {
+      position: pos,
+      rotation: rot
+    };
+  }
+
+  function shoot() {
+    const turretBackTransform = calculateWorldPosition(turretBack);
+    const turretFrontTransform = calculateWorldPosition(turretFront);
+
+    const trajectory = {
+      x: turretFrontTransform.position.x - turretBackTransform.position.x,
+      y: turretFrontTransform.position.y - turretBackTransform.position.y,
+      z: turretFrontTransform.position.z - turretBackTransform.position.z
+    };
+
+    const trajectoryLength = Math.sqrt(trajectory.x * trajectory.x + trajectory.y * trajectory.y + trajectory.z * trajectory.z);
+    const normalizedTrajectory = {
+      x: (trajectory.x / trajectoryLength) * bulletSpeed,
+      y: (trajectory.y / trajectoryLength) * bulletSpeed,
+      z: (trajectory.z / trajectoryLength) * bulletSpeed
+    };
+
+    const bullet = document.createElement("m-cube");
+    bullet.id = `bullet-${bulletIdCounter++}`;
+    bullet.setAttribute("width", "0.3");
+    bullet.setAttribute("height", "0.3");
+    bullet.setAttribute("depth", "0.3");
+    bullet.setAttribute("color", "#ffffff");
+
+    const lerpElement = document.createElement("m-attr-lerp");
+    lerpElement.setAttribute("attr", "x,y,z");
+    lerpElement.setAttribute("duration", "100");
+    bullet.appendChild(lerpElement);
+
+    bullet.setAttribute("x", turretFrontTransform.position.x);
+    bullet.setAttribute("y", turretFrontTransform.position.y);
+    bullet.setAttribute("z", turretFrontTransform.position.z);
+
+    worldGroup.appendChild(bullet);
+
+    const sfx = sfxArray.shift();
+    sfx.setAttribute("volume", "1");
+    sfx.setAttribute("start-time", document.timeline.currentTime);
+    sfx.setAttribute("end-time", document.timeline.currentTime + shootingSoundDuration);
+    setTimeout(() => {
+      sfx.setAttribute("volume", "0");
+      sfxArray.push(sfx);
+    }, shootingSoundDuration);
+
+    bullets.push({
+      element: bullet,
+      trajectory: normalizedTrajectory,
+      ticksLived: 0,
+      maxTicks: 200,
+      currentPos: {
+        x: turretFrontTransform.position.x,
+        y: turretFrontTransform.position.y,
+        z: turretFrontTransform.position.z
+      }
+    });
+
+    console.log(`Bullet fired! Trajectory: x=${normalizedTrajectory.x.toFixed(2)} y=${normalizedTrajectory.y.toFixed(2)} z=${normalizedTrajectory.z.toFixed(2)}`);
+  }
+
+  let tickCounter = 0;
+
+  // Main game loop (from original tank-battle.html)
+  setInterval(() => {
+    const currentTime = Date.now();
+    const deltaTime = currentTime - lastUpdateTime;
+    lastUpdateTime = currentTime;
+    tickCounter++;
+
+    if (currentTankPlayer) {
+      // Tank movement logic - only process input from the player in the tank
+      const tankX = parseFloat(tankGroup.getAttribute("x"));
+      const tankY = parseFloat(tankGroup.getAttribute("y"));
+      const tankZ = parseFloat(tankGroup.getAttribute("z"));
+      const tankRY = parseFloat(tankGroup.getAttribute("ry"));
+      const turretRY = parseFloat(tankTurret.getAttribute("ry"));
+
+      const rad = (tankRY * Math.PI) / 180;
+      const speed = 0.75;
+
+      const forwardX = Math.sin(rad) * speed;
+      const forwardZ = Math.cos(rad) * speed;
+      const rightX = Math.cos(rad) * speed;
+      const rightZ = -Math.sin(rad) * speed;
+
+      // Only process input from the current tank player
+      const movementValue = movementMap.get(currentTankPlayer);
+      if (movementValue) {
+        if (movementValue.x > 0) {
+          tankGroup.setAttribute("ry", tankRY - speed * Math.PI * 2)
+        }
+        if (movementValue.x < 0) {
+          tankGroup.setAttribute("ry", tankRY + speed * Math.PI * 2)
+        }
+        if (movementValue.y > 0) {
+          tankGroup.setAttribute("x", tankX - rightX);
+          tankGroup.setAttribute("z", tankZ - rightZ);
+        }
+        if (movementValue.y < 0) {
+          tankGroup.setAttribute("x", tankX + rightX);
+          tankGroup.setAttribute("z", tankZ + rightZ);
+        }
+      }
+
+      const turretValue = turretMap.get(currentTankPlayer);
+      if (turretValue) {
+        if (turretValue > 0) {
+          tankTurret.setAttribute("ry", turretRY - speed * Math.PI * 2);
+        } else if (turretValue < 0) {
+          tankTurret.setAttribute("ry", turretRY + speed * Math.PI * 2);
+        }
+      }
+
+      // Update camera FOV for aiming
+      currentFOV = lerp(currentFOV, isAiming ? cameraAimFOV : cameraDefaultFOV, deltaTime);
+      tankCamera.setAttribute("fov", currentFOV);
+    }
+
+    // Update bullets (always runs)
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const bulletData = bullets[i];
+      bulletData.ticksLived++;
+
+      if (bulletData.ticksLived >= bulletData.maxTicks) {
+        while (bulletData.element.firstChild) {
+          bulletData.element.removeChild(bulletData.element.firstChild);
+        }
+        if (bulletData.element.parentNode) {
+          bulletData.element.parentNode.removeChild(bulletData.element);
+        }
+        bullets.splice(i, 1);
+        continue;
+      }
+
+      bulletData.currentPos.x += bulletData.trajectory.x;
+      bulletData.currentPos.y += bulletData.trajectory.y;
+      bulletData.currentPos.z += bulletData.trajectory.z;
+
+      bulletData.element.setAttribute("x", bulletData.currentPos.x);
+      bulletData.element.setAttribute("y", bulletData.currentPos.y);
+      bulletData.element.setAttribute("z", bulletData.currentPos.z);
+    }
+  }, 100);
+
+  // Event listeners for player connection
+  window.addEventListener("connected", (event) => spawnPlayer(event.detail.connectionId));
+  window.addEventListener("disconnected", (event) => removePlayer(event.detail.connectionId));
+</script>

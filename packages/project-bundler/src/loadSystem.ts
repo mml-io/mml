@@ -39,9 +39,8 @@ const builtInSystems = new Map<
     {
       schema: physicsSystemSchema,
       loadPackage: async () => {
-        const physicsSystemModule = (
-          await import("mml-game-physics-system/build/index.js?text")
-        ).default;
+        const physicsSystemModule = (await import("mml-game-physics-system/build/index.js?text"))
+          .default;
         const physicsSystemPackage: SystemPackage = {
           schema: physicsSystemSchema,
           module: physicsSystemModule,

@@ -1,0 +1,15 @@
+<m-light y="50" x="-50" z="50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="50" z="50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="-50" z="-50" intensity="10000" type="point"></m-light>
+<m-light y="50" x="50" z="-50" intensity="10000" type="point"></m-light>
+
+<m-cube id="floor" kinematic="true" width="120" rigidbody="true" height="120" rx="90" y="0" opacity="1"></m-cube>
+
+<m-group id="tower" x="1" y="0" z="0">
+</m-group>
+<m-cylinder id="launch-button" color="red" radius="0.5" height="0.2" y="0.5" x="-3" z="0"
+  onclick="launchSphere()"></m-cylinder>
+<m-cylinder id="autofire-button" color="orange" radius="0.5" height="0.2" y="0.5" x="-6" z="0"
+  onclick="toggleAutofire()"></m-cylinder>
+<m-cylinder id="reset-button" color="green" radius="0.5" height="0.2" y="0.5" x="5" z="0"
+  onclick="resetTower()"></m-cylinder>

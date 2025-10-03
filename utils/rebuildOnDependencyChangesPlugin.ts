@@ -30,23 +30,25 @@ function resolveWithESMConfig(
       basedir: resolveDir,
       packageFilter: (pkg) => {
         // Handle conditional exports if they exist
-        if (pkg.exports && typeof pkg.exports === 'object') {
+        const exports = pkg.exports;
+        if (exports && typeof exports === 'object' && !Array.isArray(exports)) {
           // Try to resolve using conditions
           for (const condition of conditions) {
-            if (pkg.exports[condition]) {
-              pkg.main = pkg.exports[condition];
+            if (exports[condition]) {
+              pkg.main = exports[condition];
               return pkg;
             }
           }
           // If no condition matches, try default export
-          if (pkg.exports['.']) {
-            if (typeof pkg.exports['.'] === 'string') {
-              pkg.main = pkg.exports['.'];
-            } else if (typeof pkg.exports['.'] === 'object') {
+          const defaultExport = exports['.'];
+          if (defaultExport) {
+            if (typeof defaultExport === 'string') {
+              pkg.main = defaultExport;
+            } else if (typeof defaultExport === 'object' && !Array.isArray(defaultExport)) {
               // Try conditions on the default export
               for (const condition of conditions) {
-                if (pkg.exports['.'][condition]) {
-                  pkg.main = pkg.exports['.'][condition];
+                if (defaultExport[condition]) {
+                  pkg.main = defaultExport[condition];
                   return pkg;
                 }
               }

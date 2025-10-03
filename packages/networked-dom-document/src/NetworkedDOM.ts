@@ -672,7 +672,7 @@ export class NetworkedDOM {
       throw new Error("This NetworkedDOM has been disposed");
     }
 
-    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(
+    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrNull(
       remoteEvent.nodeId,
     );
     if (

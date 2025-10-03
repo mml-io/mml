@@ -137,6 +137,16 @@ export class NodeManager {
     return node;
   }
 
+  public getStaticVirtualDOMElementByInternalNodeIdOrNull(
+    internalNodeId: number,
+  ): NodeWithSubjectivity | null {
+    const node = this.nodeIdToNode.get(internalNodeId);
+    if (!node) {
+      return null;
+    }
+    return node;
+  }
+
   public getInternalRemappedNodeId(nodeId: number): number | undefined {
     return this.clientNodeIdToInternalNodeId.get(nodeId);
   }

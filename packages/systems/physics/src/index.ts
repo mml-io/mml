@@ -37,7 +37,7 @@ type PhysicsElementState = {
   collider: RAPIER.Collider;
   element: Element;
   lerpElement: Element;
-}
+};
 
 class PhysicsSystem implements ElementSystem {
   private world: RAPIER.World | null = null;
@@ -265,9 +265,9 @@ class PhysicsSystem implements ElementSystem {
 
     const state: PhysicsElementState = {
       rigidbody: rigidBody,
-      collider: collider,
-      element: element,
-      lerpElement: lerpElement,
+      collider,
+      element,
+      lerpElement,
     };
 
     // Store mappings
@@ -461,7 +461,7 @@ class PhysicsSystem implements ElementSystem {
         const event: CollisionEvent = {
           type: started ? "collision_start" : "collision_end",
           elementA: physicsStateA.element,
-          elementB: physicsStateB.element ,
+          elementB: physicsStateB.element,
         };
 
         this.collisionEventListeners.forEach((callback) => callback(event));
@@ -497,8 +497,9 @@ class PhysicsSystem implements ElementSystem {
         this.processCollisionEvents();
       }
 
-      if ((document.timeline.currentTime! as number) > this.lastNetworkTime + 100) {
-        this.lastNetworkTime = document.timeline.currentTime as number;
+      const currentTime = document.timeline.currentTime;
+      if (currentTime != null && currentTime > this.lastNetworkTime + 100) {
+        this.lastNetworkTime = currentTime;
         this.updateElementPositions();
       }
 

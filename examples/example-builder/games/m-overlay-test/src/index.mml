@@ -1,0 +1,75 @@
+<m-group id="scene-group">
+  <m-plane x="0" y="0" z="0" width="400" height="400" rx="-90" color="#808080"></m-plane>
+  <m-light type="point" y="20" z="10" intensity="750" cast-shadows="true"></m-light>
+  
+  <!-- Camera toggle cubes -->
+  <m-cube id="left-cube" x="-3" y="0.75" z="0" width="1.5" height="1.5" depth="1.5" color="rgb(0, 0, 25)"></m-cube>
+  <m-cube id="right-cube" x="3" y="0.75" z="0" width="1.5" height="1.5" depth="1.5" color="rgb(25, 0, 0)"></m-cube>
+  
+  <!-- Cameras -->
+  <m-camera id="top-down-camera" x="0" y="25" z="0" rx="-90" priority="2" visible-to="-1" fov="60">
+    <m-attr-anim start="0" end="360" duration="10000" loop="true" attr="rz"></m-attr-anim>
+  </m-camera>
+  <m-group ry="45" x="15" y="15" z="15"><m-camera id="angle-camera" visible-to="-1" priority="1" fov="70" rx="-45"></m-camera></m-group>
+</m-group>
+
+<m-overlay anchor="center">
+  <svg width="280" height="250" style="background: rgba(0,0,0,0.8); border-radius: 10px; padding: 10px;">
+    <!-- Panel title -->
+    <text x="140" y="25" text-anchor="middle" fill="white" font-family="Arial" font-size="16" font-weight="bold">Color Control Panel</text>
+    
+    <!-- Left Cube Controls -->
+    <text x="20" y="50" fill="white" font-family="Arial" font-size="12">Left Cube:</text>
+    
+    <!-- Blue cube color buttons -->
+    <rect id="blue-cube-blue" x="20" y="60" width="50" height="30" fill="blue" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('left-cube').setAttribute('color', 'blue')">
+      <title>Blue</title>
+    </rect>
+    <text x="45" y="80" text-anchor="middle" fill="white" font-size="10" style="pointer-events: none;">Blue</text>
+    
+    <rect id="blue-cube-green" x="80" y="60" width="50" height="30" fill="green" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('left-cube').setAttribute('color', 'green')">
+      <title>Green</title>
+    </rect>
+    <text x="105" y="80" text-anchor="middle" fill="white" font-size="10" style="pointer-events: none;">Green</text>
+    
+    <rect id="blue-cube-purple" x="140" y="60" width="50" height="30" fill="purple" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('left-cube').setAttribute('color', 'purple')">
+      <title>Purple</title>
+    </rect>
+    <text x="165" y="80" text-anchor="middle" fill="white" font-size="10" style="pointer-events: none;">Purple</text>
+    
+    <rect id="blue-cube-yellow" x="200" y="60" width="50" height="30" fill="yellow" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('left-cube').setAttribute('color', 'yellow')">
+      <title>Yellow</title>
+    </rect>
+    <text x="225" y="80" text-anchor="middle" fill="black" font-size="10" style="pointer-events: none;">Yellow</text>
+    
+    <!-- Right Cube Controls -->
+    <text x="20" y="120" fill="white" font-family="Arial" font-size="12">Right Cube:</text>
+    
+    <!-- Red cube color buttons -->
+    <rect id="red-cube-red" x="20" y="130" width="50" height="30" fill="red" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('right-cube').setAttribute('color', 'red')">
+      <title>Red</title>
+    </rect>
+    <text x="45" y="150" text-anchor="middle" fill="white" font-size="10" style="pointer-events: none;">Red</text>
+    
+    <rect id="red-cube-orange" x="80" y="130" width="50" height="30" fill="orange" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('right-cube').setAttribute('color', 'orange')">
+      <title>Orange</title>
+    </rect>
+    <text x="105" y="150" text-anchor="middle" fill="black" font-size="10" style="pointer-events: none;">Orange</text>
+    
+    <rect id="red-cube-pink" x="140" y="130" width="50" height="30" fill="pink" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('right-cube').setAttribute('color', 'pink')">
+      <title>Pink</title>
+    </rect>
+    <text x="165" y="150" text-anchor="middle" fill="black" font-size="10" style="pointer-events: none;">Pink</text>
+    
+    <rect id="red-cube-cyan" x="200" y="130" width="50" height="30" fill="cyan" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('right-cube').setAttribute('color', 'cyan')">
+      <title>Cyan</title>
+    </rect>
+    <text x="225" y="150" text-anchor="middle" fill="black" font-size="10" style="pointer-events: none;">Cyan</text>
+    
+    <!-- Reset button -->
+    <rect id="reset-colors" x="90" y="170" width="100" height="20" fill="gray" stroke="white" stroke-width="2" style="cursor: pointer;" onclick="document.getElementById('left-cube').setAttribute('color', 'rgb(0, 0, 25)'); document.getElementById('right-cube').setAttribute('color', 'rgb(25, 0, 0)')">
+      <title>Reset to original colors</title>
+    </rect>
+    <text x="140" y="183" text-anchor="middle" fill="white" font-size="10" style="pointer-events: none;">Reset Colors</text>
+  </svg>
+</m-overlay>

@@ -1,0 +1,397 @@
+<m-group id="world-group"></m-group>
+
+<m-group id="tank-group" x="0" y="0" z="0" rx="0" ry="90" rz="0">
+
+  <m-model
+    id="tank-body"
+    src="https://mml.mgz.me/assets/playground/tron_tank_body.glb"
+    collide="false"
+  >
+    <m-light y="30" intensity="3000" color="#77aaff"></m-light>
+  </m-model>
+
+  <m-model
+    id="tank-turret"
+    src="https://mml.mgz.me/assets/playground/tron_tank_turret.glb"
+    x="0" y="0" z="0"
+    rx="0" ry="0" rz="0"
+    collide="false"
+  >
+    <m-attr-lerp attr="x,y,z,rx,ry,rz" duration="100"></m-attr-lerp>
+    <m-camera
+      id="tank-camera"
+      x="7" y="3.5" z="0"
+      rx="0" ry="90" rz="0"
+      fov="70"
+    >
+      <m-attr-lerp attr="all" duration="200"></m-attr-lerp>
+    </m-camera>
+    <m-light
+      y="10"
+      x="-5"
+      rz="-90"
+      intensity="140000"
+      distance="500"
+      type="spotlight"
+      color="#77aaff"
+    ></m-light>
+    <m-cube id="turret-back" x="+2" y="1.3" z="1.28" rx="0" ry="0" rz="0" width="0.3" height="0.3" depth="0.3" color="red"></m-cube>
+    <m-cube id="turret-front" x="-3.8" y="1.25" z="1.28" rx="0" ry="0" rz="0" width="0.3" height="0.3" depth="0.3" color="red"></m-cube>
+  </m-model>
+
+  <m-attr-lerp attr="x,y,z,rx,ry,rz" duration="100"></m-attr-lerp>
+</m-group>
+
+<m-control id="movement-control" type="axis" axis="0,1" hint="Move"></m-control>
+<m-control id="turret-control" type="axis" axis="2" hint="Aim"></m-control>
+<m-control id="fire-control" type="button" button="0" hint="Fire"></m-control>
+<m-control id="aim-control" type="button" button="1" hint="Aim"></m-control>
+
+<m-model
+  id="tunnel"
+  sx="0.5" sy="0.5" sz="0.5"
+  ry="180"
+  z="50"
+  src="https://mml.mgz.me/assets/playground/tron_tunnel.glb"
+>
+</m-model>
+
+<m-cube id="test-cube" color="#ff7777" width="0.3" height="0.3" depth="0.3">
+  <m-attr-lerp attr="x,y,z,rx,ry,rz" duration="100"></m-attr-lerp>
+</m-cube>
+
+<script>
+  const bulletSpeed = 3.0;
+  const fireRateTicks = 2;
+  const shootingSoundDuration = 1000;
+  const cameraDefaultFOV = 70;
+  const cameraAimFOV = 30;
+  let currentFOV = 70;
+
+  let isAiming = false;
+  let lastUpdateTime = Date.now();
+
+  const movementControl = document.getElementById("movement-control");
+  const turretControl = document.getElementById("turret-control");
+  const fireControl = document.getElementById("fire-control");
+  const aimControl = document.getElementById("aim-control");
+
+  const tankCamera = document.getElementById("tank-camera");
+
+  const myGroup = document.getElementById("my-group");
+  const myLabel = document.getElementById("controls-label");
+
+  const movementMap = new Map();
+  const rotationMap = new Map();
+  const turretMap = new Map();
+  const fireMap = new Map();
+
+  const testCube = document.getElementById("test-cube");
+
+  movementControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    movementMap.set(connectionId, value);
+  });
+
+  turretControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    turretMap.set(connectionId, value);
+  });
+
+  fireControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    fireMap.set(connectionId, value);
+
+    // Only shoot if button is pressed AND cooldown has passed
+    if (value > 0 && (tickCounter - lastFireTick) >= fireRateTicks) {
+      shoot();
+      lastFireTick = tickCounter;
+    }
+  });
+
+  aimControl.addEventListener("input", (event) => {
+    const { value, connectionId } = event.detail;
+    isAiming = value > 0;
+  });
+
+  const tankGroup = document.getElementById("tank-group");
+  const tankTurret = document.getElementById("tank-turret");
+  const turretBack = document.getElementById("turret-back");
+  const turretFront = document.getElementById("turret-front");
+  const worldGroup = document.getElementById("world-group");
+  const sfxArray = [];
+
+  function createSFXArray() {
+    for (let i = 0; i < 20; i++) {
+      const sfx = document.createElement("m-audio");
+      sfx.setAttribute("src", "https://mml.mgz.me/assets/playground/sfx_tank_shoot.mp3");
+      sfx.setAttribute("loop", "false");
+      sfx.setAttribute("volume", "0");
+      sfx.setAttribute("start-time", -2000);
+      sfx.setAttribute("end-time", 0);
+      worldGroup.appendChild(sfx);
+      sfxArray.push(sfx);
+    }
+  }
+  createSFXArray();
+
+  function lerp(current, target, deltaTime) {
+    const rate = 0.5;
+    const lerpFactor = rate * (deltaTime / 100);
+    return current + (target - current) * lerpFactor;
+  }
+
+  function calculateWorldPosition(element) {
+    // build transform chain from element to root
+    const transforms = [];
+    let currentElement = element;
+
+    while (currentElement && currentElement.tagName && currentElement.tagName.startsWith('M-')) {
+      transforms.push({
+        x: parseFloat(currentElement.getAttribute("x") || "0"),
+        y: parseFloat(currentElement.getAttribute("y") || "0"),
+        z: parseFloat(currentElement.getAttribute("z") || "0"),
+        rx: parseFloat(currentElement.getAttribute("rx") || "0"),
+        ry: parseFloat(currentElement.getAttribute("ry") || "0"),
+        rz: parseFloat(currentElement.getAttribute("rz") || "0"),
+        sx: parseFloat(currentElement.getAttribute("sx") || "1"),
+        sy: parseFloat(currentElement.getAttribute("sy") || "1"),
+        sz: parseFloat(currentElement.getAttribute("sz") || "1")
+      });
+      currentElement = currentElement.parentElement;
+    }
+
+        // start with element's local position and rotation
+    let pos = {
+      x: transforms[0].x,
+      y: transforms[0].y,
+      z: transforms[0].z
+    };
+
+    let rot = {
+      x: transforms[0].rx,
+      y: transforms[0].ry,
+      z: transforms[0].rz
+    };
+
+    // apply parent transformations from immediate parent up to root
+    for (let i = 1; i < transforms.length; i++) {
+      const parent = transforms[i];
+
+      // apply parent's rotation to current position
+      if (parent.ry !== 0) {
+        const ryRad = (parent.ry * Math.PI) / 180;
+        const cosY = Math.cos(ryRad);
+        const sinY = Math.sin(ryRad);
+        const newX = pos.x * cosY + pos.z * sinY;
+        const newZ = -pos.x * sinY + pos.z * cosY;
+        pos.x = newX;
+        pos.z = newZ;
+      }
+
+      if (parent.rx !== 0) {
+        const rxRad = (parent.rx * Math.PI) / 180;
+        const cosX = Math.cos(rxRad);
+        const sinX = Math.sin(rxRad);
+        const newY = pos.y * cosX - pos.z * sinX;
+        const newZ = pos.y * sinX + pos.z * cosX;
+        pos.y = newY;
+        pos.z = newZ;
+      }
+
+      if (parent.rz !== 0) {
+        const rzRad = (parent.rz * Math.PI) / 180;
+        const cosZ = Math.cos(rzRad);
+        const sinZ = Math.sin(rzRad);
+        const newX = pos.x * cosZ - pos.y * sinZ;
+        const newY = pos.x * sinZ + pos.y * cosZ;
+        pos.x = newX;
+        pos.y = newY;
+      }
+
+      // accumulate rotations
+      rot.x += parent.rx;
+      rot.y += parent.ry;
+      rot.z += parent.rz;
+
+      // apply parent's scale
+      pos.x *= parent.sx;
+      pos.y *= parent.sy;
+      pos.z *= parent.sz;
+
+      // add parent's position
+      pos.x += parent.x;
+      pos.y += parent.y;
+      pos.z += parent.z;
+    }
+
+    return {
+      position: pos,
+      rotation: rot
+    };
+  }
+
+  const bullets = [];
+  let bulletIdCounter = 0;
+  let lastFireTick = -999; // Track when we last fired
+
+  function shoot() {
+    // Calculate world positions of turret back and front
+    const turretBackTransform = calculateWorldPosition(turretBack);
+    const turretFrontTransform = calculateWorldPosition(turretFront);
+
+    // Calculate trajectory vector (from back to front)
+    const trajectory = {
+      x: turretFrontTransform.position.x - turretBackTransform.position.x,
+      y: turretFrontTransform.position.y - turretBackTransform.position.y,
+      z: turretFrontTransform.position.z - turretBackTransform.position.z
+    };
+
+    // Normalize and scale the trajectory for bullet speed
+    const trajectoryLength = Math.sqrt(trajectory.x * trajectory.x + trajectory.y * trajectory.y + trajectory.z * trajectory.z);
+    const normalizedTrajectory = {
+      x: (trajectory.x / trajectoryLength) * bulletSpeed,
+      y: (trajectory.y / trajectoryLength) * bulletSpeed,
+      z: (trajectory.z / trajectoryLength) * bulletSpeed
+    };
+
+    // Create bullet element
+    const bullet = document.createElement("m-cube");
+    bullet.id = `bullet-${bulletIdCounter++}`;
+    bullet.setAttribute("width", "0.3");
+    bullet.setAttribute("height", "0.3");
+    bullet.setAttribute("depth", "0.3");
+    bullet.setAttribute("color", "#ffffff");
+
+    // Add lerp for smooth movement
+    const lerp = document.createElement("m-attr-lerp");
+    lerp.setAttribute("attr", "x,y,z");
+    lerp.setAttribute("duration", "100");
+    bullet.appendChild(lerp);
+
+    // Position bullet at turret front (spawn point)
+    bullet.setAttribute("x", turretFrontTransform.position.x);
+    bullet.setAttribute("y", turretFrontTransform.position.y);
+    bullet.setAttribute("z", turretFrontTransform.position.z);
+
+    worldGroup.appendChild(bullet);
+
+    const sfx = sfxArray.shift();
+    sfx.setAttribute("volume", "1");
+    sfx.setAttribute("start-time", document.timeline.currentTime);
+    sfx.setAttribute("end-time", document.timeline.currentTime + shootingSoundDuration);
+    setTimeout(() => {
+      sfx.setAttribute("volume", "0");
+      sfxArray.push(sfx);
+    }, shootingSoundDuration);
+
+    // Track bullet with its data
+    bullets.push({
+      element: bullet,
+      trajectory: normalizedTrajectory,
+      ticksLived: 0,
+      maxTicks: 200,
+      currentPos: {
+        x: turretFrontTransform.position.x,
+        y: turretFrontTransform.position.y,
+        z: turretFrontTransform.position.z
+      }
+    });
+
+    console.log(`Bullet fired! Trajectory: x=${normalizedTrajectory.x.toFixed(2)} y=${normalizedTrajectory.y.toFixed(2)} z=${normalizedTrajectory.z.toFixed(2)}`);
+  }
+
+  let tickCounter = 0;
+
+  setInterval(() => {
+    const currentTime = Date.now();
+    const deltaTime = currentTime - lastUpdateTime;
+    lastUpdateTime = currentTime;
+    const tankX = parseFloat(tankGroup.getAttribute("x"));
+    const tankY = parseFloat(tankGroup.getAttribute("y"));
+    const tankZ = parseFloat(tankGroup.getAttribute("z"));
+    const tankRY = parseFloat(tankGroup.getAttribute("ry"));
+
+    const turretRY = parseFloat(tankTurret.getAttribute("ry"));
+
+    tickCounter++;
+    const shouldLog = tickCounter % 10 === 0;
+
+    const rad = (tankRY * Math.PI) / 180;
+    const speed = 0.75;
+
+    const forwardX = Math.sin(rad) * speed;
+    const forwardZ = Math.cos(rad) * speed;
+    const rightX = Math.cos(rad) * speed;
+    const rightZ = -Math.sin(rad) * speed;
+
+    movementMap.forEach((value, connectionId) => {
+      if (value.x > 0) {
+        tankGroup.setAttribute("ry", tankRY - speed * Math.PI * 2)
+      }
+      if (value.x < 0) {
+        tankGroup.setAttribute("ry", tankRY + speed * Math.PI * 2)
+      }
+      if (value.y > 0) {
+        tankGroup.setAttribute("x", tankX - rightX);
+        tankGroup.setAttribute("z", tankZ - rightZ);
+      }
+      if (value.y < 0) {
+        tankGroup.setAttribute("x", tankX + rightX);
+        tankGroup.setAttribute("z", tankZ + rightZ);
+      }
+    });
+
+    turretMap.forEach((value, connectionId) => {
+      if (value > 0) {
+        tankTurret.setAttribute("ry", turretRY - speed * Math.PI * 2);
+      } else if (value < 0) {
+        tankTurret.setAttribute("ry", turretRY + speed * Math.PI * 2);
+      }
+    });
+
+    currentFOV = lerp(currentFOV, isAiming ? cameraAimFOV : cameraDefaultFOV, deltaTime);
+    tankCamera.setAttribute("fov", currentFOV);
+
+
+    const turretBackTransform = calculateWorldPosition(turretBack);
+    const turretFrontTransform = calculateWorldPosition(turretFront);
+    testCube.setAttribute("x", turretFrontTransform.position.x);
+    testCube.setAttribute("y", turretFrontTransform.position.y);
+    testCube.setAttribute("z", turretFrontTransform.position.z);
+    testCube.setAttribute("rx", turretFrontTransform.rotation.x);
+    testCube.setAttribute("ry", turretFrontTransform.rotation.y);
+    testCube.setAttribute("rz", turretFrontTransform.rotation.z);
+
+    // Update bullets
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const bulletData = bullets[i];
+      bulletData.ticksLived++;
+
+      // Check if bullet should be destroyed
+      if (bulletData.ticksLived >= bulletData.maxTicks) {
+        // Remove all children (lerp elements)
+        while (bulletData.element.firstChild) {
+          bulletData.element.removeChild(bulletData.element.firstChild);
+        }
+        // Remove bullet from DOM
+        if (bulletData.element.parentNode) {
+          bulletData.element.parentNode.removeChild(bulletData.element);
+        }
+        // Remove from bullets array
+        bullets.splice(i, 1);
+        continue;
+      }
+
+      // Update bullet position
+      bulletData.currentPos.x += bulletData.trajectory.x;
+      bulletData.currentPos.y += bulletData.trajectory.y;
+      bulletData.currentPos.z += bulletData.trajectory.z;
+
+      // Apply new position to bullet element
+      bulletData.element.setAttribute("x", bulletData.currentPos.x);
+      bulletData.element.setAttribute("y", bulletData.currentPos.y);
+      bulletData.element.setAttribute("z", bulletData.currentPos.z);
+    }
+  }, 100);
+</script>

@@ -86,7 +86,7 @@ export class GameClient {
     mmlClient.element.style.overflow = "hidden";
 
     // Connect the client to the shared document
-    mmlClient.connectToDocument(this.sharedGameDocument);
+    mmlClient.connectToDocument(this.sharedGameDocument, `${location.protocol}//${location.host}`);
 
     // Create client instance
     const clientInstance: ClientInstance = {

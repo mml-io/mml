@@ -11,8 +11,7 @@
     "build": "tsx ./build.ts --build",
     "iterate": "tsx ./build.ts --watch",
     "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
-    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix",
-    "dev": "npm run iterate"
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
     "mml-game-engine-client": "^0.1.0",

@@ -1,0 +1,17 @@
+{
+  "name": "example-builder",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "scripts": {
+    "iterate": "nodemon --watch ../../packages/multi-game-builder/build/index.js ../../packages/multi-game-builder/build/index.js --serve"
+  },
+  "dependencies": {
+    "@mml-io/multi-game-builder": "file:../../../packages/multi-game-builder"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}

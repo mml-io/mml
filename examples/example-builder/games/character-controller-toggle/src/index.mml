@@ -1,0 +1,194 @@
+<m-group id="scene-group">
+  <m-plane x="0" y="0" z="0" width="400" height="400" rx="-90" color="#808080"></m-plane>
+  <m-light type="point" y="20" intensity="750" cast-shadows="true"></m-light>
+  
+  <!-- Spawn button -->
+  <m-cube id="spawn-button" x="0" y="2" z="-8" width="2" height="0.5" depth="1" color="rgb(0, 255, 0)">
+    <m-label text="SPAWN CHARACTER" color="black" font-size="0.3" y="0.1"></m-label>
+  </m-cube>
+</m-group>
+
+<script>
+  const sceneGroup = document.getElementById("scene-group");
+  const spawnButton = document.getElementById("spawn-button");
+  const characters = [];
+  const clientControlledCharacters = new Map(); // connectionId -> character
+  let characterCounter = 0;
+
+  function setTransform(element, x, y, z, ry) {
+    ["x", "y", "z"].forEach(attr => element.setAttribute(attr, attr === "x" ? x : attr === "y" ? y : z));
+    element.setAttribute("ry", ry);
+  }
+
+  function assignAnimationLerp(element, duration, attrs) {
+    const lerp = document.createElement("m-attr-lerp");
+    lerp.setAttribute("attr", attrs);
+    lerp.setAttribute("duration", duration);
+    element.appendChild(lerp);
+  }
+
+  function createCharacter() {
+    characterCounter++;
+    const characterGroup = document.createElement("m-group");
+    characterGroup.setAttribute("id", `character-${characterCounter}`);
+    
+    const player = document.createElement("m-character");
+    player.setAttribute("state", "idle");
+    player.setAttribute("src", "/assets/models/bot.glb");
+    assignAnimationLerp(player, 100, "x,y,z,ry");
+    
+    // Random spawn position
+    const x = Math.random() * 10 - 5;
+    const z = Math.random() * 10 - 5;
+    setTransform(player, x, 0, z, Math.random() * 360);
+    
+    // Create floating indicator cube (initially hidden)
+    const indicator = document.createElement("m-cube");
+    indicator.setAttribute("width", "0.5");
+    indicator.setAttribute("height", "0.5");
+    indicator.setAttribute("depth", "0.5");
+    indicator.setAttribute("color", "rgb(255, 255, 0)");
+    indicator.setAttribute("y", "3");
+    indicator.setAttribute("visible-to", "-1"); // Initially hidden
+    indicator.setAttribute("id", `indicator-${characterCounter}`);
+    
+    // Add rotation animation to indicator
+    const indicatorAnim = document.createElement("m-attr-anim");
+    indicatorAnim.setAttribute("start", "0");
+    indicatorAnim.setAttribute("end", "360");
+    indicatorAnim.setAttribute("duration", "2000");
+    indicatorAnim.setAttribute("loop", "true");
+    indicatorAnim.setAttribute("attr", "ry");
+    indicator.appendChild(indicatorAnim);
+    
+    // Create animations
+    const idleAnimation = assignPlayerAnimation(player, "idle");
+    const runAnimation = assignPlayerAnimation(player, "run");
+    const airAnimation = assignPlayerAnimation(player, "air");
+    
+    characterGroup.appendChild(player);
+    player.appendChild(indicator);
+    sceneGroup.appendChild(characterGroup);
+    
+    const characterData = {
+      id: characterCounter,
+      group: characterGroup,
+      model: player,
+      indicator: indicator,
+      idleAnim: idleAnimation,
+      runAnim: runAnimation,
+      airAnim: airAnimation,
+      controller: null,
+      controlledBy: null
+    };
+    
+    characters.push(characterData);
+    
+    // Add click handler to character
+    characterGroup.addEventListener("click", (event) => {
+      toggleCharacterControl(characterData, event.detail.connectionId);
+    });
+    
+    return characterData;
+  }
+
+  function assignPlayerAnimation(player, state) {
+    const animation = document.createElement("m-animation");
+    animation.setAttribute("src", `/assets/models/anim_${state}.glb`);
+    animation.setAttribute("state", state);
+    assignAnimationLerp(animation, 150, "weight");
+    player.appendChild(animation);
+    return animation;
+  }
+
+  function createCharacterController(character, connectionId) {
+    const controller = document.createElement("m-character-controller");
+    controller.setAttribute("visible-to", connectionId.toString());
+    character.model.appendChild(controller);
+    return controller;
+  }
+
+  function removeCharacterController(character) {
+    if (character.controller) {
+      character.model.removeChild(character.controller);
+      character.controller = null;
+    }
+  }
+
+  function toggleCharacterControl(character, connectionId) {
+    // If we're currently controlling this character, release control
+    if (character.controlledBy === connectionId) {
+      removeCharacterController(character);
+      character.controlledBy = null;
+      character.indicator.setAttribute("visible-to", "-1"); // Hide indicator
+      clientControlledCharacters.delete(connectionId);
+      console.log(`Released control of character ${character.id}`);
+      return;
+    }
+    
+    // If this character is controlled by someone else, do nothing
+    if (character.controlledBy !== null && character.controlledBy !== connectionId) {
+      console.log("Character is already controlled by another player");
+      return;
+    }
+    
+    // If this client is controlling another character, release that first
+    const currentCharacter = clientControlledCharacters.get(connectionId);
+    if (currentCharacter && currentCharacter !== character) {
+      removeCharacterController(currentCharacter);
+      currentCharacter.controlledBy = null;
+      currentCharacter.indicator.setAttribute("visible-to", "-1");
+    }
+    
+    // Take control of this character
+    character.controller = createCharacterController(character, connectionId);
+    character.controlledBy = connectionId;
+    character.indicator.setAttribute("visible-to", connectionId.toString()); // Show indicator only to this client
+    clientControlledCharacters.set(connectionId, character);
+    
+    console.log(`Client ${connectionId} took control of character ${character.id}`);
+    
+    // Set up character movement listener
+    character.controller.addEventListener("character-move", (event) => {
+      const { position, rotation, state, connectionId: moveConnectionId } = event.detail;
+      // Only apply movement if it's from the controlling client
+      if (moveConnectionId === connectionId) {
+        setTransform(character.model, position.x, position.y, position.z, rotation.ry);
+        character.model.setAttribute("state", state);
+      }
+    });
+  }
+
+  // Spawn button handler
+  spawnButton.addEventListener("click", () => {
+    createCharacter();
+    console.log(`Spawned character ${characterCounter}`);
+  });
+
+  // Handle client disconnections
+  function handleClientDisconnected(connectionId) {
+    const controlledCharacter = clientControlledCharacters.get(connectionId);
+    if (controlledCharacter) {
+      // Remove character controller
+      removeCharacterController(controlledCharacter);
+      controlledCharacter.controlledBy = null;
+      controlledCharacter.indicator.setAttribute("visible-to", "-1"); // Hide indicator
+      
+      // Remove from client tracking
+      clientControlledCharacters.delete(connectionId);
+      
+      console.log(`Client ${connectionId} disconnected, released control of character ${controlledCharacter.id}`);
+    }
+  }
+
+  // Event listeners
+  window.addEventListener("disconnected", (event) => {
+    handleClientDisconnected(event.detail.connectionId);
+  });
+
+  // Spawn initial character
+  createCharacter();
+  
+  console.log("Click the green spawn button to create new characters");
+  console.log("Click on characters to toggle control (yellow cube indicates controlled character)");
+</script>

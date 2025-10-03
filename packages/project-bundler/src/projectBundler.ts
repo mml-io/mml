@@ -1,6 +1,6 @@
-import { SystemPackage } from "mml-game-systems-common";
 import * as esbuild from "esbuild-wasm";
 import esbuildWasmModuleBase64 from "esbuild-wasm/esbuild.wasm?base64";
+import { SystemPackage } from "mml-game-systems-common";
 
 import { loadSystemPackage } from "./loadSystem";
 import { generateSystemScripts } from "./systemScript";
