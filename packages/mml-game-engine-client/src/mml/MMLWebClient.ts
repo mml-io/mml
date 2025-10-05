@@ -99,7 +99,11 @@ export class MMLWebClient {
         } else if (data.type === "navmesh-debug-buffers") {
           const verts = new Float32Array(data.vertices);
           const cols = new Float32Array(data.colors);
-          this.navmeshOverlay?.updateBuffers(verts, cols);
+          const triVerts = data.triVertices ? new Float32Array(data.triVertices) : undefined;
+          const triCols = data.triColors ? new Float32Array(data.triColors) : undefined;
+          const obsVerts = data.obstacleVertices ? new Float32Array(data.obstacleVertices) : undefined;
+          const obsCols = data.obstacleColors ? new Float32Array(data.obstacleColors) : undefined;
+          this.navmeshOverlay?.updateBuffers(verts, cols, triVerts, triCols, obsVerts, obsCols);
           event.stopImmediatePropagation();
         }
       };

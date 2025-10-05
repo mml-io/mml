@@ -23,48 +23,49 @@
           "compactHeightfieldRegions",
           "compactHeightfieldDistance",
           "navmeshBVTree",
-          "staticGeometry"
+          "staticGeometry",
+          "obstacles"
         ]
       },
       "tileSize": {
         "type": "integer",
         "description": "Navmesh tile size",
-        "default": 16,
+        "default": 32,
         "minimum": 0,
         "maximum": 256
       },
       "cellSize": {
         "type": "number",
         "description": "Recast cell size",
-        "default": 0.2,
+        "default": 0.1,
         "minimum": 0.05,
         "maximum": 2
       },
       "cellHeight": {
         "type": "number",
         "description": "Recast cell height",
-        "default": 0.2,
+        "default": 0.05,
         "minimum": 0.05,
         "maximum": 2
       },
-      "agentHeight": {
+      "walkableRadius": {
         "type": "number",
-        "description": "Agent height",
-        "default": 2
-      },
-      "agentRadius": {
-        "type": "number",
-        "description": "Agent radius",
+        "description": "Walkable radius",
         "default": 0.5
       },
-      "agentMaxClimb": {
+      "walkableClimb": {
         "type": "number",
-        "description": "Agent max climb height",
+        "description": "Walkable climb",
         "default": 2
       },
-      "agentMaxSlope": {
+      "walkableHeight": {
         "type": "number",
-        "description": "Agent max slope degrees",
+        "description": "Walkable height",
+        "default": 2
+      },
+      "walkableSlopeAngle": {
+        "type": "number",
+        "description": "Walkable slope angle",
         "default": 60
       }
     },
@@ -74,6 +75,7 @@
     "nav-obstacle",
     "nav-agent",
     "nav-speed",
+    "nav-acceleration",
     "nav-goal-x",
     "nav-goal-y",
     "nav-goal-z",

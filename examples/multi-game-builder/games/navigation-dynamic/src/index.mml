@@ -8,6 +8,13 @@
 
 
 <script>
+  // Enable navigation debug with obstacles overlay-only mode
+  window.systemsConfig = window.systemsConfig || {};
+  window.systemsConfig.navigation = window.systemsConfig.navigation || {};
+  window.systemsConfig.navigation.debug = true;
+  // Show both navmesh fill + wireframe and obstacle lines by using base mode (navmesh)
+  window.systemsConfig.navigation.debugDrawMode = 'navmesh';
+
   const agent = document.createElement('m-cylinder');
   agent.setAttribute('id', 'agent');
   agent.setAttribute('color', '#6a0dad');
@@ -43,9 +50,9 @@
   const door = document.createElement('m-cube');
   door.setAttribute('id', 'door');
   door.setAttribute('color', '#cc3333');
-  door.setAttribute('width', '2');
+  door.setAttribute('width', '3');
   door.setAttribute('height', '3');
-  door.setAttribute('depth', '1');
+  door.setAttribute('depth', '2');
   door.setAttribute('x', '0');
   door.setAttribute('y', '1.5');
   door.setAttribute('z', '0');

@@ -1,0 +1,310 @@
+<m-light y="120" x="-150" z="150" intensity="20000" type="point"></m-light>
+<m-light y="120" x="150" z="150" intensity="20000" type="point"></m-light>
+<m-light y="120" x="-150" z="-150" intensity="20000" type="point"></m-light>
+<m-light y="120" x="150" z="-150" intensity="20000" type="point"></m-light>
+
+<m-cube id="floor" rigidbody=true kinematic="true" width="300" depth="300" height=0.1 y="0" opacity="1"></m-cube>
+
+<!-- Obstacles (static geometry + nav-obstacle for dynamic avoidance) -->
+<m-cube kinematic="true" width="8" height="2" depth="1.5" x="-10" y="1" z="-5" color="#555"></m-cube>
+<m-cube kinematic="true" width="50" height="2" depth="1.5" x="10" y="1" z="5" color="#555"></m-cube>
+<m-cube kinematic="true" nav-obstacle="true" width="1.5" height="2" depth="10" x="0" y="1" z="0" color="#555"></m-cube>
+<m-cube nav-obstacle="true" width="12" height="2" depth="1.5" x="-15" y="1" z="12" color="#555"></m-cube>
+<m-cube rigidbody="true" nav-obstacle="true" width="12" height="2" depth="1.5" x="15" y="200" z="-12" color="#999"></m-cube>
+
+<!-- Chaser agent (navigation-controlled) -->
+<m-cube id="chaser" color="#e74c3c" width="1.2" depth="1.2" height="2" x="-8" y="1" z="-8" nav-agent="true" nav-speed="25" nav-acceleration="40"></m-cube>
+
+<!-- Overlay UI: control number of agents (1–20) -->
+<m-overlay anchor="top-left" offset-x="10" offset-y="10" id="agent-ui">
+  <svg width="360" height="60" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="220" height="60" fill="rgba(0,0,0,0.7)" rx="6"/>
+    <text x="10" y="20" fill="white" font-family="Arial" font-size="12">Agents</text>
+
+    <rect id="agent-minus" x="10" y="30" width="24" height="20" fill="#444" rx="4" style="cursor: pointer;"/>
+    <text x="22" y="45" text-anchor="middle" fill="white" font-size="14" style="pointer-events: none;">-</text>
+
+    <rect x="44" y="30" width="80" height="20" fill="#222" rx="4"/>
+    <text id="agent-count-label" x="84" y="44" text-anchor="middle" fill="white" font-size="12">1</text>
+
+    <rect id="agent-plus" x="130" y="30" width="24" height="20" fill="#444" rx="4" style="cursor: pointer;"/>
+    <text x="142" y="45" text-anchor="middle" fill="white" font-size="14" style="pointer-events: none;">+</text>
+
+    <rect id="agent-min" x="160" y="30" width="34" height="20" fill="#444" rx="4" style="cursor: pointer;"/>
+    <text x="177" y="45" text-anchor="middle" fill="white" font-size="12" style="pointer-events: none;">Min</text>
+
+    <rect id="agent-max" x="200" y="30" width="34" height="20" fill="#444" rx="4" style="cursor: pointer;"/>
+    <text x="217" y="45" text-anchor="middle" fill="white" font-size="12" style="pointer-events: none;">Max</text>
+
+    <text x="210" y="44" fill="#bbb" font-size="10">1–500</text>
+
+    <rect id="agent-players-toggle" x="240" y="30" width="110" height="20" fill="#444" rx="4" style="cursor: pointer;"/>
+    <text id="agent-players-text" x="295" y="45" text-anchor="middle" fill="white" font-size="12" style="pointer-events: none;">Players: Off</text>
+  </svg>
+</m-overlay>
+
+<script>
+  const connectedPlayers = new Map();
+  let latestPlayerPos = null;
+
+  // Manage multiple chaser agents
+  const chasers = [];
+  let playersEnabled = false;
+  const previousPositions = new Map(); // Element -> { x, z }
+  function randomInRange(min, max) {
+    return min + Math.random() * (max - min);
+  }
+  function getRandomChaserModelSrc() {
+    const options = [
+      'http://files.dreamcache.xyz/models/01K6DEJHJVGMPCYXJ52AM4W2TV.glb',
+      'http://files.dreamcache.xyz/models/01K5YWERGDPJVH3MPKKBXYGBPF.glb',
+      'http://files.dreamcache.xyz/models/01K6GP4WF007CARPZR579DX663.glb',
+      'http://files.dreamcache.xyz/models/01K6J5FSEWJJZ1GBVP0JHR28BV.glb',
+      'http://files.dreamcache.xyz/models/01K6GNSYEF1NSN85MJCJMPFR8V.glb',
+      'http://files.dreamcache.xyz/models/01K6GP4RHAJ17R6YAJZPCKHW7F.glb',
+      'http://files.dreamcache.xyz/models/01K6GP4EHTS1XPEY22QZJHJ8A7.glb',
+    ];
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
+  function assignChaserAnimation(modelEl, state) {
+    const animation = document.createElement('m-animation');
+    animation.setAttribute('src', `https://dreamcache.xyz/anim_${state}.glb`);
+    animation.setAttribute('state', state);
+    animation.setAttribute('weight', state === 'run' ? '1.0' : '0.0');
+    assignAnimationLerp(animation, 150, 'weight');
+    modelEl.appendChild(animation);
+    return animation;
+  }
+
+  function createModelChaser(idSuffix) {
+    const model = document.createElement('m-model');
+    model.setAttribute('id', `chaser-${idSuffix}`);
+    model.setAttribute('src', getRandomChaserModelSrc());
+    model.setAttribute('y', '1');
+    model.setAttribute('x', String(randomInRange(-140, 140)));
+    model.setAttribute('z', String(randomInRange(-140, 140)));
+    model.setAttribute('nav-agent', 'true');
+    model.setAttribute('nav-speed', '25');
+    model.setAttribute('nav-acceleration', '40');
+    // Attach animations (default to running when chasing)
+    assignChaserAnimation(model, 'idle');
+    assignChaserAnimation(model, 'run');
+    assignChaserAnimation(model, 'air');
+    document.body.appendChild(model);
+    // Seed previous position for rotation tracking
+    previousPositions.set(model, { x: parseFloat(model.getAttribute('x') || '0'), z: parseFloat(model.getAttribute('z') || '0') });
+    return model;
+  }
+
+  function createCubeChaser(idSuffix) {
+    const cube = document.createElement('m-cube');
+    cube.setAttribute('id', `chaser-${idSuffix}`);
+    cube.setAttribute('color', '#e74c3c');
+    cube.setAttribute('width', '1.2');
+    cube.setAttribute('depth', '1.2');
+    cube.setAttribute('height', '2');
+    cube.setAttribute('y', '1');
+    cube.setAttribute('x', String(randomInRange(-140, 140)));
+    cube.setAttribute('z', String(randomInRange(-140, 140)));
+    cube.setAttribute('nav-agent', 'true');
+    cube.setAttribute('nav-speed', '25');
+    cube.setAttribute('nav-acceleration', '40');
+    document.body.appendChild(cube);
+    // Seed previous position for rotation tracking
+    previousPositions.set(cube, { x: parseFloat(cube.getAttribute('x') || '0'), z: parseFloat(cube.getAttribute('z') || '0') });
+    return cube;
+  }
+
+  function spawnChaser(idSuffix) {
+    return playersEnabled ? createModelChaser(idSuffix) : createCubeChaser(idSuffix);
+  }
+  function updateAgentCountUI() {
+    const label = document.getElementById('agent-count-label');
+    if (label) {
+      label.textContent = String(chasers.length);
+    }
+  }
+  function setAgentCount(newCount) {
+    const clamped = Math.max(1, Math.min(500, Math.floor(newCount)));
+    while (chasers.length < clamped) {
+      const idx = chasers.length + 1; // 1-based for readability
+      chasers.push(spawnChaser(idx));
+    }
+    while (chasers.length > clamped) {
+      const agent = chasers.pop();
+      if (agent && agent.parentNode) {
+        agent.parentNode.removeChild(agent);
+      }
+    }
+    updateAgentCountUI();
+  }
+
+  function rebuildChasers() {
+    const count = chasers.length;
+    while (chasers.length > 0) {
+      const agent = chasers.pop();
+      if (agent && agent.parentNode) {
+        agent.parentNode.removeChild(agent);
+      }
+      previousPositions.delete(agent);
+    }
+    for (let i = 1; i <= count; i++) {
+      chasers.push(spawnChaser(i));
+    }
+    updateAgentCountUI();
+  }
+
+  function updateAgentRotation(agent) {
+    const curX = parseFloat(agent.getAttribute('x') || '0');
+    const curZ = parseFloat(agent.getAttribute('z') || '0');
+    const prev = previousPositions.get(agent);
+    if (prev) {
+      const dx = curX - prev.x;
+      const dz = curZ - prev.z;
+      const speedSq = dx * dx + dz * dz;
+      if (speedSq > 1e-6) {
+        const angleRad = Math.atan2(dx, dz);
+        const angleDeg = angleRad * (180 / Math.PI);
+        agent.setAttribute('ry', String(angleDeg));
+      }
+    }
+    previousPositions.set(agent, { x: curX, z: curZ });
+  }
+
+  function setTransform(element, x, y, z, ry) {
+    ["x", "y", "z"].forEach(attr => element.setAttribute(attr, attr === "x" ? x : attr === "y" ? y : z));
+    element.setAttribute("ry", ry);
+  }
+
+  function assignAnimationLerp(element, duration, attrs) {
+    const lerp = document.createElement('m-attr-lerp');
+    lerp.setAttribute('attr', attrs);
+    lerp.setAttribute('duration', String(duration));
+    element.appendChild(lerp);
+  }
+
+  function createPlayer() {
+    const player = document.createElement('m-character');
+    // Lightweight bot model and animations hosted remotely (same sources used by tools)
+    player.setAttribute('src', 'https://files.dreamcache.xyz/models/01K6GPT4NSJPYYJZNSQF1GQ4CJ.glb');
+    player.setAttribute('state', 'idle');
+    assignAnimationLerp(player, 100, 'x,y,z,ry');
+    setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
+    document.body.appendChild(player);
+    return player;
+  }
+
+  function assignPlayerAnimation(player, state) {
+    const animation = document.createElement('m-animation');
+    animation.setAttribute('src', `https://dreamcache.xyz/anim_${state}.glb`);
+    animation.setAttribute('state', state);
+    animation.setAttribute('weight', state === 'idle' ? '1.0' : '0.0');
+    assignAnimationLerp(animation, 150, 'weight');
+    player.appendChild(animation);
+    return animation;
+  }
+
+  function assignPlayerController(player, connectionId) {
+    const controller = document.createElement('m-character-controller');
+    controller.setAttribute('visible-to', String(connectionId));
+    player.appendChild(controller);
+    return controller;
+  }
+
+  function spawnPlayer(connectionId) {
+    if (connectedPlayers.has(connectionId)) return;
+
+    const player = createPlayer();
+    const controller = assignPlayerController(player, connectionId);
+    const idleAnimation = assignPlayerAnimation(player, 'idle');
+    const runAnimation = assignPlayerAnimation(player, 'run');
+    const airAnimation = assignPlayerAnimation(player, 'air');
+
+    connectedPlayers.set(connectionId, {
+      character: { model: player, idleAnim: idleAnimation, runAnim: runAnimation, airAnim: airAnimation }
+    });
+
+    controller.addEventListener('character-move', (event) => {
+      const { position, rotation, state } = event.detail;
+      const character = connectedPlayers.get(connectionId).character;
+      setTransform(character.model, position.x, position.y, position.z, rotation.ry);
+      character.idleAnim.setAttribute('weight', state === 'idle' ? '1.0' : '0.0');
+      character.runAnim.setAttribute('weight', state === 'run' ? '1.0' : '0.0');
+      character.airAnim.setAttribute('weight', state === 'air' ? '1.0' : '0.0');
+      latestPlayerPos = position;
+    });
+  }
+
+  function removePlayer(connectionId) {
+    if (!connectedPlayers.has(connectionId)) return;
+    const user = connectedPlayers.get(connectionId);
+    try { document.body.removeChild(user.character.model); } catch {}
+    connectedPlayers.delete(connectionId);
+    latestPlayerPos = null;
+  }
+
+  // Auto-spawn local player using the tools pattern
+  window.addEventListener('connected', (event) => spawnPlayer(event.detail.connectionId));
+  window.addEventListener('disconnected', (event) => removePlayer(event.detail.connectionId));
+
+  // Simple chase loop: periodically repath chasers to the latest player position
+  // Seed with the existing DOM chaser if present
+  const initialChaser = document.getElementById('chaser');
+  if (initialChaser) chasers.push(initialChaser);
+  if (initialChaser) previousPositions.set(initialChaser, { x: parseFloat(initialChaser.getAttribute('x') || '0'), z: parseFloat(initialChaser.getAttribute('z') || '0') });
+  const CHASE_INTERVAL_MS = 250;
+
+  // Initialize UI controls
+  const minusBtn = document.getElementById('agent-minus');
+  const plusBtn = document.getElementById('agent-plus');
+  const minBtn = document.getElementById('agent-min');
+  const maxBtn = document.getElementById('agent-max');
+  const playersToggle = document.getElementById('agent-players-toggle');
+  const playersToggleText = document.getElementById('agent-players-text');
+  if (minusBtn && plusBtn) {
+    minusBtn.addEventListener('click', () => setAgentCount(chasers.length - 10));
+    plusBtn.addEventListener('click', () => setAgentCount(chasers.length + 10));
+  }
+  if (minBtn && maxBtn) {
+    minBtn.addEventListener('click', () => setAgentCount(1));
+    maxBtn.addEventListener('click', () => setAgentCount(500));
+  }
+  function updatePlayersToggleUI() {
+    if (playersToggle && playersToggleText) {
+      playersToggle.setAttribute('fill', playersEnabled ? '#2e7d32' : '#444');
+      playersToggleText.textContent = playersEnabled ? 'Players: On' : 'Players: Off';
+    }
+  }
+  if (playersToggle) {
+    playersToggle.addEventListener('click', () => {
+      playersEnabled = !playersEnabled;
+      updatePlayersToggleUI();
+      rebuildChasers();
+    });
+  }
+  updateAgentCountUI();
+  updatePlayersToggleUI();
+
+  const startChase = async () => {
+    // Wait for navigation system to be ready
+    while (!(window.navigation && window.navigation.crowd)) {
+      await new Promise((resolve) => setTimeout(resolve, 16));
+    }
+    setInterval(() => {
+      if (!latestPlayerPos) return;
+      // Slightly bias toward ground plane y=1 to keep targets on navmesh
+      const target = { x: latestPlayerPos.x, y: 1, z: latestPlayerPos.z };
+      for (const agent of chasers) {
+        try {
+          navigation.goTo(agent, target);
+        } catch {}
+        // Rotate agent to face movement direction
+        updateAgentRotation(agent);
+      }
+    }, CHASE_INTERVAL_MS);
+  };
+  startChase();
+</script>
+
+

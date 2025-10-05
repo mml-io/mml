@@ -17,16 +17,17 @@ type DebugDrawMode =
   | "compactHeightfieldRegions"
   | "compactHeightfieldDistance"
   | "navmeshBVTree"
-  | "staticGeometry";
+  | "staticGeometry"
+  | "obstacles";
 
 type NavigationConfig = {
   tileSize?: number;
   cellSize?: number;
   cellHeight?: number;
-  agentHeight?: number;
-  agentRadius?: number;
-  agentMaxClimb?: number;
-  agentMaxSlope?: number;
+  walkableHeight?: number;
+  walkableRadius?: number;
+  walkableClimb?: number;
+  walkableSlopeAngle?: number;
   debug?: boolean;
   debugDrawMode?: DebugDrawMode;
 };
@@ -47,6 +48,10 @@ class NavigationSystem implements ElementSystem {
   private generatorIntermediates: any | null = null;
   private debugVertices: Float32Array | null = null;
   private debugColors: Float32Array | null = null;
+  private debugTriVertices: Float32Array | null = null;
+  private debugTriColors: Float32Array | null = null;
+  private debugObstacleVertices: Float32Array | null = null;
+  private debugObstacleColors: Float32Array | null = null;
   private lastNetworkTime = 0;
   private elementToAgent = new Map<Element, AgentState>();
   private obstacles = new Map<
@@ -67,15 +72,47 @@ class NavigationSystem implements ElementSystem {
   private agentWaitUntil = new Map<number, number | null>();
   private config: Required<NavigationConfig> = {
     tileSize: 32,
-    cellSize: 0.3,
-    cellHeight: 0.2,
-    agentHeight: 2.0,
-    agentRadius: 0.6,
-    agentMaxClimb: 0.9,
-    agentMaxSlope: 45,
+    cellSize: 0.1,
+    cellHeight: 0.05,
+    walkableHeight: 2,
+    walkableRadius: 0.5,
+    walkableClimb: 2,
+    walkableSlopeAngle: 60,
     debug: false,
     debugDrawMode: "navmesh",
   };
+
+  private getWalkableParams() {
+    return {
+      height: this.config.walkableHeight ?? 2,
+      radius: this.config.walkableRadius ?? 0.5,
+      maxClimb: this.config.walkableClimb ?? 2,
+      maxSlope: this.config.walkableSlopeAngle ?? 60,
+    };
+  }
+
+  private getGeneratorParams() {
+    const walk = this.getWalkableParams();
+    const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+    const tileSize = Number.isFinite(this.config.tileSize) && this.config.tileSize > 0
+      ? clamp(Math.floor(this.config.tileSize), 8, 256)
+      : 16;
+    const cellSize = Number.isFinite(this.config.cellSize) && this.config.cellSize >= 0.05
+      ? clamp(this.config.cellSize, 0.05, 2)
+      : 0.2;
+    const cellHeight = Number.isFinite(this.config.cellHeight) && this.config.cellHeight >= 0.05
+      ? clamp(this.config.cellHeight, 0.05, 2)
+      : 0.2;
+    return {
+      tileSize,
+      cellSize,
+      cellHeight,
+      agentHeight: walk.height,
+      agentRadius: walk.radius,
+      agentMaxClimb: walk.maxClimb,
+      agentMaxSlope: walk.maxSlope,
+    } as const;
+  }
 
   private computeWorldTransformFor(element: Element | null) {
     return mathComputeWorldTransformFor(element, {
@@ -116,7 +153,7 @@ class NavigationSystem implements ElementSystem {
     }
 
     // Fallback to configured defaults
-    return { radius: this.config.agentRadius, height: this.config.agentHeight };
+    return { radius: 0.5, height: 2 };
   }
 
   async init(config: NavigationConfig = {}) {
@@ -251,15 +288,8 @@ class NavigationSystem implements ElementSystem {
       return;
     }
 
-    const { success, navMesh, tileCache, intermediates } = generateTileCache(positions, indices, {
-      tileSize: this.config.tileSize,
-      cellSize: this.config.cellSize,
-      cellHeight: this.config.cellHeight,
-      agentHeight: this.config.agentHeight,
-      agentRadius: this.config.agentRadius,
-      agentMaxClimb: this.config.agentMaxClimb,
-      agentMaxSlope: this.config.agentMaxSlope,
-    } as any, true as any);
+    const gen = this.getGeneratorParams();
+    const { success, navMesh, tileCache, intermediates } = generateTileCache(positions, indices, gen as any, true as any);
 
 
     if (!success) {
@@ -272,12 +302,12 @@ class NavigationSystem implements ElementSystem {
     this.navQuery = new NavMeshQuery(navMesh);
     // Derive a max agent radius across declared agents
     const agentElements = Array.from(document.querySelectorAll("[nav-agent]"));
-    let maxDerivedRadius = this.config.agentRadius;
+    let maxDerivedRadius = this.getWalkableParams().radius;
     for (const el of agentElements) {
       const dims = this.deriveAgentDimensionsFromElement(el);
       if (dims.radius > maxDerivedRadius) maxDerivedRadius = dims.radius;
     }
-    this.crowd = new Crowd(navMesh, { maxAgents: 128, maxAgentRadius: maxDerivedRadius });
+    this.crowd = new Crowd(navMesh, { maxAgents: 1024, maxAgentRadius: 100 });
     this.tileCache = tileCache as any;
     this.generatorIntermediates = intermediates as any;
 
@@ -293,15 +323,17 @@ class NavigationSystem implements ElementSystem {
       const pos = { x: world.position.x, y: world.position.y, z: world.position.z };
       const speedAttr = parseFloat(el.getAttribute("nav-speed") || "");
       const maxSpeed = isFinite(speedAttr) && speedAttr > 0 ? speedAttr : 3.5;
+      const accelAttr = parseFloat(el.getAttribute("nav-acceleration") || "");
+      const maxAcceleration = isFinite(accelAttr) && accelAttr > 0 ? accelAttr : 8.0;
       const dims = this.deriveAgentDimensionsFromElement(el);
       const params = {
         radius: dims.radius,
         height: dims.height,
-        maxAcceleration: 8.0,
+        maxAcceleration,
         maxSpeed,
         collisionQueryRange: dims.radius * 12.0,
         pathOptimizationRange: dims.radius * 30.0,
-        separationWeight: 0.5,
+        separationWeight: 1.0,
       } as any;
       const agent = this.crowd!.addAgent(pos, params) as any;
       const agentId: number = agent.agentIndex;
@@ -339,6 +371,18 @@ class NavigationSystem implements ElementSystem {
           Math.abs(halfExtents.z - state.lastHalfExtents.z) > 1e-3;
         const rotated = Math.abs(angle - state.lastAngle) > 1e-3;
         if (moved || resized || rotated) {
+          if (this.config.debug) {
+            const elementId = (element as any).id || element.tagName.toLowerCase();
+            console.log("[navigation] obstacle:update", {
+              elementId,
+              moved,
+              resized,
+              rotated,
+              center,
+              halfExtents,
+              angle,
+            });
+          }
           try {
             (this.tileCache as any).removeObstacle(state.obstacle);
           } catch {}
@@ -356,29 +400,44 @@ class NavigationSystem implements ElementSystem {
       if (anyChanged) {
         this.tileCacheDirty = true;
       }
-      // Drain TileCache requests quickly if many animation ticks occur
+      // Drain TileCache requests until up-to-date or max iterations per frame
       let updateRes = (this.tileCache as any).update(this.navMesh);
-      if (anyChanged && updateRes && !updateRes.upToDate) {
-        for (let i = 0; i < 4; i++) {
+      let updates = 1;
+      if (updateRes && !updateRes.upToDate) {
+        for (let i = 0; i < 8; i++) {
           updateRes = (this.tileCache as any).update(this.navMesh);
+          updates++;
           if (!updateRes || updateRes.upToDate) break;
         }
       }
+      if (this.config.debug) {
+        console.log("[navigation] tilecache:update", {
+          updates,
+          upToDate: updateRes ? !!updateRes.upToDate : null,
+          dirty: this.tileCacheDirty,
+        });
+      }
       if (this.tileCacheDirty && updateRes && updateRes.upToDate) {
         // Re-issue current move targets so Detour recomputes paths on the updated mesh
+        let repathed = 0;
         this.elementToAgent.forEach((state) => {
           const tgt = this.agentCurrentTarget.get(state.agentId);
           if (!tgt) return;
           const ag = this.crowd!.getAgent(state.agentId);
           ag?.requestMoveTarget(tgt);
+          repathed++;
         });
+        if (this.config.debug) {
+          console.log("[navigation] obstacle:repath", { repathed });
+        }
+        // Clear dirty flag once updates are applied
+        this.tileCacheDirty = false;
       }
-      if (this.config.debug && this.tileCacheDirty) {
+      if (this.config.debug && updateRes && updateRes.upToDate) {
         const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
         if (nowMs - this.lastDebugRebuildMs > 300) {
           this.lastDebugRebuildMs = nowMs;
           this.buildDebugBuffers();
-          this.tileCacheDirty = false;
         }
       }
     }
@@ -392,7 +451,7 @@ class NavigationSystem implements ElementSystem {
       const elementWorld = this.computeWorldTransformFor(state.element);
       const renderHeight = parseFloat(state.element.getAttribute("height") || "1");
       const worldRenderHeight = renderHeight * (elementWorld?.scale?.y ?? 1);
-      const yOffset = (worldRenderHeight - this.config.agentHeight) / 2;
+      const yOffset = (worldRenderHeight - this.getWalkableParams().height) / 2;
       const worldPos = new Vec3(p.x, p.y + yOffset, p.z);
       const localPos = parentWorld.rotation
         .conjugate()
@@ -453,6 +512,8 @@ class NavigationSystem implements ElementSystem {
         // Build dynamic agent and waypoint debug lines on top of static navmesh lines
         const dynPositions: number[] = [];
         const dynColors: number[] = [];
+        const dynTriPositions: number[] = [];
+        const dynTriColors: number[] = [];
 
         const pushLine = (
           ax: number, ay: number, az: number,
@@ -461,6 +522,18 @@ class NavigationSystem implements ElementSystem {
         ) => {
           dynPositions.push(ax, ay, az, bx, by, bz);
           dynColors.push(r, g, b, a, r, g, b, a);
+        };
+
+        const pushTri = (
+          ax: number, ay: number, az: number,
+          bx: number, by: number, bz: number,
+          cx: number, cy: number, cz: number,
+          r0: number, g0: number, b0: number, a0: number,
+          r1: number, g1: number, b1: number, a1: number,
+          r2: number, g2: number, b2: number, a2: number,
+        ) => {
+          dynTriPositions.push(ax, ay, az, bx, by, bz, cx, cy, cz);
+          dynTriColors.push(r0, g0, b0, a0, r1, g1, b1, a1, r2, g2, b2, a2);
         };
 
         // Per-agent markers and target lines
@@ -521,6 +594,27 @@ class NavigationSystem implements ElementSystem {
               });
             }
           }
+
+          // Agent footprint disc (filled, translucent yellow)
+          const discSegments = 20;
+          const radius = Math.max(0.05, state.radius);
+          const cy = p.y + 0.02; // slight offset to avoid z-fighting
+          for (let i = 0; i < discSegments; i++) {
+            const a0 = (i / discSegments) * Math.PI * 2;
+            const a1 = ((i + 1) / discSegments) * Math.PI * 2;
+            const x0 = p.x + Math.cos(a0) * radius;
+            const z0 = p.z + Math.sin(a0) * radius;
+            const x1 = p.x + Math.cos(a1) * radius;
+            const z1 = p.z + Math.sin(a1) * radius;
+            pushTri(
+              p.x, cy, p.z,
+              x0, cy, z0,
+              x1, cy, z1,
+              1.0, 1.0, 0.0, 0.35,
+              1.0, 1.0, 0.0, 0.35,
+              1.0, 1.0, 0.0, 0.35,
+            );
+          }
         });
 
         const baseVerts = this.debugVertices;
@@ -532,6 +626,15 @@ class NavigationSystem implements ElementSystem {
         outCols.set(baseCols, 0);
         outCols.set(new Float32Array(dynColors), baseCols.length);
 
+        const baseTriVerts = this.debugTriVertices ?? new Float32Array(0);
+        const baseTriCols = this.debugTriColors ?? new Float32Array(0);
+        const outTriVerts = new Float32Array(baseTriVerts.length + dynTriPositions.length);
+        outTriVerts.set(baseTriVerts, 0);
+        outTriVerts.set(new Float32Array(dynTriPositions), baseTriVerts.length);
+        const outTriCols = new Float32Array(baseTriCols.length + dynTriColors.length);
+        outTriCols.set(baseTriCols, 0);
+        outTriCols.set(new Float32Array(dynTriColors), baseTriCols.length);
+
         try {
           window.parent.postMessage(
             {
@@ -539,6 +642,10 @@ class NavigationSystem implements ElementSystem {
               type: "navmesh-debug-buffers",
               vertices: outVerts,
               colors: outCols,
+              triVertices: outTriVerts,
+              triColors: outTriCols,
+              obstacleVertices: this.debugObstacleVertices ?? new Float32Array(0),
+              obstacleColors: this.debugObstacleColors ?? new Float32Array(0),
             },
             "*",
           );
@@ -563,6 +670,7 @@ class NavigationSystem implements ElementSystem {
     const isAgent = attributes.some((a) => a.attributeName === "nav-agent");
     const isObstacle = attributes.some((a) => a.attributeName === "nav-obstacle");
     const speedAttr = attributes.find((a) => a.attributeName === "nav-speed");
+    const accelAttr = attributes.find((a) => a.attributeName === "nav-acceleration");
     const waypointsAttr = attributes.find((a) => a.attributeName === "nav-waypoints");
 
     // Dynamic obstacle support using TileCache temporary obstacles
@@ -579,7 +687,31 @@ class NavigationSystem implements ElementSystem {
               lastHalfExtents: box.halfExtents,
               lastAngle: box.angle,
             });
-            (this.tileCache as any).update(this.navMesh);
+            if (this.config.debug) {
+              const elementId = (element as any).id || element.tagName.toLowerCase();
+              console.log("[navigation] obstacle:add", {
+                elementId,
+                center: box.center,
+                halfExtents: box.halfExtents,
+                angle: box.angle,
+              });
+            }
+            // Drain updates immediately to reflect obstacle addition
+            let updateRes = (this.tileCache as any).update(this.navMesh);
+            let updates = 1;
+            if (updateRes && !updateRes.upToDate) {
+              for (let i = 0; i < 8; i++) {
+                updateRes = (this.tileCache as any).update(this.navMesh);
+                updates++;
+                if (!updateRes || updateRes.upToDate) break;
+              }
+            }
+            if (this.config.debug) {
+              console.log("[navigation] tilecache:update(add)", {
+                updates,
+                upToDate: updateRes ? !!updateRes.upToDate : null,
+              });
+            }
             this.tileCacheDirty = true;
           }
         }
@@ -597,12 +729,14 @@ class NavigationSystem implements ElementSystem {
       const pos = { x: world.position.x, y: world.position.y, z: world.position.z };
       const parsedSpeed = typeof speedAttr?.value === "number" ? speedAttr!.value as number : parseFloat(String(speedAttr?.value ?? ""));
       const maxSpeed = isFinite(parsedSpeed) && parsedSpeed > 0 ? parsedSpeed : 3.5;
+      const parsedAccel = typeof accelAttr?.value === "number" ? (accelAttr!.value as number) : parseFloat(String(accelAttr?.value ?? ""));
+      const maxAcceleration = isFinite(parsedAccel) && parsedAccel > 0 ? parsedAccel : 8.0;
       const dims = this.deriveAgentDimensionsFromElement(element);
       console.log("[navigation] agent:dimensions", { radius: dims.radius, height: dims.height });
       const params = {
         radius: dims.radius,
         height: dims.height,
-        maxAcceleration: 8.0,
+        maxAcceleration,
         maxSpeed,
         collisionQueryRange: dims.radius * 12.0,
         pathOptimizationRange: dims.radius * 30.0,
@@ -674,7 +808,24 @@ class NavigationSystem implements ElementSystem {
       try {
         (this.tileCache as any).removeObstacle(obs.obstacle);
       } catch {}
-      (this.tileCache as any).update(this.navMesh);
+      // Drain updates for obstacle removal
+      let updateRes = (this.tileCache as any).update(this.navMesh);
+      let updates = 1;
+      if (updateRes && !updateRes.upToDate) {
+        for (let i = 0; i < 8; i++) {
+          updateRes = (this.tileCache as any).update(this.navMesh);
+          updates++;
+          if (!updateRes || updateRes.upToDate) break;
+        }
+      }
+      if (this.config.debug) {
+        const elementId = (element as any).id || element.tagName.toLowerCase();
+        console.log("[navigation] obstacle:remove", { elementId });
+        console.log("[navigation] tilecache:update(remove)", {
+          updates,
+          upToDate: updateRes ? !!updateRes.upToDate : null,
+        });
+      }
       this.obstacles.delete(element);
       this.tileCacheDirty = true;
     }
@@ -765,15 +916,81 @@ class NavigationSystem implements ElementSystem {
     if (!this.navMesh) {
       this.debugVertices = null;
       this.debugColors = null;
+      this.debugTriVertices = null;
+      this.debugTriColors = null;
+      this.debugObstacleVertices = null;
+      this.debugObstacleColors = null;
       return;
     }
 
     const debugDrawer = new DebugDrawerUtils();
     const primitives: Array<ReturnType<typeof debugDrawer.drawNavMesh>[number]> = [] as any;
 
+    const makeObstacleLines = () => {
+      if (this.obstacles.size === 0) return null as null | { type: "lines"; vertices: [number, number, number, number, number, number, number][] };
+      const obstacleLines: { type: "lines"; vertices: [number, number, number, number, number, number, number][] } = {
+        type: "lines",
+        vertices: [],
+      };
+      const color: [number, number, number, number] = [1.0, 0.5, 0.0, 1.0];
+      this.obstacles.forEach((state) => {
+        const hx = state.lastHalfExtents.x;
+        const hy = state.lastHalfExtents.y;
+        const hz = state.lastHalfExtents.z;
+        const angle = state.lastAngle;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const localCorners: Array<[number, number, number]> = [
+          [-hx, -hy, -hz],
+          [hx, -hy, -hz],
+          [hx, -hy, hz],
+          [-hx, -hy, hz],
+          [-hx, hy, -hz],
+          [hx, hy, -hz],
+          [hx, hy, hz],
+          [-hx, hy, hz],
+        ];
+        const worldCorners: Array<[number, number, number]> = localCorners.map(([x, y, z]) => {
+          const rx = x * cos - z * sin;
+          const rz = x * sin + z * cos;
+          return [state.lastCenter.x + rx, state.lastCenter.y + y, state.lastCenter.z + rz];
+        });
+        const edges: Array<[number, number]> = [
+          [0, 1],
+          [1, 2],
+          [2, 3],
+          [3, 0],
+          [4, 5],
+          [5, 6],
+          [6, 7],
+          [7, 4],
+          [0, 4],
+          [1, 5],
+          [2, 6],
+          [3, 7],
+        ];
+        for (const [ia, ib] of edges) {
+          const a = worldCorners[ia];
+          const b = worldCorners[ib];
+          obstacleLines.vertices.push(
+            [a[0], a[1], a[2], color[0], color[1], color[2], color[3]],
+            [b[0], b[1], b[2], color[0], color[1], color[2], color[3]],
+          );
+        }
+      });
+      return obstacleLines;
+    };
+
     switch (this.config.debugDrawMode) {
       case "navmesh": {
         primitives.push(...debugDrawer.drawNavMesh(this.navMesh));
+        break;
+      }
+      case "obstacles": {
+        const obstacleLines = makeObstacleLines();
+        if (obstacleLines && obstacleLines.vertices.length > 0) {
+          primitives.push(obstacleLines);
+        }
         break;
       }
       case "heightfieldWalkable": {
@@ -868,8 +1085,24 @@ class NavigationSystem implements ElementSystem {
       }
     }
 
+    // Collect obstacle wireframes separately
+    const obstaclePositions: number[] = [];
+    const obstacleColors: number[] = [];
+    const obstacleLines = makeObstacleLines();
+    if (obstacleLines && obstacleLines.vertices.length > 0) {
+      const verts = obstacleLines.vertices;
+      for (let i = 0; i + 1 < verts.length; i += 2) {
+        const a = verts[i];
+        const b = verts[i + 1];
+        obstaclePositions.push(a[0], a[1], a[2], b[0], b[1], b[2]);
+        obstacleColors.push(a[3], a[4], a[5], a[6] ?? 1, b[3], b[4], b[5], b[6] ?? 1);
+      }
+    }
+
     const positions: number[] = [];
     const colors: number[] = [];
+    const triPositions: number[] = [];
+    const triColors: number[] = [];
 
     console.log("[navigation] buildDebugBuffers:primitives", primitives);
     for (const prim of primitives) {
@@ -886,15 +1119,24 @@ class NavigationSystem implements ElementSystem {
           const v0 = verts[i];
           const v1 = verts[i + 1];
           const v2 = verts[i + 2];
-          // Edge 0-1
+          // Edges for wireframe
           positions.push(v0[0], v0[1], v0[2], v1[0], v1[1], v1[2]);
           colors.push(v0[3], v0[4], v0[5], v0[6] ?? 1, v1[3], v1[4], v1[5], v1[6] ?? 1);
-          // Edge 1-2
           positions.push(v1[0], v1[1], v1[2], v2[0], v2[1], v2[2]);
           colors.push(v1[3], v1[4], v1[5], v1[6] ?? 1, v2[3], v2[4], v2[5], v2[6] ?? 1);
-          // Edge 2-0
           positions.push(v2[0], v2[1], v2[2], v0[0], v0[1], v0[2]);
           colors.push(v2[3], v2[4], v2[5], v2[6] ?? 1, v0[3], v0[4], v0[5], v0[6] ?? 1);
+          // Filled tris
+          triPositions.push(
+            v0[0], v0[1], v0[2],
+            v1[0], v1[1], v1[2],
+            v2[0], v2[1], v2[2],
+          );
+          triColors.push(
+            v0[3], v0[4], v0[5], v0[6] ?? 1,
+            v1[3], v1[4], v1[5], v1[6] ?? 1,
+            v2[3], v2[4], v2[5], v2[6] ?? 1,
+          );
         }
       } else if (prim.type === "quads") {
         for (let i = 0; i + 3 < verts.length; i += 4) {
@@ -902,7 +1144,7 @@ class NavigationSystem implements ElementSystem {
           const v1 = verts[i + 1];
           const v2 = verts[i + 2];
           const v3 = verts[i + 3];
-          // 0-1, 1-2, 2-3, 3-0
+          // Wireframe edges
           positions.push(v0[0], v0[1], v0[2], v1[0], v1[1], v1[2]);
           colors.push(v0[3], v0[4], v0[5], v0[6] ?? 1, v1[3], v1[4], v1[5], v1[6] ?? 1);
           positions.push(v1[0], v1[1], v1[2], v2[0], v2[1], v2[2]);
@@ -911,6 +1153,23 @@ class NavigationSystem implements ElementSystem {
           colors.push(v2[3], v2[4], v2[5], v2[6] ?? 1, v3[3], v3[4], v3[5], v3[6] ?? 1);
           positions.push(v3[0], v3[1], v3[2], v0[0], v0[1], v0[2]);
           colors.push(v3[3], v3[4], v3[5], v3[6] ?? 1, v0[3], v0[4], v0[5], v0[6] ?? 1);
+          // Two filled triangles: 0-1-2 and 0-2-3
+          triPositions.push(
+            v0[0], v0[1], v0[2],
+            v1[0], v1[1], v1[2],
+            v2[0], v2[1], v2[2],
+            v0[0], v0[1], v0[2],
+            v2[0], v2[1], v2[2],
+            v3[0], v3[1], v3[2],
+          );
+          triColors.push(
+            v0[3], v0[4], v0[5], v0[6] ?? 1,
+            v1[3], v1[4], v1[5], v1[6] ?? 1,
+            v2[3], v2[4], v2[5], v2[6] ?? 1,
+            v0[3], v0[4], v0[5], v0[6] ?? 1,
+            v2[3], v2[4], v2[5], v2[6] ?? 1,
+            v3[3], v3[4], v3[5], v3[6] ?? 1,
+          );
         }
       }
       // points are ignored for line rendering
@@ -918,6 +1177,10 @@ class NavigationSystem implements ElementSystem {
 
     this.debugVertices = new Float32Array(positions);
     this.debugColors = new Float32Array(colors);
+    this.debugTriVertices = new Float32Array(triPositions);
+    this.debugTriColors = new Float32Array(triColors);
+    this.debugObstacleVertices = new Float32Array(obstaclePositions);
+    this.debugObstacleColors = new Float32Array(obstacleColors);
 
     debugDrawer.dispose();
   }
@@ -928,6 +1191,7 @@ initElementSystem("navigation", navigationSystem, [
   "nav-obstacle",
   "nav-agent",
   "nav-speed",
+  "nav-acceleration",
   "nav-goal-x",
   "nav-goal-y",
   "nav-goal-z",
