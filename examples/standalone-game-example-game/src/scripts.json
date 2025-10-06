@@ -1,7 +1,7 @@
 {
   "scripts": [
     {
-      "src": "./src/utils/helper.js"
+      "src": "./utils/helper.js"
     },
     {
       "src": "mml-game-math-system"
@@ -14,7 +14,7 @@
       }
     },
     {
-      "src": "./src/some-util.ts"
+      "src": "./some-util.ts"
     }
   ]
 }
