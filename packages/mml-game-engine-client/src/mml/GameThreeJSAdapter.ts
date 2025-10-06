@@ -22,6 +22,11 @@ import { CameraGraphics } from "./elements/Camera";
 import { MCharacterController } from "./elements/CharacterController";
 import { CollisionsManager } from "./elements/CollisionsManager";
 import { MControl } from "./elements/Control";
+import { EnvironmentLightGraphics } from "./elements/EnvironmentLight";
+import { EnvironmentMapGraphics } from "./elements/EnvironmentMap";
+import { FogGraphics } from "./elements/Fog";
+import { SunGraphics } from "./elements/Sun";
+import { EnvironmentManager } from "./EnvironmentManager";
 import { ThreeJSDragFlyCameraControls } from "./ThreeJSDragFlyCameraControls";
 
 type ControlRegistrationHandler = {
@@ -61,7 +66,7 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
   private highlightedObjects: THREE.Object3D[] = [];
 
   private cameraManager = new CameraManager();
-  private collisionsManager: CollisionsManager;
+  private environmentManager: EnvironmentManager;
 
   private mmlControls: MControl<GameThreeJSAdapter>[] = [];
   private mmlCharacterControllers: MCharacterController<GameThreeJSAdapter>[] = [];
@@ -131,6 +136,70 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
     this.cameraManager.unregisterCharacterController(controller);
   }
 
+  registerEnvironmentMap(environmentMap: EnvironmentMapGraphics) {
+    this.environmentManager.registerEnvironmentMap(environmentMap);
+  }
+
+  updateEnvironmentMapPriority(environmentMap: EnvironmentMapGraphics) {
+    this.environmentManager.updateEnvironmentMapPriority(environmentMap);
+  }
+
+  unregisterEnvironmentMap(environmentMap: EnvironmentMapGraphics) {
+    this.environmentManager.unregisterEnvironmentMap(environmentMap);
+  }
+
+  updateEnvironmentMapProperties() {
+    this.environmentManager.updateEnvironmentMapProperties();
+  }
+
+  registerEnvironmentLight(environmentLight: EnvironmentLightGraphics) {
+    this.environmentManager.registerEnvironmentLight(environmentLight);
+  }
+
+  updateEnvironmentLightPriority(environmentLight: EnvironmentLightGraphics) {
+    this.environmentManager.updateEnvironmentLightPriority(environmentLight);
+  }
+
+  unregisterEnvironmentLight(environmentLight: EnvironmentLightGraphics) {
+    this.environmentManager.unregisterEnvironmentLight(environmentLight);
+  }
+
+  updateEnvironmentLightProperties() {
+    this.environmentManager.updateEnvironmentLightProperties();
+  }
+
+  registerSun(sun: SunGraphics) {
+    this.environmentManager.registerSun(sun);
+  }
+
+  updateSunPriority(sun: SunGraphics) {
+    this.environmentManager.updateSunPriority(sun);
+  }
+
+  unregisterSun(sun: SunGraphics) {
+    this.environmentManager.unregisterSun(sun);
+  }
+
+  updateSunProperties() {
+    this.environmentManager.updateSunProperties();
+  }
+
+  registerFog(fog: FogGraphics) {
+    this.environmentManager.registerFog(fog);
+  }
+
+  updateFogPriority(fog: FogGraphics) {
+    this.environmentManager.updateFogPriority(fog);
+  }
+
+  unregisterFog(fog: FogGraphics) {
+    this.environmentManager.unregisterFog(fog);
+  }
+
+  updateFogProperties() {
+    this.environmentManager.updateFogProperties();
+  }
+
   getThreeScene(): THREE.Scene {
     return this.threeScene;
   }
@@ -170,6 +239,7 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
       this.clickTrigger = ThreeJSClickTrigger.init(this.element, this.rootContainer, proxyCamera);
 
       this.renderer = this.createRenderer();
+      this.environmentManager = new EnvironmentManager(this.threeScene, this.renderer);
 
       // update camera aspect ratio with actual canvas dimensions
       const canvas = this.renderer.domElement;

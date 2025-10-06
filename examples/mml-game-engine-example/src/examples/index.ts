@@ -7,6 +7,7 @@ import { characterStateDemo } from "./character-state-demo";
 import { helmetAndDuck } from "./helmet-and-duck";
 import { infiniteRunner } from "./infinite-runner";
 import { mCharacterControllerTest } from "./m-character-controller-test";
+import { mEnvironmentTest } from "./m-environment-test";
 import { mOverlayTest } from "./m-overlay-test";
 import { tankBattle } from "./tank-battle";
 import { tankCharacterDemo } from "./tank-character-demo";
@@ -25,6 +26,7 @@ export const examples: Record<string, ExampleDefinition> = {
   "basic-scene": basicScene,
   "helmet-and-duck": helmetAndDuck,
   "cameras-priority": camerasPriority,
+  "m-environment-test": mEnvironmentTest,
   "block-tower": blockTower,
   "animation-showcase": animationShowcase,
   "tank-battle": tankBattle,
