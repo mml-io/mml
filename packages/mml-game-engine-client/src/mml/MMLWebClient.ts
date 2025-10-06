@@ -1,4 +1,4 @@
-import { MMLScene, RemoteDocumentWrapper } from "@mml-io/mml-web";
+import { RemoteDocumentWrapper } from "@mml-io/mml-web";
 import { EditableNetworkedDOM, NetworkedDOM } from "@mml-io/networked-dom-document";
 import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 import { FakeWebsocket } from "@mml-io/networked-dom-web-runner";
@@ -7,6 +7,7 @@ import { NavMeshDebugOverlay } from "../navigation/NavMeshDebugOverlay";
 import { PhysicsDebugOverlay } from "../physics/PhysicsDebugOverlay";
 import { ControlManager, ControlManagerConfig } from "./control-manager";
 import { GameThreeJSAdapter, GameThreeJSAdapterControlsType } from "./GameThreeJSAdapter";
+import { InteractiveMMLScene } from "./InteractiveMMLScene";
 import { NonInteractiveMMLScene } from "./NonInteractiveMMLScene";
 
 export class MMLWebClient {
@@ -15,7 +16,7 @@ export class MMLWebClient {
   private disposed = false;
 
   remoteDocumentWrapper?: RemoteDocumentWrapper;
-  mScene: MMLScene<GameThreeJSAdapter> | NonInteractiveMMLScene;
+  mScene: InteractiveMMLScene | NonInteractiveMMLScene;
   private controlManager?: ControlManager;
   private debugOverlay?: PhysicsDebugOverlay;
   private navmeshOverlay?: NavMeshDebugOverlay;
@@ -58,7 +59,7 @@ export class MMLWebClient {
     this.element.style.width = "100%";
     this.element.style.height = "100%";
     this.mScene = this.interactive
-      ? new MMLScene(this.element)
+      ? new InteractiveMMLScene(this.element)
       : new NonInteractiveMMLScene(this.element);
   }
 

@@ -3,8 +3,10 @@ import {
   IMMLScene,
   Interaction,
   LoadingProgressManager,
+  MElement,
   PositionAndRotation,
 } from "@mml-io/mml-web";
+import { Group } from "three";
 
 import { GameThreeJSAdapter } from "./GameThreeJSAdapter";
 
@@ -83,16 +85,25 @@ export class NonInteractiveMMLScene implements IMMLScene<GameThreeJSAdapter> {
     // no-op
   }
 
-  public addCollider(): void {
-    // no-op
+  public addCollider(collider: unknown, element: MElement<GameThreeJSAdapter>): void {
+    if (!this.graphicsAdapter) {
+      return;
+    }
+    this.graphicsAdapter.getCollisionsManager().addMeshesGroup(collider as Group, element);
   }
 
-  public updateCollider(): void {
-    // no-op
+  public updateCollider(collider: unknown): void {
+    if (!this.graphicsAdapter) {
+      return;
+    }
+    this.graphicsAdapter.getCollisionsManager().updateMeshesGroup(collider as Group);
   }
 
-  public removeCollider(): void {
-    // no-op
+  public removeCollider(collider: unknown): void {
+    if (!this.graphicsAdapter) {
+      return;
+    }
+    this.graphicsAdapter.getCollisionsManager().removeMeshesGroup(collider as Group);
   }
 
   public addInteraction(): void {

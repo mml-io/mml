@@ -34,6 +34,7 @@
     
     const player = document.createElement("m-character");
     player.setAttribute("state", "idle");
+    player.setAttribute("collide", "false");
     player.setAttribute("src", "/assets/models/bot.glb");
     assignAnimationLerp(player, 100, "x,y,z,ry");
     

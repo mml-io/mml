@@ -23,7 +23,7 @@ function getRandomChaserModelSrc() {
 
 function assignChaserAnimation(modelEl, state) {
   const animation = document.createElement('m-animation');
-  animation.setAttribute('src', `https://dreamcache.xyz/anim_${state}.glb`);
+  animation.setAttribute('src', `/assets/models/anim_${state}.glb`);
   animation.setAttribute('state', state);
   animation.setAttribute('weight', state === 'run' ? '1.0' : '0.0');
   assignAnimationLerp(animation, 150, 'weight');
@@ -155,7 +155,7 @@ function createPlayer() {
 
 function assignPlayerAnimation(player, state) {
   const animation = document.createElement('m-animation');
-  animation.setAttribute('src', `https://dreamcache.xyz/anim_${state}.glb`);
+  animation.setAttribute('src', `/assets/models/anim_${state}.glb`);
   animation.setAttribute('state', state);
   animation.setAttribute('weight', state === 'idle' ? '1.0' : '0.0');
   assignAnimationLerp(animation, 150, 'weight');

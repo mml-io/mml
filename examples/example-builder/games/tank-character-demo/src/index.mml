@@ -136,7 +136,7 @@
       player.dataset.connectionId = this.connectionId.toString();
       this.assignAnimationLerp(player, 100, "x,y,z,ry");
       player.setAttribute("state", "idle");
-      this.setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
+      this.setTransform(player, Math.random() * 4 - 2, 1, Math.random() * 4 - 2, 0);
       worldGroup.appendChild(player);
       return player;
     }

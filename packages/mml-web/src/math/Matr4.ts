@@ -31,11 +31,11 @@ export class Matr4 {
 
   public data: Matr4Data;
 
-  constructor(data?: Matr4Data | Matr4 | Float32Array) {
+  constructor(data?: Matr4Data | Matr4 | Float32Array | Array<number>) {
     if (data instanceof Matr4) {
       this.data = [...data.data];
     } else if (data instanceof Array) {
-      this.data = [...data];
+      this.data = [...data] as Matr4Data;
     } else if (data instanceof Float32Array) {
       this.data = [...data] as Matr4Data;
     } else {
@@ -53,9 +53,11 @@ export class Matr4 {
     return this;
   }
 
-  set(...args: Matr4Data | [Matr4Data]): this {
+  set(...args: Matr4Data | [Float32Array] | [Matr4Data] | [Array<number>]): this {
     if (args[0] instanceof Array) {
-      this.data = args[0];
+      this.data = args[0] as Matr4Data;
+    } else if (args[0] instanceof Float32Array) {
+      this.data = [...args[0]] as Matr4Data;
     } else {
       this.data = args as Matr4Data;
     }
@@ -494,6 +496,22 @@ export class Matr4 {
         n11 * n22 * n33) *
       detInv;
 
+    return this;
+  }
+
+  equals(other: Matr4) {
+    for (let i = 0; i < 16; i++) {
+      if (this.data[i] !== other.data[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  setPosition(x: number, y: number, z: number): this {
+    this.data[12] = x;
+    this.data[13] = y;
+    this.data[14] = z;
     return this;
   }
 }

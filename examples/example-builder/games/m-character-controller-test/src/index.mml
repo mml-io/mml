@@ -13,133 +13,157 @@
   <m-group ry="45" x="15" y="15" z="15"><m-camera id="angle-camera" visible-to="-1" priority="1" fov="70" rx="-45"></m-camera></m-group>
 </m-group>
 
+
+<m-group id="stairs" z="-10" ry="180" y="0.1"></m-group>
+
+<m-cube z="25" y="1.5" width="3" height="3" depth="3" id="my-cube"></m-cube>
+
+<m-cube x="15" y="0.5" z="5" width="3" height="0.25" depth="3" color="blue">
+  <m-attr-anim
+    attr="z"
+    start="-5"
+    end="10000"
+    duration="5000"
+    loop="true"
+    ping-pong="true"
+    ping-pong-delay="3000"
+    easing="easeInOutQuart"
+  ></m-attr-anim>
+</m-cube>
+
+<m-cube x="10" y="0.5" z="5" width="3" height="0.25" depth="3" color="blue">
+  <m-attr-anim
+    attr="z"
+    start="-5"
+    end="-100"
+    duration="5000"
+    loop="true"
+    ping-pong="true"
+    easing="easeInOutQuart"
+  ></m-attr-anim>
+</m-cube>
+
+<m-cube x="5" y="0.5" z="5" width="3" height="0.25" depth="3" color="blue">
+  <m-attr-anim
+    attr="z"
+    start="-5"
+    end="-20"
+    duration="5000"
+    loop="true"
+    ping-pong="true"
+    easing="easeInOutQuart"
+  ></m-attr-anim>
+</m-cube>
+
+<m-cube x="-5" y="0.5" z="5" width="3" height="0.25" depth="3" color="blue">
+  <m-attr-anim
+    attr="z"
+    start="-5"
+    end="-20"
+    duration="5000"
+    loop="true"
+    ping-pong="true"
+    easing="easeInOutQuart"
+  ></m-attr-anim>
+  <m-attr-anim
+    attr="ry"
+    start="0"
+    end="360"
+    duration="5000"
+    loop="true"
+    ping-pong="true"
+    easing="easeInOutQuart"
+  ></m-attr-anim>
+  <m-attr-anim
+    attr="height"
+    start="0.25"
+    end="3.5"
+    duration="5000"
+    loop="true"
+    ping-pong="true"
+    easing="easeInOutQuart"
+  ></m-attr-anim>
+</m-cube>
+
+<m-cube x="-10" z="-5" y="0.5" z="5" width="3" height="0.25" depth="3" color="blue">
+  <m-attr-anim
+    attr="ry"
+    start="0"
+    end="360"
+    duration="5000"
+    loop="true"
+    ping-pong="true"
+    easing="easeInOutQuart"
+  ></m-attr-anim>
+</m-cube>
+
+<m-cube x="-10" y="0.5" z="5" width="3" height="0.25" depth="3" color="blue">
+  <m-attr-anim
+    attr="y"
+    start="0.5"
+    end="100"
+    duration="5000"
+    loop="true"
+    ping-pong="true"
+    easing="easeInOutQuart"
+  ></m-attr-anim>
+</m-cube>
+
+<m-cube x="-15" y="2" z="-5" width="3" height="0.25" depth="12" rx="30" color="blue"></m-cube>
+<m-cube x="-20" y="0.5" z="-5" width="3" height="0.25" depth="12" rx="10" color="blue"></m-cube>
+
 <script>
-  const sceneGroup = document.getElementById("scene-group");
-  const connectedPlayers = new Map();
-
-  function setTransform(element, x, y, z, ry) {
-    ["x", "y", "z"].forEach(attr => element.setAttribute(attr, attr === "x" ? x : attr === "y" ? y : z));
-    element.setAttribute("ry", ry);
-  }
-
-  function assignAnimationLerp(element, duration, attrs) {
-    const lerp = document.createElement("m-attr-lerp");
-    lerp.setAttribute("attr", attrs);
-    lerp.setAttribute("duration", duration);
-    element.appendChild(lerp);
-  }
-
-  function createPlayer() {
-    const player = document.createElement("m-model");
-    player.setAttribute("src", "/assets/models/bot.glb");
-    assignAnimationLerp(player, 100, "x,y,z,ry");
-    setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
-    sceneGroup.appendChild(player);
-    return player;
-  }
-
-  function assignPlayerAnimation(player, state) {
-    const animation = document.createElement("m-animation");
-    animation.setAttribute("src", `/assets/models/anim_${state}.glb`);
-    animation.setAttribute("state", state);
-    assignAnimationLerp(animation, 150, "weight");
-    player.appendChild(animation);
-    return animation;
-  }
-
-  function assignPlayerController(player, id) {
-    const controller = document.createElement("m-character-controller");
-    controller.setAttribute("visible-to", id.toString());
-    player.appendChild(controller);
-    return controller;
-  }
-
-  function spawnPlayer(connectionId) {
-    if (connectedPlayers.has(connectionId)) return;
-    const player = createPlayer();
-    const controller = assignPlayerController(player, connectionId);
-
-    const idleAnimation = assignPlayerAnimation(player, "idle");
-    const runAnimation = assignPlayerAnimation(player, "run");
-    const airAnimation = assignPlayerAnimation(player, "air");
-
-    connectedPlayers.set(connectionId, {
-      character: { model: player, idleAnim: idleAnimation, runAnim: runAnimation, airAnim: airAnimation }
-    });
-
-    controller.addEventListener("character-move", (event) => {
-      const { position, rotation, state, connectionId } = event.detail;
-      const character = connectedPlayers.get(connectionId).character;
-      setTransform(character.model, position.x, position.y, position.z, rotation.ry);
-      character.model.setAttribute("state", state);
-    });
-  }
-
-  function removePlayer(connectionId) {
-    if (!connectedPlayers.has(connectionId)) return;
-    const user = connectedPlayers.get(connectionId);
-    sceneGroup.removeChild(user.character.model);
-    connectedPlayers.delete(connectionId);
-  }
-
-  // Camera management functions
-  function enableCamera(cameraId) {
-    const camera = document.getElementById(cameraId);
-    if (camera) {
-      camera.removeAttribute("visible-to");
-    }
-  }
-
-  function disableCamera(cameraId) {
-    const camera = document.getElementById(cameraId);
-    if (camera) {
-      camera.setAttribute("visible-to", "-1");
-    }
-  }
-
-  function isCameraEnabled(cameraId) {
-    const camera = document.getElementById(cameraId);
-    return camera && !camera.hasAttribute("visible-to");
-  }
-
-  function setCubeVisual(cubeId, activated) {
-    const cube = document.getElementById(cubeId);
-    if (!cube) return;
-    
-    if (cubeId === "blue-cube") {
-      cube.setAttribute("color", activated ? "rgb(0, 0, 255)" : "rgb(0, 0, 25)");
-    } else if (cubeId === "red-cube") {
-      cube.setAttribute("color", activated ? "rgb(255, 0, 0)" : "rgb(25, 0, 0)");
-    }
-  }
-
-  function toggleCamera(cameraId, cubeId) {
-    const enabled = isCameraEnabled(cameraId);
-    if (enabled) {
-      disableCamera(cameraId);
-      setCubeVisual(cubeId, false);
-    } else {
-      enableCamera(cameraId);
-      setCubeVisual(cubeId, true);
-    }
-  }
-
-  // Set up cube click handlers
-  const blueCube = document.getElementById("blue-cube");
-  const redCube = document.getElementById("red-cube");
-
-  blueCube.addEventListener("click", () => {
-    toggleCamera("top-down-camera", "blue-cube");
+  // Attach a click listener to the cube and spawn an m-sphere child of the cube wherever it is clicked
+  const cube = document.getElementById("my-cube");
+  console.log(cube);
+  cube.addEventListener("click", (event) => {
+    console.log("Clicked on cube", event, event.detail);
+    const x = event.detail.position.x;
+    const y = event.detail.position.y;
+    const z = event.detail.position.z;
+    const sphere = document.createElement("m-sphere");
+    sphere.setAttribute("x", x);
+    sphere.setAttribute("y", y);
+    sphere.setAttribute("z", z);
+    sphere.setAttribute("radius", 0.5);
+    sphere.setAttribute("color", "red");
+    cube.appendChild(sphere);
   });
+</script>
 
-  redCube.addEventListener("click", () => {
-    toggleCamera("angle-camera", "red-cube");
-  });
+<script>
+  const stairs = document.getElementById("stairs");
 
-  // Initialize cube visuals
-  setCubeVisual("blue-cube", isCameraEnabled("top-down-camera"));
-  setCubeVisual("red-cube", isCameraEnabled("angle-camera"));
+  function getHexForCurrentTime(lightness) {
+    const hue = ((Date.now() % 2000)/2000) * 360;
+    const saturation = 1.0;
+    const alpha = saturation * Math.min(lightness, 1 - lightness);
+    const getF = number => {
+      const k = (number + hue / 30) % 12;
+      return lightness - alpha * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))
+    };
+    const red = Math.round(255 * getF(0));
+    const green = Math.round(255 * getF(8));
+    const blue = Math.round(255 * getF(4));
+    const hex = "#"+(red.toString(16).padStart(2, "0"))+(green.toString(16).padStart(2, "0"))+(blue.toString(16).padStart(2, "0"));
+    return hex;
+  }
 
-  window.addEventListener("connected", (event) => spawnPlayer(event.detail.connectionId));
-  window.addEventListener("disconnected", (event) => removePlayer(event.detail.connectionId));
+  for (let i = 0; i < 15; i++) {
+    const stair = document.createElement("m-cube");
+    stair.setAttribute("z", i * 0.5);
+    stair.setAttribute("y", i * 0.2);
+    stair.setAttribute("width", 2);
+    stair.setAttribute("height", 0.2);
+    stair.setAttribute("depth", 0.5);
+    stair.setAttribute("color", "blue");
+    stair.setAttribute("collision-interval","1000");
+    stair.addEventListener("collisionstart", () => {
+      stair.setAttribute("color", "white");
+    });
+    stair.addEventListener("collisionend", () => {
+      stair.setAttribute("color", getHexForCurrentTime(0.5));
+    });
+    stairs.append(stair);
+  }
 </script>

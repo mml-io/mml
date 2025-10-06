@@ -20,6 +20,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { CameraManager } from "./CameraManager";
 import { CameraGraphics } from "./elements/Camera";
 import { MCharacterController } from "./elements/CharacterController";
+import { CollisionsManager } from "./elements/CollisionsManager";
 import { MControl } from "./elements/Control";
 import { ThreeJSDragFlyCameraControls } from "./ThreeJSDragFlyCameraControls";
 
@@ -60,6 +61,7 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
   private highlightedObjects: THREE.Object3D[] = [];
 
   private cameraManager = new CameraManager();
+  private collisionsManager: CollisionsManager;
 
   private mmlControls: MControl<GameThreeJSAdapter>[] = [];
   private mmlCharacterControllers: MCharacterController<GameThreeJSAdapter>[] = [];
@@ -151,6 +153,8 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
       this.threeScene = new THREE.Scene();
       this.overlayScene = new THREE.Scene();
       this.threeScene.add(this.rootContainer);
+
+      this.collisionsManager = new CollisionsManager(this.threeScene);
 
       // Create a proxy object that access the cameraManager.getCamera() for all properties
       const proxyCamera: THREE.PerspectiveCamera = new Proxy({} as THREE.PerspectiveCamera, {
@@ -435,6 +439,10 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
 
   getOverlayScene() {
     return this.overlayScene;
+  }
+
+  getCollisionsManager() {
+    return this.collisionsManager;
   }
 
   public getBoundingBoxForElement(element: HTMLElement): {

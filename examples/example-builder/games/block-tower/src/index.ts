@@ -1,3 +1,5 @@
+import "./characters";
+
 function createTower() {
   console.log("Tower creating");
   const towerGroup = document.getElementById('tower');

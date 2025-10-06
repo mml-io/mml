@@ -5,6 +5,7 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "allowJs": true,
     "strict": true,
     "target": "ES2020",
     "module": "ESNext",

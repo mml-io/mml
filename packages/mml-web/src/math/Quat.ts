@@ -2,6 +2,10 @@
 
 import { Matr4 } from "./Matr4";
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
 export class Quat {
   public x: number;
   public y: number;
@@ -153,6 +157,107 @@ export class Quat {
     this.y = y;
     this.z = z;
     this.w = w;
+    return this;
+  }
+
+  invert() {
+    this.x *= -1;
+    this.y *= -1;
+    this.z *= -1;
+    return this;
+  }
+
+  dot(other: Quat): number {
+    return this.x * other.x + this.y * other.y + this.z * other.z + this.w * other.w;
+  }
+
+  rotateTowards(other: Quat, scalar: number): this {
+    const angle = this.angleTo(other);
+
+    if (angle === 0) {
+      return this;
+    }
+
+    const t = Math.min(1, scalar / angle);
+
+    this.slerp(other, t);
+
+    return this;
+  }
+
+  angleTo(q: Quat): number {
+    return 2 * Math.acos(Math.abs(clamp(this.dot(q), -1, 1)));
+  }
+
+  slerp(qb: Quat, t: number): this {
+    if (t <= 0) return this;
+    if (t >= 1) return this.copy(qb);
+
+    const x1 = this.x,
+      y1 = this.y,
+      z1 = this.z,
+      w1 = this.w;
+    let x2 = qb.x,
+      y2 = qb.y,
+      z2 = qb.z,
+      w2 = qb.w;
+
+    let cosHalfTheta = w1 * w2 + x1 * x2 + y1 * y2 + z1 * z2;
+
+    if (cosHalfTheta < 0) {
+      w2 = -w2;
+      x2 = -x2;
+      y2 = -y2;
+      z2 = -z2;
+      cosHalfTheta = -cosHalfTheta;
+    }
+
+    if (cosHalfTheta >= 1.0) {
+      return this.set(x1, y1, z1, w1);
+    }
+
+    const sinHalfTheta = Math.sqrt(1.0 - cosHalfTheta * cosHalfTheta);
+
+    if (sinHalfTheta < 0.001) {
+      this.w = 0.5 * (w1 + w2);
+      this.x = 0.5 * (x1 + x2);
+      this.y = 0.5 * (y1 + y2);
+      this.z = 0.5 * (z1 + z2);
+      return this.normalize();
+    }
+
+    const halfTheta = Math.acos(cosHalfTheta);
+    const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta;
+    const ratioB = Math.sin(t * halfTheta) / sinHalfTheta;
+
+    this.w = w1 * ratioA + w2 * ratioB;
+    this.x = x1 * ratioA + x2 * ratioB;
+    this.y = y1 * ratioA + y2 * ratioB;
+    this.z = z1 * ratioA + z2 * ratioB;
+
+    return this.normalize();
+  }
+
+  length(): number {
+    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
+  }
+
+  normalize(): this {
+    let l = this.length();
+
+    if (l === 0) {
+      this.x = 0;
+      this.y = 0;
+      this.z = 0;
+      this.w = 1;
+    } else {
+      l = 1 / l;
+      this.x = this.x * l;
+      this.y = this.y * l;
+      this.z = this.z * l;
+      this.w = this.w * l;
+    }
+
     return this;
   }
 }
