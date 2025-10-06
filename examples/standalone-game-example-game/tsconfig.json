@@ -9,7 +9,8 @@
     "strict": true,
     "target": "ES2020",
     "module": "ESNext",
-    "lib": ["ES2020", "dom", "dom.iterable"]
+    "lib": ["ES2020", "dom", "dom.iterable"],
+    "allowJs": true
   },
   "include": [
     "src/**/*",
