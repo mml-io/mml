@@ -3,8 +3,8 @@ import { EditableNetworkedDOM, NetworkedDOM } from "@mml-io/networked-dom-docume
 import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 import { FakeWebsocket } from "@mml-io/networked-dom-web-runner";
 
-import { PhysicsDebugOverlay } from "../physics/PhysicsDebugOverlay";
 import { NavMeshDebugOverlay } from "../navigation/NavMeshDebugOverlay";
+import { PhysicsDebugOverlay } from "../physics/PhysicsDebugOverlay";
 import { ControlManager, ControlManagerConfig } from "./control-manager";
 import { GameThreeJSAdapter, GameThreeJSAdapterControlsType } from "./GameThreeJSAdapter";
 import { NonInteractiveMMLScene } from "./NonInteractiveMMLScene";
@@ -101,7 +101,9 @@ export class MMLWebClient {
           const cols = new Float32Array(data.colors);
           const triVerts = data.triVertices ? new Float32Array(data.triVertices) : undefined;
           const triCols = data.triColors ? new Float32Array(data.triColors) : undefined;
-          const obsVerts = data.obstacleVertices ? new Float32Array(data.obstacleVertices) : undefined;
+          const obsVerts = data.obstacleVertices
+            ? new Float32Array(data.obstacleVertices)
+            : undefined;
           const obsCols = data.obstacleColors ? new Float32Array(data.obstacleColors) : undefined;
           this.navmeshOverlay?.updateBuffers(verts, cols, triVerts, triCols, obsVerts, obsCols);
           event.stopImmediatePropagation();
@@ -257,15 +259,12 @@ export class MMLWebClient {
 
     const fakeWebsocket = new FakeWebsocket("networked-dom-v0.1");
 
-    const domWebsocket = this.connectToWebSocket(
-      url,
-      () => {
-        setTimeout(() => {
-          document.addWebSocket(fakeWebsocket.serverSideWebsocket as unknown as WebSocket);
-        }, 1);
-        return fakeWebsocket.clientSideWebsocket as unknown as WebSocket;
-      },
-    );
+    const domWebsocket = this.connectToWebSocket(url, () => {
+      setTimeout(() => {
+        document.addWebSocket(fakeWebsocket.serverSideWebsocket as unknown as WebSocket);
+      }, 1);
+      return fakeWebsocket.clientSideWebsocket as unknown as WebSocket;
+    });
 
     this.connectedState = {
       document,

@@ -156,13 +156,16 @@ export class GameServer {
   private setupRoutes(): void {
     // Serve assets from assets directory if provided
     if (this.options.assetsDirectory && fs.existsSync(this.options.assetsDirectory)) {
-      this.app.use("/assets", express.static(this.options.assetsDirectory, {
-        setHeaders: (res, _path) => {
-          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-          res.setHeader("Pragma", "no-cache");
-          res.setHeader("Expires", "0");
-        },
-      }));
+      this.app.use(
+        "/assets",
+        express.static(this.options.assetsDirectory, {
+          setHeaders: (res, _path) => {
+            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            res.setHeader("Pragma", "no-cache");
+            res.setHeader("Expires", "0");
+          },
+        }),
+      );
     }
 
     // WebSocket route for MML documents

@@ -206,7 +206,11 @@ class PhysicsSystem implements ElementSystem {
 
     switch (tagName) {
       case "m-cube": {
-        colliderDesc = RAPIER.ColliderDesc.cuboid(worldScale.x / 2, worldScale.y / 2, worldScale.z / 2);
+        colliderDesc = RAPIER.ColliderDesc.cuboid(
+          worldScale.x / 2,
+          worldScale.y / 2,
+          worldScale.z / 2,
+        );
         break;
       }
 
@@ -497,9 +501,12 @@ class PhysicsSystem implements ElementSystem {
         this.processCollisionEvents();
       }
 
-      const currentTime = document.timeline.currentTime;
-      if (currentTime != null && currentTime > this.lastNetworkTime + 100) {
-        this.lastNetworkTime = currentTime;
+      const tl = document.timeline;
+      const ct = tl.currentTime;
+      const currentTimeMs: number | null =
+        ct == null ? null : typeof ct === "number" ? ct : ct.to("ms").value;
+      if (currentTimeMs != null && currentTimeMs > this.lastNetworkTime + 100) {
+        this.lastNetworkTime = currentTimeMs;
         this.updateElementPositions();
       }
 

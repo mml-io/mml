@@ -135,7 +135,6 @@ export function computeWorldTransformFor(
   let worldRotation: Quat = Quat.identity();
   let worldScale: Vec3 = Vec3.one();
 
-
   for (let i = 0; i < path.length; i++) {
     const node = path[i];
     const isLeaf = i === path.length - 1;

@@ -1,7 +1,7 @@
 import * as THREE from "three";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
-import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 
 export class NavMeshDebugOverlay {
   private scene: THREE.Scene;
@@ -16,7 +16,10 @@ export class NavMeshDebugOverlay {
   private obstacleSegments: LineSegments2 | null = null;
   private obstacleMaterial: LineMaterial | null = null;
   private obstacleVertexCount: number = 0;
-  private mesh: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial | THREE.MeshBasicMaterial> | null = null;
+  private mesh: THREE.Mesh<
+    THREE.BufferGeometry,
+    THREE.ShaderMaterial | THREE.MeshBasicMaterial
+  > | null = null;
   private triVertexCount: number = 0;
   private handleResize = () => {
     if (this.obstacleMaterial) {
@@ -111,8 +114,10 @@ export class NavMeshDebugOverlay {
         geom.setColors(obRgb);
         geom.attributes.instanceStart.needsUpdate = true;
         geom.attributes.instanceEnd.needsUpdate = true;
-        if (geom.getAttribute("instanceColorStart")) (geom.getAttribute("instanceColorStart") as THREE.BufferAttribute).needsUpdate = true;
-        if (geom.getAttribute("instanceColorEnd")) (geom.getAttribute("instanceColorEnd") as THREE.BufferAttribute).needsUpdate = true;
+        if (geom.getAttribute("instanceColorStart"))
+          (geom.getAttribute("instanceColorStart") as THREE.BufferAttribute).needsUpdate = true;
+        if (geom.getAttribute("instanceColorEnd"))
+          (geom.getAttribute("instanceColorEnd") as THREE.BufferAttribute).needsUpdate = true;
         this.obstacleSegments.visible = true;
       } else {
         // Hide if none
@@ -130,9 +135,20 @@ export class NavMeshDebugOverlay {
           (this.mesh.material as any)?.dispose?.();
         }
         const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(triVertices.length), 3));
-        geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array((triVertices.length / 3) * 3), 3));
-        const material = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.2, depthWrite: false });
+        geometry.setAttribute(
+          "position",
+          new THREE.BufferAttribute(new Float32Array(triVertices.length), 3),
+        );
+        geometry.setAttribute(
+          "color",
+          new THREE.BufferAttribute(new Float32Array((triVertices.length / 3) * 3), 3),
+        );
+        const material = new THREE.MeshBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.2,
+          depthWrite: false,
+        });
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.frustumCulled = false;
         this.mesh.renderOrder = 0;
@@ -174,7 +190,11 @@ export class NavMeshDebugOverlay {
     this.baseColors = new THREE.BufferAttribute(colors, 3);
     geometry.setAttribute("position", this.basePositions);
     geometry.setAttribute("color", this.baseColors);
-    this.baseMaterial = new THREE.LineBasicMaterial({ vertexColors: true, depthTest: true, transparent: false });
+    this.baseMaterial = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      depthTest: true,
+      transparent: false,
+    });
     this.baseLineSegments = new THREE.LineSegments(geometry, this.baseMaterial);
     this.baseLineSegments.frustumCulled = false;
     this.baseLineSegments.renderOrder = 1;
@@ -208,5 +228,3 @@ export class NavMeshDebugOverlay {
     this.scene.add(this.obstacleSegments);
   }
 }
-
-

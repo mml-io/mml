@@ -5,10 +5,11 @@ declare module "recast-navigation" {
 
   export class NavMeshQuery {
     constructor(navMesh: NavMesh);
-    findClosestPoint(position: { x: number; y: number; z: number }):
-      | { success: true; point: { x: number; y: number; z: number } }
-      | { success: false }
-      | null;
+    findClosestPoint(position: {
+      x: number;
+      y: number;
+      z: number;
+    }): { success: true; point: { x: number; y: number; z: number } } | { success: false } | null;
   }
 
   export type AgentParameters = {
@@ -37,12 +38,22 @@ declare module "recast-navigation" {
 
   export class DebugDrawerUtils {
     drawNavMesh(navMesh: NavMesh): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
-    drawHeightfieldWalkable(h: unknown): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
+    drawHeightfieldWalkable(
+      h: unknown,
+    ): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
     drawHeightfieldSolid(h: unknown): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
-    drawCompactHeightfieldSolid(h: unknown): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
-    drawCompactHeightfieldRegions(h: unknown): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
-    drawCompactHeightfieldDistance(h: unknown): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
-    drawNavMeshBVTree(navMesh: NavMesh): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
+    drawCompactHeightfieldSolid(
+      h: unknown,
+    ): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
+    drawCompactHeightfieldRegions(
+      h: unknown,
+    ): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
+    drawCompactHeightfieldDistance(
+      h: unknown,
+    ): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
+    drawNavMeshBVTree(
+      navMesh: NavMesh,
+    ): Array<{ type: "lines" | "tris" | "quads"; vertices: any[] }>;
     dispose(): void;
   }
 }
@@ -53,7 +64,7 @@ declare module "recast-navigation/generators" {
     positions: number[],
     indices: number[],
     config: any,
-    buildNavMeshToo?: boolean
+    buildNavMeshToo?: boolean,
   ): {
     success: boolean;
     navMesh: NavMesh;
@@ -61,7 +72,7 @@ declare module "recast-navigation/generators" {
       addBoxObstacle(
         center: { x: number; y: number; z: number },
         halfExtents: { x: number; y: number; z: number },
-        angle: number
+        angle: number,
       ): { obstacle: unknown } | null;
       removeObstacle(obstacle: unknown): unknown;
       update(navMesh: NavMesh): { upToDate?: boolean } | null;
@@ -74,5 +85,3 @@ declare module "recast-navigation/generators" {
     };
   };
 }
-
-

@@ -72,14 +72,136 @@
     "additionalProperties": false
   },
   "attributes": [
-    "nav-obstacle",
-    "nav-agent",
-    "nav-speed",
-    "nav-acceleration",
-    "nav-goal-x",
-    "nav-goal-y",
-    "nav-goal-z",
-    "nav-waypoints"
+    {
+      "name": "nav-obstacle",
+      "validElements": ["m-cube", "m-plane", "m-cylinder"],
+      "schema": {
+        "type": "boolean",
+        "description": "Mark this element as a dynamic nav obstacle",
+        "default": true
+      }
+    },
+    {
+      "name": "nav-agent",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "boolean",
+        "description": "Enable navigation agent behavior for this element",
+        "default": true
+      }
+    },
+    {
+      "name": "nav-speed",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "number",
+        "description": "Max agent speed (units/sec)",
+        "default": 3.5,
+        "minimum": 0
+      }
+    },
+    {
+      "name": "nav-acceleration",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "number",
+        "description": "Max agent acceleration (units/sec^2)",
+        "default": 8.0,
+        "minimum": 0
+      }
+    },
+    {
+      "name": "nav-goal-x",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "number",
+        "description": "Goal X coordinate for navigation (local/world depends on system usage)",
+        "default": 0
+      }
+    },
+    {
+      "name": "nav-goal-y",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "number",
+        "description": "Goal Y coordinate for navigation",
+        "default": 0
+      }
+    },
+    {
+      "name": "nav-goal-z",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "number",
+        "description": "Goal Z coordinate for navigation",
+        "default": 0
+      }
+    },
+    {
+      "name": "nav-waypoints",
+      "validElements": [
+        "m-character",
+        "m-cube",
+        "m-sphere",
+        "m-model",
+        "m-cylinder",
+        "m-capsule",
+        "m-plane"
+      ],
+      "schema": {
+        "type": "string",
+        "description": "Semicolon-separated waypoints as x,y,z; e.g. '0,0,0; 1,0,1'",
+        "default": ""
+      }
+    }
   ]
 }
 

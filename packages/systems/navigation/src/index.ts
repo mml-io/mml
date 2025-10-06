@@ -1,11 +1,15 @@
-import { ElementSystem, initElementSystem } from "mml-game-systems-common";
-import { computeWorldTransformFor as mathComputeWorldTransformFor, Vec3, quaternionToEulerXYZ } from "mml-game-math-system";
 import {
+  computeWorldTransformFor as mathComputeWorldTransformFor,
+  quaternionToEulerXYZ,
+  Vec3,
+} from "mml-game-math-system";
+import { ElementSystem, initElementSystem } from "mml-game-systems-common";
+import {
+  Crowd,
+  DebugDrawerUtils,
   init as recastInit,
   NavMesh,
   NavMeshQuery,
-  Crowd,
-  DebugDrawerUtils,
 } from "recast-navigation";
 import { generateTileCache } from "recast-navigation/generators";
 
@@ -94,15 +98,18 @@ class NavigationSystem implements ElementSystem {
   private getGeneratorParams() {
     const walk = this.getWalkableParams();
     const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-    const tileSize = Number.isFinite(this.config.tileSize) && this.config.tileSize > 0
-      ? clamp(Math.floor(this.config.tileSize), 8, 256)
-      : 16;
-    const cellSize = Number.isFinite(this.config.cellSize) && this.config.cellSize >= 0.05
-      ? clamp(this.config.cellSize, 0.05, 2)
-      : 0.2;
-    const cellHeight = Number.isFinite(this.config.cellHeight) && this.config.cellHeight >= 0.05
-      ? clamp(this.config.cellHeight, 0.05, 2)
-      : 0.2;
+    const tileSize =
+      Number.isFinite(this.config.tileSize) && this.config.tileSize > 0
+        ? clamp(Math.floor(this.config.tileSize), 8, 256)
+        : 16;
+    const cellSize =
+      Number.isFinite(this.config.cellSize) && this.config.cellSize >= 0.05
+        ? clamp(this.config.cellSize, 0.05, 2)
+        : 0.2;
+    const cellHeight =
+      Number.isFinite(this.config.cellHeight) && this.config.cellHeight >= 0.05
+        ? clamp(this.config.cellHeight, 0.05, 2)
+        : 0.2;
     return {
       tileSize,
       cellSize,
@@ -247,7 +254,10 @@ class NavigationSystem implements ElementSystem {
     const currentAgents = Array.from(this.elementToAgent.values()).map((a) => a.element);
 
     const { positions, indices } = this.collectStaticGeometry();
-    console.log("[navigation] geometry", { vertexCount: positions.length / 3, triangleCount: indices.length / 3 });
+    console.log("[navigation] geometry", {
+      vertexCount: positions.length / 3,
+      triangleCount: indices.length / 3,
+    });
     if (positions.length === 0 || indices.length === 0) {
       this.navMesh = null;
       this.navQuery = null;
@@ -258,14 +268,17 @@ class NavigationSystem implements ElementSystem {
     }
 
     const gen = this.getGeneratorParams();
-    const { success, navMesh, tileCache, intermediates } = generateTileCache(positions, indices, gen, true);
-
+    const { success, navMesh, tileCache, intermediates } = generateTileCache(
+      positions,
+      indices,
+      gen,
+      true,
+    );
 
     if (!success) {
       console.error("[navigation] rebuild: failed to generate navmesh");
       return;
     }
-    
 
     this.navMesh = navMesh;
     this.navQuery = new NavMeshQuery(navMesh);
@@ -304,9 +317,16 @@ class NavigationSystem implements ElementSystem {
         pathOptimizationRange: dims.radius * 30.0,
         separationWeight: 1.0,
       };
-      const agent = this.crowd!.addAgent(pos, params);
+      if (!this.crowd) return;
+      const agent = this.crowd.addAgent(pos, params);
       const agentId: number = agent.agentIndex;
-      this.elementToAgent.set(el, { element: el, agentId, speed: maxSpeed, radius: dims.radius, height: dims.height });
+      this.elementToAgent.set(el, {
+        element: el,
+        agentId,
+        speed: maxSpeed,
+        radius: dims.radius,
+        height: dims.height,
+      });
       console.log("[navigation] agent:readded", { agentId, pos });
       this.setupPatrolIfDeclared(el, agentId);
     });
@@ -352,7 +372,9 @@ class NavigationSystem implements ElementSystem {
           }
           try {
             this.tileCache.removeObstacle(state.obstacle);
-          } catch {}
+          } catch {
+            // Ignore removal errors (obstacle may already be removed)
+          }
           const res = this.tileCache.addBoxObstacle(center, halfExtents, angle);
           const newObstacle = res?.obstacle ?? null;
           if (newObstacle) {
@@ -389,8 +411,8 @@ class NavigationSystem implements ElementSystem {
         let repathed = 0;
         this.elementToAgent.forEach((state) => {
           const tgt = this.agentCurrentTarget.get(state.agentId);
-          if (!tgt) return;
-          const ag = this.crowd!.getAgent(state.agentId);
+          if (!tgt || !this.crowd) return;
+          const ag = this.crowd.getAgent(state.agentId);
           ag?.requestMoveTarget(tgt);
           repathed++;
         });
@@ -401,7 +423,8 @@ class NavigationSystem implements ElementSystem {
         this.tileCacheDirty = false;
       }
       if (this.config.debug && updateRes && updateRes.upToDate) {
-        const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+        const nowMs =
+          typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
         if (nowMs - this.lastDebugRebuildMs > 300) {
           this.lastDebugRebuildMs = nowMs;
           this.buildDebugBuffers();
@@ -411,7 +434,8 @@ class NavigationSystem implements ElementSystem {
 
     // Sync agent positions to scene: if a physics kinematic body exists then drive it; else set DOM attributes
     this.elementToAgent.forEach((state) => {
-      const ag = this.crowd!.getAgent(state.agentId);
+      if (!this.crowd) return;
+      const ag = this.crowd.getAgent(state.agentId);
       if (!ag) return;
       const p = ag.position();
       const parentWorld = this.computeWorldTransformFor(state.element.parentElement);
@@ -432,13 +456,15 @@ class NavigationSystem implements ElementSystem {
       }
 
       // Attempt to move via physics kinematic API if available
-      // @ts-ignore
+      // @ts-expect-error - physics is added at runtime
       const physics: any = window.physics;
       let movedByPhysics = false;
       if (physics && typeof physics.moveKinematic === "function") {
         try {
           movedByPhysics = !!physics.moveKinematic(state.element, worldPos, { yawRadians });
-        } catch {}
+        } catch {
+          // Ignore physics movement errors
+        }
       }
 
       if (!movedByPhysics) {
@@ -457,16 +483,17 @@ class NavigationSystem implements ElementSystem {
     // Patrol progression (no intervals or repathing)
     this.elementToAgent.forEach((state) => {
       const wps = this.agentWaypoints.get(state.agentId);
-      if (!wps || wps.length === 0) return;
-      const ag = this.crowd!.getAgent(state.agentId);
+      if (!wps || wps.length === 0 || !this.crowd) return;
+      const ag = this.crowd.getAgent(state.agentId);
       if (!ag) return;
       const pos = ag.position();
       const idx = this.agentWaypointIndex.get(state.agentId) ?? 0;
-      let tgt = this.agentCurrentTarget.get(state.agentId) || null;
+      const tgt = this.agentCurrentTarget.get(state.agentId) || null;
 
       // If no current target set (e.g., after reload), set to current waypoint
       if (!tgt) {
-        const result = this.navQuery!.findClosestPoint(wps[idx]);
+        if (!this.navQuery) return;
+        const result = this.navQuery.findClosestPoint(wps[idx]);
         if (result && result.success) {
           ag.requestMoveTarget(result.point);
           this.agentCurrentTarget.set(state.agentId, result.point);
@@ -480,14 +507,16 @@ class NavigationSystem implements ElementSystem {
       const distSq = dx * dx + dy * dy + dz * dz;
       if (distSq < 1.0) {
         const waitUntil = this.agentWaitUntil.get(state.agentId) ?? null;
-        const now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+        const now =
+          typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
         if (waitUntil === null) {
           this.agentWaitUntil.set(state.agentId, now + 1000);
         } else if (now >= waitUntil) {
           const nextIdx = (idx + 1) % wps.length;
           this.agentWaypointIndex.set(state.agentId, nextIdx);
           this.agentWaitUntil.set(state.agentId, null);
-          const result = this.navQuery!.findClosestPoint(wps[nextIdx]);
+          if (!this.navQuery) return;
+          const result = this.navQuery.findClosestPoint(wps[nextIdx]);
           if (result && result.success) {
             ag.requestMoveTarget(result.point);
             this.agentCurrentTarget.set(state.agentId, result.point);
@@ -508,21 +537,43 @@ class NavigationSystem implements ElementSystem {
         const dynTriColors: number[] = [];
 
         const pushLine = (
-          ax: number, ay: number, az: number,
-          bx: number, by: number, bz: number,
-          r: number, g: number, b: number, a: number,
+          ax: number,
+          ay: number,
+          az: number,
+          bx: number,
+          by: number,
+          bz: number,
+          r: number,
+          g: number,
+          b: number,
+          a: number,
         ) => {
           dynPositions.push(ax, ay, az, bx, by, bz);
           dynColors.push(r, g, b, a, r, g, b, a);
         };
 
         const pushTri = (
-          ax: number, ay: number, az: number,
-          bx: number, by: number, bz: number,
-          cx: number, cy: number, cz: number,
-          r0: number, g0: number, b0: number, a0: number,
-          r1: number, g1: number, b1: number, a1: number,
-          r2: number, g2: number, b2: number, a2: number,
+          ax: number,
+          ay: number,
+          az: number,
+          bx: number,
+          by: number,
+          bz: number,
+          cx: number,
+          cy: number,
+          cz: number,
+          r0: number,
+          g0: number,
+          b0: number,
+          a0: number,
+          r1: number,
+          g1: number,
+          b1: number,
+          a1: number,
+          r2: number,
+          g2: number,
+          b2: number,
+          a2: number,
         ) => {
           dynTriPositions.push(ax, ay, az, bx, by, bz, cx, cy, cz);
           dynTriColors.push(r0, g0, b0, a0, r1, g1, b1, a1, r2, g2, b2, a2);
@@ -530,7 +581,8 @@ class NavigationSystem implements ElementSystem {
 
         // Per-agent markers and target lines
         this.elementToAgent.forEach((state) => {
-          const ag = this.crowd!.getAgent(state.agentId);
+          if (!this.crowd) return;
+          const ag = this.crowd.getAgent(state.agentId);
           if (!ag) return;
           const p = ag.position();
 
@@ -574,13 +626,15 @@ class NavigationSystem implements ElementSystem {
             const last = this.agentDebugLastLog.get(state.agentId) || 0;
             if (now - last > 1000) {
               this.agentDebugLastLog.set(state.agentId, now);
-              const mode = wps.length > 0 ? "patrol" : (tgt ? "goal" : "idle");
+              const mode = wps.length > 0 ? "patrol" : tgt ? "goal" : "idle";
               const dist = tgt ? Math.hypot(p.x - tgt.x, p.y - tgt.y, p.z - tgt.z) : null;
               console.log("[navigation] agent:state", {
                 agentId: state.agentId,
                 mode,
                 position: { x: +p.x.toFixed(3), y: +p.y.toFixed(3), z: +p.z.toFixed(3) },
-                target: tgt ? { x: +tgt.x.toFixed(3), y: +tgt.y.toFixed(3), z: +tgt.z.toFixed(3) } : null,
+                target: tgt
+                  ? { x: +tgt.x.toFixed(3), y: +tgt.y.toFixed(3), z: +tgt.z.toFixed(3) }
+                  : null,
                 distanceToTarget: dist !== null ? +dist.toFixed(3) : null,
                 waypointsCount: wps.length,
               });
@@ -599,12 +653,27 @@ class NavigationSystem implements ElementSystem {
             const x1 = p.x + Math.cos(a1) * radius;
             const z1 = p.z + Math.sin(a1) * radius;
             pushTri(
-              p.x, cy, p.z,
-              x0, cy, z0,
-              x1, cy, z1,
-              1.0, 1.0, 0.0, 0.35,
-              1.0, 1.0, 0.0, 0.35,
-              1.0, 1.0, 0.0, 0.35,
+              p.x,
+              cy,
+              p.z,
+              x0,
+              cy,
+              z0,
+              x1,
+              cy,
+              z1,
+              1.0,
+              1.0,
+              0.0,
+              0.35,
+              1.0,
+              1.0,
+              0.0,
+              0.35,
+              1.0,
+              1.0,
+              0.0,
+              0.35,
             );
           }
         });
@@ -719,9 +788,15 @@ class NavigationSystem implements ElementSystem {
     if (isAgent && this.crowd && !this.elementToAgent.has(element)) {
       const world = this.computeWorldTransformFor(element);
       const pos = { x: world.position.x, y: world.position.y, z: world.position.z };
-      const parsedSpeed = typeof speedAttr?.value === "number" ? speedAttr!.value as number : parseFloat(String(speedAttr?.value ?? ""));
+      const parsedSpeed =
+        typeof speedAttr?.value === "number"
+          ? (speedAttr.value as number)
+          : parseFloat(String(speedAttr?.value ?? ""));
       const maxSpeed = isFinite(parsedSpeed) && parsedSpeed > 0 ? parsedSpeed : 3.5;
-      const parsedAccel = typeof accelAttr?.value === "number" ? (accelAttr!.value as number) : parseFloat(String(accelAttr?.value ?? ""));
+      const parsedAccel =
+        typeof accelAttr?.value === "number"
+          ? (accelAttr.value as number)
+          : parseFloat(String(accelAttr?.value ?? ""));
       const maxAcceleration = isFinite(parsedAccel) && parsedAccel > 0 ? parsedAccel : 8.0;
       const dims = this.deriveAgentDimensionsFromElement(element);
       console.log("[navigation] agent:dimensions", { radius: dims.radius, height: dims.height });
@@ -734,13 +809,24 @@ class NavigationSystem implements ElementSystem {
         pathOptimizationRange: dims.radius * 30.0,
         separationWeight: 0.5,
       };
-      const agent = this.crowd!.addAgent(pos, params);
+      if (!this.crowd) return;
+      const agent = this.crowd.addAgent(pos, params);
       const agentId: number = agent.agentIndex;
-      this.elementToAgent.set(element, { element, agentId, speed: maxSpeed, radius: dims.radius, height: dims.height });
+      this.elementToAgent.set(element, {
+        element,
+        agentId,
+        speed: maxSpeed,
+        radius: dims.radius,
+        height: dims.height,
+      });
       console.log("[navigation] agent:added", { agentId, pos });
 
       // If waypoints are defined declaratively, start patrol without window APIs
-      if (waypointsAttr && typeof waypointsAttr.value === "string" && waypointsAttr.value.length > 0) {
+      if (
+        waypointsAttr &&
+        typeof waypointsAttr.value === "string" &&
+        waypointsAttr.value.length > 0
+      ) {
         this.setupPatrolIfDeclared(element, agentId, waypointsAttr.value);
       }
     }
@@ -775,9 +861,17 @@ class NavigationSystem implements ElementSystem {
         const ag = this.crowd.getAgent(agentId);
         ag?.requestMoveTarget(result.point);
         this.agentCurrentTarget.set(agentId, result.point);
-        console.log(`[navigation] patrol:${logType}` as const, { agentId, index: idx, target: result.point });
+        console.log(`[navigation] patrol:${logType}` as const, {
+          agentId,
+          index: idx,
+          target: result.point,
+        });
       } else {
-        console.log("[navigation] patrol:closestPoint:fail", { agentId, index: idx, candidate: target });
+        console.log("[navigation] patrol:closestPoint:fail", {
+          agentId,
+          index: idx,
+          candidate: target,
+        });
       }
     };
 
@@ -802,7 +896,9 @@ class NavigationSystem implements ElementSystem {
     if (obs && this.tileCache && this.navMesh) {
       try {
         this.tileCache.removeObstacle(obs.obstacle);
-      } catch {}
+      } catch {
+        // Ignore removal errors (obstacle may already be removed)
+      }
       // Drain updates for obstacle removal
       let updateRes = this.tileCache.update(this.navMesh);
       let updates = 1;
@@ -845,9 +941,11 @@ class NavigationSystem implements ElementSystem {
     }
   }
 
-  private computeBoxObstacleFromElement(element: Element):
-    | { center: { x: number; y: number; z: number }; halfExtents: { x: number; y: number; z: number }; angle: number }
-    | null {
+  private computeBoxObstacleFromElement(element: Element): {
+    center: { x: number; y: number; z: number };
+    halfExtents: { x: number; y: number; z: number };
+    angle: number;
+  } | null {
     const tag = element.tagName.toLowerCase();
     const world = this.computeWorldTransformFor(element);
     const euler = quaternionToEulerXYZ(world.rotation);
@@ -889,12 +987,18 @@ class NavigationSystem implements ElementSystem {
           center = { x: p.x, y: p.y, z: p.z };
         }
       }
-    } catch {}
+    } catch {
+      // Ignore errors getting world position
+    }
 
     return { center, halfExtents, angle: yaw };
   }
 
-  addBoxObstacle(center: { x: number; y: number; z: number }, halfExtents: { x: number; y: number; z: number }, angleRad = 0) {
+  addBoxObstacle(
+    center: { x: number; y: number; z: number },
+    halfExtents: { x: number; y: number; z: number },
+    angleRad = 0,
+  ) {
     if (!this.navMesh || !this.tileCache) return null;
     const res = this.tileCache.addBoxObstacle(center, halfExtents, angleRad);
     this.tileCache.update(this.navMesh);
@@ -925,8 +1029,15 @@ class NavigationSystem implements ElementSystem {
     const primitives: Array<ReturnType<typeof debugDrawer.drawNavMesh>[number]> = [];
 
     const makeObstacleLines = () => {
-      if (this.obstacles.size === 0) return null as null | { type: "lines"; vertices: [number, number, number, number, number, number, number][] };
-      const obstacleLines: { type: "lines"; vertices: [number, number, number, number, number, number, number][] } = {
+      if (this.obstacles.size === 0)
+        return null as null | {
+          type: "lines";
+          vertices: [number, number, number, number, number, number, number][];
+        };
+      const obstacleLines: {
+        type: "lines";
+        vertices: [number, number, number, number, number, number, number][];
+      } = {
         type: "lines",
         vertices: [],
       };
@@ -1042,7 +1153,10 @@ class NavigationSystem implements ElementSystem {
       }
       case "staticGeometry": {
         const { positions: geomPositions, indices: geomIndices } = this.collectStaticGeometry();
-        const staticLines: { type: "lines"; vertices: [number, number, number, number, number, number, number][] } = {
+        const staticLines: {
+          type: "lines";
+          vertices: [number, number, number, number, number, number, number][];
+        } = {
           type: "lines",
           vertices: [],
         };
@@ -1055,19 +1169,28 @@ class NavigationSystem implements ElementSystem {
             geomPositions[i0 + 0],
             geomPositions[i0 + 1],
             geomPositions[i0 + 2],
-            color[0], color[1], color[2], color[3],
+            color[0],
+            color[1],
+            color[2],
+            color[3],
           ];
           const v1: [number, number, number, number, number, number, number] = [
             geomPositions[i1 + 0],
             geomPositions[i1 + 1],
             geomPositions[i1 + 2],
-            color[0], color[1], color[2], color[3],
+            color[0],
+            color[1],
+            color[2],
+            color[3],
           ];
           const v2: [number, number, number, number, number, number, number] = [
             geomPositions[i2 + 0],
             geomPositions[i2 + 1],
             geomPositions[i2 + 2],
-            color[0], color[1], color[2], color[3],
+            color[0],
+            color[1],
+            color[2],
+            color[3],
           ];
           // edges: 0-1, 1-2, 2-0
           staticLines.vertices.push(v0, v1);
@@ -1125,15 +1248,20 @@ class NavigationSystem implements ElementSystem {
           positions.push(v2[0], v2[1], v2[2], v0[0], v0[1], v0[2]);
           colors.push(v2[3], v2[4], v2[5], v2[6] ?? 1, v0[3], v0[4], v0[5], v0[6] ?? 1);
           // Filled tris
-          triPositions.push(
-            v0[0], v0[1], v0[2],
-            v1[0], v1[1], v1[2],
-            v2[0], v2[1], v2[2],
-          );
+          triPositions.push(v0[0], v0[1], v0[2], v1[0], v1[1], v1[2], v2[0], v2[1], v2[2]);
           triColors.push(
-            v0[3], v0[4], v0[5], v0[6] ?? 1,
-            v1[3], v1[4], v1[5], v1[6] ?? 1,
-            v2[3], v2[4], v2[5], v2[6] ?? 1,
+            v0[3],
+            v0[4],
+            v0[5],
+            v0[6] ?? 1,
+            v1[3],
+            v1[4],
+            v1[5],
+            v1[6] ?? 1,
+            v2[3],
+            v2[4],
+            v2[5],
+            v2[6] ?? 1,
           );
         }
       } else if (prim.type === "quads") {
@@ -1153,20 +1281,50 @@ class NavigationSystem implements ElementSystem {
           colors.push(v3[3], v3[4], v3[5], v3[6] ?? 1, v0[3], v0[4], v0[5], v0[6] ?? 1);
           // Two filled triangles: 0-1-2 and 0-2-3
           triPositions.push(
-            v0[0], v0[1], v0[2],
-            v1[0], v1[1], v1[2],
-            v2[0], v2[1], v2[2],
-            v0[0], v0[1], v0[2],
-            v2[0], v2[1], v2[2],
-            v3[0], v3[1], v3[2],
+            v0[0],
+            v0[1],
+            v0[2],
+            v1[0],
+            v1[1],
+            v1[2],
+            v2[0],
+            v2[1],
+            v2[2],
+            v0[0],
+            v0[1],
+            v0[2],
+            v2[0],
+            v2[1],
+            v2[2],
+            v3[0],
+            v3[1],
+            v3[2],
           );
           triColors.push(
-            v0[3], v0[4], v0[5], v0[6] ?? 1,
-            v1[3], v1[4], v1[5], v1[6] ?? 1,
-            v2[3], v2[4], v2[5], v2[6] ?? 1,
-            v0[3], v0[4], v0[5], v0[6] ?? 1,
-            v2[3], v2[4], v2[5], v2[6] ?? 1,
-            v3[3], v3[4], v3[5], v3[6] ?? 1,
+            v0[3],
+            v0[4],
+            v0[5],
+            v0[6] ?? 1,
+            v1[3],
+            v1[4],
+            v1[5],
+            v1[6] ?? 1,
+            v2[3],
+            v2[4],
+            v2[5],
+            v2[6] ?? 1,
+            v0[3],
+            v0[4],
+            v0[5],
+            v0[6] ?? 1,
+            v2[3],
+            v2[4],
+            v2[5],
+            v2[6] ?? 1,
+            v3[3],
+            v3[4],
+            v3[5],
+            v3[6] ?? 1,
           );
         }
       }
@@ -1193,8 +1351,7 @@ initElementSystem("navigation", navigationSystem, [
   "nav-goal-x",
   "nav-goal-y",
   "nav-goal-z",
-  "nav-waypoints"
+  "nav-waypoints",
 ]);
 
 export default navigationSystem;
-

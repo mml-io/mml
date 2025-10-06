@@ -1,6 +1,6 @@
 import mathSystemSchemaJson from "mml-game-math-system/build/mml.schema.json";
-import physicsSystemSchemaJson from "mml-game-physics-system/build/mml.schema.json";
 import navigationSystemSchemaJson from "mml-game-navigation-system/build/mml.schema.json";
+import physicsSystemSchemaJson from "mml-game-physics-system/build/mml.schema.json";
 import { SystemPackage, SystemSchema } from "mml-game-systems-common";
 
 const physicsSystemSchema: SystemSchema = {
@@ -25,7 +25,11 @@ const mathSystemSchema: SystemSchema = {
 
 export type BuiltInSystemNames = "physics" | "math" | "navigation";
 
-export const builtInSystemNameSet: Set<BuiltInSystemNames> = new Set(["physics", "math", "navigation"]);
+export const builtInSystemNameSet: Set<BuiltInSystemNames> = new Set([
+  "physics",
+  "math",
+  "navigation",
+]);
 
 const builtInSystems = new Map<
   BuiltInSystemNames,
