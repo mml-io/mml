@@ -1,11 +1,11 @@
 {
   "scripts": [
-    { "src": "mml-game-physics-system", "configName": "physics", "config": { "debug": false, "gravity": 9.81 } },
+    { "src": "mml-game-physics-system", "configName": "physics", "config": { "debug": true, "gravity": 9.81 } },
     { "src": "mml-game-math-system" },
     {
       "src": "mml-game-navigation-system",
       "configName": "navigation",
-      "config": { "debug": false, "debugDrawMode": "navmesh" }
+      "config": { "debug": true, "debugDrawMode": "navmesh" }
     }
   ]
 }

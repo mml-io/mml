@@ -32,7 +32,10 @@ export function parseNumberAttr(element: Element, name: string, fallback: number
  * Read local transform from element attributes.
  * Attributes: x,y,z (position); rx,ry,rz (degrees); sx,sy,sz (scale).
  */
-export function getLocalTransformFromElement(element: Element): {
+export function getLocalTransformFromElement(
+  element: Element,
+  options?: { includeSize?: boolean },
+): {
   position: Vec3;
   rotation: Quat;
   scale: Vec3;
@@ -57,10 +60,41 @@ export function getLocalTransformFromElement(element: Element): {
   const sy = parseNumberAttr(element, "sy", 1);
   const sz = parseNumberAttr(element, "sz", 1);
 
+  const includeSize = options?.includeSize === true;
+  let sizeX = 1;
+  let sizeY = 1;
+  let sizeZ = 1;
+
+  if (includeSize) {
+    const tag = element.tagName.toLowerCase();
+    if (tag === "m-cube") {
+      sizeX = parseNumberAttr(element, "width", 1);
+      sizeY = parseNumberAttr(element, "height", 1);
+      sizeZ = parseNumberAttr(element, "depth", 1);
+    } else if (tag === "m-sphere") {
+      const radius = parseNumberAttr(element, "radius", 0.5);
+      const diameter = radius * 2;
+      sizeX = diameter;
+      sizeY = diameter;
+      sizeZ = diameter;
+    } else if (tag === "m-cylinder") {
+      const radius = parseNumberAttr(element, "radius", 0.5);
+      const height = parseNumberAttr(element, "height", 1);
+      sizeX = radius * 2;
+      sizeZ = radius * 2;
+      sizeY = height;
+    } else if (tag === "m-plane") {
+      // Match physics interpretation: plane spans X (width) and Z (depth), Y acts as thickness/height
+      sizeX = parseNumberAttr(element, "width", 10);
+      sizeZ = parseNumberAttr(element, "depth", 10);
+      sizeY = parseNumberAttr(element, "height", 1);
+    }
+  }
+
   return {
     position: new Vec3(x, y, z),
     rotation: Quat.fromEulerDegrees(rx, ry, rz),
-    scale: new Vec3(sx, sy, sz),
+    scale: new Vec3(sx * sizeX, sy * sizeY, sz * sizeZ),
   };
 }
 
@@ -101,8 +135,12 @@ export function computeWorldTransformFor(
   let worldRotation: Quat = Quat.identity();
   let worldScale: Vec3 = Vec3.one();
 
-  for (const node of path) {
-    const local = getLocalTransformFromElement(node);
+
+  for (let i = 0; i < path.length; i++) {
+    const node = path[i];
+    const isLeaf = i === path.length - 1;
+    // Only include size on the leaf element (target) when requested; never on ancestors
+    const local = getLocalTransformFromElement(node, { includeSize: isLeaf });
 
     const maybeBody = getBody ? getBody(node) : null;
     if (maybeBody && maybeBody.isValid()) {

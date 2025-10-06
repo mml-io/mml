@@ -121,39 +121,14 @@ class NavigationSystem implements ElementSystem {
   }
 
   private deriveAgentDimensionsFromElement(element: Element): { radius: number; height: number } {
-    const tag = element.tagName.toLowerCase();
     const world = this.computeWorldTransformFor(element);
 
-    if (tag === "m-cube" || tag === "m-plane") {
-      const width = parseFloat(element.getAttribute("width") || (tag === "m-plane" ? "10" : "1"));
-      const height = parseFloat(element.getAttribute("height") || "1");
-      const depth = parseFloat(element.getAttribute("depth") || (tag === "m-plane" ? "10" : "1"));
-      const worldWidth = width * world.scale.x;
-      const worldDepth = depth * world.scale.z;
-      const worldHeight = height * world.scale.y;
-      const radius = Math.max(0.1, Math.min(worldWidth, worldDepth) / 2);
-      return { radius, height: Math.max(0.5, worldHeight) };
-    }
+    const width = Math.abs(world.scale.x);
+    const depth = Math.abs(world.scale.z);
+    const height = Math.abs(world.scale.y);
 
-    if (tag === "m-cylinder") {
-      const radius = parseFloat(element.getAttribute("radius") || "0.5");
-      const height = parseFloat(element.getAttribute("height") || "1");
-      console.log("[navigation] agent:dimensions", { radius, height });
-      const worldRadius = radius * Math.max(world.scale.x, world.scale.z);
-      const worldHeight = height * world.scale.y;
-      console.log("radius", worldRadius, "height", worldHeight);
-      return { radius: worldRadius*2, height: worldHeight };
-    }
-
-    if (tag === "m-sphere") {
-      const r = parseFloat(element.getAttribute("radius") || "0.5");
-      const worldRadius = r * Math.max(world.scale.x, world.scale.y, world.scale.z);
-      const height = worldRadius * 2;
-      return { radius: Math.max(0.1, worldRadius), height: Math.max(0.5, height) };
-    }
-
-    // Fallback to configured defaults
-    return { radius: 0.5, height: 2 };
+    const radius = Math.max(0.1, Math.min(width, depth) / 2);
+    return { radius, height: Math.max(0.5, height) };
   }
 
   async init(config: NavigationConfig = {}) {
@@ -188,13 +163,9 @@ class NavigationSystem implements ElementSystem {
       const world = this.computeWorldTransformFor(element);
 
       if (tag === "m-cube" || tag === "m-plane") {
-        const width = parseFloat(element.getAttribute("width") || (tag === "m-plane" ? "10" : "1"));
-        const height = parseFloat(element.getAttribute("height") || "1");
-        const depth = parseFloat(element.getAttribute("depth") || (tag === "m-plane" ? "10" : "1"));
-
-        const hw = (width * world.scale.x) / 2;
-        const hh = (height * world.scale.y) / 2;
-        const hd = (depth * world.scale.z) / 2;
+        const hw = Math.abs(world.scale.x) / 2;
+        const hh = Math.abs(world.scale.y) / 2;
+        const hd = Math.abs(world.scale.z) / 2;
 
         const corners: Array<Vec3> = [
           new Vec3(-hw, -hh, -hd),
@@ -228,10 +199,8 @@ class NavigationSystem implements ElementSystem {
       }
       // For cylinders/spheres, approximate with bounding box for now
       if (tag === "m-cylinder") {
-        const radius = parseFloat(element.getAttribute("radius") || "0.5");
-        const height = parseFloat(element.getAttribute("height") || "1");
-        const rx = radius * Math.max(world.scale.x, world.scale.z);
-        const rh = (height * world.scale.y) / 2;
+        const rx = Math.max(Math.abs(world.scale.x), Math.abs(world.scale.z)) / 2;
+        const rh = Math.abs(world.scale.y) / 2;
         const corners: Array<Vec3> = [
           new Vec3(-rx, -rh, -rx),
           new Vec3(rx, -rh, -rx),
@@ -449,8 +418,7 @@ class NavigationSystem implements ElementSystem {
       const p = ag.position();
       const parentWorld = this.computeWorldTransformFor(state.element.parentElement);
       const elementWorld = this.computeWorldTransformFor(state.element);
-      const renderHeight = parseFloat(state.element.getAttribute("height") || "1");
-      const worldRenderHeight = renderHeight * (elementWorld?.scale?.y ?? 1);
+      const worldRenderHeight = Math.abs(elementWorld?.scale?.y ?? 1);
       const yOffset = (worldRenderHeight - this.getWalkableParams().height) / 2;
       const worldPos = new Vec3(p.x, p.y + yOffset, p.z);
       // Determine yaw to preserve: if element declares an explicit ry attribute, prefer that;
@@ -889,24 +857,25 @@ class NavigationSystem implements ElementSystem {
     let depth = 1;
 
     if (tag === "m-cube" || tag === "m-plane") {
-      width = parseFloat(element.getAttribute("width") || (tag === "m-plane" ? "10" : "1"));
-      height = parseFloat(element.getAttribute("height") || "1");
-      depth = parseFloat(element.getAttribute("depth") || (tag === "m-plane" ? "10" : "1"));
+      // World scale already includes size for leaf; use absolute scale as full extents
+      width = Math.abs(world.scale.x);
+      height = Math.abs(world.scale.y);
+      depth = Math.abs(world.scale.z);
     } else if (tag === "m-cylinder") {
-      const radius = parseFloat(element.getAttribute("radius") || "0.5");
-      height = parseFloat(element.getAttribute("height") || "1");
-      const rx = radius * 2;
+      // Cylinder width/depth derived from X/Z scale, height from Y scale
+      const rx = Math.max(Math.abs(world.scale.x), Math.abs(world.scale.z));
       width = rx;
       depth = rx;
+      height = Math.abs(world.scale.y);
     } else {
       // Unsupported element type for obstacle box
       return null;
     }
 
     const halfExtents = {
-      x: (width * world.scale.x) / 2,
-      y: (height * world.scale.y) / 2,
-      z: (depth * world.scale.z) / 2,
+      x: width / 2,
+      y: height / 2,
+      z: depth / 2,
     };
     // Prefer live world position from MML runtime (animated), fallback to attribute-derived world
     let center = { x: world.position.x, y: world.position.y, z: world.position.z };

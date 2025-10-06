@@ -200,46 +200,40 @@ class PhysicsSystem implements ElementSystem {
 
     const rigidBody = this.world.createRigidBody(rigidBodyDesc);
 
-    // Create collider based on element type
+    // Create collider based on element type using worldScale that already includes size for leaf (via math)
     let colliderDesc: RAPIER.ColliderDesc;
     const tagName = element.tagName.toLowerCase();
 
     switch (tagName) {
       case "m-cube": {
-        const width = parseFloat(element.getAttribute("width") || "1") * worldScale.x;
-        const height = parseFloat(element.getAttribute("height") || "1") * worldScale.y;
-        const depth = parseFloat(element.getAttribute("depth") || "1") * worldScale.z;
-        colliderDesc = RAPIER.ColliderDesc.cuboid(width / 2, height / 2, depth / 2);
+        colliderDesc = RAPIER.ColliderDesc.cuboid(worldScale.x / 2, worldScale.y / 2, worldScale.z / 2);
         break;
       }
 
       case "m-sphere": {
-        const radius = parseFloat(element.getAttribute("radius") || "0.5");
-        const scaleMax = Math.max(worldScale.x, worldScale.y, worldScale.z);
-        colliderDesc = RAPIER.ColliderDesc.ball(radius * scaleMax);
+        // Approximate with uniform radius using max component
+        const radius = Math.max(worldScale.x, worldScale.y, worldScale.z) / 2;
+        colliderDesc = RAPIER.ColliderDesc.ball(radius);
         break;
       }
 
       case "m-cylinder": {
-        const cylRadius = parseFloat(element.getAttribute("radius") || "0.5");
-        const cylHeight = parseFloat(element.getAttribute("height") || "1");
-        const scaledHalfHeight = (cylHeight * worldScale.y) / 2;
-        const scaledRadius = cylRadius * Math.max(worldScale.x, worldScale.z);
-        colliderDesc = RAPIER.ColliderDesc.cylinder(scaledHalfHeight, scaledRadius);
+        const halfHeight = worldScale.y / 2;
+        const radius = Math.max(worldScale.x, worldScale.z) / 2;
+        colliderDesc = RAPIER.ColliderDesc.cylinder(halfHeight, radius);
         break;
       }
 
       case "m-plane": {
-        // Create a large thin box for planes
-        const planeWidth = parseFloat(element.getAttribute("width") || "10") * worldScale.x;
-        const planeDepth = parseFloat(element.getAttribute("depth") || "10") * worldScale.z;
-        const planeThickness = 0.01 * worldScale.y;
-        colliderDesc = RAPIER.ColliderDesc.cuboid(planeWidth / 2, planeThickness, planeDepth / 2);
+        // Use thin box per worldScale; Y is thickness
+        const halfX = worldScale.x / 2;
+        const halfY = worldScale.y / 2;
+        const halfZ = worldScale.z / 2;
+        colliderDesc = RAPIER.ColliderDesc.cuboid(halfX, Math.max(halfY, 0.005), halfZ);
         break;
       }
 
       default:
-        // Default to box collider
         colliderDesc = RAPIER.ColliderDesc.cuboid(
           0.5 * worldScale.x,
           0.5 * worldScale.y,
