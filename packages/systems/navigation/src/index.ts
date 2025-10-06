@@ -442,7 +442,7 @@ class NavigationSystem implements ElementSystem {
       }
     }
 
-    // Sync agent positions to DOM (position only)
+    // Sync agent positions to scene: if a physics kinematic body exists then drive it; else set DOM attributes
     this.elementToAgent.forEach((state) => {
       const ag = this.crowd!.getAgent(state.agentId);
       if (!ag) return;
@@ -453,13 +453,38 @@ class NavigationSystem implements ElementSystem {
       const worldRenderHeight = renderHeight * (elementWorld?.scale?.y ?? 1);
       const yOffset = (worldRenderHeight - this.getWalkableParams().height) / 2;
       const worldPos = new Vec3(p.x, p.y + yOffset, p.z);
-      const localPos = parentWorld.rotation
-        .conjugate()
-        .rotateVector(worldPos.sub(parentWorld.position))
-        .div(parentWorld.scale);
-      state.element.setAttribute("x", localPos.x.toFixed(3));
-      state.element.setAttribute("y", localPos.y.toFixed(3));
-      state.element.setAttribute("z", localPos.z.toFixed(3));
+      // Determine yaw to preserve: if element declares an explicit ry attribute, prefer that;
+      // otherwise, use current world yaw so we don't override externally set rotation
+      let yawRadians = 0;
+      const ryAttr = state.element.getAttribute("ry");
+      if (ryAttr !== null) {
+        const parsed = parseFloat(ryAttr);
+        if (isFinite(parsed)) yawRadians = (parsed * Math.PI) / 180;
+      } else {
+        const eulerForRotation = quaternionToEulerXYZ(elementWorld.rotation);
+        yawRadians = eulerForRotation.y;
+      }
+
+      // Attempt to move via physics kinematic API if available
+      const physics: any = (window as any).physics;
+      let movedByPhysics = false;
+      if (physics && typeof physics.moveKinematic === "function") {
+        try {
+          movedByPhysics = !!physics.moveKinematic(state.element, worldPos, { yawRadians });
+        } catch {}
+      }
+
+      if (!movedByPhysics) {
+        // Fallback: write local transform attributes
+        const localPos = parentWorld.rotation
+          .conjugate()
+          .rotateVector(worldPos.sub(parentWorld.position))
+          .div(parentWorld.scale);
+        state.element.setAttribute("x", localPos.x.toFixed(3));
+        state.element.setAttribute("y", localPos.y.toFixed(3));
+        state.element.setAttribute("z", localPos.z.toFixed(3));
+        // Never touch rotation here to avoid stomping external yaw
+      }
     });
 
     // Patrol progression (no intervals or repathing)
@@ -845,7 +870,9 @@ class NavigationSystem implements ElementSystem {
     const ag = this.crowd.getAgent(agentState.agentId);
     ag?.requestMoveTarget(result.point);
     this.agentCurrentTarget.set(agentState.agentId, result.point);
-    console.log("[navigation] goTo", { agentId: agentState.agentId, target: result.point });
+    if (this.config.debug) {
+      console.log("[navigation] goTo", { agentId: agentState.agentId, target: result.point });
+    }
   }
 
   private computeBoxObstacleFromElement(element: Element):

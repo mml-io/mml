@@ -423,6 +423,39 @@ class PhysicsSystem implements ElementSystem {
     return () => this.collisionEventListeners.delete(callback);
   }
 
+  /**
+   * Move a kinematic rigidbody to a world-space translation (and optional yaw rotation).
+   * Returns true if a kinematic body was found and scheduled for movement.
+   */
+  moveKinematic(
+    element: Element,
+    worldPosition: { x: number; y: number; z: number },
+    options?: { yawRadians?: number },
+  ): boolean {
+    const physicsState = this.elementToBody.get(element);
+    if (!physicsState) return false;
+
+    const rb = physicsState.rigidbody;
+    // Only drive kinematic bodies directly; dynamic bodies should be driven via forces/velocities
+    if (!(rb as any).isKinematic || !(rb as any).isKinematic()) {
+      return false;
+    }
+
+    // Schedule next kinematic transform in world-space
+    rb.setNextKinematicTranslation(
+      new (RAPIER as any).Vector3(worldPosition.x, worldPosition.y, worldPosition.z),
+    );
+
+    if (options && typeof options.yawRadians === "number") {
+      const half = options.yawRadians / 2;
+      const sinHalf = Math.sin(half);
+      const cosHalf = Math.cos(half);
+      rb.setNextKinematicRotation({ x: 0, y: sinHalf, z: 0, w: cosHalf });
+    }
+
+    return true;
+  }
+
   private processCollisionEvents() {
     if (!this.eventQueue || !this.world) return;
 
@@ -544,18 +577,25 @@ class PhysicsSystem implements ElementSystem {
         element.setAttribute("y", clampFinite(localPos.y, 0).toFixed(3));
         element.setAttribute("z", clampFinite(localPos.z, 0).toFixed(3));
 
-        // Convert quaternion to Euler angles (degrees)
-        const euler = quaternionToEulerXYZ(localRot);
+        // Update rotation attributes only for non-kinematic bodies to avoid stomping
+        // externally-driven visual rotation (e.g., navigation facing logic)
+        const isKinematic = (physicsState.rigidbody as any).isKinematic
+          ? (physicsState.rigidbody as any).isKinematic()
+          : false;
+        if (!isKinematic) {
+          // Convert quaternion to Euler angles (degrees)
+          const euler = quaternionToEulerXYZ(localRot);
 
-        // Validate rotation values
-        if (!isFinite(euler.x) || !isFinite(euler.y) || !isFinite(euler.z)) {
-          console.warn("Invalid local rotation values for element:", element);
-          return;
+          // Validate rotation values
+          if (!isFinite(euler.x) || !isFinite(euler.y) || !isFinite(euler.z)) {
+            console.warn("Invalid local rotation values for element:", element);
+            return;
+          }
+
+          element.setAttribute("rx", ((euler.x * 180) / Math.PI).toFixed(3));
+          element.setAttribute("ry", ((euler.y * 180) / Math.PI).toFixed(3));
+          element.setAttribute("rz", ((euler.z * 180) / Math.PI).toFixed(3));
         }
-
-        element.setAttribute("rx", ((euler.x * 180) / Math.PI).toFixed(3));
-        element.setAttribute("ry", ((euler.y * 180) / Math.PI).toFixed(3));
-        element.setAttribute("rz", ((euler.z * 180) / Math.PI).toFixed(3));
       } catch (error) {
         console.warn("Error updating element position:", element, error);
         invalidBodies.push(element);

@@ -3,14 +3,14 @@
 <m-light y="120" x="-150" z="-150" intensity="20000" type="point"></m-light>
 <m-light y="120" x="150" z="-150" intensity="20000" type="point"></m-light>
 
-<m-cube id="floor" rigidbody=true kinematic="true" width="300" depth="300" height=0.1 y="0" opacity="1"></m-cube>
+<m-cube id="floor" rigidbody=true kinematic="true" width="300" depth="300" height=1 y="-0.5" opacity="1"></m-cube>
 
 <!-- Obstacles (static geometry + nav-obstacle for dynamic avoidance) -->
 <m-cube kinematic="true" width="8" height="2" depth="1.5" x="-10" y="1" z="-5" color="#555"></m-cube>
 <m-cube kinematic="true" width="50" height="2" depth="1.5" x="10" y="1" z="5" color="#555"></m-cube>
 <m-cube kinematic="true" nav-obstacle="true" width="1.5" height="2" depth="10" x="0" y="1" z="0" color="#555"></m-cube>
 <m-cube nav-obstacle="true" width="12" height="2" depth="1.5" x="-15" y="1" z="12" color="#555"></m-cube>
-<m-cube rigidbody="true" nav-obstacle="true" width="12" height="2" depth="1.5" x="15" y="200" z="-12" color="#999"></m-cube>
+<m-cube rigidbody="true" nav-obstacle="true" width="12" height="2" depth="1.5" x="15" y="20" restitution=1 friction=0 mass=0.1 z="-12" color="#999"></m-cube>
 
 <!-- Chaser agent (navigation-controlled) -->
 <m-cube id="chaser" color="#e74c3c" width="1.2" depth="1.2" height="2" x="-8" y="1" z="-8" nav-agent="true" nav-speed="25" nav-acceleration="40"></m-cube>
@@ -85,6 +85,8 @@
     model.setAttribute('x', String(randomInRange(-140, 140)));
     model.setAttribute('z', String(randomInRange(-140, 140)));
     model.setAttribute('nav-agent', 'true');
+    model.setAttribute('rigidbody', 'true');
+    model.setAttribute('kinematic', 'true');
     model.setAttribute('nav-speed', '25');
     model.setAttribute('nav-acceleration', '40');
     // Attach animations (default to running when chasing)
@@ -108,6 +110,8 @@
     cube.setAttribute('x', String(randomInRange(-140, 140)));
     cube.setAttribute('z', String(randomInRange(-140, 140)));
     cube.setAttribute('nav-agent', 'true');
+    cube.setAttribute('rigidbody', 'true');
+    cube.setAttribute('kinematic', 'true');
     cube.setAttribute('nav-speed', '25');
     cube.setAttribute('nav-acceleration', '40');
     document.body.appendChild(cube);
