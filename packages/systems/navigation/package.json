@@ -29,7 +29,9 @@
   "dependencies": {
     "mml-game-math-system": "*",
     "mml-game-systems-common": "file:../systems-common",
-    "recast-navigation": "^0.43.0"
+    "recast-navigation": "^0.43.0",
+    "@recast-navigation/core": "^0.43.0",
+    "@recast-navigation/generators": "^0.43.0"
   },
   "devDependencies": {
     "@types/node": "20.19.10",
@@ -39,4 +41,3 @@
     "typescript": "^5.4.5"
   }
 }
-

@@ -23,6 +23,7 @@
     "esbuild-wasm": "0.25.8",
     "mml-game-systems-common": "file:../systems/systems-common",
     "mml-game-physics-system": "file:../systems/physics",
+    "mml-game-navigation-system": "file:../systems/navigation",
     "mml-game-math-system": "file:../systems/math"
   },
   "devDependencies": {
