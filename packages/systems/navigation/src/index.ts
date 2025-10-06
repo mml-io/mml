@@ -258,7 +258,7 @@ class NavigationSystem implements ElementSystem {
     }
 
     const gen = this.getGeneratorParams();
-    const { success, navMesh, tileCache, intermediates } = generateTileCache(positions, indices, gen as any, true as any);
+    const { success, navMesh, tileCache, intermediates } = generateTileCache(positions, indices, gen, true);
 
 
     if (!success) {
@@ -277,10 +277,10 @@ class NavigationSystem implements ElementSystem {
       if (dims.radius > maxDerivedRadius) maxDerivedRadius = dims.radius;
     }
     this.crowd = new Crowd(navMesh, { maxAgents: 1024, maxAgentRadius: 100 });
-    this.tileCache = tileCache as any;
-    this.generatorIntermediates = intermediates as any;
+    this.tileCache = tileCache;
+    this.generatorIntermediates = intermediates;
 
-    (this.tileCache as any).update(navMesh);
+    this.tileCache.update(navMesh);
 
     // Rebuild debug buffers for visualization
     this.buildDebugBuffers();
@@ -303,8 +303,8 @@ class NavigationSystem implements ElementSystem {
         collisionQueryRange: dims.radius * 12.0,
         pathOptimizationRange: dims.radius * 30.0,
         separationWeight: 1.0,
-      } as any;
-      const agent = this.crowd!.addAgent(pos, params) as any;
+      };
+      const agent = this.crowd!.addAgent(pos, params);
       const agentId: number = agent.agentIndex;
       this.elementToAgent.set(el, { element: el, agentId, speed: maxSpeed, radius: dims.radius, height: dims.height });
       console.log("[navigation] agent:readded", { agentId, pos });
@@ -312,8 +312,6 @@ class NavigationSystem implements ElementSystem {
     });
     console.log("[navigation] rebuild:done", { agents: this.elementToAgent.size });
   }
-
-  // Mutation observer intentionally removed: static navmesh only, no dynamic rebuilds
 
   start() {}
 
@@ -341,7 +339,7 @@ class NavigationSystem implements ElementSystem {
         const rotated = Math.abs(angle - state.lastAngle) > 1e-3;
         if (moved || resized || rotated) {
           if (this.config.debug) {
-            const elementId = (element as any).id || element.tagName.toLowerCase();
+            const elementId = element.id || element.tagName.toLowerCase();
             console.log("[navigation] obstacle:update", {
               elementId,
               moved,
@@ -353,9 +351,9 @@ class NavigationSystem implements ElementSystem {
             });
           }
           try {
-            (this.tileCache as any).removeObstacle(state.obstacle);
+            this.tileCache.removeObstacle(state.obstacle);
           } catch {}
-          const res = (this.tileCache as any).addBoxObstacle(center, halfExtents, angle);
+          const res = this.tileCache.addBoxObstacle(center, halfExtents, angle);
           const newObstacle = res?.obstacle ?? null;
           if (newObstacle) {
             state.obstacle = newObstacle;
@@ -370,11 +368,11 @@ class NavigationSystem implements ElementSystem {
         this.tileCacheDirty = true;
       }
       // Drain TileCache requests until up-to-date or max iterations per frame
-      let updateRes = (this.tileCache as any).update(this.navMesh);
+      let updateRes = this.tileCache.update(this.navMesh);
       let updates = 1;
       if (updateRes && !updateRes.upToDate) {
         for (let i = 0; i < 8; i++) {
-          updateRes = (this.tileCache as any).update(this.navMesh);
+          updateRes = this.tileCache.update(this.navMesh);
           updates++;
           if (!updateRes || updateRes.upToDate) break;
         }
@@ -434,7 +432,8 @@ class NavigationSystem implements ElementSystem {
       }
 
       // Attempt to move via physics kinematic API if available
-      const physics: any = (window as any).physics;
+      // @ts-ignore
+      const physics: any = window.physics;
       let movedByPhysics = false;
       if (physics && typeof physics.moveKinematic === "function") {
         try {
@@ -671,7 +670,7 @@ class NavigationSystem implements ElementSystem {
       if (!this.obstacles.has(element)) {
         const box = this.computeBoxObstacleFromElement(element);
         if (box) {
-          const res = (this.tileCache as any).addBoxObstacle(box.center, box.halfExtents, box.angle);
+          const res = this.tileCache.addBoxObstacle(box.center, box.halfExtents, box.angle);
           const obstacle = res?.obstacle ?? null;
           if (obstacle) {
             this.obstacles.set(element, {
@@ -681,7 +680,7 @@ class NavigationSystem implements ElementSystem {
               lastAngle: box.angle,
             });
             if (this.config.debug) {
-              const elementId = (element as any).id || element.tagName.toLowerCase();
+              const elementId = element.id || element.tagName.toLowerCase();
               console.log("[navigation] obstacle:add", {
                 elementId,
                 center: box.center,
@@ -690,11 +689,11 @@ class NavigationSystem implements ElementSystem {
               });
             }
             // Drain updates immediately to reflect obstacle addition
-            let updateRes = (this.tileCache as any).update(this.navMesh);
+            let updateRes = this.tileCache.update(this.navMesh);
             let updates = 1;
             if (updateRes && !updateRes.upToDate) {
               for (let i = 0; i < 8; i++) {
-                updateRes = (this.tileCache as any).update(this.navMesh);
+                updateRes = this.tileCache.update(this.navMesh);
                 updates++;
                 if (!updateRes || updateRes.upToDate) break;
               }
@@ -734,8 +733,8 @@ class NavigationSystem implements ElementSystem {
         collisionQueryRange: dims.radius * 12.0,
         pathOptimizationRange: dims.radius * 30.0,
         separationWeight: 0.5,
-      } as any;
-      const agent = this.crowd!.addAgent(pos, params) as any;
+      };
+      const agent = this.crowd!.addAgent(pos, params);
       const agentId: number = agent.agentIndex;
       this.elementToAgent.set(element, { element, agentId, speed: maxSpeed, radius: dims.radius, height: dims.height });
       console.log("[navigation] agent:added", { agentId, pos });
@@ -789,7 +788,10 @@ class NavigationSystem implements ElementSystem {
   onElementRemoved(element: Element) {
     const agent = this.elementToAgent.get(element);
     if (agent && this.crowd) {
-      (this.crowd as any).removeAgent(agent.agentId);
+      const ag = this.crowd.getAgent(agent.agentId);
+      if (ag) {
+        this.crowd.removeAgent(ag);
+      }
       this.elementToAgent.delete(element);
       this.agentWaypoints.delete(agent.agentId);
       this.agentCurrentTarget.delete(agent.agentId);
@@ -799,20 +801,20 @@ class NavigationSystem implements ElementSystem {
     const obs = this.obstacles.get(element);
     if (obs && this.tileCache && this.navMesh) {
       try {
-        (this.tileCache as any).removeObstacle(obs.obstacle);
+        this.tileCache.removeObstacle(obs.obstacle);
       } catch {}
       // Drain updates for obstacle removal
-      let updateRes = (this.tileCache as any).update(this.navMesh);
+      let updateRes = this.tileCache.update(this.navMesh);
       let updates = 1;
       if (updateRes && !updateRes.upToDate) {
         for (let i = 0; i < 8; i++) {
-          updateRes = (this.tileCache as any).update(this.navMesh);
+          updateRes = this.tileCache.update(this.navMesh);
           updates++;
           if (!updateRes || updateRes.upToDate) break;
         }
       }
       if (this.config.debug) {
-        const elementId = (element as any).id || element.tagName.toLowerCase();
+        const elementId = element.id || element.tagName.toLowerCase();
         console.log("[navigation] obstacle:remove", { elementId });
         console.log("[navigation] tilecache:update(remove)", {
           updates,
@@ -830,7 +832,7 @@ class NavigationSystem implements ElementSystem {
     let agentState = this.elementToAgent.get(element);
     if (!agentState) {
       this.processElement(element, [{ attributeName: "nav-agent", value: true }]);
-      agentState = this.elementToAgent.get(element) || null as any;
+      agentState = this.elementToAgent.get(element);
     }
     if (!agentState) return;
     const result = this.navQuery.findClosestPoint(target);
@@ -880,7 +882,7 @@ class NavigationSystem implements ElementSystem {
     // Prefer live world position from MML runtime (animated), fallback to attribute-derived world
     let center = { x: world.position.x, y: world.position.y, z: world.position.z };
     try {
-      const anyEl: any = element as any;
+      const anyEl: any = element;
       if (anyEl && typeof anyEl.getWorldPosition === "function") {
         const p = anyEl.getWorldPosition();
         if (p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z)) {
@@ -894,8 +896,8 @@ class NavigationSystem implements ElementSystem {
 
   addBoxObstacle(center: { x: number; y: number; z: number }, halfExtents: { x: number; y: number; z: number }, angleRad = 0) {
     if (!this.navMesh || !this.tileCache) return null;
-    const res = (this.tileCache as any).addBoxObstacle(center, halfExtents, angleRad);
-    (this.tileCache as any).update(this.navMesh);
+    const res = this.tileCache.addBoxObstacle(center, halfExtents, angleRad);
+    this.tileCache.update(this.navMesh);
     return res?.obstacle ?? null;
   }
 
@@ -920,7 +922,7 @@ class NavigationSystem implements ElementSystem {
     }
 
     const debugDrawer = new DebugDrawerUtils();
-    const primitives: Array<ReturnType<typeof debugDrawer.drawNavMesh>[number]> = [] as any;
+    const primitives: Array<ReturnType<typeof debugDrawer.drawNavMesh>[number]> = [];
 
     const makeObstacleLines = () => {
       if (this.obstacles.size === 0) return null as null | { type: "lines"; vertices: [number, number, number, number, number, number, number][] };
