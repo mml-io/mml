@@ -7,8 +7,8 @@ import {
   MElement,
   MMLScene,
   OrientedBoundingBox,
-  parseFloatAttribute,
   parseBoolAttribute,
+  parseFloatAttribute,
   Quat,
   Ray,
   Vect3,
@@ -228,10 +228,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
       instance.props["update-interval"] = parseFloatAttribute(newValue, defaultUpdateInterval);
     },
     "rotate-with-camera": (instance, newValue) => {
-      instance.props["rotate-with-camera"] = parseBoolAttribute(
-        newValue,
-        defaultRotateWithCamera,
-      );
+      instance.props["rotate-with-camera"] = parseBoolAttribute(newValue, defaultRotateWithCamera);
     },
   });
 
