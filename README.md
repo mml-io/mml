@@ -17,4 +17,4 @@ This repository is a fork of that repository and is intended to be kept up-to-da
 1. `npm install`
 1. `npm run iterate` Builds and starts incrementally building package artefacts from sources
   * Servers should start for examples:
-    * [http://localhost:3030](http://localhost:3030) - MML Game Examples
+    * [http://localhost:3000](http://localhost:3000) - MML Game Examples
