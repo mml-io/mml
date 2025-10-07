@@ -58,10 +58,6 @@ const maxSurfaceTrackingDistance = 0.8;
 
 const downVector = new Vect3(0, -1, 0);
 
-const cameraRight = new THREE.Vector3();
-const cameraUp = new THREE.Vector3();
-const cameraForward = new THREE.Vector3();
-
 export type MCharacterControllerProps = {
   "movement-speed": number;
   gravity: number;
