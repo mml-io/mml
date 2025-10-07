@@ -109,24 +109,24 @@ export class EnvironmentManager {
   registerEnvironmentMap(environmentMap: EnvironmentMapGraphics) {
     this.environmentMaps.push(environmentMap);
     this.environmentMapsDirty = true;
-    this.applyActiveEnvironmentMap();
+    this.applyActiveSun();
   }
 
   updateEnvironmentMapPriority(_environmentMap: EnvironmentMapGraphics) {
     // just triggering reapply with dirty flag. keeping the argument for the sake of API consistency
     // and (maybe?) future proofing (maybe we'll need element specific logic for this stuff)
     this.environmentMapsDirty = true;
-    this.applyActiveEnvironmentMap();
+    this.applyActiveSun();
   }
 
   unregisterEnvironmentMap(environmentMap: EnvironmentMapGraphics) {
     this.environmentMaps = this.environmentMaps.filter((e) => e !== environmentMap);
     this.environmentMapsDirty = true;
-    this.applyActiveEnvironmentMap();
+    this.applyActiveSun();
   }
 
   updateEnvironmentMapProperties() {
-    this.applyActiveEnvironmentMap();
+    this.applyActiveSun();
   }
 
   getActiveEnvironmentLight(): EnvironmentLightGraphics | null {
@@ -199,6 +199,8 @@ export class EnvironmentManager {
     });
 
     const activeSun = this.getActiveSun();
+    const activeEnvMap = this.getActiveEnvironmentMap();
+
     if (activeSun) {
       const sunGroup = activeSun.getSunGroup();
       const sky = activeSun.getSky();
@@ -211,35 +213,44 @@ export class EnvironmentManager {
       }
 
       if (sky && skyCubeCamera && skyRenderTarget) {
-        sky.userData.isSky = true;
-        this.threeScene.add(sky);
+        if (activeEnvMap) {
+          this.applyActiveEnvironmentMap();
+        } else {
+          sky.userData.isSky = true;
+          this.threeScene.add(sky);
 
-        if (this.renderer && this.renderer.domElement) {
-          try {
-            skyCubeCamera.update(this.renderer, sky);
-            this.threeScene.environment = skyRenderTarget.texture;
-            this.threeScene.environmentIntensity = 0.5;
+          if (this.renderer && this.renderer.domElement) {
+            try {
+              skyCubeCamera.update(this.renderer, sky);
+              this.threeScene.environment = skyRenderTarget.texture;
+              this.threeScene.environmentIntensity = 0.5;
+              this.threeScene.background = skyRenderTarget.texture;
 
-            this.threeScene.traverse((object) => {
-              if ((object as THREE.Mesh).isMesh) {
-                const mesh = object as THREE.Mesh;
-                const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-                materials.forEach((material) => {
-                  if (material) {
-                    material.needsUpdate = true;
-                  }
-                });
-              }
-            });
-          } catch (error) {
-            console.warn("Failed to update sky cube camera:", error);
+              this.threeScene.traverse((object) => {
+                if ((object as THREE.Mesh).isMesh) {
+                  const mesh = object as THREE.Mesh;
+                  const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                  materials.forEach((material) => {
+                    if (material) {
+                      material.needsUpdate = true;
+                    }
+                  });
+                }
+              });
+            } catch (error) {
+              console.warn("Failed to update sky cube camera:", error);
+              this.threeScene.background = skyRenderTarget.texture;
+            }
+          } else {
+            console.warn("Renderer not ready, skipping sky environment update");
             this.threeScene.background = skyRenderTarget.texture;
           }
-        } else {
-          console.warn("Renderer not ready, skipping sky environment update");
-          this.threeScene.background = skyRenderTarget.texture;
         }
+      } else if (activeEnvMap) {
+        this.applyActiveEnvironmentMap();
       }
+    } else {
+      this.applyActiveEnvironmentMap();
     }
   }
 
