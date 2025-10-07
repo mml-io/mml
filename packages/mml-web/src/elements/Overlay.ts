@@ -224,6 +224,7 @@ export class Overlay<G extends GraphicsAdapter = GraphicsAdapter> extends Transf
       this.mode = OverlayMode.PORTAL;
 
       this.overlayElement = document.createElement("div");
+      this.overlayElement.setAttribute("data-mml-overlay", "true");
       this.overlayElement.addEventListener("click", (event) => {
         event.stopImmediatePropagation();
         event.preventDefault();

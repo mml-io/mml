@@ -105,7 +105,7 @@ export class ThreeJSDragFlyCameraControls {
   }
 
   public update(dt: number) {
-    if (!this.mouseDown || !this.isActive()) {
+    if (!(this.mouseDown || this.isPointerLocked()) || !this.isActive()) {
       return;
     }
 
@@ -119,7 +119,7 @@ export class ThreeJSDragFlyCameraControls {
   }
 
   private onKeyDown(event: KeyboardEvent) {
-    if (!this.mouseDown) {
+    if (!(this.mouseDown || this.isPointerLocked())) {
       return;
     }
     switch (event.code) {
@@ -191,7 +191,7 @@ export class ThreeJSDragFlyCameraControls {
   }
 
   private onMouseMove(event: MouseEvent) {
-    if (!this.mouseDown || !this.isActive()) {
+    if (!(this.mouseDown || this.isPointerLocked()) || !this.isActive()) {
       return;
     }
     const movementX = event.movementX;
@@ -230,13 +230,17 @@ export class ThreeJSDragFlyCameraControls {
   }
 
   private onMouseWheel(event: WheelEvent) {
-    if (!this.mouseDown) {
+    if (!(this.mouseDown || this.isPointerLocked())) {
       return;
     }
     this.speed -= event.deltaY * 0.1;
 
     // restrict to a reasonable min and max
     this.speed = Math.max(5, Math.min(this.speed, 1000));
+  }
+
+  private isPointerLocked(): boolean {
+    return !!document.pointerLockElement;
   }
 }
 

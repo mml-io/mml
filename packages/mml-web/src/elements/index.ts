@@ -15,6 +15,7 @@ export * from "./Light";
 export * from "./Link";
 export * from "./MElement";
 export * from "./Model";
+export * from "./MouseBehavior";
 export * from "./Overlay";
 export * from "./Plane";
 export * from "./PositionProbe";

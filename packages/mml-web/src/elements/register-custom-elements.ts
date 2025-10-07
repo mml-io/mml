@@ -14,6 +14,7 @@ import { Label } from "./Label";
 import { Light } from "./Light";
 import { Link } from "./Link";
 import { MElement } from "./MElement";
+import { MouseBehavior } from "./MouseBehavior";
 import { Model } from "./Model";
 import { Overlay } from "./Overlay";
 import { Plane } from "./Plane";
@@ -37,6 +38,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(Plane.tagName, Plane);
   targetWindow.customElements.define(Label.tagName, Label);
   targetWindow.customElements.define(Group.tagName, Group);
+  targetWindow.customElements.define(MouseBehavior.tagName, MouseBehavior);
   targetWindow.customElements.define(Prompt.tagName, Prompt);
   targetWindow.customElements.define(Link.tagName, Link);
   targetWindow.customElements.define(Overlay.tagName, Overlay);

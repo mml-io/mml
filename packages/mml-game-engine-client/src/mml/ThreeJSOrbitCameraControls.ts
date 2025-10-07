@@ -156,7 +156,7 @@ export class ThreeJSOrbitCameraControls {
   }
 
   private onMouseMove(event: MouseEvent) {
-    if (!this.mouseDown) {
+    if (!(this.mouseDown || this.isPointerLocked())) {
       return;
     }
     const movementX = event.movementX;
@@ -198,5 +198,9 @@ export class ThreeJSOrbitCameraControls {
   private onMouseWheel(event: WheelEvent) {
     this.distance += event.deltaY * 0.01;
     this.distance = Math.max(0.01, Math.min(this.distance, 1000));
+  }
+
+  private isPointerLocked(): boolean {
+    return !!document.pointerLockElement;
   }
 }
