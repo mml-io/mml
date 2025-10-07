@@ -5,6 +5,8 @@
 
 <m-cube id="floor" rigidbody=true kinematic="true" width="300" depth="300" height=1 y="-0.5" opacity="1" color="#444"></m-cube>
 
+<m-mouse-behavior mode="locked"></m-mouse-behavior>
+
 <m-overlay anchor="top-left" offset-x="10" offset-y="10" id="rotate-ui">
   <svg width="260" height="60" xmlns="http://www.w3.org/2000/svg">
     <rect x="0" y="0" width="200" height="60" fill="rgba(0,0,0,0.7)" rx="6"/>

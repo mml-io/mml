@@ -66,9 +66,6 @@ export class ThreeJSOrbitCameraControls {
     if (this.dampingFactor > 0) {
       this.targetYaw += deltaYaw;
       this.targetPitch += deltaPitch;
-
-      this.targetYaw = this.targetYaw % (Math.PI * 2);
-      this.targetPitch = this.targetPitch % (Math.PI * 2);
       this.targetPitch = Math.max(
         Math.PI / 2 - this.maxPolarAngle,
         Math.min(Math.PI / 2 - this.minPolarAngle, this.targetPitch),
@@ -76,8 +73,6 @@ export class ThreeJSOrbitCameraControls {
     } else {
       this.yaw += deltaYaw;
       this.pitch += deltaPitch;
-      this.yaw = this.yaw % (Math.PI * 2);
-      this.pitch = this.pitch % (Math.PI * 2);
       this.pitch = Math.max(
         Math.PI / 2 - this.maxPolarAngle,
         Math.min(Math.PI / 2 - this.minPolarAngle, this.pitch),
@@ -172,9 +167,6 @@ export class ThreeJSOrbitCameraControls {
     if (this.dampingFactor > 0) {
       this.targetYaw += deltaYaw;
       this.targetPitch += deltaPitch;
-
-      this.targetYaw = this.targetYaw % (Math.PI * 2);
-      this.targetPitch = this.targetPitch % (Math.PI * 2);
       this.targetPitch = Math.max(
         Math.PI / 2 - this.maxPolarAngle,
         Math.min(Math.PI / 2 - this.minPolarAngle, this.targetPitch),
@@ -182,8 +174,6 @@ export class ThreeJSOrbitCameraControls {
     } else {
       this.yaw += deltaYaw;
       this.pitch += deltaPitch;
-      this.yaw = this.yaw % (Math.PI * 2);
-      this.pitch = this.pitch % (Math.PI * 2);
       this.pitch = Math.max(
         Math.PI / 2 - this.maxPolarAngle,
         Math.min(Math.PI / 2 - this.minPolarAngle, this.pitch),

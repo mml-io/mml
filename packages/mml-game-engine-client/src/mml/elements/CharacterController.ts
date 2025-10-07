@@ -430,11 +430,14 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
     const camera = this.scene.getGraphicsAdapter().getCamera();
     if (!camera) return;
 
-    camera.matrixWorld.extractBasis(cameraRight, cameraUp, cameraForward);
+    // Use the camera's forward direction projected onto the XZ plane.
+    // This avoids inversion when the camera pitches beyond the horizon.
+    const worldForward = new THREE.Vector3();
+    camera.getWorldDirection(worldForward);
+    worldForward.y = 0;
+    worldForward.normalize();
 
-    const forward = new THREE.Vector3(-cameraUp.x, 0, -cameraUp.z).negate().normalize();
-
-    this.azimuthalAngle = Math.atan2(forward.x, forward.z);
+    this.azimuthalAngle = Math.atan2(worldForward.x, worldForward.z);
   }
 
   private computeFinalRotation(): void {
@@ -527,9 +530,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
 
     const forward = this.cameraController.getForwardDirection();
     const desiredYaw = Math.atan2(forward.x, forward.z);
-    console.log("desiredYaw", desiredYaw);
     this.currentRotation.ry = desiredYaw;
-    // this.currentRotation.ry = this.lerpAngle(this.currentRotation.ry, desiredYaw, rotationLerpFactor);
   }
 
   private updateParentElementTransform(): void {
@@ -546,7 +547,6 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
       return;
     }
 
-    console.log("currentRotation.ry", this.currentRotation.ry);
     this.dispatchEvent(
       new CustomEvent("character-move", {
         detail: {
