@@ -1,0 +1,228 @@
+<m-group id="scene-group">
+  <m-plane x="0" y="0" z="0" width="400" height="400" rx="-90" color="#808080"></m-plane>
+
+  <m-sun
+    id="sun" 
+    priority="1" 
+    intensity="0.7" 
+    color="#fffafa"
+    azimuthal-angle="180"
+    polar-angle="-45"
+    resolution="8192"
+    frustum="50"
+    turbidity="1.2"
+    rayleigh="0.7"
+  >
+    <m-attr-lerp attr="intensity,azimuthal-angle,polar-angle" duration="1000"></m-attr-lerp>
+  </m-sun>
+
+  <m-environment-light
+    id="ambient-light"
+    priority="1"
+    intensity="0.2"
+    color="#ffffff"
+  >
+    <m-attr-lerp attr="intensity" duration="50"></m-attr-lerp>
+  </m-environment-light>
+
+  <m-environment-map
+    id="environment-map"
+    priority="1"
+    intensity="0.5"
+    azimuthal-angle="180"
+    src="/assets/hdr/sky_on_fire.hdr"
+  ></m-environment-map>
+
+  <m-cube id="fog-cube" x="0" y="2" z="-100" width="2" height="2" depth="2" color="red"></m-cube>
+
+  <m-fog
+    id="fog"
+    priority="1"
+    near="1"
+    far="350"
+    color="#EEEEEE"
+  >
+    <m-attr-lerp attr="near,far" duration="1000"></m-attr-lerp>
+  </m-fog>
+
+  <!-- Battle Damaged Sci-fi Helmet - PBR by theblueturtle_
+  https://sketchfab.com/models/b81008d513954189a063ff901f7abfe4 -->
+  <m-model x="-2" collide="true" src="/assets/models/damaged-helmet.glb" z="-2" y="1.2" sx="0.5" sy="0.5" sz="0.5"></m-model>
+
+  <m-label
+    id="sun-label"
+    x="-2" y="3" z="-4"
+    width="3.5" height="0.3"
+    content="remove sun"
+    alignment="center"
+    padding="0"
+  ></m-label>
+  <m-label
+    id="environment-map-label"
+    x="-2" y="3.5" z="-4"
+    width="3.5" height="0.3"
+    content="remove environment map"
+    alignment="center"
+    padding="0"
+  ></m-label>
+</m-group>
+  
+<script>
+  const sceneGroup = document.getElementById("scene-group");
+  const connectedPlayers = new Map();
+  const sun = document.getElementById("sun");
+  const fog = document.getElementById("fog");
+  const environmentMap = document.getElementById("environment-map");
+  const sunLabel = document.getElementById("sun-label");
+  const environmentMapLabel = document.getElementById("environment-map-label");
+
+  let hasSun = true;
+  let hasEnvironmentMap = true;
+
+  sunLabel.addEventListener("click", () => {
+    if (hasSun) {
+      sceneGroup.removeChild(sun);
+      hasSun = false;
+      sunLabel.setAttribute("content", "add sun");
+    } else {
+      sceneGroup.appendChild(sun);
+      hasSun = true;
+      sunLabel.setAttribute("content", "remove sun");
+    }
+  });
+  environmentMapLabel.addEventListener("click", () => {
+    if (hasEnvironmentMap) {
+      sceneGroup.removeChild(environmentMap);
+      hasEnvironmentMap = false;
+      environmentMapLabel.setAttribute("content", "add environment map");
+    } else {
+      sceneGroup.appendChild(environmentMap);
+      hasEnvironmentMap = true;
+      environmentMapLabel.setAttribute("content", "remove environment map");
+    }
+  });
+
+  function setTransform(element, x, y, z, ry) {
+    ["x", "y", "z"].forEach(attr => element.setAttribute(attr, attr === "x" ? x : attr === "y" ? y : z));
+    element.setAttribute("ry", ry);
+  }
+
+  function assignAnimationLerp(element, duration, attrs) {
+    const lerp = document.createElement("m-attr-lerp");
+    lerp.setAttribute("attr", attrs);
+    lerp.setAttribute("duration", duration);
+    element.appendChild(lerp);
+  }
+
+  function createPlayer() {
+    const player = document.createElement("m-model");
+    player.setAttribute("src", "/assets/models/bot.glb");
+    assignAnimationLerp(player, 100, "x,y,z,ry");
+    setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
+    sceneGroup.appendChild(player);
+    return player;
+  }
+
+  function assignPlayerAnimation(player, state) {
+    const animation = document.createElement("m-animation");
+    animation.setAttribute("src", `/assets/models/anim_${state}.glb`);
+    animation.setAttribute("state", state);
+    animation.setAttribute("weight", state === "idle" ? "1.0" : "0.0");
+    assignAnimationLerp(animation, 150, "weight");
+    player.appendChild(animation);
+    return animation;
+  }
+
+  function assignPlayerController(player, id) {
+    const controller = document.createElement("m-character-controller");
+    controller.setAttribute("visible-to", id.toString());
+    player.appendChild(controller);
+  }
+
+  function spawnPlayer(connectionId) {
+    if (connectedPlayers.has(connectionId)) return;
+    const player = createPlayer();
+    assignPlayerController(player, connectionId);
+
+    const idleAnimation = assignPlayerAnimation(player, "idle");
+    const runAnimation = assignPlayerAnimation(player, "run");
+    const airAnimation = assignPlayerAnimation(player, "air");
+
+    connectedPlayers.set(connectionId, {
+      character: { model: player, idleAnim: idleAnimation, runAnim: runAnimation, airAnim: airAnimation }
+    });
+
+    player.addEventListener("character-move", (event) => {
+      const { position, rotation, state, connectionId } = event.detail;
+      const character = connectedPlayers.get(connectionId).character;
+      setTransform(character.model, position.x, position.y, position.z, rotation.ry);
+      character.idleAnim.setAttribute("weight", state === "idle" ? "1.0" : "0.0");
+      character.runAnim.setAttribute("weight", state === "run" ? "1.0" : "0.0");
+      character.airAnim.setAttribute("weight", state === "air" ? "1.0" : "0.0");
+    });
+  }
+
+  function removePlayer(connectionId) {
+    if (!connectedPlayers.has(connectionId)) return;
+    const user = connectedPlayers.get(connectionId);
+    sceneGroup.removeChild(user.character.model);
+    connectedPlayers.delete(connectionId);
+  }
+
+  function createLabel(value, targetAttribute, x, y, z) {
+    const label = document.createElement("m-label");
+    label.setAttribute("content", `${targetAttribute} ${value}`);
+    label.setAttribute("x", x);
+    label.setAttribute("y", y);
+    label.setAttribute("z", z);
+    label.setAttribute("height", 0.25);
+    label.setAttribute("width", 2.5);
+    label.setAttribute("alignment", "center");
+    label.setAttribute("padding", 0);
+    sceneGroup.appendChild(label);
+
+    label.addEventListener("click", () => {
+      sun.setAttribute(targetAttribute, value);
+    });
+  }
+
+  [-89, -67.5, -45, -22.5, 0, 22.5, 45, 67.5, 89].forEach((value, index) => {
+    createLabel(value, "polar-angle", 2, index * 0.4 + 0.5, -5);
+  });
+
+  [0, 22.5, 45.0, 67.5, 90, 112.5, 135.0, 157.5, 180, 202.5, 225.0, 247.5, 270.0, 292.5, 315.0, 337.5, 360].forEach((value, index) => {
+    createLabel(value, "azimuthal-angle", 5, index * 0.4 + 0.5, -5);
+  });
+
+  function createFogLabel(value, targetAttribute, x, y, z) {
+    const label = document.createElement("m-label");
+    label.setAttribute("content", `${targetAttribute} ${value}`);
+    label.setAttribute("x", x);
+    label.setAttribute("y", y);
+    label.setAttribute("z", z);
+    label.setAttribute("height", 0.25);
+    label.setAttribute("width", 1.85);
+    label.setAttribute("alignment", "center");
+    label.setAttribute("padding", 0);
+    sceneGroup.appendChild(label);
+
+    label.addEventListener("click", () => {
+      fog.setAttribute(targetAttribute, value);
+    });
+  }
+
+  [5, 10, 20, 50, 100].forEach((value, index) => {
+    createFogLabel(value, "near", -5, index * 0.4 + 0.5, -5);
+  });
+
+  [50, 100, 200, 500, 1000].forEach((value, index) => {
+    createFogLabel(value, "far", -3, index * 0.4 + 0.5, -5);
+  });
+
+  ["#AAAAAA", "#FFFFFF", "#FF6B6B", "#4ECDC4", "#45B7D1"].forEach((value, index) => {
+    createFogLabel(value, "color", -1, index * 0.4 + 0.5, -5);
+  });
+
+  window.addEventListener("connected", (event) => spawnPlayer(event.detail.connectionId));
+  window.addEventListener("disconnected", (event) => removePlayer(event.detail.connectionId));
+</script>
