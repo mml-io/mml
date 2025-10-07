@@ -8,6 +8,7 @@ import {
   MMLScene,
   OrientedBoundingBox,
   parseFloatAttribute,
+  parseBoolAttribute,
   Quat,
   Ray,
   Vect3,
@@ -28,6 +29,7 @@ const defaultCoyoteJumpThreshold = 150;
 const defaultCameraDistance = 7;
 const defaultCameraHeight = 1.8;
 const defaultUpdateInterval = 100;
+const defaultRotateWithCamera = false;
 
 // character controller constants
 const cameraFov = 60;
@@ -68,6 +70,7 @@ export type MCharacterControllerProps = {
   "camera-distance": number;
   "camera-height": number;
   "update-interval": number;
+  "rotate-with-camera": boolean;
 };
 
 export class MCharacterController<G extends GameThreeJSAdapter> extends MElement<G> {
@@ -103,6 +106,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
     "camera-distance": defaultCameraDistance,
     "camera-height": defaultCameraHeight,
     "update-interval": defaultUpdateInterval,
+    "rotate-with-camera": defaultRotateWithCamera,
   };
 
   public threeJSCamera: THREE.PerspectiveCamera | null = null;
@@ -222,6 +226,12 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
     },
     "update-interval": (instance, newValue) => {
       instance.props["update-interval"] = parseFloatAttribute(newValue, defaultUpdateInterval);
+    },
+    "rotate-with-camera": (instance, newValue) => {
+      instance.props["rotate-with-camera"] = parseBoolAttribute(
+        newValue,
+        defaultRotateWithCamera,
+      );
     },
   });
 
@@ -511,6 +521,17 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
     this.cameraController.updateInWorldSpaceAbsolute(worldPos, deltaTime);
   }
 
+  private updatePlayerRotationFromCamera(): void {
+    if (!this.cameraController) return;
+    if (!this.props["rotate-with-camera"]) return;
+
+    const forward = this.cameraController.getForwardDirection();
+    const desiredYaw = Math.atan2(forward.x, forward.z);
+    console.log("desiredYaw", desiredYaw);
+    this.currentRotation.ry = desiredYaw;
+    // this.currentRotation.ry = this.lerpAngle(this.currentRotation.ry, desiredYaw, rotationLerpFactor);
+  }
+
   private updateParentElementTransform(): void {
     if (this.parentElement) {
       this.parentElement.setAttribute("x", String(this.currentPosition.x));
@@ -525,6 +546,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
       return;
     }
 
+    console.log("currentRotation.ry", this.currentRotation.ry);
     this.dispatchEvent(
       new CustomEvent("character-move", {
         detail: {
@@ -606,6 +628,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
     this.computeFinalRotation();
 
     this.updateCameraPosition(physicsDeltatime);
+    this.updatePlayerRotationFromCamera();
 
     // Update parent element transform every frame for smooth visuals
     this.updateParentElementTransform();
