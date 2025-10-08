@@ -315,12 +315,17 @@ export class UniversalInputMapper {
     axes: new Array(4).fill(0),
     buttons: new Array(16).fill(false),
   };
-  private gamepadEventListeners = new Map<string, () => void>();
-
+  private gamepadEventListeners = new Map<string, (event: CustomEvent) => void>();
+  private keyboardEventListeners = new Map<string, (event: KeyboardEvent) => void>();
+  private mouseEventListeners = new Map<string, (event: MouseEvent) => void>();
   private debug = false;
+
+  public lastMouseClientX = 0;
+  public lastMouseClientY = 0;
 
   private constructor() {
     this.setupKeyboardHandlers();
+    this.setupMouseHandlers();
     this.setupGamepadHandlers();
     if (isMobileDevice()) {
       this.setupMobileHandlers();
@@ -335,17 +340,35 @@ export class UniversalInputMapper {
   }
 
   private setupKeyboardHandlers(): void {
-    document.addEventListener("keydown", (event) => {
+    const onKeyDown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
       this.pressedKeys.add(key);
       this.updateKeyboardState();
-    });
+    };
 
-    document.addEventListener("keyup", (event) => {
+    document.addEventListener("keydown", onKeyDown);
+
+    const onKeyUp = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
       this.pressedKeys.delete(key);
       this.updateKeyboardState();
-    });
+    };
+
+    document.addEventListener("keyup", onKeyUp);
+
+    this.keyboardEventListeners.set("keydown", onKeyDown);
+    this.keyboardEventListeners.set("keyup", onKeyUp);
+  }
+
+  private setupMouseHandlers(): void {
+    const onMouseMove = (event: MouseEvent) => {
+      this.lastMouseClientX = event.clientX;
+      this.lastMouseClientY = event.clientY;
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+
+    this.mouseEventListeners.set("mousemove", onMouseMove);
   }
 
   private setupGamepadHandlers(): void {
@@ -363,11 +386,11 @@ export class UniversalInputMapper {
       }
     };
 
-    window.addEventListener("gamepad-axis", axisListener as EventListener);
-    window.addEventListener("gamepad-button", buttonListener as EventListener);
+    window.addEventListener("gamepad-axis", axisListener);
+    window.addEventListener("gamepad-button", buttonListener);
 
-    this.gamepadEventListeners.set("axis", axisListener as any);
-    this.gamepadEventListeners.set("button", buttonListener as any);
+    this.gamepadEventListeners.set("axis", axisListener);
+    this.gamepadEventListeners.set("button", buttonListener);
   }
 
   private setupMobileHandlers(): void {
@@ -432,13 +455,29 @@ export class UniversalInputMapper {
   public destroy(): void {
     this.gamepadEventListeners.forEach((listener, type) => {
       if (type === "axis") {
-        window.removeEventListener("gamepad-axis", listener as EventListener);
+        window.removeEventListener("gamepad-axis", listener);
       } else if (type === "button") {
-        window.removeEventListener("gamepad-button", listener as EventListener);
+        window.removeEventListener("gamepad-button", listener);
       }
     });
     this.gamepadEventListeners.clear();
 
+
+    this.keyboardEventListeners.forEach((listener, type) => {
+      if (type === "keydown") {
+        document.removeEventListener("keydown", listener);
+      } else if (type === "keyup") {
+        document.removeEventListener("keyup", listener);
+      }
+    });
+    this.keyboardEventListeners.clear();
+
+    this.mouseEventListeners.forEach((listener, type) => {
+      if (type === "mousemove") {
+        document.removeEventListener("mousemove", listener);
+      }
+    });
+    this.mouseEventListeners.clear();
     // Virtual controls cleanup now handled by ControlManager
   }
 }
@@ -446,16 +485,14 @@ export type MControlProps = {
   type: "axis" | "button" | "swipe";
   axis?: string; // comma separated axis indices ("0,1" for both X and Y)
   button?: string; // button index ("0" for primary button)
-  input?: string; // space-separated input tokens e.g. "Keyboard_F Key_G Gamepad_DPad_Up Mouse_LeftClick"
   hint?: string; // optional hint text for UI
   debug?: boolean;
-  "raycast-distance"?: string; // how far to raycast from the source
-  "raycast-type"?: string; // what type of raycast to use
+  "raycast-distance"?: string;
+  "raycast-type"?: string;
 };
 
 export type InputEventDetail = {
   value: { x: number; y: number } | number | boolean;
-  action?: string;
   ray?: { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number };
 };
 
@@ -470,25 +507,6 @@ export class ControlGraphics {
 
   private debug = false;
   private debugMesh: THREE.Mesh | null = null;
-  private mouseHandlersAttached = false;
-  private boundMouseDown?: (e: MouseEvent) => void;
-  private boundMouseUp?: (e: MouseEvent) => void;
-  private boundClick?: (e: MouseEvent) => void;
-  private boundContextMenu?: (e: MouseEvent) => void;
-  private rayDistance: number | null = null;
-  private raycastType: "camera" | "cursor" | "none" = "none";
-  private keyboardHandlersAttached = false;
-  private boundKeyDown?: (e: KeyboardEvent) => void;
-  private boundMouseMove?: (e: MouseEvent) => void;
-  private lastMouseClientX = 0;
-  private lastMouseClientY = 0;
-  private gamepadHandlersAttached = false;
-  private boundGamepadButton?: (e: Event) => void;
-
-  // Parsed input tokens
-  private allowedKeyboardActions = new Set<string>(); // e.g. "Keyboard_F", "Keyboard_ArrowUp"
-  private allowedMouseActions = new Set<string>(); // e.g. "Mouse_LeftClick"
-  private allowedGamepadActions = new Set<string>(); // e.g. "Gamepad_A", "Gamepad_DPad_Up"
 
   constructor(private control: MControl<GameThreeJSAdapter>) {
     if (this.debug) {
@@ -506,7 +524,7 @@ export class ControlGraphics {
     // TODO: implement hint functionality
   }
 
-  setType(type: "axis" | "button" | "swipe", _props: MControlProps) {
+  setType(type: "axis" | "button", _props: MControlProps) {
     void _props;
     // TODO: implement type-specific behavior
   }
@@ -519,25 +537,6 @@ export class ControlGraphics {
   setButton(button: string | undefined, _props: MControlProps) {
     void _props;
     // TODO: implement button extra configs?
-  }
-
-  // Configure generic input tokens
-  setInput(input: string | undefined, _props: MControlProps) {
-    void _props;
-    this.parseInputTokens(input);
-    this.updateKeyboardHandlers();
-    this.updateMouseHandlers();
-    this.updateGamepadHandlers();
-  }
-
-  setRaycastDistance(distanceStr: string | undefined) {
-    const d = distanceStr != null ? Number(distanceStr) : NaN;
-    this.rayDistance = Number.isFinite(d) && d > 0 ? d : null;
-  }
-
-  setRaycastType(raycastType: string | undefined) {
-    const t = (raycastType || "none").toLowerCase();
-    this.raycastType = t === "camera" || t === "cursor" ? (t as any) : "none";
   }
 
   private clearDebugVisualisation() {
@@ -565,206 +564,17 @@ export class ControlGraphics {
     }
   }
 
-  private updateMouseHandlers() {
-    const wantsMouse = Array.from(this.allowedMouseActions).length > 0;
-    if (wantsMouse && !this.mouseHandlersAttached) {
-      this.attachMouseHandlers();
-    } else if (!wantsMouse && this.mouseHandlersAttached) {
-      this.detachMouseHandlers();
-    }
-  }
-
-  private updateKeyboardHandlers() {
-    const wantsKeyboard = Array.from(this.allowedKeyboardActions).length > 0;
-    if (wantsKeyboard && !this.keyboardHandlersAttached) {
-      this.attachKeyboardHandlers();
-    } else if (!wantsKeyboard && this.keyboardHandlersAttached) {
-      this.detachKeyboardHandlers();
-    }
-  }
-
-  private attachKeyboardHandlers() {
-    if (this.keyboardHandlersAttached) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return;
-      const action = this.keyboardEventToAction(e);
-      if (!action) return;
-      if (!this.allowedKeyboardActions.has(action)) return;
-
-      const ray = this.getRayForCurrentType();
-      e.preventDefault();
-      const detail: InputEventDetail = { value: true, action };
-      if (ray) detail.ray = ray;
-      this.control.dispatchInputEvent(detail);
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      this.lastMouseClientX = e.clientX;
-      this.lastMouseClientY = e.clientY;
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("mousemove", onMouseMove);
-
-    this.boundKeyDown = onKeyDown;
-    this.boundMouseMove = onMouseMove;
-    this.keyboardHandlersAttached = true;
-  }
-
-  private detachKeyboardHandlers() {
-    if (!this.keyboardHandlersAttached) return;
-    if (this.boundKeyDown) document.removeEventListener("keydown", this.boundKeyDown);
-    if (this.boundMouseMove) document.removeEventListener("mousemove", this.boundMouseMove);
-    this.boundKeyDown = undefined;
-    this.boundMouseMove = undefined;
-    this.keyboardHandlersAttached = false;
-  }
-
-  private updateGamepadHandlers() {
-    const wantsGamepad = Array.from(this.allowedGamepadActions).length > 0;
-    if (wantsGamepad && !this.gamepadHandlersAttached) {
-      this.attachGamepadHandlers();
-    } else if (!wantsGamepad && this.gamepadHandlersAttached) {
-      this.detachGamepadHandlers();
-    }
-  }
-
-  private attachGamepadHandlers() {
-    if (this.gamepadHandlersAttached) return;
-    // Ensure gamepad manager is running
-    GamepadManager.getInstance();
-
-    const onGamepadButton = (e: Event) => {
-      const evt = e as CustomEvent;
-      const detail = (evt.detail || {}) as { gamepadId: number; buttonIndex: number; pressed: boolean };
-      if (!detail || !detail.pressed) return;
-
-      const token = this.gamepadButtonIndexToToken(detail.buttonIndex);
-      if (!token) return;
-      if (!this.allowedGamepadActions.has(token)) return;
-
-      const ray = this.getRayForCurrentType();
-      const data: InputEventDetail = { value: true, action: token };
-      if (ray) data.ray = ray;
-      this.control.dispatchInputEvent(data);
-    };
-
-    window.addEventListener("gamepad-button", onGamepadButton as EventListener);
-    this.boundGamepadButton = onGamepadButton as any;
-    this.gamepadHandlersAttached = true;
-  }
-
-  private detachGamepadHandlers() {
-    if (!this.gamepadHandlersAttached) return;
-    if (this.boundGamepadButton) {
-      window.removeEventListener("gamepad-button", this.boundGamepadButton as EventListener);
-    }
-    this.boundGamepadButton = undefined;
-    this.gamepadHandlersAttached = false;
-  }
-
-  private attachMouseHandlers() {
-    if (this.mouseHandlersAttached) return;
-
-    const onDown = (e: MouseEvent) => {
-      const action = this.getActionFromMouseEvent(e, "down");
-      if (action && this.allowedMouseActions.has(action)) {
-        this.dispatchMouseAction(action, e);
-      }
-    };
-    const onUp = (e: MouseEvent) => {
-      const action = this.getActionFromMouseEvent(e, "up");
-      if (action && this.allowedMouseActions.has(action)) {
-        this.dispatchMouseAction(action, e);
-      }
-    };
-    const onClick = (e: MouseEvent) => {
-      const action = this.getActionFromMouseEvent(e, "click");
-      if (action && this.allowedMouseActions.has(action)) {
-        this.dispatchMouseAction(action, e);
-      }
-    };
-    const onContextMenu = (e: MouseEvent) => {
-      // Treat as right click
-      e.preventDefault();
-      if (this.allowedMouseActions.has("Mouse_RightClick")) {
-        this.dispatchMouseAction("Mouse_RightClick", e);
-      }
-    };
-
-    // Attach to document to ensure we capture regardless of pointer-events on canvas
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("mouseup", onUp);
-    document.addEventListener("click", onClick);
-    document.addEventListener("contextmenu", onContextMenu);
-
-    this.boundMouseDown = onDown;
-    this.boundMouseUp = onUp;
-    this.boundClick = onClick;
-    this.boundContextMenu = onContextMenu;
-    this.mouseHandlersAttached = true;
-  }
-
-  private detachMouseHandlers() {
-    if (!this.mouseHandlersAttached) {
-      return;
-    }
-    if (this.boundMouseDown) {
-      document.removeEventListener("mousedown", this.boundMouseDown);
-    }
-    if (this.boundMouseUp) {
-      document.removeEventListener("mouseup", this.boundMouseUp);
-    }
-    if (this.boundClick) {
-      document.removeEventListener("click", this.boundClick);
-    }
-    if (this.boundContextMenu) {
-      document.removeEventListener("contextmenu", this.boundContextMenu);
-    }
-    this.boundMouseDown = undefined;
-    this.boundMouseUp = undefined;
-    this.boundClick = undefined;
-    this.boundContextMenu = undefined;
-    this.mouseHandlersAttached = false;
-  }
-
-  private getActionFromMouseEvent(e: MouseEvent, phase: "down" | "up" | "click"): string | null {
-    if (e.button === 0) {
-      return `Mouse_Left${phase === "click" ? "Click" : phase === "down" ? "Down" : "Up"}`;
-    }
-    if (e.button === 2) {
-      return `Mouse_Right${phase === "click" ? "Click" : phase === "down" ? "Down" : "Up"}`;
-    }
-    if (e.button === 1) {
-      return `Mouse_Middle${phase === "click" ? "Click" : "Down"}`; // MiddleUp not always reliable
-    }
-    if (phase === "click" && e.button === 0) {
-      return "Mouse_LeftClick";
-    }
-    return null;
-  }
-
-  private dispatchMouseAction(action: string, e: MouseEvent) {
-    const detail: InputEventDetail = {
-      value: /Down$/.test(action) || /Click$/.test(action),
-      action,
-    };
-    if (this.raycastType !== "none") {
-      const mode = this.raycastType === "cursor" ? "cursor" : "camera";
-      const ray = this.computeRay(mode, e.clientX, e.clientY);
-      if (ray) {
-        detail.ray = ray;
-      }
-    }
-    this.control.dispatchInputEvent(detail);
-  }
-
-  private computeRay(
+  public computeRay({
+    mode,
+    clientX,
+    clientY,
+    rayDistance,
+  }: {
     mode: "camera" | "cursor",
     clientX?: number,
     clientY?: number,
-  ): { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number } | null {
+    rayDistance?: number,
+  }): { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number } | null {
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
     const camera = graphicsAdapter.getCamera();
 
@@ -784,8 +594,8 @@ export class ControlGraphics {
         const rect = canvas.getBoundingClientRect();
         width = rect.width || canvas.width;
         height = rect.height || canvas.height;
-        const cx = clientX != null ? clientX : this.lastMouseClientX;
-        const cy = clientY != null ? clientY : this.lastMouseClientY;
+        const cx = clientX;
+        const cy = clientY;
         x = ((cx - rect.left) / width) * 2 - 1;
         y = -(((cy - rect.top) / height) * 2 - 1);
       }
@@ -799,7 +609,7 @@ export class ControlGraphics {
       dir.normalize();
     }
 
-    const maxDistance = this.rayDistance ?? (Number(camera.far) || 1000);
+    const maxDistance = rayDistance ?? (Number(camera.far) || 1000);
     let distance = maxDistance;
     const collisionsManager = graphicsAdapter.getCollisionsManager();
     const ray = new Ray(
@@ -821,147 +631,13 @@ export class ControlGraphics {
     };
   }
 
-  public getRayForCurrentType():
-    | { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number }
-    | null {
-    if (this.raycastType === "camera") {
-      return this.computeRay("camera");
-    }
-    if (this.raycastType === "cursor") {
-      return this.computeRay("cursor", this.lastMouseClientX, this.lastMouseClientY);
-    }
-    return null;
-  }
-
   dispose() {
     this.clearDebugVisualisation();
 
     this.control.stopInputPolling();
 
-    this.detachMouseHandlers();
-    this.detachKeyboardHandlers();
-    this.detachGamepadHandlers();
-
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
     graphicsAdapter.unregisterControl(this.control);
-  }
-
-  // Helpers: input parsing and normalization
-  private parseInputTokens(input: string | undefined): void {
-    this.allowedKeyboardActions.clear();
-    this.allowedMouseActions.clear();
-    this.allowedGamepadActions.clear();
-
-    if (!input || !input.trim()) {
-      return;
-    }
-
-    const tokens = input
-      .trim()
-      .split(/\s+/)
-      .filter((t) => t.length > 0);
-
-    for (const token of tokens) {
-      if (/^Keyboard_/i.test(token)) {
-        const normalized = this.normalizeKeyboardToken(token);
-        if (normalized) this.allowedKeyboardActions.add(normalized);
-      } else if (/^Key_/i.test(token)) {
-        const normalized = this.normalizeKeyPrefixToken(token);
-        if (normalized) this.allowedKeyboardActions.add(normalized);
-      } else if (/^Mouse_/i.test(token)) {
-        const normalized = this.normalizeMouseToken(token);
-        if (normalized) this.allowedMouseActions.add(normalized);
-      } else if (/^Gamepad_/i.test(token)) {
-        const normalized = this.normalizeGamepadToken(token);
-        if (normalized) this.allowedGamepadActions.add(normalized);
-      }
-    }
-
-    this.applyDefaultGamepadMappingsIfMissing();
-  }
-
-  private normalizeKeyboardToken(token: string): string | null {
-    const rest = token.substring("Keyboard_".length);
-    if (!rest) return null;
-    if (/^Key[A-Z]$/.test(rest)) {
-      return `Keyboard_${rest.substring(3)}`;
-    }
-    return `Keyboard_${rest}`;
-  }
-
-  private normalizeKeyPrefixToken(token: string): string | null {
-    const rest = token.substring("Key_".length);
-    if (!rest) return null;
-    return `Keyboard_${rest.toUpperCase()}`;
-  }
-
-  private normalizeMouseToken(token: string): string | null {
-    const canonical = token
-      .replace(/mouse_/i, "Mouse_")
-      .replace(/left/i, "Left")
-      .replace(/right/i, "Right")
-      .replace(/middle/i, "Middle")
-      .replace(/(click|down|up)$/i, (m) => m[0].toUpperCase() + m.slice(1).toLowerCase());
-    return canonical;
-  }
-
-  private normalizeGamepadToken(token: string): string | null {
-    let canonical = token.replace(/gamepad_/i, "Gamepad_");
-    canonical = canonical.replace(/dpad_/i, "DPad_");
-    // Ensure second part capitalization, e.g., Gamepad_DPad_Up
-    canonical = canonical
-      .split("_")
-      .map((part, idx) => (idx === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)))
-      .join("_");
-    return canonical;
-  }
-
-  private keyboardEventToAction(e: KeyboardEvent): string | null {
-    const code = e.code || "";
-    if (!code) return null;
-    const m = code.match(/^Key([A-Z])$/);
-    if (m) {
-      return `Keyboard_${m[1]}`;
-    }
-    return `Keyboard_${code}`;
-  }
-
-  private gamepadButtonIndexToToken(index: number): string | null {
-    const entries = Object.entries(XBOX_GAMEPAD_MAPPING.buttons);
-    for (const [name, idx] of entries) {
-      if (idx === index) {
-        // Map names like DPadUp -> DPad_Up
-        const mapped = name.startsWith("DPad")
-          ? `Gamepad_DPad_${name.substring(4)}`
-          : `Gamepad_${name}`;
-        return mapped;
-      }
-    }
-    return null;
-  }
-
-  private applyDefaultGamepadMappingsIfMissing(): void {
-    if (this.allowedGamepadActions.size > 0) return;
-
-    // Map common mouse/keyboard to gamepad defaults
-    if (this.allowedMouseActions.has("Mouse_LeftClick") || this.allowedKeyboardActions.has("Keyboard_Space")) {
-      this.allowedGamepadActions.add("Gamepad_A");
-    }
-    if (this.allowedMouseActions.has("Mouse_RightClick")) {
-      this.allowedGamepadActions.add("Gamepad_B");
-    }
-    if (this.allowedKeyboardActions.has("Keyboard_ArrowUp")) {
-      this.allowedGamepadActions.add("Gamepad_DPad_Up");
-    }
-    if (this.allowedKeyboardActions.has("Keyboard_ArrowDown")) {
-      this.allowedGamepadActions.add("Gamepad_DPad_Down");
-    }
-    if (this.allowedKeyboardActions.has("Keyboard_ArrowLeft")) {
-      this.allowedGamepadActions.add("Gamepad_DPad_Left");
-    }
-    if (this.allowedKeyboardActions.has("Keyboard_ArrowRight")) {
-      this.allowedGamepadActions.add("Gamepad_DPad_Right");
-    }
   }
 }
 
@@ -981,16 +657,13 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     type: "axis",
     axis: "0,1",
     button: "0",
-    input: undefined,
     hint: "",
     debug: false,
-    "raycast-distance": undefined,
-    "raycast-type": undefined,
   };
 
   private static attributeHandler = new AttributeHandler<MControl<GameThreeJSAdapter>>({
     type: (instance, newValue) => {
-      instance.props.type = (newValue as "axis" | "button" | "swipe") || "axis";
+      instance.props.type = (newValue as "axis" | "button") || "axis";
       instance.controlGraphics?.setType(instance.props.type, instance.props);
     },
     axis: (instance, newValue) => {
@@ -1001,10 +674,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       instance.props.button = newValue || undefined;
       instance.controlGraphics?.setButton(instance.props.button, instance.props);
     },
-    input: (instance, newValue) => {
-      instance.props.input = newValue || undefined;
-      instance.controlGraphics?.setInput(instance.props.input, instance.props);
-    },
     hint: (instance, newValue) => {
       instance.props.hint = newValue || "";
       instance.controlGraphics?.setHint(instance.props.hint, instance.props);
@@ -1012,14 +681,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     debug: (instance, newValue) => {
       instance.props.debug = newValue !== null ? newValue === "true" : false;
       instance.controlGraphics?.setDebug(instance.props.debug, instance.props);
-    },
-    "raycast-distance": (instance, newValue) => {
-      instance.props["raycast-distance"] = newValue || undefined;
-      instance.controlGraphics?.setRaycastDistance(instance.props["raycast-distance"]);
-    },
-    "raycast-type": (instance, newValue) => {
-      instance.props["raycast-type"] = newValue || undefined;
-      instance.controlGraphics?.setRaycastType(instance.props["raycast-type"]);
     },
   });
 
@@ -1058,11 +719,31 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   }
 
   public dispatchInputEvent(data: InputEventDetail) {
+    if (this.shouldAddRayToEvent()) {
+      data.ray = this.getRay();
+    }
+
     const event = new CustomEvent("input", {
       detail: data,
     });
     this.dispatchEvent(event);
   }
+
+  private shouldAddRayToEvent(): boolean {
+    return this.props["raycast-type"] !== "none";
+  }
+  
+  private getRay():
+  | { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number }
+  | null {
+  if (this.props["raycast-type"] === "camera") {
+    return this.controlGraphics?.computeRay({ mode: "camera", rayDistance: Number(this.props["raycast-distance"]) });
+  }
+  if (this.props["raycast-type"] === "cursor") {
+    return this.controlGraphics?.computeRay({ mode: "cursor", rayDistance: Number(this.props["raycast-distance"]),clientX: this.inputMapper.lastMouseClientX, clientY: this.inputMapper.lastMouseClientY });
+  }
+  return null;
+};
 
   /**
    * Setup or cleanup mouse input based on enableMouse prop
@@ -1141,8 +822,8 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       cancelAnimationFrame(this.animationFrameId);
     }
 
-    // Only poll for axis and button controls when not using event-driven input tokens
-    if (this.props.type === "swipe" || (this.props.input && this.props.input.length > 0)) {
+    // Only poll for axis and button controls, not swipe
+    if (this.props.type === "swipe") {
       return;
     }
 
@@ -1180,28 +861,19 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       if (axisIndices.length === 1) {
         // single axis (val)
         const value = inputState.axes[axisIndices[0]] || 0;
-        const detail: InputEventDetail = { value };
-        const ray = this.controlGraphics?.getRayForCurrentType();
-        if (ray) detail.ray = ray;
-        this.dispatchInputEvent(detail);
+        this.dispatchInputEvent({ value });
       } else if (axisIndices.length >= 2) {
         // multi-axis (vector)
         const vector = {
           x: inputState.axes[axisIndices[0]] || 0,
           y: inputState.axes[axisIndices[1]] || 0,
         };
-        const detail: InputEventDetail = { value: vector };
-        const ray = this.controlGraphics?.getRayForCurrentType();
-        if (ray) detail.ray = ray;
-        this.dispatchInputEvent(detail);
+        this.dispatchInputEvent({ value: vector });
       }
     } else if (this.props.type === "button" && this.props.button) {
       const buttonIndex = parseInt(this.props.button);
       const pressed = inputState.buttons[buttonIndex] || false;
-      const detail: InputEventDetail = { value: pressed };
-      const ray = this.controlGraphics?.getRayForCurrentType();
-      if (ray) detail.ray = ray;
-      this.dispatchInputEvent(detail);
+      this.dispatchInputEvent({ value: pressed });
     }
   }
 
@@ -1225,9 +897,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     this.controlGraphics = new ControlGraphics(this);
 
     const graphicsAdapter = this.scene.getGraphicsAdapter();
-    if (graphicsAdapter && "registerControl" in graphicsAdapter) {
-      (graphicsAdapter as any).registerControl(this);
-    }
+    graphicsAdapter.registerControl(this);
 
     // Initialize attributes
     for (const name of MControl.observedAttributes) {
