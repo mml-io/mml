@@ -9,45 +9,37 @@
 <m-cube id="target2" x="3" y="1" z="-8" width="1.5" height="1.5" depth="1.5" color="#e76f51"></m-cube>
 <m-cube id="target3" x="-3" y="1" z="-8" width="1.5" height="1.5" depth="1.5" color="#f4a261"></m-cube>
 
-<!-- Enable mouse control; raycast-type controls camera vs cursor ray -->
+<!-- Enable generic input control; raycast-type controls camera vs cursor ray -->
 <m-control
   id="mouse-control"
-  type="mouse"
-  mouse="left,right"
+  type="button"
+  input="Mouse_LeftClick, Mouse_RightClick, Keyboard_F, Keyboard_G"
   raycast-type="camera"
   ray-distance="200"
 ></m-control>
 
 <m-overlay anchor="top-left" offset-x="10" offset-y="10">
-  <svg width="420" height="140" style="background: rgba(0,0,0,0.75); border-radius: 8px; padding: 8px;">
-    <text x="8" y="18" fill="white" font-family="Arial" font-size="14">Raycasts Demo</text>
-    <text x="8" y="40" fill="#adb5bd" font-family="Arial" font-size="11">Click to send a ray. Mode controls source: camera center vs cursor.</text>
-    <text x="8" y="58" fill="#adb5bd" font-family="Arial" font-size="11">Left/Right produce different actions.</text>
-    <text id="last-action" x="8" y="86" fill="#ffd166" font-family="Arial" font-size="12">Last: (none)</text>
-    <!-- SVG-only toggle button -->
-    <g id="toggle-raycast-type" cursor="pointer">
-      <rect x="8" y="96" rx="4" ry="4" width="140" height="28" fill="#333" stroke="#666" />
-      <text id="toggle-raycast-type-label" x="16" y="115" fill="#fff" font-family="Arial" font-size="12">Mode: camera</text>
-    </g>
-    <!-- SVG-only input toggle button -->
-    <g id="toggle-input-mode" cursor="pointer">
-      <rect x="160" y="96" rx="4" ry="4" width="160" height="28" fill="#333" stroke="#666" />
-      <text id="toggle-input-mode-label" x="168" y="115" fill="#fff" font-family="Arial" font-size="12">Input: mouse</text>
-    </g>
-  </svg>
+  <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.75); border-radius: 8px; padding: 12px; color: white; font-family: Arial, system-ui; width: 420px;">
+    <div style="font-size: 14px; font-weight: 700;">Raycasts Demo</div>
+    <div style="font-size: 11px; color: #adb5bd;">Click to send a ray. Mode controls source: camera center vs cursor.</div>
+    <div style="font-size: 11px; color: #adb5bd;">Left/Right produce different actions.</div>
+    <div id="last-action" style="font-size: 12px; color: #ffd166;">Last: (none)</div>
+    <div style="display: flex; flex-direction: row; gap: 8px; margin-top: 6px;">
+      <button id="toggle-raycast-type" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Mode: camera</button>
+      <button id="toggle-input-mode" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Input: mouse</button>
+    </div>
+  </div>
   <script>
     (function(){
       const ctl = document.getElementById('mouse-control');
       const label = document.getElementById('last-action');
       const toggleBtn = document.getElementById('toggle-raycast-type');
-      const toggleLabel = document.getElementById('toggle-raycast-type-label');
       const inputBtn = document.getElementById('toggle-input-mode');
-      const inputLabel = document.getElementById('toggle-input-mode-label');
       if (!ctl || !label) return;
-      if (toggleBtn && toggleLabel) {
+      if (toggleBtn) {
         const updateBtn = () => {
           const mode = ctl.getAttribute('raycast-type') || 'camera';
-          toggleLabel.textContent = `Mode: ${mode}`;
+          toggleBtn.textContent = `Mode: ${mode}`;
         };
         updateBtn();
         toggleBtn.addEventListener('click', () => {
@@ -57,11 +49,11 @@
           updateBtn();
         });
       }
-      if (inputBtn && inputLabel) {
+      if (inputBtn) {
         // default input mode: mouse
         const updateInputBtn = () => {
           const mode = ctl.getAttribute('data-input-mode') || 'mouse';
-          inputLabel.textContent = `Input: ${mode}`;
+          inputBtn.textContent = `Input: ${mode}`;
         };
         if (!ctl.getAttribute('data-input-mode')) ctl.setAttribute('data-input-mode', 'mouse');
         updateInputBtn();
@@ -78,7 +70,7 @@
         const r = d.ray || {};
         label.textContent = `Last: ${a} | dist=${r.distance.toFixed(2) ?? '-'} dir=(${r.direction?.x?.toFixed?.(2) ?? '-'}, ${r.direction?.y?.toFixed?.(2) ?? '-'}, ${r.direction?.z?.toFixed?.(2) ?? '-'})`;
         // simple visual feedback: recolor target1 on left-click
-        if (a === 'mouse-left-click') {
+        if (a === 'Mouse_LeftClick') {
           const t1 = document.getElementById('target1');
           if (t1) t1.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16));
         }
@@ -162,7 +154,7 @@
       if (!d.ray) return;
       const a = d.action || '';
       const inputMode = ctl.getAttribute('data-input-mode') || 'mouse';
-      if ((inputMode === 'mouse' && /Mouse_.*Click$/.test(a)) || (inputMode === 'keyboard' && /^Keyboard_[FG]$/.test(a))) {
+      if ((inputMode === 'mouse' && /Mouse_.*Click$/.test(a)) || (inputMode === 'keyboard' && /^Keyboard_[A-Za-z]+$/.test(a))) {
         updateRay(d.ray);
       }
     });

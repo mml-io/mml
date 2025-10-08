@@ -1,0 +1,118 @@
+<m-sun></m-sun>
+<m-environment-light></m-environment-light>
+<m-environment-map></m-environment-map>
+
+<m-plane id="floor" kinematic="true" width="60" depth="60" y="0" opacity="1" color="#3b3b3b"></m-plane>
+
+<!-- Universal control elements to bind to all inputs -->
+<m-control
+  id="ctl-keyboard-mouse"
+  type="button"
+  input="Keyboard_W, Keyboard_A, Keyboard_S, Keyboard_D, Keyboard_Space, Keyboard_ShiftLeft, Keyboard_ControlLeft, Keyboard_ArrowUp, Keyboard_ArrowDown, Keyboard_ArrowLeft, Keyboard_ArrowRight, Mouse_LeftClick, Mouse_RightClick, Mouse_MiddleClick"
+></m-control>
+
+<!-- Axes for joysticks/gamepad sticks: left (0,1) and right (2,3) -->
+<m-control id="ctl-left-stick" type="axis" axis="0,1"></m-control>
+<m-control id="ctl-right-stick" type="axis" axis="2,3"></m-control>
+
+<!-- Buttons for a representative set of gamepad buttons -->
+<m-control id="ctl-gamepad-buttons" type="button" input="Gamepad_A, Gamepad_B, Gamepad_X, Gamepad_Y, Gamepad_LB, Gamepad_RB, Gamepad_LT, Gamepad_RT, Gamepad_Back, Gamepad_Start, Gamepad_LS, Gamepad_RS, Gamepad_DPad_Up, Gamepad_DPad_Down, Gamepad_DPad_Left, Gamepad_DPad_Right"></m-control>
+
+<m-overlay anchor="top-left" offset-x="10" offset-y="10">
+  <svg width="560" height="300" style="background: rgba(0,0,0,0.75); border-radius: 8px; padding: 8px;">
+    <text x="8" y="18" fill="white" font-family="Arial" font-size="14">Controls Demo</text>
+    <text x="8" y="38" fill="#adb5bd" font-family="Arial" font-size="11">Shows keyboard, mouse, gamepad buttons, and both sticks in real time.</text>
+
+    <!-- Keyboard/Mouse section -->
+    <text x="8" y="64" fill="#ffd166" font-family="Arial" font-size="12">Keyboard/Mouse:</text>
+    <text id="km-last" x="160" y="64" fill="#fff" font-family="Arial" font-size="12">(none)</text>
+
+    <!-- Left stick vector -->
+    <text x="8" y="92" fill="#90e0ef" font-family="Arial" font-size="12">Left Stick (0,1):</text>
+    <text id="ls-val" x="160" y="92" fill="#fff" font-family="Arial" font-size="12">x=0.00 y=0.00</text>
+
+    <!-- Right stick vector -->
+    <text x="8" y="120" fill="#90e0ef" font-family="Arial" font-size="12">Right Stick (2,3):</text>
+    <text id="rs-val" x="160" y="120" fill="#fff" font-family="Arial" font-size="12">x=0.00 y=0.00</text>
+
+    <!-- Gamepad button last action -->
+    <text x="8" y="148" fill="#caffbf" font-family="Arial" font-size="12">Gamepad Button:</text>
+    <text id="gp-last" x="160" y="148" fill="#fff" font-family="Arial" font-size="12">(none)</text>
+
+    <!-- Live mini-visuals for sticks -->
+    <g>
+      <rect x="8" y="168" width="120" height="120" rx="6" ry="6" fill="#222" stroke="#555"></rect>
+      <text x="12" y="184" fill="#aaa" font-family="Arial" font-size="10">Left</text>
+      <circle id="ls-dot" cx="68" cy="228" r="6" fill="#90e0ef"></circle>
+    </g>
+    <g>
+      <rect x="142" y="168" width="120" height="120" rx="6" ry="6" fill="#222" stroke="#555"></rect>
+      <text x="146" y="184" fill="#aaa" font-family="Arial" font-size="10">Right</text>
+      <circle id="rs-dot" cx="202" cy="228" r="6" fill="#90e0ef"></circle>
+    </g>
+
+    
+  </svg>
+  <script>
+    (function(){
+      const kmCtl = document.getElementById('ctl-keyboard-mouse');
+      const gpBtns = document.getElementById('ctl-gamepad-buttons');
+      const lsCtl = document.getElementById('ctl-left-stick');
+      const rsCtl = document.getElementById('ctl-right-stick');
+      const kmLast = document.getElementById('km-last');
+      const gpLast = document.getElementById('gp-last');
+      const lsVal = document.getElementById('ls-val');
+      const rsVal = document.getElementById('rs-val');
+      const lsDot = document.getElementById('ls-dot');
+      const rsDot = document.getElementById('rs-dot');
+
+      function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+      function lerp(a,b,t){ return a + (b-a)*t; }
+
+      function updateStick(labelEl, dotEl, x, y, box){
+        if (labelEl) labelEl.textContent = `x=${x.toFixed(2)} y=${y.toFixed(2)}`;
+        if (dotEl) {
+          const cx0 = box.cx0 || 68, cy0 = box.cy0 || 228, r = box.r || 48;
+          const cx = cx0 + clamp(x, -1, 1) * r;
+          const cy = cy0 + clamp(y, -1, 1) * r;
+          dotEl.setAttribute('cx', String(cx));
+          dotEl.setAttribute('cy', String(cy));
+        }
+      }
+
+      if (kmCtl) {
+        kmCtl.addEventListener('input', (ev) => {
+          const d = ev.detail || {};
+          const a = d.action || '(unknown)';
+          if (kmLast) kmLast.textContent = a;
+        });
+      }
+
+      if (gpBtns) {
+        gpBtns.addEventListener('input', (ev) => {
+          const d = ev.detail || {};
+          const a = d.action || '(unknown)';
+          if (gpLast) gpLast.textContent = a;
+        });
+      }
+
+      if (lsCtl) {
+        lsCtl.addEventListener('input', (ev) => {
+          const d = ev.detail || {};
+          const v = d.value || { x: 0, y: 0 };
+          updateStick(lsVal, lsDot, v.x || 0, v.y || 0, { cx0: 68, cy0: 228, r: 48 });
+        });
+      }
+
+      if (rsCtl) {
+        rsCtl.addEventListener('input', (ev) => {
+          const d = ev.detail || {};
+          const v = d.value || { x: 0, y: 0 };
+          updateStick(rsVal, rsDot, v.x || 0, v.y || 0, { cx0: 202, cy0: 228, r: 48 });
+        });
+      }
+    })();
+  </script>
+</m-overlay>
+
+
