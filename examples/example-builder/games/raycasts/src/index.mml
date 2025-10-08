@@ -29,6 +29,11 @@
       <rect x="8" y="96" rx="4" ry="4" width="140" height="28" fill="#333" stroke="#666" />
       <text id="toggle-raycast-type-label" x="16" y="115" fill="#fff" font-family="Arial" font-size="12">Mode: camera</text>
     </g>
+    <!-- SVG-only input toggle button -->
+    <g id="toggle-input-mode" cursor="pointer">
+      <rect x="160" y="96" rx="4" ry="4" width="160" height="28" fill="#333" stroke="#666" />
+      <text id="toggle-input-mode-label" x="168" y="115" fill="#fff" font-family="Arial" font-size="12">Input: mouse</text>
+    </g>
   </svg>
   <script>
     (function(){
@@ -36,6 +41,8 @@
       const label = document.getElementById('last-action');
       const toggleBtn = document.getElementById('toggle-raycast-type');
       const toggleLabel = document.getElementById('toggle-raycast-type-label');
+      const inputBtn = document.getElementById('toggle-input-mode');
+      const inputLabel = document.getElementById('toggle-input-mode-label');
       if (!ctl || !label) return;
       if (toggleBtn && toggleLabel) {
         const updateBtn = () => {
@@ -48,6 +55,21 @@
           const next = curr === 'camera' ? 'cursor' : 'camera';
           ctl.setAttribute('raycast-type', next);
           updateBtn();
+        });
+      }
+      if (inputBtn && inputLabel) {
+        // default input mode: mouse
+        const updateInputBtn = () => {
+          const mode = ctl.getAttribute('data-input-mode') || 'mouse';
+          inputLabel.textContent = `Input: ${mode}`;
+        };
+        if (!ctl.getAttribute('data-input-mode')) ctl.setAttribute('data-input-mode', 'mouse');
+        updateInputBtn();
+        inputBtn.addEventListener('click', () => {
+          const curr = ctl.getAttribute('data-input-mode') || 'mouse';
+          const next = curr === 'mouse' ? 'keyboard' : 'mouse';
+          ctl.setAttribute('data-input-mode', next);
+          updateInputBtn();
         });
       }
       ctl.addEventListener('input', (ev) => {
@@ -83,8 +105,12 @@
         el.setAttribute('color', 'red');
         el.setAttribute('opacity', '0.9');
         el.setAttribute('clickable', 'false');
+        el.setAttribute('collide', 'false');
         document.body.appendChild(el);
       }
+      // Ensure attributes are enforced even if element existed
+      el.setAttribute('clickable', 'false');
+      el.setAttribute('collide', 'false');
       return el;
     }
 
@@ -97,8 +123,12 @@
         el.setAttribute('color', 'red');
         el.setAttribute('opacity', '1');
         el.setAttribute('clickable', 'false');
+        el.setAttribute('collide', 'false');
         document.body.appendChild(el);
       }
+      // Ensure attributes are enforced even if element existed
+      el.setAttribute('clickable', 'false');
+      el.setAttribute('collide', 'false');
       return el;
     }
 
@@ -131,7 +161,8 @@
       const d = ev.detail || {};
       if (!d.ray) return;
       const a = d.action || '';
-      if (/Mouse_.*Click$/.test(a)) {
+      const inputMode = ctl.getAttribute('data-input-mode') || 'mouse';
+      if ((inputMode === 'mouse' && /Mouse_.*Click$/.test(a)) || (inputMode === 'keyboard' && /^Keyboard_[FG]$/.test(a))) {
         updateRay(d.ray);
       }
     });

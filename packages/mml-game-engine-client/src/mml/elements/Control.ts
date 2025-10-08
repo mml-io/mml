@@ -452,7 +452,7 @@ export type MControlProps = {
   hint?: string; // optional hint text for UI
   debug?: boolean;
   "ray-distance"?: string; // as attribute; parsed to number in graphics
-  "raycast-type"?: string; // camera | cursor (default camera)
+  "raycast-type"?: string; // camera | cursor | none (default none)
 };
 
 export type InputEventDetail = {
@@ -479,12 +479,18 @@ export class ControlGraphics {
   private boundClick?: (e: MouseEvent) => void;
   private boundContextMenu?: (e: MouseEvent) => void;
   private rayDistance: number | null = null;
-  private raycastType: "camera" | "cursor" = "camera";
+  private raycastType: "camera" | "cursor" | "none" = "none";
+  private keyboardHandlersAttached = false;
+  private boundKeyDown?: (e: KeyboardEvent) => void;
+  private boundMouseMove?: (e: MouseEvent) => void;
+  private lastMouseClientX = 0;
+  private lastMouseClientY = 0;
 
   constructor(private control: MControl<GameThreeJSAdapter>) {
     if (this.debug) {
       console.log("ControlGraphics created for:", control.id);
     }
+    this.attachKeyboardHandlers();
   }
 
   setDebug(debug: boolean, _props: MControlProps) {
@@ -524,8 +530,8 @@ export class ControlGraphics {
   }
 
   setRaycastType(raycastType: string | undefined) {
-    const t = (raycastType || "camera").toLowerCase();
-    this.raycastType = t === "cursor" ? "cursor" : "camera";
+    const t = (raycastType || "none").toLowerCase();
+    this.raycastType = t === "camera" || t === "cursor" ? (t as any) : "none";
   }
 
   private clearDebugVisualisation() {
@@ -560,6 +566,48 @@ export class ControlGraphics {
     } else if (!shouldAttach && this.mouseHandlersAttached) {
       this.detachMouseHandlers();
     }
+  }
+
+  private attachKeyboardHandlers() {
+    if (this.keyboardHandlersAttached) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const key = (e.key || "").toLowerCase();
+      if (key === "f" || key === "g") {
+        const mode = key === "f" ? "camera" : "cursor";
+        const ray = this.computeRay(mode, this.lastMouseClientX, this.lastMouseClientY);
+        if (ray) {
+          e.preventDefault();
+          const action = key === "f" ? "Keyboard_F" : "Keyboard_G";
+          this.control.dispatchInputEvent(1, {
+            value: true,
+            action,
+            ray,
+          });
+        }
+      }
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      this.lastMouseClientX = e.clientX;
+      this.lastMouseClientY = e.clientY;
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("mousemove", onMouseMove);
+
+    this.boundKeyDown = onKeyDown;
+    this.boundMouseMove = onMouseMove;
+    this.keyboardHandlersAttached = true;
+  }
+
+  private detachKeyboardHandlers() {
+    if (!this.keyboardHandlersAttached) return;
+    if (this.boundKeyDown) document.removeEventListener("keydown", this.boundKeyDown);
+    if (this.boundMouseMove) document.removeEventListener("mousemove", this.boundMouseMove);
+    this.boundKeyDown = undefined;
+    this.boundMouseMove = undefined;
+    this.keyboardHandlersAttached = false;
   }
 
   private attachMouseHandlers() {
@@ -640,14 +688,35 @@ export class ControlGraphics {
     if (!graphicsAdapter || !("getCamera" in graphicsAdapter)) {
       return;
     }
+    const detail: any = {
+      value: /Down$/.test(action) || /Click$/.test(action),
+      action,
+    };
+    if (this.raycastType !== "none") {
+      const mode = this.raycastType === "cursor" ? "cursor" : "camera";
+      const ray = this.computeRay(mode, e.clientX, e.clientY);
+      if (ray) {
+        detail.ray = ray;
+      }
+    }
+    this.control.dispatchInputEvent(1, detail);
+  }
+
+  private computeRay(
+    mode: "camera" | "cursor",
+    clientX?: number,
+    clientY?: number,
+  ): { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number } | null {
+    const graphicsAdapter = this.control.scene.getGraphicsAdapter();
+    if (!graphicsAdapter || !("getCamera" in graphicsAdapter)) {
+      return null;
+    }
     const camera = (graphicsAdapter as any).getCamera() as THREE.PerspectiveCamera;
 
-    const useCursorRay = this.raycastType === "cursor";
-    let origin = new THREE.Vector3();
+    const origin = new THREE.Vector3();
     const dir = new THREE.Vector3();
 
-    if (useCursorRay) {
-      // Compute a ray from the mouse cursor position on the canvas
+    if (mode === "cursor") {
       let x = 0;
       let y = 0;
       const raycaster = new THREE.Raycaster();
@@ -661,26 +730,23 @@ export class ControlGraphics {
           const rect = canvas.getBoundingClientRect();
           width = rect.width || canvas.width;
           height = rect.height || canvas.height;
-          x = ((e.clientX - rect.left) / width) * 2 - 1;
-          y = -(((e.clientY - rect.top) / height) * 2 - 1);
+          const cx = clientX != null ? clientX : this.lastMouseClientX;
+          const cy = clientY != null ? clientY : this.lastMouseClientY;
+          x = ((cx - rect.left) / width) * 2 - 1;
+          y = -(((cy - rect.top) / height) * 2 - 1);
         }
-      } else {
-        x = (e.clientX / width) * 2 - 1;
-        y = -((e.clientY / height) * 2 - 1);
       }
-
       v2.set(x, y);
       raycaster.setFromCamera(v2, camera);
       origin.copy(raycaster.ray.origin);
       dir.copy(raycaster.ray.direction).normalize();
     } else {
-      // Default: ray through the center of the screen (camera forward)
       origin.copy(camera.position);
       camera.getWorldDirection(dir);
       dir.normalize();
     }
-    const maxDistance = this.rayDistance ?? (Number((camera as any).far) || 1000);
 
+    const maxDistance = this.rayDistance ?? (Number((camera as any).far) || 1000);
     let distance = maxDistance;
     if ("getCollisionsManager" in graphicsAdapter) {
       const collisionsManager = (graphicsAdapter as any).getCollisionsManager();
@@ -699,15 +765,23 @@ export class ControlGraphics {
       }
     }
 
-    this.control.dispatchInputEvent(1, {
-      value: /Down$/.test(action) || /Click$/.test(action),
-      action,
-      ray: {
-        origin: { x: origin.x, y: origin.y, z: origin.z },
-        direction: { x: dir.x, y: dir.y, z: dir.z },
-        distance,
-      },
-    });
+    return {
+      origin: { x: origin.x, y: origin.y, z: origin.z },
+      direction: { x: dir.x, y: dir.y, z: dir.z },
+      distance,
+    };
+  }
+
+  public getRayForCurrentType():
+    | { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number }
+    | null {
+    if (this.raycastType === "camera") {
+      return this.computeRay("camera");
+    }
+    if (this.raycastType === "cursor") {
+      return this.computeRay("cursor", this.lastMouseClientX, this.lastMouseClientY);
+    }
+    return null;
   }
 
   dispose() {
@@ -716,6 +790,7 @@ export class ControlGraphics {
     this.control.stopInputPolling();
 
     this.detachMouseHandlers();
+    this.detachKeyboardHandlers();
 
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
     if (graphicsAdapter && "unregisterControl" in graphicsAdapter) {
@@ -937,33 +1012,29 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
 
       if (axisIndices.length === 1) {
         // single axis (val)
-        let value: number;
-        if (this.props.enableMouse && !isMobileDevice()) {
-          // Use mouse X for single axis when mouse is enabled
-          value = this.mouseAxisValues.x;
-        } else {
-          value = inputState.axes[axisIndices[0]] || 0;
-        }
-        this.dispatchInputEvent(inputState.connectionId, { value });
+        const value = inputState.axes[axisIndices[0]] || 0;
+        const detail: any = { value };
+        const ray = this.controlGraphics?.getRayForCurrentType();
+        if (ray) detail.ray = ray;
+        this.dispatchInputEvent(inputState.connectionId, detail);
       } else if (axisIndices.length >= 2) {
         // multi-axis (vector)
-        let x: number, y: number;
-        if (this.props.enableMouse && !isMobileDevice()) {
-          // Use mouse input
-          x = this.mouseAxisValues.x;
-          y = this.mouseAxisValues.y;
-        } else {
-          // Use gamepad/keyboard input
-          x = inputState.axes[axisIndices[0]] || 0;
-          y = inputState.axes[axisIndices[1]] || 0;
-        }
-        const vector = { x, y };
-        this.dispatchInputEvent(inputState.connectionId, { value: vector });
+        const vector = {
+          x: inputState.axes[axisIndices[0]] || 0,
+          y: inputState.axes[axisIndices[1]] || 0,
+        };
+        const detail: any = { value: vector };
+        const ray = this.controlGraphics?.getRayForCurrentType();
+        if (ray) detail.ray = ray;
+        this.dispatchInputEvent(inputState.connectionId, detail);
       }
     } else if (this.props.type === "button" && this.props.button) {
       const buttonIndex = parseInt(this.props.button);
       const pressed = inputState.buttons[buttonIndex] || false;
-      this.dispatchInputEvent(inputState.connectionId, { value: pressed });
+      const detail: any = { value: pressed };
+      const ray = this.controlGraphics?.getRayForCurrentType();
+      if (ray) detail.ray = ray;
+      this.dispatchInputEvent(inputState.connectionId, detail);
     }
   }
 
