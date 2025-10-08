@@ -1,0 +1,11 @@
+{
+	"scripts": [
+    {
+      "src": "mml-game-math-system",
+      "configName": "math",
+      "config": {
+      }
+    }
+  ]
+}
+

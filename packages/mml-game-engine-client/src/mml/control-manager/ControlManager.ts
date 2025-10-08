@@ -256,13 +256,15 @@ export class ControlManager {
     const controlInfo: ControlInfo = {
       element,
       id: `control-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-      type: props.type as "axis" | "button" | "swipe",
+      type: props.type as "axis" | "button" | "swipe" | "mouse",
       config: {
         type: props.type,
         axis: props.axis,
         button: props.button,
+        mouse: (props as any).mouse,
         hint: props.hint,
         debug: props.debug,
+        "ray-distance": (props as any)["ray-distance"],
       },
       visualComponent: null,
       priority: 0,

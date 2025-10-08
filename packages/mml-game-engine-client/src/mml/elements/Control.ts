@@ -1,4 +1,4 @@
-import { AttributeHandler, MElement, MMLScene } from "@mml-io/mml-web";
+import { AttributeHandler, MElement, MMLScene, Ray } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import {
@@ -445,17 +445,20 @@ export class UniversalInputMapper {
   }
 }
 export type MControlProps = {
-  type: "axis" | "button" | "swipe";
+  type: "axis" | "button" | "swipe" | "mouse";
   axis?: string; // comma separated axis indices ("0,1" for both X and Y)
   button?: string; // button index ("0" for primary button)
+  mouse?: string; // optional mouse config (e.g. "left,right")
   hint?: string; // optional hint text for UI
   debug?: boolean;
-  enableMouse?: boolean; // enable mouse input for axis controls (desktop only)
+  "ray-distance"?: string; // as attribute; parsed to number in graphics
 };
 
 export type InputEventDetail = {
   connectionId: number;
   value: { x: number; y: number } | number | boolean;
+  action?: string;
+  ray?: { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number };
 };
 
 export class ControlGraphics {
@@ -469,6 +472,12 @@ export class ControlGraphics {
 
   private debug = false;
   private debugMesh: THREE.Mesh | null = null;
+  private mouseHandlersAttached = false;
+  private boundMouseDown?: (e: MouseEvent) => void;
+  private boundMouseUp?: (e: MouseEvent) => void;
+  private boundClick?: (e: MouseEvent) => void;
+  private boundContextMenu?: (e: MouseEvent) => void;
+  private rayDistance: number | null = null;
 
   constructor(private control: MControl<GameThreeJSAdapter>) {
     if (this.debug) {
@@ -486,9 +495,9 @@ export class ControlGraphics {
     // TODO: implement hint functionality
   }
 
-  setType(type: "axis" | "button", _props: MControlProps) {
-    void _props;
-    // TODO: implement type-specific behavior
+  setType(type: "axis" | "button" | "mouse" | "swipe", _props: MControlProps) {
+    void type;
+    this.updateMouseHandlers();
   }
 
   setAxis(axis: string | undefined, _props: MControlProps) {
@@ -499,6 +508,17 @@ export class ControlGraphics {
   setButton(button: string | undefined, _props: MControlProps) {
     void _props;
     // TODO: implement button extra configs?
+  }
+
+  setMouse(mouse: string | undefined, _props: MControlProps) {
+    void mouse;
+    void _props;
+    this.updateMouseHandlers();
+  }
+
+  setRayDistance(distanceStr: string | undefined) {
+    const d = distanceStr != null ? Number(distanceStr) : NaN;
+    this.rayDistance = Number.isFinite(d) && d > 0 ? d : null;
   }
 
   private clearDebugVisualisation() {
@@ -526,10 +546,136 @@ export class ControlGraphics {
     }
   }
 
+  private updateMouseHandlers() {
+    const shouldAttach = this.control.props.type === "mouse";
+    if (shouldAttach && !this.mouseHandlersAttached) {
+      this.attachMouseHandlers();
+    } else if (!shouldAttach && this.mouseHandlersAttached) {
+      this.detachMouseHandlers();
+    }
+  }
+
+  private attachMouseHandlers() {
+    if (this.mouseHandlersAttached) return;
+
+    const onDown = (e: MouseEvent) => {
+      const action = this.getActionFromMouseEvent(e, "down");
+      if (action) {
+        this.dispatchMouseAction(action, e);
+      }
+    };
+    const onUp = (e: MouseEvent) => {
+      const action = this.getActionFromMouseEvent(e, "up");
+      if (action) {
+        this.dispatchMouseAction(action, e);
+      }
+    };
+    const onClick = (e: MouseEvent) => {
+      const action = this.getActionFromMouseEvent(e, "click");
+      if (action) {
+        this.dispatchMouseAction(action, e);
+      }
+    };
+    const onContextMenu = (e: MouseEvent) => {
+      // Treat as right click
+      e.preventDefault();
+      this.dispatchMouseAction("Mouse_RightClick", e);
+    };
+
+    // Attach to document to ensure we capture regardless of pointer-events on canvas
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("click", onClick);
+    document.addEventListener("contextmenu", onContextMenu);
+
+    this.boundMouseDown = onDown;
+    this.boundMouseUp = onUp;
+    this.boundClick = onClick;
+    this.boundContextMenu = onContextMenu;
+    this.mouseHandlersAttached = true;
+  }
+
+  private detachMouseHandlers() {
+    if (!this.mouseHandlersAttached) return;
+    if (this.boundMouseDown) document.removeEventListener("mousedown", this.boundMouseDown);
+    if (this.boundMouseUp) document.removeEventListener("mouseup", this.boundMouseUp);
+    if (this.boundClick) document.removeEventListener("click", this.boundClick);
+    if (this.boundContextMenu)
+      document.removeEventListener("contextmenu", this.boundContextMenu);
+    this.boundMouseDown = undefined;
+    this.boundMouseUp = undefined;
+    this.boundClick = undefined;
+    this.boundContextMenu = undefined;
+    this.mouseHandlersAttached = false;
+  }
+
+  private getActionFromMouseEvent(e: MouseEvent, phase: "down" | "up" | "click"): string | null {
+    // Filter according to optional props.mouse list
+    // Accepted tokens: left, right, middle
+    const cfg = (this.control.props.mouse || "left,right").toLowerCase();
+    const allowLeft = cfg.includes("left");
+    const allowRight = cfg.includes("right");
+    const allowMiddle = cfg.includes("middle");
+
+    if (e.button === 0 && allowLeft)
+      return `Mouse_Left${phase === "click" ? "Click" : phase === "down" ? "Down" : "Up"}`;
+    if (e.button === 2 && allowRight)
+      return `Mouse_Right${phase === "click" ? "Click" : phase === "down" ? "Down" : "Up"}`;
+    if (e.button === 1 && allowMiddle)
+      return `Mouse_Middle${phase === "click" ? "Click" : phase === "down" ? "Down" : "Up"}`;
+    // For click events, e.button is often 0; contextmenu handled separately
+    if (phase === "click" && allowLeft && e.button === 0) return "Mouse_LeftClick";
+    return null;
+  }
+
+  private dispatchMouseAction(action: string, _e: MouseEvent) {
+    void _e;
+    const graphicsAdapter = this.control.scene.getGraphicsAdapter();
+    if (!graphicsAdapter || !("getCamera" in graphicsAdapter)) {
+      return;
+    }
+    const camera = (graphicsAdapter as any).getCamera() as THREE.PerspectiveCamera;
+    const origin = camera.position;
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    dir.normalize();
+    const maxDistance = this.rayDistance ?? (Number((camera as any).far) || 1000);
+
+    let distance = maxDistance;
+    if ("getCollisionsManager" in graphicsAdapter) {
+      const collisionsManager = (graphicsAdapter as any).getCollisionsManager();
+      if (collisionsManager && typeof collisionsManager.raycastFirst === "function") {
+        const ray = new Ray(
+          { x: origin.x, y: origin.y, z: origin.z },
+          { x: dir.x, y: dir.y, z: dir.z },
+        );
+        const hit = collisionsManager.raycastFirst(ray, maxDistance);
+        if (hit) {
+          const hitDistance = hit[0];
+          if (typeof hitDistance === "number" && isFinite(hitDistance)) {
+            distance = Math.min(hitDistance, maxDistance);
+          }
+        }
+      }
+    }
+
+    this.control.dispatchInputEvent(1, {
+      value: /Down$/.test(action) || /Click$/.test(action),
+      action,
+      ray: {
+        origin: { x: origin.x, y: origin.y, z: origin.z },
+        direction: { x: dir.x, y: dir.y, z: dir.z },
+        distance,
+      },
+    });
+  }
+
   dispose() {
     this.clearDebugVisualisation();
 
     this.control.stopInputPolling();
+
+    this.detachMouseHandlers();
 
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
     if (graphicsAdapter && "unregisterControl" in graphicsAdapter) {
@@ -554,14 +700,15 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     type: "axis",
     axis: "0,1",
     button: "0",
+    mouse: undefined,
     hint: "",
     debug: false,
-    enableMouse: false,
+    "ray-distance": undefined,
   };
 
   private static attributeHandler = new AttributeHandler<MControl<GameThreeJSAdapter>>({
     type: (instance, newValue) => {
-      instance.props.type = (newValue as "axis" | "button") || "axis";
+      instance.props.type = (newValue as "axis" | "button" | "swipe" | "mouse") || "axis";
       instance.controlGraphics?.setType(instance.props.type, instance.props);
     },
     axis: (instance, newValue) => {
@@ -572,6 +719,10 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       instance.props.button = newValue || undefined;
       instance.controlGraphics?.setButton(instance.props.button, instance.props);
     },
+    mouse: (instance, newValue) => {
+      instance.props.mouse = newValue || undefined;
+      instance.controlGraphics?.setMouse(instance.props.mouse, instance.props);
+    },
     hint: (instance, newValue) => {
       instance.props.hint = newValue || "";
       instance.controlGraphics?.setHint(instance.props.hint, instance.props);
@@ -580,9 +731,9 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       instance.props.debug = newValue !== null ? newValue === "true" : false;
       instance.controlGraphics?.setDebug(instance.props.debug, instance.props);
     },
-    "enable-mouse": (instance, newValue) => {
-      instance.props.enableMouse = newValue !== null ? newValue === "true" : false;
-      instance.updateMouseInput();
+    "ray-distance": (instance, newValue) => {
+      instance.props["ray-distance"] = newValue || undefined;
+      instance.controlGraphics?.setRayDistance(instance.props["ray-distance"]);
     },
   });
 
@@ -705,7 +856,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     }
 
     // Only poll for axis and button controls, not swipe
-    if (this.props.type === "swipe") {
+    if (this.props.type === "swipe" || this.props.type === "mouse") {
       return;
     }
 

@@ -1,0 +1,116 @@
+<m-light y="50" x="0" z="0" intensity="10000" type="point"></m-light>
+
+<m-cube id="floor" kinematic="true" width="60" depth="60" y="0" opacity="1" color="#444"></m-cube>
+
+<!-- Spawn a few targets to raycast against -->
+<m-cube id="target1" x="0" y="1" z="-5" width="1.5" height="1.5" depth="1.5" color="#2a9d8f"></m-cube>
+<m-cube id="target2" x="3" y="1" z="-8" width="1.5" height="1.5" depth="1.5" color="#e76f51"></m-cube>
+<m-cube id="target3" x="-3" y="1" z="-8" width="1.5" height="1.5" depth="1.5" color="#f4a261"></m-cube>
+
+<!-- Enable mouse control with raycasts from camera direction -->
+<m-control
+  id="mouse-control"
+  type="mouse"
+  mouse="left,right"
+  ray-distance="200"
+></m-control>
+
+<m-overlay anchor="top-left" offset-x="10" offset-y="10">
+  <svg width="360" height="120" style="background: rgba(0,0,0,0.75); border-radius: 8px; padding: 8px;">
+    <text x="8" y="18" fill="white" font-family="Arial" font-size="14">Raycasts Demo</text>
+    <text x="8" y="40" fill="#adb5bd" font-family="Arial" font-size="11">Click to send a ray from camera forward.</text>
+    <text x="8" y="58" fill="#adb5bd" font-family="Arial" font-size="11">Left/Right produce different actions.</text>
+    <text id="last-action" x="8" y="86" fill="#ffd166" font-family="Arial" font-size="12">Last: (none)</text>
+  </svg>
+  <script>
+    (function(){
+      const ctl = document.getElementById('mouse-control');
+      const label = document.getElementById('last-action');
+      if (!ctl || !label) return;
+      ctl.addEventListener('input', (ev) => {
+        const d = ev.detail || {};
+        const a = d.action || 'unknown';
+        const r = d.ray || {};
+        label.textContent = `Last: ${a} | dist=${r.distance.toFixed(2) ?? '-'} dir=(${r.direction?.x?.toFixed?.(2) ?? '-'}, ${r.direction?.y?.toFixed?.(2) ?? '-'}, ${r.direction?.z?.toFixed?.(2) ?? '-'})`;
+        // simple visual feedback: recolor target1 on left-click
+        if (a === 'mouse-left-click') {
+          const t1 = document.getElementById('target1');
+          if (t1) t1.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16));
+        }
+      });
+    })();
+  </script>
+</m-overlay>
+
+
+<script>
+  (function(){
+    const ctl = document.getElementById('mouse-control');
+    if (!ctl) return;
+
+    const rayElId = 'ray-cylinder';
+    const endSphereId = 'ray-end-sphere';
+    function ensureRayEl() {
+      let el = document.getElementById(rayElId);
+      if (!el) {
+        el = document.createElement('m-cylinder');
+        el.setAttribute('id', rayElId);
+        el.setAttribute('radius', '0.02');
+        el.setAttribute('height', '1');
+        el.setAttribute('color', 'red');
+        el.setAttribute('opacity', '0.9');
+        el.setAttribute('clickable', 'false');
+        document.body.appendChild(el);
+      }
+      return el;
+    }
+
+    function ensureEndSphereEl() {
+      let el = document.getElementById(endSphereId);
+      if (!el) {
+        el = document.createElement('m-sphere');
+        el.setAttribute('id', endSphereId);
+        el.setAttribute('radius', '0.15');
+        el.setAttribute('color', 'red');
+        el.setAttribute('opacity', '1');
+        el.setAttribute('clickable', 'false');
+        document.body.appendChild(el);
+      }
+      return el;
+    }
+
+    function updateRay(ray) {
+      const el = ensureRayEl();
+      const hitEl = ensureEndSphereEl();
+      const o = ray.origin;
+      const d = ray.direction;
+      const dist = Math.max(0, Math.min(ray.distance || 0, 10000));
+      const forwardOffset = 0.1; // small offset in front of camera
+      const verticalOffset = -0.05; // slightly below camera
+      const start = {
+        x: o.x + d.x * forwardOffset,
+        y: o.y + d.y * forwardOffset + verticalOffset,
+        z: o.z + d.z * forwardOffset
+      };
+      const end = {
+        x: start.x + d.x * dist,
+        y: start.y + d.y * dist,
+        z: start.z + d.z * dist
+      };
+      math.transformCylinderBetweenPoints(el, start, end);
+      // Move the end sphere to the end point
+      hitEl.setAttribute('x', String(end.x));
+      hitEl.setAttribute('y', String(end.y));
+      hitEl.setAttribute('z', String(end.z));
+    }
+
+    ctl.addEventListener('input', (ev) => {
+      const d = ev.detail || {};
+      if (!d.ray) return;
+      const a = d.action || '';
+      if (/Mouse_.*Click$/.test(a)) {
+        updateRay(d.ray);
+      }
+    });
+  })();
+</script>

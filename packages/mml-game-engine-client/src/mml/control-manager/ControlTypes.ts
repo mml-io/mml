@@ -79,13 +79,15 @@ export const XBOX_GAMEPAD_MAPPING: GamepadMapping = {
 export type ControlInfo = {
   element: MControl<GameThreeJSAdapter>;
   id: string;
-  type: "axis" | "button" | "swipe";
+  type: "axis" | "button" | "swipe" | "mouse";
   config: {
     type: string;
     axis?: string;
     button?: string;
+    mouse?: string;
     hint?: string;
     debug?: boolean;
+    "ray-distance"?: string;
   };
   visualComponent: VirtualControlComponent | null;
   priority: number;
