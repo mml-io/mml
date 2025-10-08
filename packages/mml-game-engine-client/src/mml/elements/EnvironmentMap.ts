@@ -77,7 +77,8 @@ export class EnvironmentMapGraphics {
     }
 
     try {
-      const hdrTexture = await this.loadHDR(src);
+      const contentSrc = this.environmentMapElement.contentSrcToContentAddress(src);
+      const hdrTexture = await this.loadHDR(contentSrc);
       this.currentEnvironmentMap = hdrTexture;
       this.applyEnvironmentMap();
     } catch (error) {
