@@ -191,10 +191,9 @@ export function transformCylinderBetweenPoints(
   start: { x: number; y: number; z: number },
   end: { x: number; y: number; z: number },
 ): void {
-  // Validate element tag (non-fatal)
   const tag = cylinderElement.tagName.toLowerCase();
   if (tag !== "m-cylinder") {
-    // Allow usage anyway, but this function is intended for m-cylinder
+    return;
   }
 
   const dx = end.x - start.x;

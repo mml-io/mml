@@ -4,7 +4,6 @@ import { GameThreeJSAdapter } from "../GameThreeJSAdapter";
 export type UniversalInputState = {
   axes: number[];
   buttons: boolean[];
-  connectionId: number;
 };
 
 export type GamepadState = {

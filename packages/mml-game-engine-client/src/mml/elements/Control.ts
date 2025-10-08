@@ -314,9 +314,7 @@ export class UniversalInputMapper {
   private inputState: UniversalInputState = {
     axes: new Array(4).fill(0),
     buttons: new Array(16).fill(false),
-    connectionId: 1,
   };
-  private gamepadManager = GamepadManager.getInstance();
   private gamepadEventListeners = new Map<string, () => void>();
 
   private debug = false;
@@ -448,7 +446,7 @@ export type MControlProps = {
   type: "axis" | "button" | "swipe";
   axis?: string; // comma separated axis indices ("0,1" for both X and Y)
   button?: string; // button index ("0" for primary button)
-  input?: string; // comma-separated input tokens e.g. "Keyboard_F, Key_G, Gamepad_DPad_Up, Mouse_LeftClick"
+  input?: string; // space-separated input tokens e.g. "Keyboard_F Key_G Gamepad_DPad_Up Mouse_LeftClick"
   hint?: string; // optional hint text for UI
   debug?: boolean;
   "raycast-distance"?: string; // how far to raycast from the source
@@ -456,7 +454,6 @@ export type MControlProps = {
 };
 
 export type InputEventDetail = {
-  connectionId: number;
   value: { x: number; y: number } | number | boolean;
   action?: string;
   ray?: { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number };
@@ -510,8 +507,8 @@ export class ControlGraphics {
   }
 
   setType(type: "axis" | "button" | "swipe", _props: MControlProps) {
-    void type;
-    // Type no longer controls mouse/keyboard listeners. See setInput.
+    void _props;
+    // TODO: implement type-specific behavior
   }
 
   setAxis(axis: string | undefined, _props: MControlProps) {
@@ -597,9 +594,9 @@ export class ControlGraphics {
 
       const ray = this.getRayForCurrentType();
       e.preventDefault();
-      const detail: any = { value: true, action };
+      const detail: InputEventDetail = { value: true, action };
       if (ray) detail.ray = ray;
-      this.control.dispatchInputEvent(1, detail);
+      this.control.dispatchInputEvent(detail);
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -648,9 +645,9 @@ export class ControlGraphics {
       if (!this.allowedGamepadActions.has(token)) return;
 
       const ray = this.getRayForCurrentType();
-      const data: any = { value: true, action: token };
+      const data: InputEventDetail = { value: true, action: token };
       if (ray) data.ray = ray;
-      this.control.dispatchInputEvent(1, data);
+      this.control.dispatchInputEvent(data);
     };
 
     window.addEventListener("gamepad-button", onGamepadButton as EventListener);
@@ -710,12 +707,21 @@ export class ControlGraphics {
   }
 
   private detachMouseHandlers() {
-    if (!this.mouseHandlersAttached) return;  
-    if (this.boundMouseDown) document.removeEventListener("mousedown", this.boundMouseDown);
-    if (this.boundMouseUp) document.removeEventListener("mouseup", this.boundMouseUp);
-    if (this.boundClick) document.removeEventListener("click", this.boundClick);
-    if (this.boundContextMenu)
+    if (!this.mouseHandlersAttached) {
+      return;
+    }
+    if (this.boundMouseDown) {
+      document.removeEventListener("mousedown", this.boundMouseDown);
+    }
+    if (this.boundMouseUp) {
+      document.removeEventListener("mouseup", this.boundMouseUp);
+    }
+    if (this.boundClick) {
+      document.removeEventListener("click", this.boundClick);
+    }
+    if (this.boundContextMenu) {
       document.removeEventListener("contextmenu", this.boundContextMenu);
+    }
     this.boundMouseDown = undefined;
     this.boundMouseUp = undefined;
     this.boundClick = undefined;
@@ -724,22 +730,23 @@ export class ControlGraphics {
   }
 
   private getActionFromMouseEvent(e: MouseEvent, phase: "down" | "up" | "click"): string | null {
-    if (e.button === 0)
+    if (e.button === 0) {
       return `Mouse_Left${phase === "click" ? "Click" : phase === "down" ? "Down" : "Up"}`;
-    if (e.button === 2)
+    }
+    if (e.button === 2) {
       return `Mouse_Right${phase === "click" ? "Click" : phase === "down" ? "Down" : "Up"}`;
-    if (e.button === 1)
+    }
+    if (e.button === 1) {
       return `Mouse_Middle${phase === "click" ? "Click" : "Down"}`; // MiddleUp not always reliable
-    if (phase === "click" && e.button === 0) return "Mouse_LeftClick";
+    }
+    if (phase === "click" && e.button === 0) {
+      return "Mouse_LeftClick";
+    }
     return null;
   }
 
   private dispatchMouseAction(action: string, e: MouseEvent) {
-    const graphicsAdapter = this.control.scene.getGraphicsAdapter();
-    if (!graphicsAdapter || !("getCamera" in graphicsAdapter)) {
-      return;
-    }
-    const detail: any = {
+    const detail: InputEventDetail = {
       value: /Down$/.test(action) || /Click$/.test(action),
       action,
     };
@@ -750,7 +757,7 @@ export class ControlGraphics {
         detail.ray = ray;
       }
     }
-    this.control.dispatchInputEvent(1, detail);
+    this.control.dispatchInputEvent(detail);
   }
 
   private computeRay(
@@ -759,10 +766,7 @@ export class ControlGraphics {
     clientY?: number,
   ): { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number } | null {
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
-    if (!graphicsAdapter || !("getCamera" in graphicsAdapter)) {
-      return null;
-    }
-    const camera = (graphicsAdapter as any).getCamera() as THREE.PerspectiveCamera;
+    const camera = graphicsAdapter.getCamera();
 
     const origin = new THREE.Vector3();
     const dir = new THREE.Vector3();
@@ -775,17 +779,15 @@ export class ControlGraphics {
 
       let width = window.innerWidth;
       let height = window.innerHeight;
-      if ("getCanvasElement" in graphicsAdapter) {
-        const canvas = (graphicsAdapter as any).getCanvasElement() as HTMLCanvasElement | undefined;
-        if (canvas) {
-          const rect = canvas.getBoundingClientRect();
-          width = rect.width || canvas.width;
-          height = rect.height || canvas.height;
-          const cx = clientX != null ? clientX : this.lastMouseClientX;
-          const cy = clientY != null ? clientY : this.lastMouseClientY;
-          x = ((cx - rect.left) / width) * 2 - 1;
-          y = -(((cy - rect.top) / height) * 2 - 1);
-        }
+      const canvas = graphicsAdapter.getCanvasElement();
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        width = rect.width || canvas.width;
+        height = rect.height || canvas.height;
+        const cx = clientX != null ? clientX : this.lastMouseClientX;
+        const cy = clientY != null ? clientY : this.lastMouseClientY;
+        x = ((cx - rect.left) / width) * 2 - 1;
+        y = -(((cy - rect.top) / height) * 2 - 1);
       }
       v2.set(x, y);
       raycaster.setFromCamera(v2, camera);
@@ -797,22 +799,18 @@ export class ControlGraphics {
       dir.normalize();
     }
 
-    const maxDistance = this.rayDistance ?? (Number((camera as any).far) || 1000);
+    const maxDistance = this.rayDistance ?? (Number(camera.far) || 1000);
     let distance = maxDistance;
-    if ("getCollisionsManager" in graphicsAdapter) {
-      const collisionsManager = (graphicsAdapter as any).getCollisionsManager();
-      if (collisionsManager && typeof collisionsManager.raycastFirst === "function") {
-        const ray = new Ray(
-          { x: origin.x, y: origin.y, z: origin.z },
-          { x: dir.x, y: dir.y, z: dir.z },
-        );
-        const hit = collisionsManager.raycastFirst(ray, maxDistance);
-        if (hit) {
-          const hitDistance = hit[0];
-          if (typeof hitDistance === "number" && isFinite(hitDistance)) {
-            distance = Math.min(hitDistance, maxDistance);
-          }
-        }
+    const collisionsManager = graphicsAdapter.getCollisionsManager();
+    const ray = new Ray(
+      { x: origin.x, y: origin.y, z: origin.z },
+      { x: dir.x, y: dir.y, z: dir.z },
+    );
+    const hit = collisionsManager.raycastFirst(ray, maxDistance);
+    if (hit) {
+      const hitDistance = hit[0];
+      if (isFinite(hitDistance)) {
+        distance = Math.min(hitDistance, maxDistance);
       }
     }
 
@@ -845,9 +843,7 @@ export class ControlGraphics {
     this.detachGamepadHandlers();
 
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
-    if (graphicsAdapter && "unregisterControl" in graphicsAdapter) {
-      (graphicsAdapter as any).unregisterControl(this.control);
-    }
+    graphicsAdapter.unregisterControl(this.control);
   }
 
   // Helpers: input parsing and normalization
@@ -861,8 +857,8 @@ export class ControlGraphics {
     }
 
     const tokens = input
-      .split(",")
-      .map((t) => t.trim())
+      .trim()
+      .split(/\s+/)
       .filter((t) => t.length > 0);
 
     for (const token of tokens) {
@@ -1061,9 +1057,9 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     return false; // Control elements are not clickable
   }
 
-  public dispatchInputEvent(connectionId: number, data: any) {
+  public dispatchInputEvent(data: InputEventDetail) {
     const event = new CustomEvent("input", {
-      detail: { connectionId, ...data },
+      detail: data,
     });
     this.dispatchEvent(event);
   }
@@ -1184,28 +1180,28 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       if (axisIndices.length === 1) {
         // single axis (val)
         const value = inputState.axes[axisIndices[0]] || 0;
-        const detail: any = { value };
+        const detail: InputEventDetail = { value };
         const ray = this.controlGraphics?.getRayForCurrentType();
         if (ray) detail.ray = ray;
-        this.dispatchInputEvent(inputState.connectionId, detail);
+        this.dispatchInputEvent(detail);
       } else if (axisIndices.length >= 2) {
         // multi-axis (vector)
         const vector = {
           x: inputState.axes[axisIndices[0]] || 0,
           y: inputState.axes[axisIndices[1]] || 0,
         };
-        const detail: any = { value: vector };
+        const detail: InputEventDetail = { value: vector };
         const ray = this.controlGraphics?.getRayForCurrentType();
         if (ray) detail.ray = ray;
-        this.dispatchInputEvent(inputState.connectionId, detail);
+        this.dispatchInputEvent(detail);
       }
     } else if (this.props.type === "button" && this.props.button) {
       const buttonIndex = parseInt(this.props.button);
       const pressed = inputState.buttons[buttonIndex] || false;
-      const detail: any = { value: pressed };
+      const detail: InputEventDetail = { value: pressed };
       const ray = this.controlGraphics?.getRayForCurrentType();
       if (ray) detail.ray = ray;
-      this.dispatchInputEvent(inputState.connectionId, detail);
+      this.dispatchInputEvent(detail);
     }
   }
 
