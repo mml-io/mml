@@ -452,6 +452,7 @@ export type MControlProps = {
   hint?: string; // optional hint text for UI
   debug?: boolean;
   "ray-distance"?: string; // as attribute; parsed to number in graphics
+  "raycast-type"?: string; // camera | cursor (default camera)
 };
 
 export type InputEventDetail = {
@@ -478,6 +479,7 @@ export class ControlGraphics {
   private boundClick?: (e: MouseEvent) => void;
   private boundContextMenu?: (e: MouseEvent) => void;
   private rayDistance: number | null = null;
+  private raycastType: "camera" | "cursor" = "camera";
 
   constructor(private control: MControl<GameThreeJSAdapter>) {
     if (this.debug) {
@@ -519,6 +521,11 @@ export class ControlGraphics {
   setRayDistance(distanceStr: string | undefined) {
     const d = distanceStr != null ? Number(distanceStr) : NaN;
     this.rayDistance = Number.isFinite(d) && d > 0 ? d : null;
+  }
+
+  setRaycastType(raycastType: string | undefined) {
+    const t = (raycastType || "camera").toLowerCase();
+    this.raycastType = t === "cursor" ? "cursor" : "camera";
   }
 
   private clearDebugVisualisation() {
@@ -628,17 +635,50 @@ export class ControlGraphics {
     return null;
   }
 
-  private dispatchMouseAction(action: string, _e: MouseEvent) {
-    void _e;
+  private dispatchMouseAction(action: string, e: MouseEvent) {
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
     if (!graphicsAdapter || !("getCamera" in graphicsAdapter)) {
       return;
     }
     const camera = (graphicsAdapter as any).getCamera() as THREE.PerspectiveCamera;
-    const origin = camera.position;
+
+    const useCursorRay = this.raycastType === "cursor";
+    let origin = new THREE.Vector3();
     const dir = new THREE.Vector3();
-    camera.getWorldDirection(dir);
-    dir.normalize();
+
+    if (useCursorRay) {
+      // Compute a ray from the mouse cursor position on the canvas
+      let x = 0;
+      let y = 0;
+      const raycaster = new THREE.Raycaster();
+      const v2 = new THREE.Vector2();
+
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      if ("getCanvasElement" in graphicsAdapter) {
+        const canvas = (graphicsAdapter as any).getCanvasElement() as HTMLCanvasElement | undefined;
+        if (canvas) {
+          const rect = canvas.getBoundingClientRect();
+          width = rect.width || canvas.width;
+          height = rect.height || canvas.height;
+          x = ((e.clientX - rect.left) / width) * 2 - 1;
+          y = -(((e.clientY - rect.top) / height) * 2 - 1);
+        }
+      } else {
+        x = (e.clientX / width) * 2 - 1;
+        y = -((e.clientY / height) * 2 - 1);
+      }
+
+      v2.set(x, y);
+      raycaster.setFromCamera(v2, camera);
+      origin.copy(raycaster.ray.origin);
+      dir.copy(raycaster.ray.direction).normalize();
+    } else {
+      // Default: ray through the center of the screen (camera forward)
+      origin.copy(camera.position);
+      camera.getWorldDirection(dir);
+      dir.normalize();
+    }
     const maxDistance = this.rayDistance ?? (Number((camera as any).far) || 1000);
 
     let distance = maxDistance;
@@ -734,6 +774,10 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     "ray-distance": (instance, newValue) => {
       instance.props["ray-distance"] = newValue || undefined;
       instance.controlGraphics?.setRayDistance(instance.props["ray-distance"]);
+    },
+    "raycast-type": (instance, newValue) => {
+      instance.props["raycast-type"] = newValue || undefined;
+      instance.controlGraphics?.setRaycastType(instance.props["raycast-type"]);
     },
   });
 
@@ -855,7 +899,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       cancelAnimationFrame(this.animationFrameId);
     }
 
-    // Only poll for axis and button controls, not swipe
+    // Only poll for axis and button controls, not swipe or mouse click controls
     if (this.props.type === "swipe" || this.props.type === "mouse") {
       return;
     }

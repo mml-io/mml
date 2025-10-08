@@ -1,4 +1,6 @@
-<m-light y="50" x="0" z="0" intensity="10000" type="point"></m-light>
+  <m-sun></m-sun>
+  <m-environment-light></m-environment-light>
+  <m-environment-map></m-environment-map>
 
 <m-cube id="floor" kinematic="true" width="60" depth="60" y="0" opacity="1" color="#444"></m-cube>
 
@@ -7,26 +9,47 @@
 <m-cube id="target2" x="3" y="1" z="-8" width="1.5" height="1.5" depth="1.5" color="#e76f51"></m-cube>
 <m-cube id="target3" x="-3" y="1" z="-8" width="1.5" height="1.5" depth="1.5" color="#f4a261"></m-cube>
 
-<!-- Enable mouse control with raycasts from camera direction -->
+<!-- Enable mouse control; raycast-type controls camera vs cursor ray -->
 <m-control
   id="mouse-control"
   type="mouse"
   mouse="left,right"
+  raycast-type="camera"
   ray-distance="200"
 ></m-control>
 
 <m-overlay anchor="top-left" offset-x="10" offset-y="10">
-  <svg width="360" height="120" style="background: rgba(0,0,0,0.75); border-radius: 8px; padding: 8px;">
+  <svg width="420" height="140" style="background: rgba(0,0,0,0.75); border-radius: 8px; padding: 8px;">
     <text x="8" y="18" fill="white" font-family="Arial" font-size="14">Raycasts Demo</text>
-    <text x="8" y="40" fill="#adb5bd" font-family="Arial" font-size="11">Click to send a ray from camera forward.</text>
+    <text x="8" y="40" fill="#adb5bd" font-family="Arial" font-size="11">Click to send a ray. Mode controls source: camera center vs cursor.</text>
     <text x="8" y="58" fill="#adb5bd" font-family="Arial" font-size="11">Left/Right produce different actions.</text>
     <text id="last-action" x="8" y="86" fill="#ffd166" font-family="Arial" font-size="12">Last: (none)</text>
+    <!-- SVG-only toggle button -->
+    <g id="toggle-raycast-type" cursor="pointer">
+      <rect x="8" y="96" rx="4" ry="4" width="140" height="28" fill="#333" stroke="#666" />
+      <text id="toggle-raycast-type-label" x="16" y="115" fill="#fff" font-family="Arial" font-size="12">Mode: camera</text>
+    </g>
   </svg>
   <script>
     (function(){
       const ctl = document.getElementById('mouse-control');
       const label = document.getElementById('last-action');
+      const toggleBtn = document.getElementById('toggle-raycast-type');
+      const toggleLabel = document.getElementById('toggle-raycast-type-label');
       if (!ctl || !label) return;
+      if (toggleBtn && toggleLabel) {
+        const updateBtn = () => {
+          const mode = ctl.getAttribute('raycast-type') || 'camera';
+          toggleLabel.textContent = `Mode: ${mode}`;
+        };
+        updateBtn();
+        toggleBtn.addEventListener('click', () => {
+          const curr = ctl.getAttribute('raycast-type') || 'camera';
+          const next = curr === 'camera' ? 'cursor' : 'camera';
+          ctl.setAttribute('raycast-type', next);
+          updateBtn();
+        });
+      }
       ctl.addEventListener('input', (ev) => {
         const d = ev.detail || {};
         const a = d.action || 'unknown';
