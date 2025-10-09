@@ -337,7 +337,6 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
 
   private handleMovementInput(event: CustomEvent): void {
     const inputData = event.detail;
-    console.log("handleMovementInput", inputData);
     if (inputData.value && typeof inputData.value === "object") {
       const movement = inputData.value as { x: number; y: number };
       const magnitude = Math.sqrt(movement.x * movement.x + movement.y * movement.y);

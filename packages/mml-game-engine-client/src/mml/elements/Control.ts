@@ -307,7 +307,7 @@ export const isMobileDevice = (): boolean => {
 };
 
 export class MouseManager {
-  private mouseEventListeners = new Map<string, (event: MouseEvent) => void>();
+  private mouseEventListeners = new Map<string, (event: any) => void>();
   public lastMouseClientX = 0;
   public lastMouseClientY = 0;
   private inputMapper: UniversalInputMapper;
@@ -344,13 +344,24 @@ export class MouseManager {
       }
     };
 
+    const onWheel = (event: WheelEvent) => {
+      const deltaY = event.deltaY || 0;
+      if (deltaY === 0) return;
+      const key = deltaY < 0 ? "mousewheel-up" : "mousewheel-down";
+      this.inputMapper.updateInputKey(key, 1.0);
+      // Reset on next frame to create a momentary pulse
+      requestAnimationFrame(() => this.inputMapper.updateInputKey(key, 0.0));
+    };
+
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("wheel", onWheel, { passive: true } as AddEventListenerOptions);
 
     this.mouseEventListeners.set("mousemove", onMouseMove);
     this.mouseEventListeners.set("mousedown", onMouseDown);
     this.mouseEventListeners.set("mouseup", onMouseUp);
+    this.mouseEventListeners.set("wheel", onWheel as any);
   }
 
   public destroy(): void {
@@ -464,8 +475,6 @@ export class UniversalInputMapper {
       }
     }
 
-    console.log("leftX", leftX);
-    console.log("leftY", leftY);
     this.inputState.axes[0] = leftX;
     this.inputState.axes[1] = leftY;
 
@@ -496,7 +505,6 @@ export class UniversalInputMapper {
   }
 
   public getInputState(inputs?: string[]): UniversalInputState {
-    console.log("getInputState", inputs, this.activeInputs, this.inputState);
     // if inputs are provided
     if (inputs && inputs.length > 0) {
       let buttonValue = 0;
@@ -523,11 +531,9 @@ export class UniversalInputMapper {
           }
         }
       });
-      console.log("returning input inputState", { axes: [], buttons: [buttonValue] });
       return { axes: [], buttons: [buttonValue] };
     }
 
-    console.log("returning inputState", this.inputState);
     return { ...this.inputState };
   }
 
@@ -897,7 +903,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       detail: data,
     });
     this.dispatchEvent(event);
-    console.log("dispatchInputEvent", data);
   }
 
   private shouldAddRayToEvent(): boolean {

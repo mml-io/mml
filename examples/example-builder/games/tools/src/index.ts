@@ -1,25 +1,18 @@
+export {};
+
 class XTool extends HTMLElement {
   static get observedAttributes() { return ["activated", "equipped", "activation-mode", "name"]; }
-  private __controls: HTMLElement[];
   private __group: HTMLElement | null;
   constructor() {
     super();
-    this.__controls = [];
     this.__group = null;
   }
   connectedCallback() {
     if (!this.hasAttribute("activation-mode")) this.setAttribute("activation-mode", "hold");
     this.__ensureGroup();
     this.__updateGroupEquippedState();
-    this.__controls = Array.from(this.querySelectorAll("m-control"));
   }
   disconnectedCallback() {
-    this.__controls.forEach((ctrl: any) => {
-      if (ctrl && typeof ctrl.stopInputPolling === "function") {
-        ctrl.stopInputPolling();
-      }
-    });
-    this.__controls = [];
   }
   equip() {
     this.setAttribute("equipped", "true");
@@ -78,6 +71,8 @@ class XInventoryManager extends HTMLElement {
   private __slotControls: any[];
   private __onSlotInput: (ev: any) => void;
   private __maxSlots: number;
+  private __scrollPrevControl: any | null = null;
+  private __scrollNextControl: any | null = null;
   constructor() {
     super();
     this.__tools = [];
@@ -87,6 +82,7 @@ class XInventoryManager extends HTMLElement {
   }
   connectedCallback() {
     this.__setupSlotControls();
+    this.__setupScrollControls();
   }
   disconnectedCallback() {
     this.__slotControls.forEach((ctrl: any) => {
@@ -95,22 +91,70 @@ class XInventoryManager extends HTMLElement {
       try { ctrl.remove(); } catch {}
     });
     this.__slotControls = [];
+    if (this.__scrollPrevControl) {
+      try { this.__scrollPrevControl.removeEventListener("input", this.__onScrollPrev); } catch {}
+      try { this.__scrollPrevControl.remove(); } catch {}
+      this.__scrollPrevControl = null;
+    }
+    if (this.__scrollNextControl) {
+      try { this.__scrollNextControl.removeEventListener("input", this.__onScrollNext); } catch {}
+      try { this.__scrollNextControl.remove(); } catch {}
+      this.__scrollNextControl = null;
+    }
     this.__tools = [];
   }
   private __setupSlotControls() {
     for (let i = 0; i < this.__maxSlots; i++) {
       const slotControl: any = document.createElement("m-control");
       slotControl.setAttribute("type", "button");
-      slotControl.setAttribute("input", `Keyboard_${String((i + 1) % 10)}`);
+      slotControl.setAttribute("input", `${String((i + 1) % 10)}`);
       slotControl.dataset.slotIndex = String(i);
       slotControl.addEventListener("input", this.__onSlotInput);
       this.appendChild(slotControl);
       this.__slotControls.push(slotControl);
     }
   }
+  private __onScrollPrev = (ev: any) => {
+    if (!ev || ev.detail?.value !== 1.0) return;
+    this.__equipRelative(-1);
+  };
+  private __onScrollNext = (ev: any) => {
+    if (!ev || ev.detail?.value !== 1.0) return;
+    this.__equipRelative(1);
+  };
+  private __setupScrollControls() {
+    // Previous tool: mouse wheel up or LB
+    const prevCtrl: any = document.createElement("m-control");
+    prevCtrl.setAttribute("type", "button");
+    prevCtrl.setAttribute("input", "mousewheel-up gamepad-lb");
+    prevCtrl.addEventListener("input", this.__onScrollPrev);
+    this.appendChild(prevCtrl);
+    this.__scrollPrevControl = prevCtrl;
+
+    // Next tool: mouse wheel down or RB
+    const nextCtrl: any = document.createElement("m-control");
+    nextCtrl.setAttribute("type", "button");
+    nextCtrl.setAttribute("input", "mousewheel-down gamepad-rb");
+    nextCtrl.addEventListener("input", this.__onScrollNext);
+    this.appendChild(nextCtrl);
+    this.__scrollNextControl = nextCtrl;
+  }
+  private __equipRelative(delta: number) {
+    const tools = this.__tools;
+    if (!tools || tools.length === 0) return;
+    let currentIndex = tools.findIndex((t: any) => t.hasAttribute("equipped"));
+    if (currentIndex < 0) currentIndex = delta > 0 ? -1 : 0; // if none, choose start depending on direction
+    const nextIndex = ((currentIndex + delta) % tools.length + tools.length) % tools.length;
+    const nextTool = tools[nextIndex];
+    if (!nextTool) return;
+    const model = this.closest("m-model");
+    if (model && typeof (applyEquipSelection as any) === "function") {
+      applyEquipSelection(model as any, nextTool as any);
+    }
+  }
   private _onSlotInput(ev: any) {
     const v = ev?.detail?.value;
-    if (v !== true) return;
+    if (v !== 1.0) return;
     const ctrl = ev?.target as any;
     const slotIndex = parseInt(ctrl?.dataset?.slotIndex || "-1", 10);
     if (slotIndex < 0) return;
@@ -191,17 +235,16 @@ function assignPlayerController(player: Element, id: number) {
 }
 
 function addToolsToPlayer(player: any, connectionId: number) {
-  return;
   const manager = document.createElement("x-inventory-manager") as any;
   player.appendChild(manager);
 
   const placeMarkerControl: any = document.createElement("m-control");
   placeMarkerControl.setAttribute("type", "button");
-  placeMarkerControl.setAttribute("input", "g");
+  placeMarkerControl.setAttribute("input", "g,gamepad-y");
   placeMarkerControl.setAttribute("raycast-type", "cursor");
   placeMarkerControl.setAttribute("visible-to", String(connectionId));
   placeMarkerControl.addEventListener("input", (ev: any) => {
-    if (ev.detail.value !== true) return;
+    if (ev.detail.value !== 1.0) return;
     const hit = ev.detail.hit;
     if (!hit) return;
     const marker = document.createElement("m-cylinder");
@@ -224,12 +267,13 @@ function addToolsToPlayer(player: any, connectionId: number) {
   flashlight.setAttribute("owner-id", String(connectionId));
   const flashlightControl: any = document.createElement("m-control");
   flashlightControl.setAttribute("type", "button");
-  flashlightControl.setAttribute("input", "mouseleft,gamepad-rt");
-  flashlightControl.setAttribute("button", "0");
+  flashlightControl.setAttribute("input", "mouseleft gamepad-rt");
+  // flashlightControl.setAttribute("button", "0");
   flashlightControl.setAttribute("visible-to", String(connectionId));
   flashlightControl.addEventListener("input", (ev: any) => {
+    console.log("flashlightControl input", ev);
     if (!flashlight.hasAttribute("equipped")) return;
-    if (ev.detail.connectionId !== connectionId || ev.detail.value !== true) return;
+    if (ev.detail.connectionId !== connectionId || ev.detail.value !== 1.0) return;
     if (flashlight.hasAttribute("activated")) {
       flashlight.deactivate();
     } else {
@@ -248,6 +292,7 @@ function addToolsToPlayer(player: any, connectionId: number) {
   flashlight.appendChild(light);
   const flashlightModel = document.createElement("m-model");
   flashlightModel.setAttribute("src", "https://files.dreamcache.xyz/models/01K6BN28S3X87VHQGR928EKHQ4.glb");
+  flashlightModel.setAttribute("collide", "false");
   flashlight.appendChild(flashlightModel);
   manager.addTool(flashlight);
   flashlight.addEventListener("activate", () => {
@@ -269,26 +314,30 @@ function addToolsToPlayer(player: any, connectionId: number) {
   horn.setAttribute("owner-id", String(connectionId));
   const hornControl: any = document.createElement("m-control");
   hornControl.setAttribute("type", "button");
-  hornControl.setAttribute("input", "Mouse_LeftDown,Gamepad_0");
+  hornControl.setAttribute("input", "mouseleft gamepad-rt");
   hornControl.setAttribute("visible-to", String(connectionId));
   hornControl.addEventListener("input", (ev: any) => {
     if (!horn.hasAttribute("equipped")) return;
     if (ev.detail.connectionId !== connectionId) return;
-    if (ev.detail.value === true) {
+    if (ev.detail.value === 1.0) {
+      console.log("hornControl input activate");
       horn.activate();
-    } else if (ev.detail.value === false) {
+    } else if (ev.detail.value === 0.0) {
+      console.log("hornControl input deactivate");
       horn.deactivate();
     }
   });
   horn.appendChild(hornControl);
   horn.addEventListener("activate", () => {
-    const audio = horn.querySelector("m-audio") as any;
+    const audio = horn.querySelector("m-audio");
+    console.log("hornControl activate", audio);
     audio.setAttribute("enabled", "true");
-    (audio as any).setAttribute("start-time", String(performance.now()));
+    audio.setAttribute("start-time", String(performance.now()));
     audio.setAttribute("loop", "false");
   });
   horn.addEventListener("deactivate", () => {
-    const audio = horn.querySelector("m-audio") as any;
+    const audio = horn.querySelector("m-audio");
+    console.log("hornControl deactivate", audio);
     audio.setAttribute("enabled", "false");
   });
   const audio = document.createElement("m-audio");
@@ -320,9 +369,9 @@ function addToolsToPlayer(player: any, connectionId: number) {
     gun.setAttribute("activation-mode", "hold");
     gun.setAttribute("visible-to", String(connectionId));
     gun.setAttribute("owner-id", String(connectionId));
-    const gunControl: any = document.createElement("m-control");
+    const gunControl = document.createElement("m-control");
     gunControl.setAttribute("type", "button");
-    gunControl.setAttribute("input", "Mouse_LeftDown,Gamepad_0");
+    gunControl.setAttribute("input", "mouseleft gamepad-rt");
     gunControl.setAttribute("raycast", "socket-camera");
     gunControl.setAttribute("visible-to", String(connectionId));
     let maxAmmo = 12;
@@ -393,33 +442,40 @@ function addToolsToPlayer(player: any, connectionId: number) {
     }
 
     gunControl.addEventListener("input", (ev: any) => {
+      console.log("gunControl input", ev);
       if (!gun.hasAttribute("equipped")) return;
       if (ev.detail.connectionId !== connectionId) return;
-      if (ev.detail.value === true) {
-        if (isReloading) return;
-        if (currentAmmo <= 0) { startReload(); return; }
+      if (ev.detail.value === 1.0) {
         const ray = ev.detail.ray || null;
-        if (ray) {
-          if (currentAmmo > 0) {
-            currentAmmo -= 1;
-            updateAmmoUI();
-            spawnBullet(ray);
-          }
-        }
-        gun.activate();
-      } else if (ev.detail.value === false) {
+        gun.activate(ray);
+      } else if (ev.detail.value === 0.0) {
         gun.deactivate();
       }
     });
     gun.appendChild(gunControl);
 
+    gun.addEventListener("activate", (ray: any) => {
+      if (isReloading) return;
+      if (currentAmmo <= 0) { startReload(); return; }
+      if (ray) {
+        if (currentAmmo > 0) {
+          currentAmmo -= 1;
+          updateAmmoUI();
+          spawnBullet(ray);
+        }
+      }
+    });
+    gun.addEventListener("deactivate", () => {
+      console.log("gun deactivate");
+    });
+
     const reloadControl: any = document.createElement("m-control");
     reloadControl.setAttribute("type", "button");
-    reloadControl.setAttribute("input", "Keyboard_r,Gamepad_2");
+    reloadControl.setAttribute("input", "r gamepad-x");
     reloadControl.setAttribute("visible-to", String(connectionId));
     reloadControl.addEventListener("input", (ev: any) => {
       if (!gun.hasAttribute("equipped")) return;
-      if (ev.detail.connectionId !== connectionId || ev.detail.value !== true) return;
+      if (ev.detail.connectionId !== connectionId || ev.detail.value !== 1.0) return;
       startReload();
     });
     gun.appendChild(reloadControl);
@@ -431,7 +487,7 @@ function addToolsToPlayer(player: any, connectionId: number) {
     const gunText = document.createElementNS("http://www.w3.org/2000/svg", "text");
     gunText.setAttribute("x", "10");
     gunText.setAttribute("y", "14");
-    gunText.setAttribute("text-anchor", "middle");
+    gunText.setAttribute("text-anchor", "middle");    
     gunText.setAttribute("font-size", "16");
     gunText.textContent = "🔫";
     gunOverlaySvg.appendChild(gunText);
@@ -440,6 +496,7 @@ function addToolsToPlayer(player: any, connectionId: number) {
 
     const gunModel = document.createElement("m-model");
     gunModel.setAttribute("src", "https://files.dreamcache.xyz/models/01K6FTMJR4BRQGD64NBY2952T4.glb");
+    gunModel.setAttribute("collide", "false");
     gunModel.setAttribute("rz", "180");
     gunModel.setAttribute("rx", "180");
     gun.appendChild(gunModel);

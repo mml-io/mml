@@ -60,12 +60,10 @@ export class ThreeJSTransformable extends TransformableGraphics<ThreeJSGraphicsA
   }
 
   private registerWithParentModel(socketName: string): void {
-    if (
-      (this.transformableElement.parentElement as Model<ThreeJSGraphicsAdapter> | undefined)
-        ?.isModel
-    ) {
-      const parentModel = this.transformableElement.parentElement as Model<ThreeJSGraphicsAdapter>;
-      this.registeredSocketParent = parentModel.modelGraphics as ThreeJSModel;
+    // Attach to the nearest ancestor m-model rather than only the direct parent
+    const closestModel = this.transformableElement.closest(Model.tagName ?? "m-model") as Model<ThreeJSGraphicsAdapter> | undefined;
+    if (closestModel && closestModel.isModel) {
+      this.registeredSocketParent = closestModel.modelGraphics as ThreeJSModel;
       this.registeredSocketParent.registerSocketChild(this.transformableElement, socketName);
     }
   }
