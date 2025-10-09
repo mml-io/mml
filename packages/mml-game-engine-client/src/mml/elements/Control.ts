@@ -542,13 +542,11 @@ export class UniversalInputMapper {
   }
 
   public updateInputButton(buttonIndex: number, value: number): void {
-    console.log("updateInputButton", buttonIndex, value);
     this.inputState.buttons[buttonIndex] = value;
     this.emitInputIfChanged();
   }
 
   public updateInputAxis(axisIndex: number, value: number): void {
-    console.log("updateInputAxis", axisIndex, value);
     this.inputState.axes[axisIndex] = value;
     this.emitInputIfChanged();
   }
@@ -875,7 +873,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       detail: data,
     });
     this.dispatchEvent(event);
-    console.log("dispatchInputEvent", data);
   }
 
   private shouldAddRayToEvent(): boolean {
