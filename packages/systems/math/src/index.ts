@@ -2,6 +2,7 @@ export { Quat } from "./Quat";
 export { Vec3 } from "./Vec3";
 
 import { ElementSystem, initElementSystem } from "mml-game-systems-common";
+
 import { Quat } from "./Quat";
 import { Vec3 } from "./Vec3";
 
@@ -213,42 +214,50 @@ export function transformCylinderBetweenPoints(
   let qz = 0;
   let qw = 1;
 
-    // Align cylinder local +Y axis (0,1,0) to the direction (dx,dy,dz)
-    const invLen = length > 1e-8 ? 1 / length : 0;
-    const ux = 0, uy = 1, uz = 0; // from vector (up)
-    const vx = dx * invLen, vy = dy * invLen, vz = dz * invLen; // to vector (normalized segment dir)
+  // Align cylinder local +Y axis (0,1,0) to the direction (dx,dy,dz)
+  const invLen = length > 1e-8 ? 1 / length : 0;
+  const ux = 0,
+    uy = 1,
+    uz = 0; // from vector (up)
+  const vx = dx * invLen,
+    vy = dy * invLen,
+    vz = dz * invLen; // to vector (normalized segment dir)
 
-    const dot = ux * vx + uy * vy + uz * vz; // dot(u, v)
+  const dot = ux * vx + uy * vy + uz * vz; // dot(u, v)
 
-    if (dot < -0.999999) {
-      // 180° rotation: choose any axis orthogonal to u
-      // Pick axis by crossing with X or Z depending on u
-      let ax = 1, ay = 0, az = 0;
-      if (Math.abs(ux) > 0.9) {
-        ax = 0; ay = 0; az = 1;
-      }
-      // cross(u, a)
-      const cx = uy * az - uz * ay;
-      const cy = uz * ax - ux * az;
-      const cz = ux * ay - uy * ax;
-      const cLen = Math.hypot(cx, cy, cz) || 1;
-      qx = cx / cLen;
-      qy = cy / cLen;
-      qz = cz / cLen;
-      qw = 0;
-    } else {
-      // Standard case
-      // q = (cross(u, v), 1 + dot(u, v)) normalized
-      const cx = uy * vz - uz * vy;
-      const cy = uz * vx - ux * vz;
-      const cz = ux * vy - uy * vx;
-      const w = 1 + dot;
-      const invNorm = 1 / Math.hypot(cx, cy, cz, w);
-      qx = cx * invNorm;
-      qy = cy * invNorm;
-      qz = cz * invNorm;
-      qw = w * invNorm;
+  if (dot < -0.999999) {
+    // 180° rotation: choose any axis orthogonal to u
+    // Pick axis by crossing with X or Z depending on u
+    let ax = 1,
+      ay = 0,
+      az = 0;
+    if (Math.abs(ux) > 0.9) {
+      ax = 0;
+      ay = 0;
+      az = 1;
     }
+    // cross(u, a)
+    const cx = uy * az - uz * ay;
+    const cy = uz * ax - ux * az;
+    const cz = ux * ay - uy * ax;
+    const cLen = Math.hypot(cx, cy, cz) || 1;
+    qx = cx / cLen;
+    qy = cy / cLen;
+    qz = cz / cLen;
+    qw = 0;
+  } else {
+    // Standard case
+    // q = (cross(u, v), 1 + dot(u, v)) normalized
+    const cx = uy * vz - uz * vy;
+    const cy = uz * vx - ux * vz;
+    const cz = ux * vy - uy * vx;
+    const w = 1 + dot;
+    const invNorm = 1 / Math.hypot(cx, cy, cz, w);
+    qx = cx * invNorm;
+    qy = cy * invNorm;
+    qz = cz * invNorm;
+    qw = w * invNorm;
+  }
 
   // Convert quaternion to Euler XYZ in degrees
   const eulerRad = quaternionToEulerXYZ(new Quat(qx, qy, qz, qw));
@@ -267,7 +276,7 @@ export function transformCylinderBetweenPoints(
 }
 
 class MathSystem implements ElementSystem {
-  init = () => Promise.resolve(); 
+  init = () => Promise.resolve();
   processElement = (element: Element, attributes: Array<{ attributeName: string; value: any }>) => {
     void 0;
   };
@@ -284,7 +293,7 @@ class MathSystem implements ElementSystem {
     void 0;
   };
   transformCylinderBetweenPoints = transformCylinderBetweenPoints;
-};
+}
 
 const mathSystem = new MathSystem();
 initElementSystem("math", mathSystem, []);

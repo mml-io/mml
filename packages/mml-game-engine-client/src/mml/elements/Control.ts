@@ -2,10 +2,10 @@ import { AttributeHandler, MElement, MMLScene, Ray } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import {
+  GAMEPAD_MEANINGFUL_BUTTON_MAPPING,
   GamepadState,
   UniversalInputState,
   XBOX_GAMEPAD_MAPPING,
-  GAMEPAD_MEANINGFUL_BUTTON_MAPPING,
 } from "../control-manager/ControlTypes";
 import { GameThreeJSAdapter } from "../GameThreeJSAdapter";
 
@@ -334,7 +334,7 @@ export class MouseManager {
       this.lastMouseClientX = event.clientX;
       this.lastMouseClientY = event.clientY;
     };
-    
+
     const onMouseDown = (event: MouseEvent) => {
       console.log("mousedown", event.button);
       if (event.button === 0) {
@@ -500,8 +500,8 @@ export class UniversalInputMapper {
     if (inputs) {
       let buttonValue = 0;
 
-      // process keyboard/mouse inputs
-      inputs.forEach((input) => {        
+      // process keyboard inputs
+      inputs.forEach((input) => {
         const newValue = this.activeInputs.get(input) || 0;
         if (newValue > buttonValue) {
           buttonValue = newValue;
@@ -510,7 +510,10 @@ export class UniversalInputMapper {
 
       // process gamepad inputs
       inputs.forEach((input) => {
-        const buttonIndex = GAMEPAD_MEANINGFUL_BUTTON_MAPPING[input as keyof typeof GAMEPAD_MEANINGFUL_BUTTON_MAPPING];
+        const buttonIndex =
+          GAMEPAD_MEANINGFUL_BUTTON_MAPPING[
+            input as keyof typeof GAMEPAD_MEANINGFUL_BUTTON_MAPPING
+          ];
         if (buttonIndex !== undefined) {
           const newValue = this.inputState.buttons[buttonIndex] || 0;
           // only accept new inputs if they contribute more to the value
@@ -538,7 +541,6 @@ export class UniversalInputMapper {
     });
     this.gamepadEventListeners.clear();
 
-
     this.keyboardEventListeners.forEach((listener, type) => {
       if (type === "keydown") {
         document.removeEventListener("keydown", listener);
@@ -556,14 +558,18 @@ export type MControlProps = {
   button?: string; // button index ("0" for primary button)
   hint?: string; // optional hint text for UI
   debug?: boolean;
-  input?: string,
+  input?: string;
   "raycast-distance"?: string;
   "raycast-type"?: string;
 };
 
 export type InputEventDetail = {
   value: { x: number; y: number } | number | boolean;
-  ray?: { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number };
+  ray?: {
+    origin: { x: number; y: number; z: number };
+    direction: { x: number; y: number; z: number };
+    distance: number;
+  };
 };
 
 export class ControlGraphics {
@@ -640,11 +646,15 @@ export class ControlGraphics {
     clientY,
     distance,
   }: {
-    mode: "camera" | "cursor",
-    clientX?: number,
-    clientY?: number,
-    distance?: number,
-  }): { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number } | null {
+    mode: "camera" | "cursor";
+    clientX?: number;
+    clientY?: number;
+    distance?: number;
+  }): {
+    origin: { x: number; y: number; z: number };
+    direction: { x: number; y: number; z: number };
+    distance: number;
+  } | null {
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
     const camera = graphicsAdapter.getCamera();
 
@@ -813,7 +823,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     });
   }
 
-
   public dispatchInputEvent(data: InputEventDetail) {
     console.log("dispatchInputEvent", data);
     if (this.shouldAddRayToEvent()) {
@@ -829,18 +838,28 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   private shouldAddRayToEvent(): boolean {
     return this.props["raycast-type"] !== "none";
   }
-  
-  private getRay():
-  | { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number }
-  | null {
-  if (this.props["raycast-type"] === "camera") {
-    return this.controlGraphics?.computeRay({ mode: "camera", distance: Number(this.props["raycast-distance"]) });
+
+  private getRay(): {
+    origin: { x: number; y: number; z: number };
+    direction: { x: number; y: number; z: number };
+    distance: number;
+  } | null {
+    if (this.props["raycast-type"] === "camera") {
+      return this.controlGraphics?.computeRay({
+        mode: "camera",
+        distance: Number(this.props["raycast-distance"]),
+      });
+    }
+    if (this.props["raycast-type"] === "cursor") {
+      return this.controlGraphics?.computeRay({
+        mode: "cursor",
+        distance: Number(this.props["raycast-distance"]),
+        clientX: this.mouseManager.lastMouseClientX,
+        clientY: this.mouseManager.lastMouseClientY,
+      });
+    }
+    return null;
   }
-  if (this.props["raycast-type"] === "cursor") {
-    return this.controlGraphics?.computeRay({ mode: "cursor", distance: Number(this.props["raycast-distance"]),clientX: this.mouseManager.lastMouseClientX, clientY: this.mouseManager.lastMouseClientY });
-  }
-  return null;
-};
 
   /**
    * Setup or cleanup mouse input based on enableMouse prop
@@ -934,7 +953,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   }
 
   // process the input string as a space separated list of keys
-   getInputs(): string[] {
+  getInputs(): string[] {
     return this.props.input?.split(" ") || [];
   }
 
@@ -957,7 +976,10 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
 
   private hasInputChanged(inputState: UniversalInputState): boolean {
     // compare values of all axes and buttons. if the size has changed, return true. if the values have changed by more than 0.01, return true.
-    if (inputState.axes.length !== this.previousInputState?.axes.length || inputState.buttons.length !== this.previousInputState?.buttons.length) {
+    if (
+      inputState.axes.length !== this.previousInputState?.axes.length ||
+      inputState.buttons.length !== this.previousInputState?.buttons.length
+    ) {
       return true;
     }
     const axisThreshold = 0.01;
@@ -968,7 +990,9 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     }
     const buttonThreshold = 0.01;
     for (let i = 0; i < inputState.buttons.length; i++) {
-      if (Math.abs(inputState.buttons[i] - this.previousInputState?.buttons[i] || 0) > buttonThreshold) {
+      if (
+        Math.abs(inputState.buttons[i] - this.previousInputState?.buttons[i] || 0) > buttonThreshold
+      ) {
         return true;
       }
     }
@@ -983,7 +1007,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       return;
     }
     this.previousInputState = inputState;
-    
+
     if (this.props.type === "axis" && this.props.axis) {
       const axisIndices = this.props.axis.split(",").map((s) => parseInt(s.trim()));
 
@@ -1002,13 +1026,13 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     } else if (this.props.type === "button" && (this.props.button || this.props.input)) {
       let value = 0;
       if (this.props.button) {
-      const buttonIndex = parseInt(this.props.button);
-      value = inputState.buttons[buttonIndex] || 0;
+        const buttonIndex = parseInt(this.props.button);
+        value = inputState.buttons[buttonIndex] || 0;
       } else {
         // when input is provided, we use the first button to store the value
         value = inputState.buttons[0] || 0;
       }
-      this.dispatchInputEvent({ value: value });
+      this.dispatchInputEvent({ value });
     }
   }
 
