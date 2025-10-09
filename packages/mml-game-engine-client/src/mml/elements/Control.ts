@@ -408,7 +408,6 @@ export class UniversalInputMapper {
   private setupKeyboardHandlers(): void {
     const onKeyDown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
-      this.updateKeyboardState();
       this.updateInputKey(key, 1.0);
     };
 
@@ -416,7 +415,6 @@ export class UniversalInputMapper {
 
     const onKeyUp = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
-      this.updateKeyboardState();
       this.updateInputKey(key, 0.0);
     };
 
@@ -466,6 +464,8 @@ export class UniversalInputMapper {
       }
     }
 
+    console.log("leftX", leftX);
+    console.log("leftY", leftY);
     this.inputState.axes[0] = leftX;
     this.inputState.axes[1] = leftY;
 
@@ -496,6 +496,7 @@ export class UniversalInputMapper {
   }
 
   public getInputState(inputs?: string[]): UniversalInputState {
+    console.log("getInputState", inputs, this.activeInputs, this.inputState);
     // if inputs are provided
     if (inputs && inputs.length > 0) {
       let buttonValue = 0;
@@ -522,9 +523,11 @@ export class UniversalInputMapper {
           }
         }
       });
+      console.log("returning input inputState", { axes: [], buttons: [buttonValue] });
       return { axes: [], buttons: [buttonValue] };
     }
 
+    console.log("returning inputState", this.inputState);
     return { ...this.inputState };
   }
 
@@ -537,17 +540,31 @@ export class UniversalInputMapper {
   }
 
   public updateInputKey(key: string, value: number): void {
-    this.activeInputs.set(key, value);
+    if (value && value !== 0) {
+      this.activeInputs.set(key, value);
+    } else {
+      this.activeInputs.delete(key);
+    }
+    this.updateKeyboardState();
     this.emitInputIfChanged();
   }
 
   public updateInputButton(buttonIndex: number, value: number): void {
+    if (value && value !== 0) {
+      this.inputState.buttons[buttonIndex] = value;
+    } else {
+      this.inputState.buttons[buttonIndex] = 0;
+    }
     this.inputState.buttons[buttonIndex] = value;
     this.emitInputIfChanged();
   }
 
   public updateInputAxis(axisIndex: number, value: number): void {
-    this.inputState.axes[axisIndex] = value;
+    if (value && value !== 0) {
+      this.inputState.axes[axisIndex] = value;
+    } else {
+      this.inputState.axes[axisIndex] = 0;
+    }
     this.emitInputIfChanged();
   }
 
@@ -562,7 +579,7 @@ export class UniversalInputMapper {
     if (this.previousInputState && this.isSameInputState(this.previousInputState, newInputState)) {
       return;
     }
-    this.previousInputState = newInputState;
+    this.previousInputState = { axes: [...newInputState.axes], buttons: [...newInputState.buttons] };
     this.control.emitInput(newInputState);
   }
 
@@ -850,6 +867,13 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
 
   constructor() {
     super();
+
+    // lazy init gamepad manager
+    if (!GamepadManager.getInstance()) {
+      GamepadManager.getInstance();
+    }
+    this.inputMapper = new UniversalInputMapper(this);
+    this.mouseManager = new MouseManager(this.inputMapper);
   }
 
   public getContentBounds(): null {
@@ -873,6 +897,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       detail: data,
     });
     this.dispatchEvent(event);
+    console.log("dispatchInputEvent", data);
   }
 
   private shouldAddRayToEvent(): boolean {
@@ -980,20 +1005,15 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   public connectedCallback(): void {
     super.connectedCallback();
 
-    // lazy init gamepad manager
-    if (!GamepadManager.getInstance()) {
-      GamepadManager.getInstance();
-    }
 
     this.scene = this.getScene() as unknown as MMLScene<GameThreeJSAdapter>;
 
     if (!this.scene.hasGraphicsAdapter() || this.controlGraphics) {
       return;
     }
-
+    
     this.controlGraphics = new ControlGraphics(this);
-    this.inputMapper = new UniversalInputMapper(this);
-    this.mouseManager = new MouseManager(this.inputMapper);
+
 
     const graphicsAdapter = this.scene.getGraphicsAdapter();
     graphicsAdapter.registerControl(this);
