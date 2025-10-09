@@ -26,7 +26,6 @@
     <div id="last-action" style="font-size: 12px; color: #ffd166;">Last: (none)</div>
     <div style="display: flex; flex-direction: row; gap: 8px; margin-top: 6px;">
       <button id="toggle-raycast-type" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Mode: cursor</button>
-      <button id="toggle-input-mode" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Input: mouse</button>
     </div>
     <div style="display: flex; flex-direction: row; gap: 8px;">
       <button id="toggle-interval" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Interval: off</button>
@@ -39,7 +38,6 @@
       const ctl = document.getElementById('mouse-control');
       const label = document.getElementById('last-action');
       const toggleBtn = document.getElementById('toggle-raycast-type');
-      const inputBtn = document.getElementById('toggle-input-mode');
       if (!ctl || !label) return;
       if (toggleBtn) {
         const CAMERA_ID = 'cursor-mode-camera';
@@ -78,21 +76,7 @@
           updateBtn();
         });
       }
-      if (inputBtn) {
-        // default input mode: mouse
-        const updateInputBtn = () => {
-          const mode = ctl.getAttribute('data-input-mode') || 'mouse';
-          inputBtn.textContent = `Input: ${mode}`;
-        };
-        if (!ctl.getAttribute('data-input-mode')) ctl.setAttribute('data-input-mode', 'mouse');
-        updateInputBtn();
-        inputBtn.addEventListener('click', () => {
-          const curr = ctl.getAttribute('data-input-mode') || 'mouse';
-          const next = curr === 'mouse' ? 'keyboard' : 'mouse';
-          ctl.setAttribute('data-input-mode', next);
-          updateInputBtn();
-        });
-      }
+      // Removed input mode toggle; all inputs are treated equally
       // Interval controls (toggle on/off and adjust by 100ms within 100ms..2000ms)
       const intervalToggleBtn = document.getElementById('toggle-interval');
       const intervalDownBtn = document.getElementById('interval-down');

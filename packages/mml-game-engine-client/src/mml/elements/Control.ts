@@ -364,8 +364,6 @@ export class MouseManager {
 // Universal mapping system
 export class UniversalInputMapper {
   private activeInputs = new Map<string, number>();
-  private activeGamepadAxes = new Map<number, number>();
-  private activeGamepadButtons = new Map<number, number>();
   // Virtual controls are now handled by ControlManager
   private inputState: UniversalInputState = {
     axes: new Array(4).fill(0.0),
@@ -433,8 +431,7 @@ export class UniversalInputMapper {
       if (this.isDocumentHidden) return;
       const { axisIndex, value } = event.detail;
       if (axisIndex >= 0 && axisIndex < this.inputState.axes.length) {
-        this.inputState.axes[axisIndex] = value;
-        this.activeGamepadAxes.set(axisIndex, value);
+        this.updateInputAxis(axisIndex, value);
       }
     };
 
@@ -442,8 +439,7 @@ export class UniversalInputMapper {
       if (this.isDocumentHidden) return;
       const { buttonIndex, value } = event.detail;
       if (buttonIndex >= 0 && buttonIndex < this.inputState.buttons.length) {
-        this.inputState.buttons[buttonIndex] = value;
-        this.activeGamepadButtons.set(buttonIndex, value);
+        this.updateInputButton(buttonIndex, value);
       }
     };
 
@@ -606,8 +602,6 @@ export class UniversalInputMapper {
 
   private resetAllInputs(): void {
     this.activeInputs.clear();
-    this.activeGamepadAxes.clear();
-    this.activeGamepadButtons.clear();
     for (let i = 0; i < this.inputState.axes.length; i++) this.inputState.axes[i] = 0.0;
     for (let i = 0; i < this.inputState.buttons.length; i++) this.inputState.buttons[i] = 0.0;
     this.emitInputIfChanged();
@@ -988,6 +982,11 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
 
   public connectedCallback(): void {
     super.connectedCallback();
+
+    // lazy init gamepad manager
+    if (!GamepadManager.getInstance()) {
+      GamepadManager.getInstance();
+    }
 
     this.scene = this.getScene() as unknown as MMLScene<GameThreeJSAdapter>;
 
