@@ -1,4 +1,4 @@
-import { AttributeHandler, MElement, MMLScene, Ray } from "@mml-io/mml-web";
+import { AttributeHandler, MElement, MMLScene, parseFloatAttribute, Ray } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import {
@@ -313,10 +313,12 @@ export class MouseManager {
   public lastMouseClientX = 0;
   public lastMouseClientY = 0;
   private listenedInputs = new Set<string>();
+  private inputMapper: UniversalInputMapper;
   private dispatchMouseEvent: (key: string, value: number) => void;
 
-  constructor(dispatchMouseEvent: (key: string, value: number) => void) {
+  constructor(inputMapper: UniversalInputMapper, dispatchMouseEvent: (key: string, value: number) => void) {
     this.dispatchMouseEvent = dispatchMouseEvent;
+    this.inputMapper = inputMapper;
     this.setupMouseHandlers();
   }
 
@@ -336,24 +338,29 @@ export class MouseManager {
     };
 
     const onMouseDown = (event: MouseEvent) => {
-      console.log("mousedown", event.button);
+      // Update universal mapper so controls using polling can pick up held state
       if (event.button === 0) {
         this.dispatchMouseEvent("mouseleft", 1.0);
+        this.inputMapper.setActiveInput("mouseleft", 1.0);
       } else if (event.button === 1) {
         this.dispatchMouseEvent("mousemiddle", 1.0);
+        this.inputMapper.setActiveInput("mousemiddle", 1.0);
       } else if (event.button === 2) {
         this.dispatchMouseEvent("mouseright", 1.0);
+        this.inputMapper.setActiveInput("mouseright", 1.0);
       }
     };
 
     const onMouseUp = (event: MouseEvent) => {
-      console.log("mouseup", event.button);
       if (event.button === 0) {
         this.dispatchMouseEvent("mouseleft", 0.0);
+        this.inputMapper.setActiveInput("mouseleft", 0);
       } else if (event.button === 1) {
         this.dispatchMouseEvent("mousemiddle", 0.0);
+        this.inputMapper.setActiveInput("mousemiddle", 0);
       } else if (event.button === 2) {
         this.dispatchMouseEvent("mouseright", 0.0);
+        this.inputMapper.setActiveInput("mouseright", 0);
       }
     };
 
@@ -368,9 +375,7 @@ export class MouseManager {
 
   public destroy(): void {
     this.mouseEventListeners.forEach((listener, type) => {
-      if (type === "mousemove") {
-        document.removeEventListener("mousemove", listener);
-      }
+      document.removeEventListener(type as keyof DocumentEventMap, listener as any);
     });
     this.mouseEventListeners.clear();
   }
@@ -389,7 +394,6 @@ export class UniversalInputMapper {
   };
   private gamepadEventListeners = new Map<string, (event: CustomEvent) => void>();
   private keyboardEventListeners = new Map<string, (event: KeyboardEvent) => void>();
-  private debug = false;
 
   private constructor() {
     this.setupKeyboardHandlers();
@@ -529,6 +533,14 @@ export class UniversalInputMapper {
     return { ...this.inputState };
   }
 
+  public setActiveInput(key: string, value: number): void {
+    if (value && value !== 0) {
+      this.activeInputs.set(key, value);
+    } else {
+      this.activeInputs.delete(key);
+    }
+  }
+
   // Virtual control creation methods removed - now handled by ControlManager
 
   public destroy(): void {
@@ -558,6 +570,7 @@ export type MControlProps = {
   button?: string; // button index ("0" for primary button)
   hint?: string; // optional hint text for UI
   debug?: boolean;
+  "interval-ms"?: number; // how oten, if the input has not changed and is non-zero, to send the same value again
   input?: string;
   "raycast-distance"?: string;
   "raycast-type"?: string;
@@ -740,6 +753,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     button: "0",
     hint: "",
     debug: false,
+    "interval-ms": undefined,
     input: undefined,
     "raycast-distance": undefined,
     "raycast-type": undefined,
@@ -774,6 +788,9 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     },
     "raycast-type": (instance, newValue) => {
       instance.props["raycast-type"] = newValue || undefined;
+    },
+    "interval-ms": (instance, newValue) => {
+      instance.props["interval-ms"] = parseFloatAttribute(newValue, undefined);
     },
   });
 
@@ -824,7 +841,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   }
 
   public dispatchInputEvent(data: InputEventDetail) {
-    console.log("dispatchInputEvent", data);
     if (this.shouldAddRayToEvent()) {
       data.ray = this.getRay();
     }
@@ -833,6 +849,8 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       detail: data,
     });
     this.dispatchEvent(event);
+
+    this.previousInputDispatchTime = Date.now();
   }
 
   private shouldAddRayToEvent(): boolean {
@@ -943,6 +961,9 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       return;
     }
 
+    // Ensure mouse inputs are registered for polling when applicable
+    this.mouseManager?.updateMouseInputs(this.getInputs());
+
     const pollInput = () => {
       const inputState = this.inputMapper.getInputState(this.getInputs());
       this.processInput(inputState);
@@ -973,6 +994,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   }
 
   private previousInputState: UniversalInputState | null = null;
+  private previousInputDispatchTime: number | null = null;
 
   private hasInputChanged(inputState: UniversalInputState): boolean {
     // compare values of all axes and buttons. if the size has changed, return true. if the values have changed by more than 0.01, return true.
@@ -996,6 +1018,25 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
         return true;
       }
     }
+
+    console.log("inputState", inputState);
+
+    const anyValueNonZero = inputState.axes.some((axis) => axis !== 0) || inputState.buttons.some((button) => button !== 0);
+
+    if (this.props["interval-ms"]) {
+      const interval = this.props["interval-ms"];
+      console.log("interval", interval, anyValueNonZero);
+      if (interval > 0 && anyValueNonZero) {
+        if (this.previousInputDispatchTime) {
+          const timeSincePreviousInput = Date.now() - this.previousInputDispatchTime;
+          if (timeSincePreviousInput < interval) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -1042,6 +1083,9 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     }
     super.attributeChangedCallback(name, oldValue, newValue);
     MControl.attributeHandler.handle(this, name, newValue);
+    if (name === "input") {
+      this.mouseManager?.updateMouseInputs(this.getInputs());
+    }
   }
 
   public connectedCallback(): void {
@@ -1054,7 +1098,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     }
 
     this.controlGraphics = new ControlGraphics(this);
-    this.mouseManager = new MouseManager(this.dispatchMouseEvent.bind(this));
+    this.mouseManager = new MouseManager(this.inputMapper, this.dispatchMouseEvent.bind(this));
 
     const graphicsAdapter = this.scene.getGraphicsAdapter();
     graphicsAdapter.registerControl(this);

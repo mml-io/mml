@@ -1,6 +1,6 @@
-  <m-sun></m-sun>
-  <m-environment-light></m-environment-light>
-  <m-environment-map></m-environment-map>
+<m-sun></m-sun>
+<m-environment-light></m-environment-light>
+<m-environment-map></m-environment-map>
 
 <m-cube id="floor" kinematic="true" width="60" depth="60" y="0" opacity="1" color="#444"></m-cube>
 
@@ -28,6 +28,11 @@
       <button id="toggle-raycast-type" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Mode: camera</button>
       <button id="toggle-input-mode" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Input: mouse</button>
     </div>
+    <div style="display: flex; flex-direction: row; gap: 8px;">
+      <button id="toggle-interval" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Interval: off</button>
+      <button id="interval-down" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">-100ms</button>
+      <button id="interval-up" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">+100ms</button>
+    </div>
   </div>
   <script>
     (function(){
@@ -37,9 +42,33 @@
       const inputBtn = document.getElementById('toggle-input-mode');
       if (!ctl || !label) return;
       if (toggleBtn) {
+        const CAMERA_ID = 'cursor-mode-camera';
+        const ensureCursorCamera = () => {
+          let cam = document.getElementById(CAMERA_ID);
+          if (!cam) {
+            cam = document.createElement('m-camera');
+            cam.setAttribute('id', CAMERA_ID);
+            cam.setAttribute('x', '0');
+            cam.setAttribute('y', '25');
+            cam.setAttribute('z', '25');
+            cam.setAttribute('rx', '-45');
+            cam.setAttribute('fov', '60');
+            document.body.appendChild(cam);
+          }
+          return cam;
+        };
+        const removeCursorCamera = () => {
+          const cam = document.getElementById(CAMERA_ID);
+          if (cam && cam.parentNode) cam.parentNode.removeChild(cam);
+        };
         const updateBtn = () => {
           const mode = ctl.getAttribute('raycast-type') || 'camera';
           toggleBtn.textContent = `Mode: ${mode}`;
+          if (mode === 'cursor') {
+            ensureCursorCamera();
+          } else {
+            removeCursorCamera();
+          }
         };
         updateBtn();
         toggleBtn.addEventListener('click', () => {
@@ -64,8 +93,65 @@
           updateInputBtn();
         });
       }
+      // Interval controls (toggle on/off and adjust by 100ms within 100ms..2000ms)
+      const intervalToggleBtn = document.getElementById('toggle-interval');
+      const intervalDownBtn = document.getElementById('interval-down');
+      const intervalUpBtn = document.getElementById('interval-up');
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+      const getAttrMs = () => {
+        const raw = parseInt(ctl.getAttribute('interval-ms') || '0', 10);
+        return Number.isFinite(raw) ? raw : 0;
+      };
+      let currentIntervalMs = clamp(getAttrMs() || 500, 100, 2000);
+      const isOn = () => {
+        const v = getAttrMs();
+        return v > 0;
+      };
+      const updateIntervalUI = () => {
+        if (intervalToggleBtn) intervalToggleBtn.textContent = isOn() ? `Interval: ${currentIntervalMs}ms` : 'Interval: off';
+        const visible = isOn();
+        if (intervalDownBtn) {
+          intervalDownBtn.style.display = visible ? '' : 'none';
+          intervalDownBtn.disabled = currentIntervalMs <= 100;
+        }
+        if (intervalUpBtn) {
+          intervalUpBtn.style.display = visible ? '' : 'none';
+          intervalUpBtn.disabled = currentIntervalMs >= 2000;
+        }
+      };
+      // If an attribute is already present, normalize it to bounds
+      if (isOn()) {
+        currentIntervalMs = clamp(getAttrMs(), 100, 2000);
+        ctl.setAttribute('interval-ms', String(currentIntervalMs));
+      }
+      updateIntervalUI();
+      if (intervalToggleBtn) {
+        intervalToggleBtn.addEventListener('click', () => {
+          if (isOn()) {
+            ctl.removeAttribute('interval-ms');
+          } else {
+            ctl.setAttribute('interval-ms', String(currentIntervalMs));
+          }
+          updateIntervalUI();
+        });
+      }
+      if (intervalDownBtn) {
+        intervalDownBtn.addEventListener('click', () => {
+          currentIntervalMs = clamp(currentIntervalMs - 100, 100, 2000);
+          if (isOn()) ctl.setAttribute('interval-ms', String(currentIntervalMs));
+          updateIntervalUI();
+        });
+      }
+      if (intervalUpBtn) {
+        intervalUpBtn.addEventListener('click', () => {
+          currentIntervalMs = clamp(currentIntervalMs + 100, 100, 2000);
+          if (isOn()) ctl.setAttribute('interval-ms', String(currentIntervalMs));
+          updateIntervalUI();
+        });
+      }
       ctl.addEventListener('input', (ev) => {
         const d = ev.detail || {};
+        if (d.value < 0.5) return
         const r = d.ray || {};
         label.textContent = `dist=${r.distance?.toFixed(2) ?? '-'} dir=(${r.direction?.x?.toFixed?.(2) ?? '-'}, ${r.direction?.y?.toFixed?.(2) ?? '-'}, ${r.direction?.z?.toFixed?.(2) ?? '-'})`;
       });
@@ -145,7 +231,7 @@
 
     ctl.addEventListener('input', (ev) => {
       const d = ev.detail || {};
-      if (!d.ray) return;
+      if (!d.ray || d.value < 0.5) return;
       updateRay(d.ray);
     });
   })();
