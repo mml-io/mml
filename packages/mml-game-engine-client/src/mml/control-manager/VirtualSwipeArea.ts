@@ -24,6 +24,8 @@ export class VirtualSwipeArea implements VirtualControlComponent {
   private startTime = 0;
   private minSwipeDistance = 50;
   private minSwipeVelocity = 0.02;
+  private boundHandleVisibilityChange: () => void;
+  private boundHandleWindowBlur: () => void;
 
   constructor(controlInfo: ControlInfo, theme?: ControlTheme) {
     this.controlInfo = controlInfo;
@@ -40,6 +42,9 @@ export class VirtualSwipeArea implements VirtualControlComponent {
       borderRadius: "0px",
       shadowStyle: "0 2px 8px rgba(0, 0, 0, 0.1)",
     };
+
+    this.boundHandleVisibilityChange = this.handleVisibilityChange.bind(this);
+    this.boundHandleWindowBlur = this.handleWindowBlur.bind(this);
 
     this.createElement();
     this.setupEventListeners();
@@ -102,6 +107,9 @@ export class VirtualSwipeArea implements VirtualControlComponent {
     document.addEventListener("mouseup", this.handleTouchEnd.bind(this), {
       passive: false,
     });
+
+    document.addEventListener("visibilitychange", this.boundHandleVisibilityChange);
+    window.addEventListener("blur", this.boundHandleWindowBlur);
   }
 
   private handleTouchStart(event: TouchEvent | MouseEvent): void {
@@ -183,6 +191,24 @@ export class VirtualSwipeArea implements VirtualControlComponent {
           this.sendSwipeEvent(1, axisVelocity, Math.abs(deltaY));
         }
       }
+    }
+  }
+
+  private handleVisibilityChange(): void {
+    if (document.hidden) {
+      if (this.isActive) {
+        this.isActive = false;
+        this.element.style.opacity = "0.7";
+        this.rippleElement.style.transform = "scale(0)";
+      }
+    }
+  }
+
+  private handleWindowBlur(): void {
+    if (this.isActive) {
+      this.isActive = false;
+      this.element.style.opacity = "0.7";
+      this.rippleElement.style.transform = "scale(0)";
     }
   }
 

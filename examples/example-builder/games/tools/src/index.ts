@@ -12,11 +12,6 @@ class XTool extends HTMLElement {
     this.__ensureGroup();
     this.__updateGroupEquippedState();
     this.__controls = Array.from(this.querySelectorAll("m-control"));
-    this.__controls.forEach((ctrl: any) => {
-      if (ctrl && typeof ctrl.startInputPolling === "function") {
-        ctrl.startInputPolling();
-      }
-    });
   }
   disconnectedCallback() {
     this.__controls.forEach((ctrl: any) => {
@@ -109,7 +104,6 @@ class XInventoryManager extends HTMLElement {
       slotControl.setAttribute("input", `Keyboard_${String((i + 1) % 10)}`);
       slotControl.dataset.slotIndex = String(i);
       slotControl.addEventListener("input", this.__onSlotInput);
-      try { slotControl.startInputPolling && slotControl.startInputPolling(); } catch {}
       this.appendChild(slotControl);
       this.__slotControls.push(slotControl);
     }

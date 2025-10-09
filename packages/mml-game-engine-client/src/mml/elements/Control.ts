@@ -9,7 +9,6 @@ import {
 } from "../control-manager/ControlTypes";
 import { GameThreeJSAdapter } from "../GameThreeJSAdapter";
 
-// Gamepad Manager (adapted from upstream)
 export class GamepadManager {
   private static instance: GamepadManager | null = null;
   private gamepads = new Map<number, GamepadState>();
@@ -45,8 +44,8 @@ export class GamepadManager {
       this.gamepads.set(gamepad.index, {
         id: gamepad.index,
         connected: true,
-        axes: new Array(gamepad.axes.length).fill(0),
-        buttons: new Array(gamepad.buttons.length).fill(false),
+        axes: new Array(gamepad.axes.length).fill(0.0),
+        buttons: new Array(gamepad.buttons.length).fill(0.0),
         timestamp: Date.now(),
         mapping: gamepad.mapping,
       });
@@ -87,7 +86,7 @@ export class GamepadManager {
     this.isPolling = true;
     this.pollInterval = window.setInterval(() => {
       this.pollGamepads();
-    }, 16); // ~60fps
+    }, 1000/75); // chrome polls at 62.5Hz, so we'll poll slightly more frequently to ensure we get the latest state
   }
 
   private stopPolling(): void {
@@ -299,7 +298,6 @@ export class GamepadManager {
   }
 }
 
-// Device detection
 export const isMobileDevice = (): boolean => {
   return (
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -312,23 +310,11 @@ export class MouseManager {
   private mouseEventListeners = new Map<string, (event: MouseEvent) => void>();
   public lastMouseClientX = 0;
   public lastMouseClientY = 0;
-  private listenedInputs = new Set<string>();
   private inputMapper: UniversalInputMapper;
-  private dispatchMouseEvent: (key: string, value: number) => void;
 
-  constructor(inputMapper: UniversalInputMapper, dispatchMouseEvent: (key: string, value: number) => void) {
-    this.dispatchMouseEvent = dispatchMouseEvent;
+  constructor(inputMapper: UniversalInputMapper) {
     this.inputMapper = inputMapper;
     this.setupMouseHandlers();
-  }
-
-  public updateMouseInputs(inputs: string[]): void {
-    for (const input of inputs) {
-      if (this.listenedInputs.has(input) || !input.startsWith("mouse")) {
-        return;
-      }
-      this.listenedInputs.add(input);
-    }
   }
 
   private setupMouseHandlers(): void {
@@ -340,27 +326,21 @@ export class MouseManager {
     const onMouseDown = (event: MouseEvent) => {
       // Update universal mapper so controls using polling can pick up held state
       if (event.button === 0) {
-        this.dispatchMouseEvent("mouseleft", 1.0);
-        this.inputMapper.setActiveInput("mouseleft", 1.0);
+        this.inputMapper.updateInputKey("mouseleft", 1.0);
       } else if (event.button === 1) {
-        this.dispatchMouseEvent("mousemiddle", 1.0);
-        this.inputMapper.setActiveInput("mousemiddle", 1.0);
+        this.inputMapper.updateInputKey("mousemiddle", 1.0);
       } else if (event.button === 2) {
-        this.dispatchMouseEvent("mouseright", 1.0);
-        this.inputMapper.setActiveInput("mouseright", 1.0);
+        this.inputMapper.updateInputKey("mouseright", 1.0);
       }
     };
 
     const onMouseUp = (event: MouseEvent) => {
       if (event.button === 0) {
-        this.dispatchMouseEvent("mouseleft", 0.0);
-        this.inputMapper.setActiveInput("mouseleft", 0);
+        this.inputMapper.updateInputKey("mouseleft", 0.0);
       } else if (event.button === 1) {
-        this.dispatchMouseEvent("mousemiddle", 0.0);
-        this.inputMapper.setActiveInput("mousemiddle", 0);
+        this.inputMapper.updateInputKey("mousemiddle", 0.0);
       } else if (event.button === 2) {
-        this.dispatchMouseEvent("mouseright", 0.0);
-        this.inputMapper.setActiveInput("mouseright", 0);
+        this.inputMapper.updateInputKey("mouseright", 0.0);
       }
     };
 
@@ -383,45 +363,63 @@ export class MouseManager {
 
 // Universal mapping system
 export class UniversalInputMapper {
-  private static instance: UniversalInputMapper | null = null;
   private activeInputs = new Map<string, number>();
   private activeGamepadAxes = new Map<number, number>();
   private activeGamepadButtons = new Map<number, number>();
   // Virtual controls are now handled by ControlManager
   private inputState: UniversalInputState = {
-    axes: new Array(4).fill(0),
-    buttons: new Array(16).fill(false),
+    axes: new Array(4).fill(0.0),
+    buttons: new Array(16).fill(0.0),
   };
   private gamepadEventListeners = new Map<string, (event: CustomEvent) => void>();
   private keyboardEventListeners = new Map<string, (event: KeyboardEvent) => void>();
+  private control: MControl<GameThreeJSAdapter>;
+  private isDocumentHidden = false;
+  private onVisibilityChange?: () => void;
+  private onWindowBlur?: () => void;
+  private onWindowFocus?: () => void;
 
-  private constructor() {
+  constructor(control: MControl<GameThreeJSAdapter>) {
+    this.control = control;
     this.setupKeyboardHandlers();
     this.setupGamepadHandlers();
-  }
 
-  public static getInstance(): UniversalInputMapper {
-    if (!UniversalInputMapper.instance) {
-      UniversalInputMapper.instance = new UniversalInputMapper();
-    }
-    return UniversalInputMapper.instance;
+    this.onVisibilityChange = () => {
+      if (document.hidden) {
+        this.isDocumentHidden = true;
+        this.resetAllInputs();
+      } else {
+        this.isDocumentHidden = false;
+      }
+    };
+
+    this.onWindowBlur = () => {
+      this.isDocumentHidden = true;
+      this.resetAllInputs();
+    };
+
+    this.onWindowFocus = () => {
+      this.isDocumentHidden = false;
+    };
+
+    document.addEventListener("visibilitychange", this.onVisibilityChange);
+    window.addEventListener("blur", this.onWindowBlur);
+    window.addEventListener("focus", this.onWindowFocus);
   }
 
   private setupKeyboardHandlers(): void {
     const onKeyDown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
-      console.log("keydown", key);
-      this.activeInputs.set(key, 1.0);
       this.updateKeyboardState();
+      this.updateInputKey(key, 1.0);
     };
 
     document.addEventListener("keydown", onKeyDown);
 
     const onKeyUp = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
-      console.log("keyup", key);
-      this.activeInputs.delete(key);
       this.updateKeyboardState();
+      this.updateInputKey(key, 0.0);
     };
 
     document.addEventListener("keyup", onKeyUp);
@@ -432,6 +430,7 @@ export class UniversalInputMapper {
 
   private setupGamepadHandlers(): void {
     const axisListener = (event: CustomEvent) => {
+      if (this.isDocumentHidden) return;
       const { axisIndex, value } = event.detail;
       if (axisIndex >= 0 && axisIndex < this.inputState.axes.length) {
         this.inputState.axes[axisIndex] = value;
@@ -440,6 +439,7 @@ export class UniversalInputMapper {
     };
 
     const buttonListener = (event: CustomEvent) => {
+      if (this.isDocumentHidden) return;
       const { buttonIndex, value } = event.detail;
       if (buttonIndex >= 0 && buttonIndex < this.inputState.buttons.length) {
         this.inputState.buttons[buttonIndex] = value;
@@ -501,7 +501,7 @@ export class UniversalInputMapper {
 
   public getInputState(inputs?: string[]): UniversalInputState {
     // if inputs are provided
-    if (inputs) {
+    if (inputs && inputs.length > 0) {
       let buttonValue = 0;
 
       // process keyboard inputs
@@ -526,8 +526,7 @@ export class UniversalInputMapper {
           }
         }
       });
-      this.inputState.axes = [];
-      this.inputState.buttons = [buttonValue];
+      return { axes: [], buttons: [buttonValue] };
     }
 
     return { ...this.inputState };
@@ -541,9 +540,50 @@ export class UniversalInputMapper {
     }
   }
 
+  public updateInputKey(key: string, value: number): void {
+    this.activeInputs.set(key, value);
+    this.emitInputIfChanged();
+  }
+
+  public updateInputButton(buttonIndex: number, value: number): void {
+    console.log("updateInputButton", buttonIndex, value);
+    this.inputState.buttons[buttonIndex] = value;
+    this.emitInputIfChanged();
+  }
+
+  public updateInputAxis(axisIndex: number, value: number): void {
+    console.log("updateInputAxis", axisIndex, value);
+    this.inputState.axes[axisIndex] = value;
+    this.emitInputIfChanged();
+  }
+
+  private previousInputState: UniversalInputState | null = null;
+
+  private isSameInputState(inputState1: UniversalInputState, inputState2: UniversalInputState): boolean {
+    return inputState1.axes.every((axis, index) => axis === inputState2.axes[index]) && inputState1.buttons.every((button, index) => button === inputState2.buttons[index]);
+  }
+
+  private emitInputIfChanged(): void {
+    const newInputState = this.getInputState(this.control.getInputs());
+    if (this.previousInputState && this.isSameInputState(this.previousInputState, newInputState)) {
+      return;
+    }
+    this.previousInputState = newInputState;
+    this.control.emitInput(newInputState);
+  }
+
   // Virtual control creation methods removed - now handled by ControlManager
 
   public destroy(): void {
+    if (this.onVisibilityChange) {
+      document.removeEventListener("visibilitychange", this.onVisibilityChange);
+    }
+    if (this.onWindowBlur) {
+      window.removeEventListener("blur", this.onWindowBlur);
+    }
+    if (this.onWindowFocus) {
+      window.removeEventListener("focus", this.onWindowFocus);
+    }
     this.gamepadEventListeners.forEach((listener, type) => {
       if (type === "axis") {
         window.removeEventListener("gamepad-axis", listener);
@@ -562,6 +602,15 @@ export class UniversalInputMapper {
     });
     this.keyboardEventListeners.clear();
     // Virtual controls cleanup now handled by ControlManager
+  }
+
+  private resetAllInputs(): void {
+    this.activeInputs.clear();
+    this.activeGamepadAxes.clear();
+    this.activeGamepadButtons.clear();
+    for (let i = 0; i < this.inputState.axes.length; i++) this.inputState.axes[i] = 0.0;
+    for (let i = 0; i < this.inputState.buttons.length; i++) this.inputState.buttons[i] = 0.0;
+    this.emitInputIfChanged();
   }
 }
 export type MControlProps = {
@@ -727,8 +776,6 @@ export class ControlGraphics {
   dispose() {
     this.clearDebugVisualisation();
 
-    this.control.stopInputPolling();
-
     const graphicsAdapter = this.control.scene.getGraphicsAdapter();
     graphicsAdapter.unregisterControl(this.control);
   }
@@ -738,14 +785,11 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   static tagName = "m-control";
 
   public controlGraphics: ControlGraphics | null = null;
-  private inputMapper = UniversalInputMapper.getInstance();
-  private animationFrameId: number | null = null;
+  public inputMapper: UniversalInputMapper | null = null;
   public scene: MMLScene<GameThreeJSAdapter>;
   public mouseManager: MouseManager | null = null;
 
-  // Mouse input state
-  private mouseAxisValues: { x: number; y: number } = { x: 0, y: 0 };
-  private mouseListenerCleanup: (() => void) | null = null;
+  private timer: number | null = null;
 
   public props: MControlProps = {
     type: "axis",
@@ -828,18 +872,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     return false; // Control elements are not clickable
   }
 
-  private dispatchMouseEvent(key: string, value: number): void {
-    // check if the key is listened to
-    const inputs = this.getInputs();
-    if (!inputs.includes(key)) {
-      return;
-    }
-
-    this.dispatchInputEvent({
-      value,
-    });
-  }
-
   public dispatchInputEvent(data: InputEventDetail) {
     if (this.shouldAddRayToEvent()) {
       data.ray = this.getRay();
@@ -849,8 +881,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       detail: data,
     });
     this.dispatchEvent(event);
-
-    this.previousInputDispatchTime = Date.now();
+    console.log("dispatchInputEvent", data);
   }
 
   private shouldAddRayToEvent(): boolean {
@@ -879,176 +910,12 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     return null;
   }
 
-  /**
-   * Setup or cleanup mouse input based on enableMouse prop
-   */
-  private updateMouseInput(): void {
-    // Cleanup existing mouse listener if any
-    if (this.mouseListenerCleanup) {
-      this.mouseListenerCleanup();
-      this.mouseListenerCleanup = null;
-      this.mouseAxisValues = { x: 0, y: 0 };
-    }
-
-    // Only setup mouse input if enabled, on desktop, and for axis controls
-    if (!this.props.enableMouse || isMobileDevice() || this.props.type !== "axis") {
-      return;
-    }
-
-    // Only setup if we're already connected (have scene)
-    if (this.scene && this.scene.hasGraphicsAdapter()) {
-      this.setupMouseInput();
-    }
-  }
-
-  /**
-   * Setup mouse input tracking
-   */
-  private setupMouseInput(): void {
-    if (!this.scene) return;
-
-    const graphicsAdapter = this.scene.getGraphicsAdapter();
-    if (!graphicsAdapter || !("getCanvasElement" in graphicsAdapter)) {
-      return;
-    }
-
-    const canvas = (graphicsAdapter as any).getCanvasElement();
-    if (!canvas) return;
-
-    // Enable pointer events on canvas for mouse input
-    canvas.style.pointerEvents = "auto";
-
-    const handleMouseMove = (event: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-
-      // Get mouse position relative to canvas
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
-
-      // Convert to normalized coordinates (-1 to 1) relative to center
-      this.mouseAxisValues.x = (mouseX - centerX) / centerX;
-      this.mouseAxisValues.y = -(mouseY - centerY) / centerY; // Invert Y for intuitive up/down
-
-      // Clamp to -1, 1 range
-      this.mouseAxisValues.x = Math.max(-1, Math.min(1, this.mouseAxisValues.x));
-      this.mouseAxisValues.y = Math.max(-1, Math.min(1, this.mouseAxisValues.y));
-    };
-
-    canvas.addEventListener("mousemove", handleMouseMove);
-
-    // Store cleanup function
-    this.mouseListenerCleanup = () => {
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      // Reset pointer events when cleaning up
-      canvas.style.pointerEvents = "none";
-    };
-  }
-
-  /**
-   * Start input polling for axis and button controls.
-   * This is needed because virtual controls update inputState and expect polling.
-   * Swipe controls call dispatchInputEvent directly.
-   */
-  public startInputPolling(): void {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
-
-    // Only poll for axis and button controls, not swipe
-    if (this.props.type === "swipe") {
-      return;
-    }
-
-    // Ensure mouse inputs are registered for polling when applicable
-    this.mouseManager?.updateMouseInputs(this.getInputs());
-
-    const pollInput = () => {
-      const inputState = this.inputMapper.getInputState(this.getInputs());
-      this.processInput(inputState);
-      this.animationFrameId = requestAnimationFrame(pollInput);
-    };
-
-    this.animationFrameId = requestAnimationFrame(pollInput);
-  }
-
   // process the input string as a space separated list of keys
   getInputs(): string[] {
     return this.props.input?.split(" ") || [];
   }
 
-  /**
-   * Stop input polling
-   */
-  public stopInputPolling(): void {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
-    }
-    // Cleanup mouse input
-    if (this.mouseListenerCleanup) {
-      this.mouseListenerCleanup();
-      this.mouseListenerCleanup = null;
-    }
-  }
-
-  private previousInputState: UniversalInputState | null = null;
-  private previousInputDispatchTime: number | null = null;
-
-  private hasInputChanged(inputState: UniversalInputState): boolean {
-    // compare values of all axes and buttons. if the size has changed, return true. if the values have changed by more than 0.01, return true.
-    if (
-      inputState.axes.length !== this.previousInputState?.axes.length ||
-      inputState.buttons.length !== this.previousInputState?.buttons.length
-    ) {
-      return true;
-    }
-    const axisThreshold = 0.01;
-    for (let i = 0; i < inputState.axes.length; i++) {
-      if (Math.abs(inputState.axes[i] - this.previousInputState?.axes[i] || 0) > axisThreshold) {
-        return true;
-      }
-    }
-    const buttonThreshold = 0.01;
-    for (let i = 0; i < inputState.buttons.length; i++) {
-      if (
-        Math.abs(inputState.buttons[i] - this.previousInputState?.buttons[i] || 0) > buttonThreshold
-      ) {
-        return true;
-      }
-    }
-
-    console.log("inputState", inputState);
-
-    const anyValueNonZero = inputState.axes.some((axis) => axis !== 0) || inputState.buttons.some((button) => button !== 0);
-
-    if (this.props["interval-ms"]) {
-      const interval = this.props["interval-ms"];
-      console.log("interval", interval, anyValueNonZero);
-      if (interval > 0 && anyValueNonZero) {
-        if (this.previousInputDispatchTime) {
-          const timeSincePreviousInput = Date.now() - this.previousInputDispatchTime;
-          if (timeSincePreviousInput < interval) {
-            return false;
-          }
-        }
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Process input from the inputState and dispatch events to game logic
-   */
-  private processInput(inputState: UniversalInputState): void {
-    if (!this.hasInputChanged(inputState)) {
-      return;
-    }
-    this.previousInputState = inputState;
-
+  public emitInput(inputState: UniversalInputState): void {
     if (this.props.type === "axis" && this.props.axis) {
       const axisIndices = this.props.axis.split(",").map((s) => parseInt(s.trim()));
 
@@ -1075,6 +942,40 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       }
       this.dispatchInputEvent({ value });
     }
+
+    const anyValueNonZero = inputState.axes.some((axis) => axis !== 0) || inputState.buttons.some((button) => button !== 0);
+
+    // if no interval is present and the value is non-zero, create one
+    // if the interval is present and all values are zero, remove the interval
+    if (!this.timer && anyValueNonZero) {
+      this.startEmitting();
+    } else if (this.timer && !anyValueNonZero) {
+      this.stopEmitting();
+    }
+  }
+
+  private startEmitting() {
+    // if no interval is desired, don't start one
+    if (!this.props["interval-ms"]) {
+      return;
+    }
+
+    if (this.timer) {
+      console.warn("asked to start emitting but timer already exists, clearing it");
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
+    this.timer = setInterval(() => {
+      this.emitInput(this.inputMapper.getInputState(this.getInputs()));
+    }, this.props["interval-ms"]);
+  }
+
+  private stopEmitting() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
@@ -1083,9 +984,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     }
     super.attributeChangedCallback(name, oldValue, newValue);
     MControl.attributeHandler.handle(this, name, newValue);
-    if (name === "input") {
-      this.mouseManager?.updateMouseInputs(this.getInputs());
-    }
   }
 
   public connectedCallback(): void {
@@ -1098,7 +996,8 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     }
 
     this.controlGraphics = new ControlGraphics(this);
-    this.mouseManager = new MouseManager(this.inputMapper, this.dispatchMouseEvent.bind(this));
+    this.inputMapper = new UniversalInputMapper(this);
+    this.mouseManager = new MouseManager(this.inputMapper);
 
     const graphicsAdapter = this.scene.getGraphicsAdapter();
     graphicsAdapter.registerControl(this);
@@ -1121,7 +1020,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   }
 
   public disconnectedCallback(): void {
-    this.stopInputPolling();
     this.controlGraphics?.dispose();
     this.controlGraphics = null;
     this.mouseManager?.destroy();

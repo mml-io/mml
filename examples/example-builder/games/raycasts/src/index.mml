@@ -13,8 +13,8 @@
 <m-control
   id="mouse-control"
   type="button"
-  input="mouseleft mouseright f g"
-  raycast-type="camera"
+  input="mouseleft mouseright f g gamepad-a gamepad-rt"
+  raycast-type="cursor"
   raycast-distance="200"
 ></m-control>
 
@@ -25,7 +25,7 @@
     <div style="font-size: 11px; color: #adb5bd;">Left/Right produce different actions.</div>
     <div id="last-action" style="font-size: 12px; color: #ffd166;">Last: (none)</div>
     <div style="display: flex; flex-direction: row; gap: 8px; margin-top: 6px;">
-      <button id="toggle-raycast-type" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Mode: camera</button>
+      <button id="toggle-raycast-type" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Mode: cursor</button>
       <button id="toggle-input-mode" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Input: mouse</button>
     </div>
     <div style="display: flex; flex-direction: row; gap: 8px;">
@@ -49,9 +49,9 @@
             cam = document.createElement('m-camera');
             cam.setAttribute('id', CAMERA_ID);
             cam.setAttribute('x', '0');
-            cam.setAttribute('y', '25');
-            cam.setAttribute('z', '25');
-            cam.setAttribute('rx', '-45');
+            cam.setAttribute('y', '10');
+            cam.setAttribute('z', '15');
+            cam.setAttribute('rx', '-25');
             cam.setAttribute('fov', '60');
             document.body.appendChild(cam);
           }

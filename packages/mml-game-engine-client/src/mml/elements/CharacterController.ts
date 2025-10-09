@@ -275,6 +275,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
       button: "0",
       hint: "",
       debug: false,
+      "interval-ms": 10,
     };
     this.movementControl.addEventListener("input", this.handleMovementInput.bind(this));
     this.movementControl.scene = this.scene;
@@ -288,6 +289,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
         button: "0",
         hint: "",
         debug: false,
+        "interval-ms": 100, // enables bunny hop
       };
       this.jumpControl.addEventListener("input", this.handleJumpInput.bind(this));
       this.jumpControl.scene = this.scene;
@@ -301,6 +303,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
       button: "0",
       hint: "",
       debug: false,
+      "interval-ms": 100,
     };
     this.cameraControl.addEventListener("input", this.handleCameraInput.bind(this));
     this.cameraControl.scene = this.scene;
@@ -330,12 +333,11 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
         control.attributeChangedCallback(name, null, value);
       }
     }
-
-    control.startInputPolling();
   }
 
   private handleMovementInput(event: CustomEvent): void {
     const inputData = event.detail;
+    console.log("handleMovementInput", inputData);
     if (inputData.value && typeof inputData.value === "object") {
       const movement = inputData.value as { x: number; y: number };
       const magnitude = Math.sqrt(movement.x * movement.x + movement.y * movement.y);
@@ -366,7 +368,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
 
   private handleJumpInput(event: CustomEvent): void {
     const inputData = event.detail;
-    const jumpPressed = inputData.value === true;
+    const jumpPressed = inputData.value === 1.0;
 
     if (!this.controlState) {
       this.controlState = { direction: null, isSprinting: false, jump: jumpPressed };

@@ -23,6 +23,8 @@ export class VirtualJoystick implements VirtualControlComponent {
   private boundHandleStart: (event: TouchEvent | MouseEvent) => void;
   private boundHandleMove: (event: TouchEvent | MouseEvent) => void;
   private boundHandleEnd: (event: TouchEvent | MouseEvent) => void;
+  private boundHandleVisibilityChange: () => void;
+  private boundHandleWindowBlur: () => void;
 
   constructor(controlInfo: ControlInfo, theme?: ControlTheme) {
     this.controlInfo = controlInfo;
@@ -43,6 +45,8 @@ export class VirtualJoystick implements VirtualControlComponent {
     this.boundHandleStart = this.handleStart.bind(this);
     this.boundHandleMove = this.handleMove.bind(this);
     this.boundHandleEnd = this.handleEnd.bind(this);
+    this.boundHandleVisibilityChange = this.handleVisibilityChange.bind(this);
+    this.boundHandleWindowBlur = this.handleWindowBlur.bind(this);
 
     this.createElement();
     this.setupEventListeners();
@@ -121,6 +125,9 @@ export class VirtualJoystick implements VirtualControlComponent {
     document.addEventListener("mouseup", this.boundHandleEnd, {
       passive: false,
     });
+
+    document.addEventListener("visibilitychange", this.boundHandleVisibilityChange);
+    window.addEventListener("blur", this.boundHandleWindowBlur);
   }
 
   private handleStart(event: TouchEvent | MouseEvent): void {
@@ -146,6 +153,22 @@ export class VirtualJoystick implements VirtualControlComponent {
     this.resetStick();
 
     this.tryVibrate(5);
+  }
+
+  private handleVisibilityChange(): void {
+    if (document.hidden) {
+      if (this.isDragging) {
+        this.isDragging = false;
+        this.resetStick();
+      }
+    }
+  }
+
+  private handleWindowBlur(): void {
+    if (this.isDragging) {
+      this.isDragging = false;
+      this.resetStick();
+    }
   }
 
   private tryVibrate(duration: number): void {
@@ -203,13 +226,13 @@ export class VirtualJoystick implements VirtualControlComponent {
     const axisIndices =
       this.controlInfo.config.axis?.split(",").map((s) => parseInt(s.trim())) || [];
 
-    const inputMapper = (this.controlInfo.element as any).inputMapper;
-    if (inputMapper && inputMapper.inputState) {
+    const control = this.controlInfo.element;
+    if (control && control.inputMapper) {
       if (axisIndices.length >= 1) {
-        inputMapper.inputState.axes[axisIndices[0]] = x;
+        control.inputMapper.updateInputAxis(axisIndices[0], x);
       }
       if (axisIndices.length >= 2) {
-        inputMapper.inputState.axes[axisIndices[1]] = y;
+        control.inputMapper.updateInputAxis(axisIndices[1], y);
       }
     }
   }
@@ -262,6 +285,8 @@ export class VirtualJoystick implements VirtualControlComponent {
     this.trackElement.removeEventListener("mousedown", this.boundHandleStart);
     document.removeEventListener("mousemove", this.boundHandleMove);
     document.removeEventListener("mouseup", this.boundHandleEnd);
+    document.removeEventListener("visibilitychange", this.boundHandleVisibilityChange);
+    window.removeEventListener("blur", this.boundHandleWindowBlur);
 
     if (this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);

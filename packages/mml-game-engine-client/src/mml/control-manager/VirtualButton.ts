@@ -20,6 +20,8 @@ export class VirtualButton implements VirtualControlComponent {
   private debugInfo: any = null;
   private currentRadius = 25;
   private debugCircle: HTMLElement | null = null;
+  private boundHandleVisibilityChange: () => void;
+  private boundHandleWindowBlur: () => void;
 
   constructor(controlInfo: ControlInfo, theme?: ControlTheme) {
     this.controlInfo = controlInfo;
@@ -36,6 +38,9 @@ export class VirtualButton implements VirtualControlComponent {
       borderRadius: "50%",
       shadowStyle: "0 4px 12px rgba(0, 0, 0, 0.15)",
     };
+
+    this.boundHandleVisibilityChange = this.handleVisibilityChange.bind(this);
+    this.boundHandleWindowBlur = this.handleWindowBlur.bind(this);
 
     this.createElement();
     this.setupEventListeners();
@@ -110,6 +115,9 @@ export class VirtualButton implements VirtualControlComponent {
     this.element.addEventListener("mouseleave", this.handleRelease.bind(this), {
       passive: false,
     });
+
+    document.addEventListener("visibilitychange", this.boundHandleVisibilityChange);
+    window.addEventListener("blur", this.boundHandleWindowBlur);
   }
 
   private handlePress(event: TouchEvent | MouseEvent): void {
@@ -138,6 +146,28 @@ export class VirtualButton implements VirtualControlComponent {
     this.sendInputToControl(false);
   }
 
+  private handleVisibilityChange(): void {
+    if (document.hidden) {
+      if (this.isPressed) {
+        this.isPressed = false;
+        this.element.style.transform = "scale(1)";
+        this.element.style.opacity = "0.9";
+        this.element.style.background = this.theme.primaryColor;
+        this.sendInputToControl(false);
+      }
+    }
+  }
+
+  private handleWindowBlur(): void {
+    if (this.isPressed) {
+      this.isPressed = false;
+      this.element.style.transform = "scale(1)";
+      this.element.style.opacity = "0.9";
+      this.element.style.background = this.theme.primaryColor;
+      this.sendInputToControl(false);
+    }
+  }
+
   private tryVibrate(duration: number): void {
     if ("vibrate" in navigator && navigator.userActivation?.hasBeenActive) {
       try {
@@ -151,10 +181,8 @@ export class VirtualButton implements VirtualControlComponent {
   private sendInputToControl(pressed: boolean): void {
     const buttonIndex = parseInt(this.controlInfo.config.button || "0");
 
-    const inputMapper = (this.controlInfo.element as any).inputMapper;
-    if (inputMapper && inputMapper.inputState) {
-      inputMapper.inputState.buttons[buttonIndex] = pressed;
-    }
+    const control = this.controlInfo.element;
+    control.inputMapper.updateInputButton(buttonIndex, pressed ? 1.0 : 0.0);
   }
 
   render(container: HTMLElement): void {
@@ -239,6 +267,9 @@ export class VirtualButton implements VirtualControlComponent {
       this.debugCircle.remove();
       this.debugCircle = null;
     }
+
+    document.removeEventListener("visibilitychange", this.boundHandleVisibilityChange);
+    window.removeEventListener("blur", this.boundHandleWindowBlur);
 
     if (this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);

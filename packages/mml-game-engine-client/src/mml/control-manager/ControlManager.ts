@@ -220,20 +220,12 @@ export class ControlManager {
       controlInfo.visualComponent = this.createVisualComponent(controlInfo);
     }
 
-    // startInputPolling is now called by the control itself in connectedCallback
-    // after attributes are initialized
-
     this.updateLayout();
   }
 
   public removeControl(element: MControl<GameThreeJSAdapter>): void {
     const controlInfo = this.findControlByElement(element);
     if (controlInfo) {
-      // Always stop input polling for axis and button controls
-      if (controlInfo.type === "axis" || controlInfo.type === "button") {
-        element.stopInputPolling();
-      }
-
       // Dispose visual components if they exist
       controlInfo.visualComponent?.dispose();
       this.controlElements.delete(controlInfo.id);
