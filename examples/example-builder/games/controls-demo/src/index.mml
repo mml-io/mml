@@ -8,7 +8,7 @@
 <m-control
   id="ctl-keyboard-mouse"
   type="button"
-  input="Keyboard_W, Keyboard_A, Keyboard_S, Keyboard_D, Keyboard_Space, Keyboard_ShiftLeft, Keyboard_ControlLeft, Keyboard_ArrowUp, Keyboard_ArrowDown, Keyboard_ArrowLeft, Keyboard_ArrowRight, Mouse_LeftClick, Mouse_RightClick, Mouse_MiddleClick"
+  input="w a s d space shift control arrowup arrowdown arrowleft arrowright mouseleft"
 ></m-control>
 
 <!-- Axes for joysticks/gamepad sticks: left (0,1) and right (2,3) -->
@@ -16,7 +16,7 @@
 <m-control id="ctl-right-stick" type="axis" axis="2,3"></m-control>
 
 <!-- Buttons for a representative set of gamepad buttons -->
-<m-control id="ctl-gamepad-buttons" type="button" input="Gamepad_A, Gamepad_B, Gamepad_X, Gamepad_Y, Gamepad_LB, Gamepad_RB, Gamepad_LT, Gamepad_RT, Gamepad_Back, Gamepad_Start, Gamepad_LS, Gamepad_RS, Gamepad_DPad_Up, Gamepad_DPad_Down, Gamepad_DPad_Left, Gamepad_DPad_Right"></m-control>
+<m-control id="ctl-gamepad-buttons" type="button" input="gamepad-a, gamepad-b, gamepad-x, gamepad-y, gamepad-lb, Gamepad_RB, Gamepad_LT, Gamepad_RT, Gamepad_Back, Gamepad_Start, Gamepad_LS, Gamepad_RS, Gamepad_DPad_Up, Gamepad_DPad_Down, Gamepad_DPad_Left, Gamepad_DPad_Right"></m-control>
 
 <m-overlay anchor="top-left" offset-x="10" offset-y="10">
   <svg width="560" height="300" style="background: rgba(0,0,0,0.75); border-radius: 8px; padding: 8px;">
@@ -82,6 +82,7 @@
 
       if (kmCtl) {
         kmCtl.addEventListener('input', (ev) => {
+          console.log(ev)
           const d = ev.detail || {};
           const a = d.action || '(unknown)';
           if (kmLast) kmLast.textContent = a;

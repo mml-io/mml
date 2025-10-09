@@ -3,14 +3,14 @@ import { GameThreeJSAdapter } from "../GameThreeJSAdapter";
 
 export type UniversalInputState = {
   axes: number[];
-  buttons: boolean[];
+  buttons: number[];
 };
 
 export type GamepadState = {
   id: number;
   connected: boolean;
   axes: number[];
-  buttons: boolean[];
+  buttons: number[];
   timestamp: number;
   mapping: string;
   processedAxes?: number[];
@@ -73,6 +73,25 @@ export const XBOX_GAMEPAD_MAPPING: GamepadMapping = {
     DPadLeft: 14,
     DPadRight: 15,
   },
+};
+
+export const GAMEPAD_MEANINGFUL_BUTTON_MAPPING = {
+  "gamepad-a": 0,
+  "gamepad-b": 1,
+  "gamepad-x": 2,
+  "gamepad-y": 3,
+  "gamepad-lb": 4,
+  "gamepad-rb": 5,
+  "gamepad-lt": 6,
+  "gamepad-rt": 7,
+  "gamepad-back": 8,
+  "gamepad-start": 9,
+  "gamepad-ls": 10,
+  "gamepad-rs": 11,
+  "gamepad-dpad-up": 12,
+  "gamepad-dpad-down": 13,
+  "gamepad-dpad-left": 14,
+  "gamepad-dpad-right": 15,
 };
 
 export type ControlInfo = {

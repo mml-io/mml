@@ -10,9 +10,9 @@ function bindLog(id: string) {
 	});
 }
 
-bindLog("ctl-keyboard-mouse");
-bindLog("ctl-left-stick");
-bindLog("ctl-right-stick");
-bindLog("ctl-gamepad-buttons");
+// bindLog("ctl-keyboard-mouse");
+// bindLog("ctl-left-stick");
+// bindLog("ctl-right-stick");
+// bindLog("ctl-gamepad-buttons");
 
 

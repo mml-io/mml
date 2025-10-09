@@ -13,9 +13,9 @@
 <m-control
   id="mouse-control"
   type="button"
-  input="Mouse_LeftClick, Mouse_RightClick, Keyboard_F, Keyboard_G"
+  input="mouseleft mouseright f g"
   raycast-type="camera"
-  ray-distance="200"
+  raycast-distance="200"
 ></m-control>
 
 <m-overlay anchor="top-left" offset-x="10" offset-y="10">
@@ -66,14 +66,8 @@
       }
       ctl.addEventListener('input', (ev) => {
         const d = ev.detail || {};
-        const a = d.action || 'unknown';
         const r = d.ray || {};
-        label.textContent = `Last: ${a} | dist=${r.distance.toFixed(2) ?? '-'} dir=(${r.direction?.x?.toFixed?.(2) ?? '-'}, ${r.direction?.y?.toFixed?.(2) ?? '-'}, ${r.direction?.z?.toFixed?.(2) ?? '-'})`;
-        // simple visual feedback: recolor target1 on left-click
-        if (a === 'Mouse_LeftClick') {
-          const t1 = document.getElementById('target1');
-          if (t1) t1.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16));
-        }
+        label.textContent = `dist=${r.distance?.toFixed(2) ?? '-'} dir=(${r.direction?.x?.toFixed?.(2) ?? '-'}, ${r.direction?.y?.toFixed?.(2) ?? '-'}, ${r.direction?.z?.toFixed?.(2) ?? '-'})`;
       });
     })();
   </script>
@@ -152,11 +146,7 @@
     ctl.addEventListener('input', (ev) => {
       const d = ev.detail || {};
       if (!d.ray) return;
-      const a = d.action || '';
-      const inputMode = ctl.getAttribute('data-input-mode') || 'mouse';
-      if ((inputMode === 'mouse' && /Mouse_.*Click$/.test(a)) || (inputMode === 'keyboard' && /^Keyboard_[A-Za-z]+$/.test(a))) {
-        updateRay(d.ray);
-      }
+      updateRay(d.ray);
     });
   })();
 </script>
