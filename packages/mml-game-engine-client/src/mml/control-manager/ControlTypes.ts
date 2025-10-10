@@ -103,6 +103,7 @@ export type ControlInfo = {
     axis?: string;
     button?: string;
     input?: string;
+    "interval-ms"?: string;
     hint?: string;
     debug?: boolean;
     "raycast-distance"?: string;
