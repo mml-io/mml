@@ -471,7 +471,6 @@ class PhysicsSystem implements ElementSystem {
     if (physicsState) {
       const impulseVector = new RAPIER.Vector3(impulse.x, impulse.y, impulse.z);
       physicsState.rigidbody.applyImpulse(impulseVector, true);
-      console.log("applyImpulse", impulseVector);
     } else {
       console.warn("Physics state not found for element:", element);
     }

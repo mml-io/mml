@@ -27,7 +27,6 @@ class XTool extends HTMLElement {
     this.dispatchEvent(new CustomEvent("unequip", { bubbles: true }));
   }
   activate(ray: any) {
-    console.log("activate internal", ray);
     this.setAttribute("activated", "true");
     this.dispatchEvent(new CustomEvent("activate", { bubbles: true, detail: { ray } }));
   }
@@ -272,7 +271,6 @@ function addToolsToPlayer(player: any, connectionId: number) {
   // flashlightControl.setAttribute("button", "0");
   flashlightControl.setAttribute("visible-to", String(connectionId));
   flashlightControl.addEventListener("input", (ev: any) => {
-    console.log("flashlightControl input", ev);
     if (!flashlight.hasAttribute("equipped")) return;
     if (ev.detail.connectionId !== connectionId || ev.detail.value !== 1.0) return;
     if (flashlight.hasAttribute("activated")) {
@@ -321,24 +319,20 @@ function addToolsToPlayer(player: any, connectionId: number) {
     if (!horn.hasAttribute("equipped")) return;
     if (ev.detail.connectionId !== connectionId) return;
     if (ev.detail.value === 1.0) {
-      console.log("hornControl input activate");
       horn.activate();
     } else if (ev.detail.value === 0.0) {
-      console.log("hornControl input deactivate");
       horn.deactivate();
     }
   });
   horn.appendChild(hornControl);
   horn.addEventListener("activate", () => {
     const audio = horn.querySelector("m-audio");
-    console.log("hornControl activate", audio);
     audio.setAttribute("enabled", "true");
     audio.setAttribute("start-time", String(performance.now()));
     audio.setAttribute("loop", "false");
   });
   horn.addEventListener("deactivate", () => {
     const audio = horn.querySelector("m-audio");
-    console.log("hornControl deactivate", audio);
     audio.setAttribute("enabled", "false");
   });
   const audio = document.createElement("m-audio");
@@ -427,14 +421,12 @@ function addToolsToPlayer(player: any, connectionId: number) {
         y: ray.direction.y * bulletImpulse,
         z: ray.direction.z * bulletImpulse,
       };
-      console.log("applyImpulse", impulse);
       setTimeout(() => {
         (window as any).physics.applyImpulse(bullet, impulse);
       }, 50);
     }
 
     gunControl.addEventListener("input", (ev: any) => {
-      console.log("gunControl input", ev);
       if (!gun.hasAttribute("equipped")) return;
       if (ev.detail.connectionId !== connectionId) return;
       if (ev.detail.value === 1.0) {
@@ -448,7 +440,6 @@ function addToolsToPlayer(player: any, connectionId: number) {
 
     gun.addEventListener("activate", (ev: any) => {
       const ray = ev.detail.ray || null;
-      console.log("gun activate", ray);
       if (isReloading) return;
       if (currentAmmo <= 0) { startReload(); return; }
       if (ray) {
@@ -460,7 +451,6 @@ function addToolsToPlayer(player: any, connectionId: number) {
       }
     });
     gun.addEventListener("deactivate", () => {
-      console.log("gun deactivate");
     });
 
     const reloadControl: any = document.createElement("m-control");
