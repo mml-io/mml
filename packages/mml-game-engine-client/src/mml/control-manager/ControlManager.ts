@@ -213,6 +213,7 @@ export class ControlManager {
   }
 
   public addControl(element: MControl<GameThreeJSAdapter>): void {
+    console.log("addControl", element);
     const controlInfo = this.createControlInfo(element);
     this.controlElements.set(controlInfo.id, controlInfo);
 
@@ -417,6 +418,7 @@ export class ControlManager {
 
     const layout = new ControlLayout();
     const safeArea = this.calculateSafeArea(containerBounds);
+    console.log("controls", controls);
     const sortedControls = this.sortControlsForMobile(controls);
 
     const joystickControls = sortedControls.filter((c) => c.type === "axis");

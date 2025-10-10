@@ -274,7 +274,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
       axis: "0,1",
       button: "0",
       hint: "",
-      debug: false
+      debug: false,
     };
     this.movementControl.addEventListener("input", this.handleMovementInput.bind(this));
     this.movementControl.scene = this.scene;
@@ -287,7 +287,7 @@ export class MCharacterController<G extends GameThreeJSAdapter> extends MElement
         axis: "0,1",
         button: "0",
         hint: "",
-        debug: false
+        debug: false,
       };
       this.jumpControl.addEventListener("input", this.handleJumpInput.bind(this));
       this.jumpControl.scene = this.scene;

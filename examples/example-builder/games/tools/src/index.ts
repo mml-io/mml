@@ -238,27 +238,6 @@ function addToolsToPlayer(player: any, connectionId: number) {
   const manager = document.createElement("x-inventory-manager") as any;
   player.appendChild(manager);
 
-  const placeMarkerControl: any = document.createElement("m-control");
-  placeMarkerControl.setAttribute("type", "button");
-  placeMarkerControl.setAttribute("input", "g,gamepad-y");
-  placeMarkerControl.setAttribute("raycast-type", "cursor");
-  placeMarkerControl.setAttribute("visible-to", String(connectionId));
-  placeMarkerControl.addEventListener("input", (ev: any) => {
-    if (ev.detail.value !== 1.0) return;
-    const hit = ev.detail.hit;
-    if (!hit) return;
-    const marker = document.createElement("m-cylinder");
-    marker.setAttribute("radius", "0.2");
-    marker.setAttribute("height", "0.05");
-    marker.setAttribute("color", "#00ffaa");
-    marker.setAttribute("x", hit.position.x);
-    marker.setAttribute("y", 0.025 as any);
-    marker.setAttribute("z", hit.position.z);
-    sceneGroup && sceneGroup.appendChild(marker);
-    setTimeout(() => { try { sceneGroup && sceneGroup.removeChild(marker); } catch {} }, 4000);
-  });
-  player.appendChild(placeMarkerControl);
-
   const flashlight = document.createElement("x-tool") as any;
   flashlight.setAttribute("name", "Flashlight");
   flashlight.setAttribute("tooltip", "Toggle light");

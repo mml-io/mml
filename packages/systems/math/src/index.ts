@@ -277,7 +277,10 @@ export function transformCylinderBetweenPoints(
 
 class MathSystem implements ElementSystem {
   init = () => Promise.resolve();
-  processElement = (_element: Element, _attributes: Array<{ attributeName: string; value: any }>) => {
+  processElement = (
+    _element: Element,
+    _attributes: Array<{ attributeName: string; value: any }>,
+  ) => {
     void 0;
   };
   onElementRemoved = (_element: Element) => {

@@ -306,6 +306,7 @@ export class GamepadManager {
 }
 
 export const isMobileDevice = (): boolean => {
+  return true;
   return (
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
     "ontouchstart" in window ||
@@ -655,7 +656,7 @@ export type MControlProps = {
   button?: string; // button index ("0" for primary button)
   hint?: string; // optional hint text for UI
   debug?: boolean;
-  "interval-ms"?: number; // how oten, if the input has not changed and is non-zero, to send the same value again
+  "interval-ms"?: number; // how often, if the input has not changed and is non-zero, to send the same value again
   input?: string;
   "raycast-distance"?: string;
   "raycast-type"?: string;
