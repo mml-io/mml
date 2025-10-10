@@ -3,6 +3,5 @@
 <m-environment-map></m-environment-map>
 
 <m-group id="scene-group">
-  <m-cube></m-cube>
-  <m-plane x="0" y="0" z="0" width="400" height="400" rx="-90" color="#808080" rigidbody kinematic></m-plane>
+  <m-cube x="0" y="0" z="0" width="400" height="1" depth="400" color="#808080" rigidbody="true" kinematic="true"></m-plane>
 </m-group>

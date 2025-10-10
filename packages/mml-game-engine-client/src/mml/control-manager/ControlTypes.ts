@@ -107,6 +107,7 @@ export type ControlInfo = {
     debug?: boolean;
     "raycast-distance"?: string;
     "raycast-type"?: string;
+    "raycast-from-socket"?: boolean;
   };
   visualComponent: VirtualControlComponent | null;
   priority: number;

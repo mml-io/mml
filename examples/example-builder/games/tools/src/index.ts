@@ -26,9 +26,10 @@ class XTool extends HTMLElement {
     this.__updateGroupEquippedState();
     this.dispatchEvent(new CustomEvent("unequip", { bubbles: true }));
   }
-  activate() {
+  activate(ray: any) {
+    console.log("activate internal", ray);
     this.setAttribute("activated", "true");
-    this.dispatchEvent(new CustomEvent("activate", { bubbles: true }));
+    this.dispatchEvent(new CustomEvent("activate", { bubbles: true, detail: { ray } }));
   }
   deactivate() {
     this.removeAttribute("activated");
@@ -372,17 +373,15 @@ function addToolsToPlayer(player: any, connectionId: number) {
     const gunControl = document.createElement("m-control");
     gunControl.setAttribute("type", "button");
     gunControl.setAttribute("input", "mouseleft gamepad-rt");
-    gunControl.setAttribute("raycast", "socket-camera");
+    gunControl.setAttribute("raycast-type", "camera");
+    // gunControl.setAttribute("raycast-distance", "100");
+    gunControl.setAttribute("raycast-from-socket", "true");
     gunControl.setAttribute("visible-to", String(connectionId));
     let maxAmmo = 12;
     let currentAmmo = maxAmmo;
     const reloadDurationMs = 1500;
     let isReloading = false;
     let reloadTimeoutId: any = null;
-    const bulletSpeed = 2.0;
-    const bulletLifetimeTicks = 200;
-    const bulletStepMs = 16;
-    const bullets: any[] = [];
 
     function updateAmmoUI() {
       if (!ammoTextNode) return;
@@ -401,44 +400,37 @@ function addToolsToPlayer(player: any, connectionId: number) {
     }
     function spawnBullet(ray: any) {
       if (!ray) return;
-      const bullet = document.createElement("m-cube");
-      bullet.setAttribute("width", "0.1");
-      bullet.setAttribute("height", "0.1");
-      bullet.setAttribute("depth", "0.1");
-      bullet.setAttribute("color", "#ffffff");
-      const lerp = document.createElement("m-attr-lerp");
-      lerp.setAttribute("attr", "x,y,z");
-      lerp.setAttribute("duration", "50");
-      bullet.appendChild(lerp);
+      const bullet = document.createElement("m-sphere");
+      bullet.setAttribute("radius", "0.35");
+      bullet.setAttribute("color", "#d90429");
+      bullet.setAttribute("rigidbody", "true");
+      bullet.setAttribute("mass", "8");
+      bullet.setAttribute("restitution", "0.1");
+      bullet.setAttribute("collide", "false");
+      // const lerp = document.createElement("m-attr-lerp");
+      // lerp.setAttribute("attr", "x,y,z");
+      // lerp.setAttribute("duration", "50");
+      // bullet.appendChild(lerp);
+
       const start = {
         x: ray.origin.x + ray.direction.x * 0.5,
         y: ray.origin.y + ray.direction.y * 0.5,
         z: ray.origin.z + ray.direction.z * 0.5,
       };
       bullet.setAttribute("x", start.x);
-      bullet.setAttribute("y", start.y as any);
+      bullet.setAttribute("y", start.y);
       bullet.setAttribute("z", start.z);
       sceneGroup && sceneGroup.appendChild(bullet);
-      const velocity = {
-        x: ray.direction.x * bulletSpeed,
-        y: ray.direction.y * bulletSpeed,
-        z: ray.direction.z * bulletSpeed,
+      const bulletImpulse = 1000.0;
+      const impulse = {
+        x: ray.direction.x * bulletImpulse,
+        y: ray.direction.y * bulletImpulse,
+        z: ray.direction.z * bulletImpulse,
       };
-      const data = { element: bullet, pos: { ...start }, ticks: 0 };
-      bullets.push(data);
-      const interval = setInterval(() => {
-        data.ticks++;
-        data.pos.x += velocity.x;
-        data.pos.y += velocity.y;
-        data.pos.z += velocity.z;
-        bullet.setAttribute("x", data.pos.x);
-        bullet.setAttribute("y", data.pos.y as any);
-        bullet.setAttribute("z", data.pos.z);
-        if (data.ticks > bulletLifetimeTicks) {
-          clearInterval(interval);
-          sceneGroup && sceneGroup.removeChild(bullet);
-        }
-      }, bulletStepMs);
+      console.log("applyImpulse", impulse);
+      setTimeout(() => {
+        (window as any).physics.applyImpulse(bullet, impulse);
+      }, 50);
     }
 
     gunControl.addEventListener("input", (ev: any) => {
@@ -454,7 +446,9 @@ function addToolsToPlayer(player: any, connectionId: number) {
     });
     gun.appendChild(gunControl);
 
-    gun.addEventListener("activate", (ray: any) => {
+    gun.addEventListener("activate", (ev: any) => {
+      const ray = ev.detail.ray || null;
+      console.log("gun activate", ray);
       if (isReloading) return;
       if (currentAmmo <= 0) { startReload(); return; }
       if (ray) {

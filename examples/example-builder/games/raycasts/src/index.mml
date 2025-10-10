@@ -26,6 +26,7 @@
     <div id="last-action" style="font-size: 12px; color: #ffd166;">Last: (none)</div>
     <div style="display: flex; flex-direction: row; gap: 8px; margin-top: 6px;">
       <button id="toggle-raycast-type" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Mode: cursor</button>
+      <button id="toggle-socket" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Socket: off</button>
     </div>
     <div style="display: flex; flex-direction: row; gap: 8px;">
       <button id="toggle-interval" style="padding: 6px 10px; background: #333; color: #fff; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Interval: off</button>
@@ -76,8 +77,79 @@
           updateBtn();
         });
       }
+      // Socket toggle: spawn/remove character and reparent control under a socket host
+      const socketBtn = document.getElementById('toggle-socket');
+      if (socketBtn) {
+        const CHARACTER_ID = 'raycast-socket-character';
+        const SOCKET_HOST_ID = 'raycast-socket-host';
+        const CONTROL_PARENT_PLACEHOLDER_ID = 'raycast-control-placeholder';
+        // Create a placeholder to remember original parent position
+        let placeholder = document.getElementById(CONTROL_PARENT_PLACEHOLDER_ID);
+        if (!placeholder) {
+          placeholder = document.createElement('div');
+          placeholder.id = CONTROL_PARENT_PLACEHOLDER_ID;
+          // Place just before overlay so the control sits near original position when restored
+          document.body.insertBefore(placeholder, document.body.firstChild);
+        }
+
+        const updateSocketBtn = () => {
+          const on = ctl.hasAttribute('raycast-from-socket');
+          socketBtn.textContent = `Socket: ${on ? 'on' : 'off'}`;
+        };
+
+        const ensureCharacter = () => {
+          let model = document.getElementById(CHARACTER_ID);
+          if (!model) {
+            model = document.createElement('m-model');
+            model.setAttribute('id', CHARACTER_ID);
+            model.setAttribute('src', 'https://files.dreamcache.xyz/models/01K6GPT4NSJPYYJZNSQF1GQ4CJ.glb');
+            model.setAttribute('x', '0');
+            model.setAttribute('y', '0');
+            model.setAttribute('z', '-3');
+            document.body.appendChild(model);
+            const controller = document.createElement('m-character-controller');
+            model.appendChild(controller);
+          }
+          let socketHost = document.getElementById(SOCKET_HOST_ID);
+          if (!socketHost) {
+            socketHost = document.createElement('m-group');
+            socketHost.setAttribute('id', SOCKET_HOST_ID);
+            // Attach to a common bone name; matches tools demo default
+            socketHost.setAttribute('socket', 'hand_r');
+            model.appendChild(socketHost);
+          }
+          return { model, socketHost };
+        };
+
+        const removeCharacter = () => {
+          const model = document.getElementById(CHARACTER_ID);
+          if (model && model.parentNode) model.parentNode.removeChild(model);
+        };
+
+        updateSocketBtn();
+        socketBtn.addEventListener('click', () => {
+          const turningOn = !ctl.hasAttribute('raycast-from-socket');
+          if (turningOn) {
+            const { socketHost } = ensureCharacter();
+            // Reparent control under the socket host so it can find the ancestor [socket]
+            try { socketHost.appendChild(ctl); } catch {}
+            ctl.setAttribute('raycast-from-socket', 'true');
+          } else {
+            // Restore control near original place
+            const ph = document.getElementById(CONTROL_PARENT_PLACEHOLDER_ID);
+            if (ph) {
+              try { ph.after(ctl); } catch { try { document.body.appendChild(ctl); } catch {} }
+            } else {
+              try { document.body.appendChild(ctl); } catch {}
+            }
+            ctl.removeAttribute('raycast-from-socket');
+            removeCharacter();
+          }
+          updateSocketBtn();
+        });
+      }
       // Removed input mode toggle; all inputs are treated equally
-      // Interval controls (toggle on/off and adjust by 100ms within 100ms..2000ms)
+      // Interval controls (toggle on/off and adjust by 100ms within 10ms..2000ms)
       const intervalToggleBtn = document.getElementById('toggle-interval');
       const intervalDownBtn = document.getElementById('interval-down');
       const intervalUpBtn = document.getElementById('interval-up');
@@ -86,7 +158,7 @@
         const raw = parseInt(ctl.getAttribute('interval-ms') || '0', 10);
         return Number.isFinite(raw) ? raw : 0;
       };
-      let currentIntervalMs = clamp(getAttrMs() || 500, 100, 2000);
+      let currentIntervalMs = clamp(getAttrMs() || 500, 10, 2000);
       const isOn = () => {
         const v = getAttrMs();
         return v > 0;
@@ -96,7 +168,7 @@
         const visible = isOn();
         if (intervalDownBtn) {
           intervalDownBtn.style.display = visible ? '' : 'none';
-          intervalDownBtn.disabled = currentIntervalMs <= 100;
+          intervalDownBtn.disabled = currentIntervalMs <= 10;
         }
         if (intervalUpBtn) {
           intervalUpBtn.style.display = visible ? '' : 'none';
@@ -105,7 +177,7 @@
       };
       // If an attribute is already present, normalize it to bounds
       if (isOn()) {
-        currentIntervalMs = clamp(getAttrMs(), 100, 2000);
+        currentIntervalMs = clamp(getAttrMs(), 10, 2000);
         ctl.setAttribute('interval-ms', String(currentIntervalMs));
       }
       updateIntervalUI();
@@ -121,14 +193,14 @@
       }
       if (intervalDownBtn) {
         intervalDownBtn.addEventListener('click', () => {
-          currentIntervalMs = clamp(currentIntervalMs - 100, 100, 2000);
+          currentIntervalMs = clamp(currentIntervalMs - 100, 10, 2000);
           if (isOn()) ctl.setAttribute('interval-ms', String(currentIntervalMs));
           updateIntervalUI();
         });
       }
       if (intervalUpBtn) {
         intervalUpBtn.addEventListener('click', () => {
-          currentIntervalMs = clamp(currentIntervalMs + 100, 100, 2000);
+          currentIntervalMs = clamp(currentIntervalMs + 100, 10, 2000);
           if (isOn()) ctl.setAttribute('interval-ms', String(currentIntervalMs));
           updateIntervalUI();
         });

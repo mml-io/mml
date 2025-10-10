@@ -471,6 +471,9 @@ class PhysicsSystem implements ElementSystem {
     if (physicsState) {
       const impulseVector = new RAPIER.Vector3(impulse.x, impulse.y, impulse.z);
       physicsState.rigidbody.applyImpulse(impulseVector, true);
+      console.log("applyImpulse", impulseVector);
+    } else {
+      console.warn("Physics state not found for element:", element);
     }
   }
 
@@ -485,6 +488,8 @@ class PhysicsSystem implements ElementSystem {
     if (physicsState) {
       const velocityVector = new RAPIER.Vector3(velocity.x, velocity.y, velocity.z);
       physicsState.rigidbody.setLinvel(velocityVector, true);
+    } else {
+      console.warn("Physics state not found for element:", element);
     }
   }
 

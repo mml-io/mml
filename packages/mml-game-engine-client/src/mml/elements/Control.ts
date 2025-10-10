@@ -1,4 +1,11 @@
-import { AttributeHandler, MElement, MMLScene, parseFloatAttribute, Ray } from "@mml-io/mml-web";
+import {
+  AttributeHandler,
+  MElement,
+  MMLScene,
+  parseBoolAttribute,
+  parseFloatAttribute,
+  Ray,
+} from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import {
@@ -86,7 +93,7 @@ export class GamepadManager {
     this.isPolling = true;
     this.pollInterval = window.setInterval(() => {
       this.pollGamepads();
-    }, 1000/75); // chrome polls at 62.5Hz, so we'll poll slightly more frequently to ensure we get the latest state
+    }, 1000 / 75); // chrome polls at 62.5Hz, so we'll poll slightly more frequently to ensure we get the latest state
   }
 
   private stopPolling(): void {
@@ -387,6 +394,7 @@ export class UniversalInputMapper {
   private onVisibilityChange?: () => void;
   private onWindowBlur?: () => void;
   private onWindowFocus?: () => void;
+  public inputs: string[] = [];
 
   constructor(control: MControl<GameThreeJSAdapter>) {
     this.control = control;
@@ -414,6 +422,10 @@ export class UniversalInputMapper {
     document.addEventListener("visibilitychange", this.onVisibilityChange);
     window.addEventListener("blur", this.onWindowBlur);
     window.addEventListener("focus", this.onWindowFocus);
+  }
+
+  public setInputs(input: string): void {
+    this.inputs = input.split(" ");
   }
 
   private setupKeyboardHandlers(): void {
@@ -504,13 +516,13 @@ export class UniversalInputMapper {
     this.inputState.buttons[3] = this.activeInputs.get("alt") || 0; // Alt = quaternary button
   }
 
-  public getInputState(inputs?: string[]): UniversalInputState {
+  public getInputState(): UniversalInputState {
     // if inputs are provided
-    if (inputs && inputs.length > 0) {
+    if (this.inputs && this.inputs.length > 0) {
       let buttonValue = 0;
 
       // process keyboard inputs
-      inputs.forEach((input) => {
+      this.inputs.forEach((input) => {
         const newValue = this.activeInputs.get(input) || 0;
         if (newValue > buttonValue) {
           buttonValue = newValue;
@@ -518,7 +530,7 @@ export class UniversalInputMapper {
       });
 
       // process gamepad inputs
-      inputs.forEach((input) => {
+      this.inputs.forEach((input) => {
         const buttonIndex =
           GAMEPAD_MEANINGFUL_BUTTON_MAPPING[
             input as keyof typeof GAMEPAD_MEANINGFUL_BUTTON_MAPPING
@@ -576,16 +588,25 @@ export class UniversalInputMapper {
 
   private previousInputState: UniversalInputState | null = null;
 
-  private isSameInputState(inputState1: UniversalInputState, inputState2: UniversalInputState): boolean {
-    return inputState1.axes.every((axis, index) => axis === inputState2.axes[index]) && inputState1.buttons.every((button, index) => button === inputState2.buttons[index]);
+  private isSameInputState(
+    inputState1: UniversalInputState,
+    inputState2: UniversalInputState,
+  ): boolean {
+    return (
+      inputState1.axes.every((axis, index) => axis === inputState2.axes[index]) &&
+      inputState1.buttons.every((button, index) => button === inputState2.buttons[index])
+    );
   }
 
   private emitInputIfChanged(): void {
-    const newInputState = this.getInputState(this.control.getInputs());
+    const newInputState = this.getInputState();
     if (this.previousInputState && this.isSameInputState(this.previousInputState, newInputState)) {
       return;
     }
-    this.previousInputState = { axes: [...newInputState.axes], buttons: [...newInputState.buttons] };
+    this.previousInputState = {
+      axes: [...newInputState.axes],
+      buttons: [...newInputState.buttons],
+    };
     this.control.emitInput(newInputState);
   }
 
@@ -638,6 +659,7 @@ export type MControlProps = {
   input?: string;
   "raycast-distance"?: string;
   "raycast-type"?: string;
+  "raycast-from-socket"?: boolean;
 };
 
 export type InputEventDetail = {
@@ -766,7 +788,7 @@ export class ControlGraphics {
       dir.normalize();
     }
 
-    const maxDistance = distance ?? (Number(camera.far) || 1000);
+    const maxDistance = isNaN(distance) ? Number(camera.far) || 1000 : distance;
     let rayDistance = maxDistance;
     const collisionsManager = graphicsAdapter.getCollisionsManager();
     const ray = new Ray(
@@ -816,6 +838,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     input: undefined,
     "raycast-distance": undefined,
     "raycast-type": undefined,
+    "raycast-from-socket": false,
   };
 
   private static attributeHandler = new AttributeHandler<MControl<GameThreeJSAdapter>>({
@@ -841,12 +864,16 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     },
     input: (instance, newValue) => {
       instance.props.input = newValue || undefined;
+      instance.inputMapper?.setInputs(instance.props.input);
     },
     "raycast-distance": (instance, newValue) => {
       instance.props["raycast-distance"] = newValue || undefined;
     },
     "raycast-type": (instance, newValue) => {
       instance.props["raycast-type"] = newValue || undefined;
+    },
+    "raycast-from-socket": (instance, newValue) => {
+      instance.props["raycast-from-socket"] = parseBoolAttribute(newValue, false);
     },
     "interval-ms": (instance, newValue) => {
       instance.props["interval-ms"] = parseFloatAttribute(newValue, undefined);
@@ -914,26 +941,66 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     direction: { x: number; y: number; z: number };
     distance: number;
   } | null {
+    let baseRay: {
+      origin: { x: number; y: number; z: number };
+      direction: { x: number; y: number; z: number };
+      distance: number;
+    } | null = null;
+
     if (this.props["raycast-type"] === "camera") {
-      return this.controlGraphics?.computeRay({
-        mode: "camera",
-        distance: Number(this.props["raycast-distance"]),
-      });
+      baseRay =
+        this.controlGraphics?.computeRay({
+          mode: "camera",
+          distance: Number(this.props["raycast-distance"]),
+        }) ?? null;
+    } else if (this.props["raycast-type"] === "cursor") {
+      baseRay =
+        this.controlGraphics?.computeRay({
+          mode: "cursor",
+          distance: Number(this.props["raycast-distance"]),
+          clientX: this.mouseManager.lastMouseClientX,
+          clientY: this.mouseManager.lastMouseClientY,
+        }) ?? null;
     }
-    if (this.props["raycast-type"] === "cursor") {
-      return this.controlGraphics?.computeRay({
-        mode: "cursor",
-        distance: Number(this.props["raycast-distance"]),
-        clientX: this.mouseManager.lastMouseClientX,
-        clientY: this.mouseManager.lastMouseClientY,
-      });
+
+    if (!baseRay) return null;
+
+    if (this.props["raycast-from-socket"]) {
+      const socketPos = this.getSocketWorldPosition();
+      if (socketPos) {
+        // Keep the same end point as the base ray, just change the start to socket position
+        const endX = baseRay.origin.x + baseRay.direction.x * baseRay.distance;
+        const endY = baseRay.origin.y + baseRay.direction.y * baseRay.distance;
+        const endZ = baseRay.origin.z + baseRay.direction.z * baseRay.distance;
+
+        const dx = endX - socketPos.x;
+        const dy = endY - socketPos.y;
+        const dz = endZ - socketPos.z;
+        const newDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (newDistance > 1e-6) {
+          const inv = 1 / newDistance;
+          const newDir = { x: dx * inv, y: dy * inv, z: dz * inv };
+          return {
+            origin: socketPos,
+            direction: newDir,
+            distance: newDistance,
+          };
+        }
+        // Degenerate case: endpoint equals socket position, return base ray
+        return baseRay;
+      }
     }
-    return null;
+
+    return baseRay;
   }
 
-  // process the input string as a space separated list of keys
-  getInputs(): string[] {
-    return this.props.input?.split(" ") || [];
+  private getSocketWorldPosition(): { x: number; y: number; z: number } | null {
+    const socketElement = this.closest("[socket]") as MElement<GameThreeJSAdapter> | null;
+    if (!socketElement) return null;
+    const container = socketElement.getContainer?.();
+    const v = new THREE.Vector3();
+    container.getWorldPosition(v);
+    return { x: v.x, y: v.y, z: v.z };
   }
 
   public emitInput(inputState: UniversalInputState): void {
@@ -964,7 +1031,9 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       this.dispatchInputEvent({ value });
     }
 
-    const anyValueNonZero = inputState.axes.some((axis) => axis !== 0) || inputState.buttons.some((button) => button !== 0);
+    const anyValueNonZero =
+      inputState.axes.some((axis) => axis !== 0) ||
+      inputState.buttons.some((button) => button !== 0);
 
     // if no interval is present and the value is non-zero, create one
     // if the interval is present and all values are zero, remove the interval
@@ -988,7 +1057,8 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     }
 
     this.timer = setInterval(() => {
-      this.emitInput(this.inputMapper.getInputState(this.getInputs()));
+      const inputState = this.inputMapper.getInputState();
+      this.emitInput(inputState);
     }, this.props["interval-ms"]);
   }
 
@@ -1010,15 +1080,13 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   public connectedCallback(): void {
     super.connectedCallback();
 
-
     this.scene = this.getScene() as unknown as MMLScene<GameThreeJSAdapter>;
 
     if (!this.scene.hasGraphicsAdapter() || this.controlGraphics) {
       return;
     }
-    
-    this.controlGraphics = new ControlGraphics(this);
 
+    this.controlGraphics = new ControlGraphics(this);
 
     const graphicsAdapter = this.scene.getGraphicsAdapter();
     graphicsAdapter.registerControl(this);
