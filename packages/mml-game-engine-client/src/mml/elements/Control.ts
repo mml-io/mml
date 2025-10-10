@@ -306,7 +306,6 @@ export class GamepadManager {
 }
 
 export const isMobileDevice = (): boolean => {
-  return true;
   return (
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
     "ontouchstart" in window ||
