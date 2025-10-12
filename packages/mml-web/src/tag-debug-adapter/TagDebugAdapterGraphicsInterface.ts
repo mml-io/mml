@@ -205,7 +205,9 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
       setHeight: "height",
       setCastShadows: "cast-shadows",
     },
-    {},
+    {
+      allAttributesObserved: () => {},
+    },
   ),
   MMLPromptGraphicsInterface: TagDebugAdapterElement(
     {

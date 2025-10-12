@@ -1,0 +1,190 @@
+<m-plane color="pink" width="20" height="20" rx="-90"></m-plane>
+<m-light type="point" intensity="900" x="0" y="10" z="10"></m-light>
+
+<!-- Control Labels -->
+<m-label id="load-1-duck" font-size="30" x="-4" y="8" width="3" height="0.5" content="Load 1 Duck" alignment="center" font-color="white" color="darkblue" border-radius="0.2"></m-label>
+<m-label id="load-5-ducks" font-size="30" x="0" y="8" width="3" height="0.5" content="Load 5 Ducks" alignment="center" font-color="white" color="darkgreen" border-radius="0.2"></m-label>
+<m-label id="remove-all-ducks" font-size="30" x="4" y="8" width="3" height="0.5" content="Remove All" alignment="center" font-color="white" color="darkred" border-radius="0.2"></m-label>
+
+<!-- Delay Control Labels -->
+<m-label id="load-1-duck-delay-1s" font-size="25" x="-4" y="7" width="3" height="0.4" content="Load 1 Duck (1s delay)" alignment="center" font-color="white" color="purple" border-radius="0.2"></m-label>
+<m-label id="load-1-duck-delay-3s" font-size="25" x="0" y="7" width="3" height="0.4" content="Load 1 Duck (3s delay)" alignment="center" font-color="white" color="black" border-radius="0.2"></m-label>
+<m-label id="load-1-duck-delay-5s" font-size="25" x="4" y="7" width="3" height="0.4" content="Load 1 Duck (5s delay)" alignment="center" font-color="white" color="brown" border-radius="0.2"></m-label>
+
+<!-- Duck Container -->
+<m-group id="duck-container"></m-group>
+
+<script>
+class DuckManager {
+    constructor() {
+        this.ducks = new Map(); // Map of duckId to position index
+        this.duckCounter = 0;
+        this.availablePositions = []; // Stack of available position indices
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Add click handlers for the control labels
+        const load1Duck = document.getElementById("load-1-duck");
+        const load5Ducks = document.getElementById("load-5-ducks");
+        const removeAllDucks = document.getElementById("remove-all-ducks");
+        
+        // Add click handlers for the delay control labels
+        const load1DuckDelay1s = document.getElementById("load-1-duck-delay-1s");
+        const load1DuckDelay3s = document.getElementById("load-1-duck-delay-3s");
+        const load1DuckDelay5s = document.getElementById("load-1-duck-delay-5s");
+        
+        if (load1Duck) {
+            load1Duck.addEventListener("click", () => this.loadDucks(1));
+        }
+        
+        if (load5Ducks) {
+            load5Ducks.addEventListener("click", () => this.loadDucks(5));
+        }
+        
+        if (removeAllDucks) {
+            removeAllDucks.addEventListener("click", () => this.removeAllDucks());
+        }
+        
+        if (load1DuckDelay1s) {
+            load1DuckDelay1s.addEventListener("click", () => this.loadDuckWithDelay(1000));
+        }
+        
+        if (load1DuckDelay3s) {
+            load1DuckDelay3s.addEventListener("click", () => this.loadDuckWithDelay(3000));
+        }
+        
+        if (load1DuckDelay5s) {
+            load1DuckDelay5s.addEventListener("click", () => this.loadDuckWithDelay(5000));
+        }
+    }
+
+    loadDucks(count) {
+        for (let i = 0; i < count; i++) {
+            this.addDuck();
+        }
+    }
+
+    loadDuckWithDelay(delayMs) {
+        this.addDuck(delayMs);
+    }
+
+    addDuck(delayMs = 0) {
+        const duckId = `duck-${this.duckCounter++}`;
+        
+        // Get position index - use available position if any, otherwise use next sequential position
+        let positionIndex;
+        if (this.availablePositions.length > 0) {
+            positionIndex = this.availablePositions.shift(); // Use the first available position (leftmost gap)
+        } else {
+            positionIndex = this.ducks.size; // Use next sequential position
+        }
+        
+        const position = this.getGridPosition(positionIndex);
+        const scale = this.getRandomScale(position);
+        
+        // Create duck group container
+        const duckGroup = document.createElement("m-group");
+        duckGroup.id = duckId;
+        duckGroup.setAttribute("x", position.x.toString());
+        duckGroup.setAttribute("y", position.y.toString());
+        duckGroup.setAttribute("z", position.z.toString());
+        
+        // Create remove label (relative to group position)
+        const removeLabel = document.createElement("m-label");
+        removeLabel.setAttribute("font-size", "20");
+        removeLabel.setAttribute("x", "0");
+        removeLabel.setAttribute("y", "2");
+        removeLabel.setAttribute("z", "0");
+        removeLabel.setAttribute("width", "2");
+        removeLabel.setAttribute("height", "0.8");
+        removeLabel.setAttribute("content", "Remove");
+        removeLabel.setAttribute("color", "white");
+        removeLabel.setAttribute("background-color", "red");
+        removeLabel.style.cursor = "pointer";
+        
+        // Create duck model (relative to group position)
+        const duckModel = document.createElement("m-model");
+        duckModel.setAttribute("x", "0");
+        duckModel.setAttribute("y", "0");
+        duckModel.setAttribute("z", "0");
+        duckModel.setAttribute("sx", scale.toString());
+        duckModel.setAttribute("sy", scale.toString());
+        duckModel.setAttribute("sz", scale.toString());
+        duckModel.setAttribute("ry", "-100");
+
+        
+        console.log(`Loading duck with delay ${delayMs}`);
+        // Set the asset URL with optional delay parameter
+        const assetUrl = delayMs > 0 ? `/assets/duck.glb?delay=${delayMs}` : "/assets/duck.glb";
+        duckModel.setAttribute("src", assetUrl);
+        
+        // Add click handler for removal
+        removeLabel.addEventListener("click", () => this.removeDuck(duckId));
+        
+        // Append elements to group
+        duckGroup.appendChild(removeLabel);
+        duckGroup.appendChild(duckModel);
+        
+        // Add group to container and track
+        const container = document.getElementById("duck-container");
+        container.appendChild(duckGroup);
+        this.ducks.set(duckId, positionIndex);
+    }
+
+    removeDuck(duckId) {
+        const duckElement = document.getElementById(duckId);
+        if (duckElement) {
+            duckElement.remove();
+            
+            // Get the position index that was freed up
+            const positionIndex = this.ducks.get(duckId);
+            if (positionIndex !== undefined) {
+                // Add this position back to available positions
+                this.availablePositions.push(positionIndex);
+                this.ducks.delete(duckId);
+            }
+        }
+    }
+
+    removeAllDucks() {
+        // Remove all duck groups from the DOM
+        const container = document.getElementById("duck-container");
+        container.innerHTML = "";
+        
+        // Clear the ducks map and available positions
+        this.ducks.clear();
+        this.availablePositions = [];
+    }
+
+    getGridPosition(index) {
+        // Grid parameters
+        const colsPerRow = 5; // 5 ducks per row
+        const spacing = 3; // Distance between grid points
+        
+        const row = Math.floor(index / colsPerRow);
+        const col = index % colsPerRow;
+        
+        // Center the grid
+        const startX = -(colsPerRow - 1) * spacing / 2;
+        const startZ = -row * spacing;
+        
+        const x = startX + col * spacing;
+        const z = startZ;
+        
+        return { x: x, y: 0, z: z };
+    }
+
+    getRandomScale(position) {
+        // Create pseudo-random scale based on position
+        const seed = Math.abs(position.x * 1000 + position.z * 1000);
+        const random = (Math.sin(seed) + 1) / 2; // Normalize to 0-1
+        return 0.5 + random * 1.5; // Scale between 0.5 and 2.0
+    }
+}
+
+// Initialize the duck manager when the page loads
+document.addEventListener("DOMContentLoaded", () => {
+    new DuckManager();
+});
+</script>

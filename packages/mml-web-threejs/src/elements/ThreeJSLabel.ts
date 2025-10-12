@@ -1,13 +1,17 @@
-import { CanvasText, Label, LabelGraphics } from "@mml-io/mml-web";
+import { Label, LabelGraphics } from "@mml-io/mml-web";
 import * as THREE from "three";
 
+import { ThreeJSLabelHandle, ThreeJSLabelResourceResult } from "../resources/ThreeJSLabelHandle";
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
 
 export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
   static labelGeometry = new THREE.PlaneGeometry(1, 1);
   private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial | null = null;
-  private canvasText: CanvasText = new CanvasText();
+  private latestLabelHandle: ThreeJSLabelHandle | null = null;
+  private shouldDrawText: boolean = false;
+
+  private static readonly MAX_TEXTURE_SIZE = 1024;
 
   constructor(private label: Label<ThreeJSGraphicsAdapter>) {
     super(label);
@@ -23,6 +27,12 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
     this.mesh.receiveShadow = true;
     this.redrawText();
     this.label.getContainer().add(this.mesh);
+  }
+
+  allAttributesObserved(): void {
+    // Only start drawing text after all attributes have been observed
+    this.shouldDrawText = true;
+    this.redrawText();
   }
 
   disable(): void {}
@@ -76,39 +86,73 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   private redrawText() {
+    if (!this.shouldDrawText) {
+      return;
+    }
     if (!this.material) {
       return;
     }
-    if (this.material.map) {
-      this.material.map.dispose();
+    if (this.latestLabelHandle) {
+      this.latestLabelHandle.dispose();
+      this.latestLabelHandle = null;
     }
 
-    const canvas = this.canvasText.renderText(this.label.props.content, {
-      bold: true,
-      fontSize: this.label.props.fontSize * 2,
-      paddingPx: this.label.props.padding,
-      textColorRGB255A1: {
-        r: this.label.props.fontColor.r * 255,
-        g: this.label.props.fontColor.g * 255,
-        b: this.label.props.fontColor.b * 255,
-        a: this.label.props.fontColor.a ?? 1,
-      },
-      backgroundColorRGB255A1: {
-        r: this.label.props.color.r * 255,
-        g: this.label.props.color.g * 255,
-        b: this.label.props.color.b * 255,
-        a: this.label.props.color.a ?? 1,
-      },
-      dimensions: {
-        width: this.label.props.width * 200,
-        height: this.label.props.height * 200,
-      },
-      alignment: this.label.props.alignment,
-    });
+    // Clamp the width and height to 1024px whilst maintaining the aspect ratio
+    const desiredWidth = this.label.props.width * 200;
+    const desiredHeight = this.label.props.height * 200;
+    const scale = Math.min(ThreeJSLabel.MAX_TEXTURE_SIZE / desiredWidth, ThreeJSLabel.MAX_TEXTURE_SIZE / desiredHeight);
+    const clampedScale = Math.min(scale, 1);
+    const clampedWidth = desiredWidth * clampedScale;
+    const clampedHeight = desiredHeight * clampedScale;
 
-    this.material.map = new THREE.CanvasTexture(canvas);
-    this.material.transparent = (this.label.props.color.a ?? 1) < 1;
-    this.updateMaterialEmissiveIntensity();
+    const handle = this.label
+      .getScene()
+      .getGraphicsAdapter()
+      .getResourceManager()
+      .loadLabel({
+        content: this.label.props.content,
+        fontSize: this.label.props.fontSize * 2 * clampedScale,
+        paddingPx: this.label.props.padding * clampedScale,
+        textColorRGB255A1: {
+          r: this.label.props.fontColor.r * 255,
+          g: this.label.props.fontColor.g * 255,
+          b: this.label.props.fontColor.b * 255,
+          a: this.label.props.fontColor.a ?? 1,
+        },
+        backgroundColorRGB255A1: {
+          r: this.label.props.color.r * 255,
+          g: this.label.props.color.g * 255,
+          b: this.label.props.color.b * 255,
+          a: this.label.props.color.a ?? 1,
+        },
+        dimensions: {
+          width: clampedWidth,
+          height: clampedHeight,
+        },
+        alignment: this.label.props.alignment,
+        bold: true,
+      });
+
+    this.latestLabelHandle = handle;
+
+    const apply = (result: ThreeJSLabelResourceResult | Error) => {
+      if (result instanceof Error || !this.material) {
+        return;
+      }
+      this.material.map = result.texture;
+      const hasTransparency = (this.label.props.color.a ?? 1) < 1;
+      this.material.transparent = hasTransparency;
+      this.material.alphaTest = hasTransparency ? 0.01 : 0;
+      this.material.needsUpdate = true;
+      this.updateMaterialEmissiveIntensity();
+    };
+
+    const result = handle.getResult();
+    if (result) {
+      apply(result);
+    } else {
+      handle.onLoad(apply);
+    }
   }
 
   private updateMaterialEmissiveIntensity() {
@@ -129,10 +173,16 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   dispose() {
-    this.mesh.geometry.dispose();
+    if (this.latestLabelHandle) {
+      this.latestLabelHandle.dispose();
+      this.latestLabelHandle = null;
+    }
     if (this.material) {
-      if (this.material.map) {
-        this.material.map.dispose();
+      // Do not dispose shared texture here
+      this.material.map = null;
+      if (this.material.emissiveMap) {
+        this.material.emissiveMap.dispose();
+        this.material.emissiveMap = null;
       }
       this.material.dispose();
       this.material = null;

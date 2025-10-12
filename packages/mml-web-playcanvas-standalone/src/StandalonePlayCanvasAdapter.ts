@@ -18,6 +18,8 @@ import dracoWasmJs from "base64:./wasm/draco.wasm.js";
 import dracoWasmWasm from "base64:./wasm/draco.wasm.wasm";
 import glslangWasmJs from "base64:./wasm/glslang.js";
 import twgslWasmJs from "base64:./wasm/twgsl.js";
+import basisTranscoderJs from "base64:three/examples/jsm/libs/basis/basis_transcoder.js";
+import basisTranscoderWasm from "base64:three/examples/jsm/libs/basis/basis_transcoder.wasm";
 import * as playcanvas from "playcanvas";
 
 import { PlayCanvasOrbitCameraControls } from "./controls";
@@ -103,6 +105,14 @@ export class StandalonePlayCanvasAdapter
     playcanvas.WasmModule.setConfig("DracoDecoderModule", {
       glueUrl: "data:text/javascript;base64," + dracoWasmJs,
       wasmUrl: "data:application/wasm;base64," + dracoWasmWasm,
+    });
+
+    // Configure Basis/KTX2 transcoder (used by KTX2 and .basis textures)
+    playcanvas.WasmModule.setConfig("BASIS", {
+      glueUrl: "data:text/javascript;base64," + basisTranscoderJs,
+      wasmUrl: "data:application/wasm;base64," + basisTranscoderWasm,
+      fallbackUrl: "data:text/javascript;base64," + basisTranscoderJs,
+      numWorkers: 1,
     });
 
     this.canvas = document.createElement("canvas");

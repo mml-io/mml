@@ -35,6 +35,11 @@ export const loadingGroup: GroupDefinition = {
   label: "Loading",
 };
 
+export const developerGroup: GroupDefinition = {
+  name: "developer",
+  label: "Developer",
+};
+
 export const allGroups = [
   sourceGroup,
   rendererGroup,
@@ -43,6 +48,7 @@ export const allGroups = [
   environmentGroup,
   characterGroup,
   loadingGroup,
+  developerGroup,
 ];
 
 export const cameraModeField: FieldDefinition = {

@@ -1,6 +1,8 @@
+import BASIS_TRANSCODER_JS from "base64:three/examples/jsm/libs/basis/basis_transcoder.js";
+import BASIS_TRANSCODER_WASM from "base64:three/examples/jsm/libs/basis/basis_transcoder.wasm";
 import DRACO_DECODER_WASM from "base64:three/examples/jsm/libs/draco/gltf/draco_decoder.wasm";
 import DRACO_WASM_WRAPPER from "base64:three/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js";
-import { AnimationClip, FileLoader, Group, LoadingManager } from "three";
+import { AnimationClip, FileLoader, Group, LoadingManager, WebGLRenderer } from "three";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
@@ -9,6 +11,7 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
 
 const textDecoder = new TextDecoder();
 
@@ -84,6 +87,7 @@ export class ModelLoader {
   private fbxLoader: FBXLoader;
   private gltfLoader: GLTFLoader;
   private static dracoLoader: DRACOLoader | null = null;
+  private static ktx2Loader: KTX2Loader | null = null;
 
   private static getDracoLoader() {
     if (ModelLoader.dracoLoader) {
@@ -111,6 +115,7 @@ export class ModelLoader {
       itemError: () => {
         // no-op
       },
+      abortController: new AbortController(),
     }).preload();
     return ModelLoader.dracoLoader;
   }
@@ -121,12 +126,61 @@ export class ModelLoader {
   ) {
     this.gltfLoader = new GLTFLoader(this.manager)
       .setMeshoptDecoder(MeshoptDecoder)
-      .setDRACOLoader(ModelLoader.getDracoLoader());
+      .setDRACOLoader(ModelLoader.getDracoLoader())
+      .setKTX2Loader(ModelLoader.getKTX2Loader());
 
     this.fbxLoader = new FBXLoader(this.manager);
   }
 
-  public async load(url: string, onProgress?: (loaded: number, total: number) => void) {
+  private static getKTX2Loader() {
+    if (ModelLoader.ktx2Loader) {
+      return ModelLoader.ktx2Loader;
+    }
+    ModelLoader.ktx2Loader = new KTX2Loader({
+      resolveURL: (url: string) => {
+        if (url.endsWith("basis_transcoder.js")) {
+          return "data:text/javascript;base64," + BASIS_TRANSCODER_JS;
+        } else if (url.endsWith("basis_transcoder.wasm")) {
+          return "data:application/wasm;base64," + BASIS_TRANSCODER_WASM;
+        }
+        return url;
+      },
+      itemStart: () => {
+        // no-op
+      },
+      itemEnd: () => {
+        // no-op
+      },
+      itemError: () => {
+        // no-op
+      },
+      abortController: new AbortController(),
+    } as unknown as LoadingManager);
+    // Ensure the loader does not try to fetch from network paths
+    ModelLoader.ktx2Loader.setTranscoderPath("");
+
+    // Attempt to detect GPU compressed texture support when a WebGL context can be created.
+    // In non-browser/test environments without WebGL (e.g. Node), skip detection gracefully.
+    try {
+      const tempRenderer = new WebGLRenderer();
+      ModelLoader.ktx2Loader.detectSupport(tempRenderer);
+      tempRenderer.dispose();
+    } catch {
+      // WebGL context could not be created; skip detection in this environment.
+    }
+
+    return ModelLoader.ktx2Loader;
+  }
+
+  public static getSharedKTX2Loader() {
+    return ModelLoader.getKTX2Loader();
+  }
+
+  public async load(
+    url: string,
+    onProgress?: (loaded: number, total: number) => void,
+    abortController?: AbortController,
+  ) {
     return new Promise<ModelLoadResult>((resolve, reject) => {
       const resourcePath = ModelLoader.extractUrlBase(url);
 
@@ -146,6 +200,13 @@ export class ModelLoader {
       }
       if (this.options.withCredentials !== undefined) {
         loader.setWithCredentials(this.options.withCredentials);
+      }
+
+      if (abortController) {
+        abortController.signal.addEventListener("abort", () => {
+          console.log(`Aborting ModelLoader for ${url}`);
+          loader.abort();
+        });
       }
 
       loader.load(

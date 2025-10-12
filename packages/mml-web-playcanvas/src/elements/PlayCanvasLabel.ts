@@ -44,6 +44,10 @@ export class PlayCanvasLabel extends LabelGraphics<PlayCanvasGraphicsAdapter> {
 
   enable(): void {}
 
+  allAttributesObserved(): void {
+    // no-op
+  }
+
   getCollisionElement(): playcanvas.Entity {
     return this.entity;
   }

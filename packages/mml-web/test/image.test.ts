@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
+import { ThreeJSResourceManager } from "@mml-io/mml-web-threejs";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
-import { Cache } from "three";
 
 import { Image } from "../build/index";
 import { registerCustomElementsToWindow } from "../build/index";
@@ -10,7 +10,6 @@ import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 beforeAll(() => {
   registerCustomElementsToWindow(window);
-  Cache.clear();
 });
 
 describe("m-image", () => {
@@ -66,77 +65,138 @@ describe("m-image", () => {
   });
 
   test("images default to a width of 1 and use the source image aspect ratio", async () => {
-    const { element: image } = await createSceneAttachedElement<Image>("m-image");
+    const { element: image, scene } = await createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
-    // mock calls to THREE's Cache class to prevent the loaders attempting to
-    // fetch images from the web
-    const cacheSpy = jest.spyOn(Cache, "get").mockImplementation(() => {
-      const htmlImageElement = document.createElement("img");
-      htmlImageElement.width = originalImageWidth;
-      htmlImageElement.height = originalImageHeight;
-      return htmlImageElement;
+    // mock the resource manager loadImage to synchronously deliver an image
+    const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
+    const rm = ga.getResourceManager() as ThreeJSResourceManager;
+    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (
+          cb: (
+            result:
+              | { texture: THREE.Texture; width: number; height: number; hasTransparency: boolean }
+              | Error,
+          ) => void,
+        ) => {
+          const img = document.createElement("canvas");
+          img.width = originalImageWidth;
+          img.height = originalImageHeight;
+          const texture = new THREE.CanvasTexture(img as any);
+          cb({
+            texture,
+            width: originalImageWidth,
+            height: originalImageHeight,
+            hasTransparency: false,
+          });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
     });
 
     image.setAttribute("src", "SOME_ASSET_URL");
-    expect(cacheSpy).toHaveBeenCalled();
-    expect((image as any).imageGraphics.srcApplyPromise).toBeTruthy();
-    await (image as any).imageGraphics.srcApplyPromise;
 
-    const imageMesh = (image.getContainer() as THREE.Object3D).children[0];
+    const imageMesh = (image.getContainer() as THREE.Object3D).children[0] as THREE.Mesh;
+    expect(loadImageSpy).toHaveBeenCalled();
     expect(imageMesh.scale.y).toBe(0.5);
     expect(imageMesh.scale.x).toBe(1);
+
+    loadImageSpy.mockRestore();
   });
 
   test("setting height but not width preserves image aspect ratio", async () => {
-    const { element: image } = await createSceneAttachedElement<Image>("m-image");
+    const { element: image, scene } = await createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
-    // mock calls to THREE's Cache class to prevent the loaders attempting to
-    // fetch images from the web
-    const cacheSpy = jest.spyOn(Cache, "get").mockImplementation(() => {
-      const htmlImageElement = document.createElement("img");
-      htmlImageElement.width = originalImageWidth;
-      htmlImageElement.height = originalImageHeight;
-      return htmlImageElement;
+    const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
+    const rm = ga.getResourceManager() as ThreeJSResourceManager;
+    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (
+          cb: (
+            result:
+              | { texture: THREE.Texture; width: number; height: number; hasTransparency: boolean }
+              | Error,
+          ) => void,
+        ) => {
+          const img = document.createElement("canvas");
+          img.width = originalImageWidth;
+          img.height = originalImageHeight;
+          const texture = new THREE.CanvasTexture(img as any);
+          cb({
+            texture,
+            width: originalImageWidth,
+            height: originalImageHeight,
+            hasTransparency: false,
+          });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
     });
 
     image.setAttribute("src", "SOME_ASSET_URL");
-    expect(cacheSpy).toHaveBeenCalled();
     image.setAttribute("height", "10");
-    expect((image as any).imageGraphics.srcApplyPromise).toBeTruthy();
-    await (image as any).imageGraphics.srcApplyPromise;
 
-    const imageMesh = (image.getContainer() as THREE.Object3D).children[0];
+    const imageMesh = (image.getContainer() as THREE.Object3D).children[0] as THREE.Mesh;
+    expect(loadImageSpy).toHaveBeenCalled();
     expect(imageMesh.scale.y).toBe(10);
     expect(imageMesh.scale.x).toBe(20);
+
+    loadImageSpy.mockRestore();
   });
 
   test("setting width but not height preserves image aspect ratio", async () => {
-    const { element: image } = await createSceneAttachedElement<Image>("m-image");
+    const { element: image, scene } = await createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
-    // mock calls to THREE's Cache class to prevent the loaders attempting to
-    // fetch images from the web
-    const cacheSpy = jest.spyOn(Cache, "get").mockImplementation(() => {
-      const htmlImageElement = document.createElement("img");
-      htmlImageElement.width = originalImageWidth;
-      htmlImageElement.height = originalImageHeight;
-      return htmlImageElement;
+    const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
+    const rm = ga.getResourceManager() as ThreeJSResourceManager;
+    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (
+          cb: (
+            result:
+              | { texture: THREE.Texture; width: number; height: number; hasTransparency: boolean }
+              | Error,
+          ) => void,
+        ) => {
+          const img = document.createElement("canvas");
+          img.width = originalImageWidth;
+          img.height = originalImageHeight;
+          const texture = new THREE.CanvasTexture(img as any);
+          cb({
+            texture,
+            width: originalImageWidth,
+            height: originalImageHeight,
+            hasTransparency: false,
+          });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
     });
 
     image.setAttribute("src", "SOME_ASSET_URL");
-    expect(cacheSpy).toHaveBeenCalled();
     image.setAttribute("width", "10");
-    expect((image as any).imageGraphics.srcApplyPromise).toBeTruthy();
-    await (image as any).imageGraphics.srcApplyPromise;
 
-    const imageMesh = (image.getContainer() as THREE.Object3D).children[0];
+    const imageMesh = (image.getContainer() as THREE.Object3D).children[0] as THREE.Mesh;
+    expect(loadImageSpy).toHaveBeenCalled();
     expect(imageMesh.scale.y).toBe(5);
     expect(imageMesh.scale.x).toBe(10);
+
+    loadImageSpy.mockRestore();
   });
 
   test("collider is updated", async () => {
@@ -148,7 +208,7 @@ describe("m-image", () => {
     const removeColliderSpy = jest.spyOn(scene, "removeCollider");
     remoteDocument.append(image);
 
-    const imageMesh = (image.getContainer() as THREE.Object3D).children[0];
+    const imageMesh = (image.getContainer() as THREE.Object3D).children[0] as THREE.Mesh;
     expect(removeColliderSpy).toHaveBeenCalledTimes(0);
     expect(addColliderSpy).toHaveBeenCalledTimes(1);
     expect(addColliderSpy).toHaveBeenNthCalledWith(1, imageMesh, image);
@@ -157,13 +217,33 @@ describe("m-image", () => {
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
-    // mock calls to THREE's Cache class to prevent the loaders attempting to
-    // fetch images from the web
-    const cacheSpy = jest.spyOn(Cache, "get").mockImplementation(() => {
-      const htmlImageElement = document.createElement("img");
-      htmlImageElement.width = originalImageWidth;
-      htmlImageElement.height = originalImageHeight;
-      return htmlImageElement;
+    const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
+    const rm = ga.getResourceManager() as ThreeJSResourceManager;
+    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (
+          cb: (
+            result:
+              | { texture: THREE.Texture; width: number; height: number; hasTransparency: boolean }
+              | Error,
+          ) => void,
+        ) => {
+          const img = document.createElement("canvas");
+          img.width = originalImageWidth;
+          img.height = originalImageHeight;
+          const texture = new THREE.CanvasTexture(img as any);
+          cb({
+            texture,
+            width: originalImageWidth,
+            height: originalImageHeight,
+            hasTransparency: false,
+          });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
     });
 
     image.setAttribute("width", "10");
@@ -172,9 +252,7 @@ describe("m-image", () => {
     expect(imageMesh.scale.x).toBe(10);
 
     image.setAttribute("src", "SOME_ASSET_URL");
-    expect(cacheSpy).toHaveBeenCalled();
-    expect((image as any).imageGraphics.srcApplyPromise).toBeTruthy();
-    await (image as any).imageGraphics.srcApplyPromise;
+    expect(loadImageSpy).toHaveBeenCalled();
     expect(updateColliderSpy).toHaveBeenCalledTimes(3);
     expect(imageMesh.scale.y).toBe(5);
     expect(imageMesh.scale.x).toBe(10);
@@ -185,31 +263,53 @@ describe("m-image", () => {
     expect(Array.from((scene as any).colliders)).toEqual([imageMesh]);
     expect(updateColliderSpy).toHaveBeenNthCalledWith(1, imageMesh, image);
     expect(removeColliderSpy).toHaveBeenCalledTimes(0);
+
+    loadImageSpy.mockRestore();
   });
 
   test("setting width and height ignores aspect ratio", async () => {
-    const { element: image } = await createSceneAttachedElement<Image>("m-image");
+    const { element: image, scene } = await createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
-    // mock calls to THREE's Cache class to prevent the loaders attempting to
-    // fetch images from the web
-    const cacheSpy = jest.spyOn(Cache, "get").mockImplementation(() => {
-      const htmlImageElement = document.createElement("img");
-      htmlImageElement.width = originalImageWidth;
-      htmlImageElement.height = originalImageHeight;
-      return htmlImageElement;
+    const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
+    const rm = ga.getResourceManager() as ThreeJSResourceManager;
+    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (
+          cb: (
+            result:
+              | { texture: THREE.Texture; width: number; height: number; hasTransparency: boolean }
+              | Error,
+          ) => void,
+        ) => {
+          const img = document.createElement("canvas");
+          img.width = originalImageWidth;
+          img.height = originalImageHeight;
+          const texture = new THREE.CanvasTexture(img as any);
+          cb({
+            texture,
+            width: originalImageWidth,
+            height: originalImageHeight,
+            hasTransparency: false,
+          });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
     });
 
     image.setAttribute("src", "SOME_ASSET_URL");
-    expect(cacheSpy).toHaveBeenCalled();
     image.setAttribute("width", "12");
     image.setAttribute("height", "12");
-    expect((image as any).imageGraphics.srcApplyPromise).toBeTruthy();
-    await (image as any).imageGraphics.srcApplyPromise;
 
-    const imageMesh = (image.getContainer() as THREE.Object3D).children[0];
+    const imageMesh = (image.getContainer() as THREE.Object3D).children[0] as THREE.Mesh;
+    expect(loadImageSpy).toHaveBeenCalled();
     expect(imageMesh.scale.y).toBe(12);
     expect(imageMesh.scale.x).toBe(12);
+
+    loadImageSpy.mockRestore();
   });
 });

@@ -6,16 +6,16 @@ import {
 } from "@mml-io/mml-web";
 import * as THREE from "three";
 
+import { ThreeJSImageHandle, ThreeJSImageResourceResult } from "../resources/ThreeJSImageHandle";
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
 
 export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
   private static planeGeometry = new THREE.PlaneGeometry(1, 1);
   private mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material | Array<THREE.Material>>;
   private material: THREE.MeshStandardMaterial;
-  private static imageLoader = new THREE.ImageLoader();
 
-  private srcApplyPromise: Promise<HTMLImageElement> | null = null;
-  private loadedImage: HTMLImageElement | null;
+  private latestImageHandle: ThreeJSImageHandle | null = null;
+  private loadedImageDimensions: { width: number; height: number } | null;
   private loadedImageHasTransparency = false;
   private srcLoadingInstanceManager = new LoadingInstanceManager(`${Image.tagName}.src`);
   constructor(
@@ -97,9 +97,14 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setSrc(newValue: string | null): void {
+    if (this.latestImageHandle) {
+      this.latestImageHandle.dispose();
+    }
+    this.latestImageHandle = null;
+
     const src = (newValue || "").trim();
     const isDataUri = src.startsWith("data:image/");
-    if (this.loadedImage !== null && !isDataUri) {
+    if (this.loadedImageDimensions !== null && !isDataUri) {
       // if the image has already been loaded, remove the image data from the THREE material
       this.clearImage();
     }
@@ -118,47 +123,64 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
       // if the src is a data url, load it directly rather than using the loader - this avoids a potential frame skip
       const image = document.createElement("img");
       image.src = src;
-      this.applyImage(image);
+      this.loadedImageDimensions = {
+        width: image.width,
+        height: image.height,
+      };
+      const finalize = () => {
+        const texture = new THREE.CanvasTexture(image);
+        const result: ThreeJSImageResourceResult = {
+          texture,
+          width: image.width,
+          height: image.height,
+          hasTransparency: hasTransparency(image),
+        };
+        this.applyTexture(result);
+      };
+      if (image.complete) {
+        finalize();
+      } else {
+        image.addEventListener("load", finalize);
+      }
       this.srcLoadingInstanceManager.abortIfLoading();
       return;
     }
 
     const contentSrc = this.image.contentSrcToContentAddress(src);
-    const srcApplyPromise = loadImageAsPromise(
-      ThreeJSImage.imageLoader,
-      contentSrc,
-      (loaded, total) => {
-        this.srcLoadingInstanceManager.setProgress(loaded / total);
-      },
-    );
     this.srcLoadingInstanceManager.start(this.image.getLoadingProgressManager(), contentSrc);
-    this.srcApplyPromise = srcApplyPromise;
-    srcApplyPromise
-      .then((image: HTMLImageElement) => {
-        if (this.srcApplyPromise !== srcApplyPromise || !this.material) {
-          // If we've loaded a different image since, or we're no longer connected, ignore this image
-          return;
-        }
-        this.applyImage(image);
-        this.srcLoadingInstanceManager.finish();
-      })
-      .catch((error) => {
-        console.error("Error loading image:", newValue, error);
-        if (this.srcApplyPromise !== srcApplyPromise || !this.material) {
-          // If we've loaded a different image since, or we're no longer connected, ignore this image
-          return;
-        }
-        this.clearImage();
-        this.srcLoadingInstanceManager.error(error);
-      });
+    const imageHandle = this.image
+      .getScene()
+      .getGraphicsAdapter()
+      .getResourceManager()
+      .loadImage(contentSrc);
+    this.latestImageHandle = imageHandle;
+    imageHandle.onProgress((loaded, total) => {
+      if (this.latestImageHandle !== imageHandle) {
+        return;
+      }
+      this.srcLoadingInstanceManager.setProgress(loaded / total);
+    });
+    imageHandle.onLoad((result: ThreeJSImageResourceResult | Error) => {
+      if (result instanceof Error) {
+        console.error("Error loading image:", newValue, result);
+        this.srcLoadingInstanceManager.error(result);
+        return;
+      }
+      if (this.latestImageHandle !== imageHandle || !this.material) {
+        // If we've loaded a different image since, or we're no longer connected, ignore this image
+        return;
+      }
+      this.applyTexture(result);
+      this.srcLoadingInstanceManager.finish();
+    });
   }
 
   private updateWidthAndHeight() {
     const mesh = this.mesh;
 
     const { width, height } = calculateContentSize({
-      content: this.loadedImage
-        ? { width: this.loadedImage.width, height: this.loadedImage.height }
+      content: this.loadedImageDimensions
+        ? { width: this.loadedImageDimensions.width, height: this.loadedImageDimensions.height }
         : undefined,
       width: this.image.props.width,
       height: this.image.props.height,
@@ -169,25 +191,18 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
     this.updateMeshCallback();
   }
 
-  private applyImage(image: HTMLImageElement) {
-    this.loadedImage = image;
-    if (!image.complete) {
-      // Wait for the image to be fully loaded (most likely a data uri that has not yet been decoded)
-      image.addEventListener("load", () => {
-        if (this.loadedImage !== image) {
-          // if the image has changed since we started loading, ignore this image
-          return;
-        }
-        this.applyImage(image);
-      });
-      return;
-    }
-    this.loadedImageHasTransparency = hasTransparency(this.loadedImage);
+  private applyTexture(result: ThreeJSImageResourceResult) {
+    this.loadedImageHasTransparency = result.hasTransparency;
     if (!this.material) {
       return;
     }
-    this.material.map = new THREE.CanvasTexture(this.loadedImage);
-    this.material.transparent = this.image.props.opacity !== 1 || this.loadedImageHasTransparency;
+
+    this.loadedImageDimensions = {
+      width: result.width,
+      height: result.height,
+    };
+    this.material.map = result.texture;
+    this.material.transparent = this.image.props.opacity !== 1 || result.hasTransparency;
     this.material.alphaTest = 0.01;
     this.material.needsUpdate = true;
     this.updateMaterialEmissiveIntensity();
@@ -195,10 +210,9 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
   }
 
   private clearImage() {
-    this.loadedImage = null;
-    this.srcApplyPromise = null;
+    this.loadedImageDimensions = null;
     if (this.material && this.material.map) {
-      this.material.map.dispose();
+      // Do not dispose shared texture here
       this.material.needsUpdate = true;
       this.material.map = null;
       this.material.alphaMap = null;
@@ -208,41 +222,20 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
   }
 
   dispose() {
-    if (this.material.map) {
-      this.material.map.dispose();
-      this.material.map = null;
+    if (this.latestImageHandle) {
+      this.latestImageHandle.dispose();
     }
+    this.latestImageHandle = null;
+    // Do not dispose shared texture
+    this.material.map = null;
     if (this.material.emissiveMap) {
       this.material.emissiveMap.dispose();
       this.material.emissiveMap = null;
     }
     this.material.dispose();
-    this.loadedImage = null;
+    this.loadedImageDimensions = null;
     this.srcLoadingInstanceManager.dispose();
   }
-}
-
-export function loadImageAsPromise(
-  imageLoader: THREE.ImageLoader,
-  path: string,
-  onProgress?: (loaded: number, total: number) => void,
-): Promise<HTMLImageElement> {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    imageLoader.load(
-      path,
-      (image: HTMLImageElement) => {
-        resolve(image);
-      },
-      (xhr: ProgressEvent) => {
-        if (onProgress) {
-          onProgress(xhr.loaded, xhr.total);
-        }
-      },
-      (error: ErrorEvent) => {
-        reject(error);
-      },
-    );
-  });
 }
 
 function hasTransparency(image: HTMLImageElement) {

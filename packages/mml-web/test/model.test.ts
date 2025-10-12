@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { ThreeJSModel } from "@mml-io/mml-web-threejs";
+import { ThreeJSResourceManager } from "@mml-io/mml-web-threejs";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
@@ -53,32 +53,33 @@ describe("m-model", () => {
     const testNode = new THREE.Group();
     testNode.name = "MY_LOADED_ASSET";
 
-    // mock the loader to return a specific THREE node
-    const mockGLTFLoad = jest
-      .spyOn(ThreeJSModel.prototype, "asyncLoadSourceAsset")
-      .mockResolvedValue({
-        animations: [],
-        group: testNode,
-      });
+    // mock the resource manager to return a handle that immediately loads our test node
+    const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
+    const rm = ga.getResourceManager() as ThreeJSResourceManager;
+    const loadModelSpy = jest.spyOn(rm, "loadModel").mockImplementation(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (cb: (result: { animations: any[]; group: THREE.Group } | Error) => void) => {
+          cb({ animations: [], group: testNode });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
+    });
 
     element.setAttribute("src", "some_asset_path");
-    expect(mockGLTFLoad).toBeCalledTimes(1);
-    expect((element as any).modelGraphics.latestSrcModelPromise).toBeTruthy();
-    await (element as any).modelGraphics.latestSrcModelPromise;
+    expect(loadModelSpy).toBeCalledTimes(1);
 
     const modelContainer = element.getContainer() as THREE.Object3D;
     const loadedModel = modelContainer.children[0];
     expect(loadedModel.name).toBe(testNode.name);
-
-    mockGLTFLoad.mockRestore();
+    loadModelSpy.mockRestore();
   });
 
   test("geometries are disposed of when elements are removed", async () => {
     const { scene, remoteDocument } = await createTestScene();
     const element = document.createElement("m-model") as Model;
-
-    // mock the loader to return a specific THREE node
-    const asyncLoadSpy = jest.spyOn(ThreeJSModel.prototype, "asyncLoadSourceAsset");
 
     const firstBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
     const firstMaterial = new THREE.MeshStandardMaterial();
@@ -88,27 +89,36 @@ describe("m-model", () => {
     const firstGeometryDisposeSpy = jest.spyOn(firstBoxGeometry, "dispose");
     const firstMaterialDisposeSpy = jest.spyOn(firstMaterial, "dispose");
 
-    asyncLoadSpy.mockResolvedValue({
-      animations: [],
-      group: firstGroup,
+    const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
+    const rm = ga.getResourceManager() as ThreeJSResourceManager;
+    const loadModelSpy = jest.spyOn(rm, "loadModel");
+    loadModelSpy.mockImplementation(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (cb: (result: { animations: any[]; group: THREE.Group } | Error) => void) => {
+          cb({ animations: [], group: firstGroup });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
     });
 
     // Setting the attribute should not cause the model to be loaded as the element is not connected
     element.setAttribute("src", "some_asset_path");
 
-    expect(asyncLoadSpy).toBeCalledTimes(0);
+    expect(loadModelSpy).toBeCalledTimes(0);
     expect(firstGeometryDisposeSpy).toBeCalledTimes(0);
     expect(firstMaterialDisposeSpy).toBeCalledTimes(0);
 
     // Appending the element to the document should cause the model to be loaded
     remoteDocument.append(element);
 
-    expect(asyncLoadSpy).toBeCalledTimes(1);
+    expect(loadModelSpy).toBeCalledTimes(1);
     expect(firstGeometryDisposeSpy).toBeCalledTimes(0);
     expect(firstMaterialDisposeSpy).toBeCalledTimes(0);
 
-    expect((element as any).modelGraphics.latestSrcModelPromise).toBeTruthy();
-    await (element as any).modelGraphics.latestSrcModelPromise;
+    // loaded synchronously by our mock
 
     expect(
       (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene().children[0]
@@ -128,16 +138,22 @@ describe("m-model", () => {
     const secondGroup = new THREE.Group();
     secondGroup.add(secondMesh);
 
-    asyncLoadSpy.mockResolvedValueOnce({
-      animations: [],
-      group: secondGroup,
+    loadModelSpy.mockImplementationOnce(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (cb: (result: { animations: any[]; group: THREE.Group } | Error) => void) => {
+          cb({ animations: [], group: secondGroup });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
     });
 
     // Re-appending the element should cause the model to be re-loaded
     remoteDocument.append(element);
 
-    expect((element as any).modelGraphics.latestSrcModelPromise).toBeTruthy();
-    await (element as any).modelGraphics.latestSrcModelPromise;
+    // loaded synchronously by our mock
 
     expect(
       (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene().children[0]
