@@ -100,7 +100,10 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
     // Clamp the width and height to 1024px whilst maintaining the aspect ratio
     const desiredWidth = this.label.props.width * 200;
     const desiredHeight = this.label.props.height * 200;
-    const scale = Math.min(ThreeJSLabel.MAX_TEXTURE_SIZE / desiredWidth, ThreeJSLabel.MAX_TEXTURE_SIZE / desiredHeight);
+    const scale = Math.min(
+      ThreeJSLabel.MAX_TEXTURE_SIZE / desiredWidth,
+      ThreeJSLabel.MAX_TEXTURE_SIZE / desiredHeight,
+    );
     const clampedScale = Math.min(scale, 1);
     const clampedWidth = desiredWidth * clampedScale;
     const clampedHeight = desiredHeight * clampedScale;
