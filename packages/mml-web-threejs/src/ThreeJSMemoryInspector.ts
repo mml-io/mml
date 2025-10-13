@@ -1345,7 +1345,8 @@ export class ThreeJSMemoryInspector {
       const total = items.length;
 
       if (activeObjectFilter) {
-        items = items.filter((item) => item.usedByObjectInstanceIds.includes(activeObjectFilter!));
+        const filter = activeObjectFilter;
+        items = items.filter((item) => item.usedByObjectInstanceIds.includes(filter));
       }
 
       items.sort((a, b) => b.memoryBytes - a.memoryBytes);
@@ -1378,7 +1379,6 @@ export class ThreeJSMemoryInspector {
     };
 
     const updateFilterBar = () => {
-      console.log("updateFilterBar", activeObjectFilter);
       if (activeObjectFilter) {
         filterStatus.textContent = `Object filter: ${activeObjectFilter}`;
         clearFilterBtn.style.display = "";

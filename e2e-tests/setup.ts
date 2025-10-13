@@ -20,7 +20,9 @@ module.exports = async function () {
       // We pass a small set of likely feature names; unknown entries are ignored by Chromium.
       "--disable-features=CanvasReadbackNoise,CanvasNoise,CanvasImageDataNoise",
       // Enable software rendering for WebGL in CI environments
-      ...(process.env.RENDERER !== "playcanvas" ? ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] : []),
+      ...(process.env.RENDERER !== "playcanvas"
+        ? ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"]
+        : []),
     ],
     headless: headless ? ("new" as any) : false,
   });
