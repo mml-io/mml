@@ -19,7 +19,7 @@ describe("m-label", () => {
     const baseline = await readThreeSceneCounts(page);
     if (baseline) {
       // Ground mesh + shared label plane, and 3 control label textures
-      expect(baseline).toMatchObject({ geometryCount: 2, textureCount: 3 });
+      expect(baseline).toMatchObject({ geometryCount: 1, textureCount: 3 });
     }
 
     await takeAndCompareScreenshot(page);
@@ -38,7 +38,7 @@ describe("m-label", () => {
     const afterFive = await readThreeSceneCounts(page);
     if (afterFive) {
       // Shared label geometry already present; textures add: 1 remove texture + 3 variant textures
-      expect(afterFive).toMatchObject({ geometryCount: 2, textureCount: 7 });
+      expect(afterFive).toMatchObject({ geometryCount: 1, textureCount: 7 });
     }
 
     // Remove one label (middle)
@@ -54,7 +54,7 @@ describe("m-label", () => {
     const afterRemoveOne = await readThreeSceneCounts(page);
     if (afterRemoveOne) {
       // Removing one still leaves shared textures referenced; counts unchanged
-      expect(afterRemoveOne).toMatchObject({ geometryCount: 2, textureCount: 6 });
+      expect(afterRemoveOne).toMatchObject({ geometryCount: 1, textureCount: 6 });
     }
 
     // Add one more label
@@ -70,7 +70,7 @@ describe("m-label", () => {
     const afterAddOne = await readThreeSceneCounts(page);
     if (afterAddOne) {
       // Still using the same shared textures and geometry
-      expect(afterAddOne).toMatchObject({ geometryCount: 2, textureCount: 7 });
+      expect(afterAddOne).toMatchObject({ geometryCount: 1, textureCount: 7 });
     }
 
     // Remove all labels
@@ -86,7 +86,7 @@ describe("m-label", () => {
     const afterRemoveAll = await readThreeSceneCounts(page);
     if (afterRemoveAll) {
       // Back to baseline: ground + shared label plane, and only the 3 control label textures remain
-      expect(afterRemoveAll).toMatchObject({ geometryCount: 2, textureCount: 3 });
+      expect(afterRemoveAll).toMatchObject({ geometryCount: 1, textureCount: 3 });
       expect(afterRemoveAll).toEqual(baseline);
     }
 

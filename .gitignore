@@ -6,3 +6,4 @@ build/
 .vscode/
 coverage/
 .nx/
+__diff_output__

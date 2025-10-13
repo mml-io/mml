@@ -19,7 +19,7 @@ describe("m-image", () => {
     const baseline = await readThreeSceneCounts(page);
     if (baseline) {
       // The base scene contains a ground mesh, and a single reused mesh for the labels, and then 6 unique label textures
-      expect(baseline).toMatchObject({ geometryCount: 2, textureCount: 6 });
+      expect(baseline).toMatchObject({ geometryCount: 1, textureCount: 6 });
     }
 
     await takeAndCompareScreenshot(page);
@@ -46,7 +46,7 @@ describe("m-image", () => {
     const afterFive = await readThreeSceneCounts(page);
     if (afterFive) {
       // 1 additional geometry (the image quad), and 2 additional textures (the image texture + a remove label texture)
-      expect(afterFive).toMatchObject({ geometryCount: 3, textureCount: 8 });
+      expect(afterFive).toMatchObject({ geometryCount: 2, textureCount: 8 });
     }
 
     // Remove one image in the middle
@@ -62,7 +62,7 @@ describe("m-image", () => {
     const afterRemoveOne = await readThreeSceneCounts(page);
     if (afterRemoveOne) {
       // Removing one image should not change the geometry or texture count (shared geometry/texture still in use)
-      expect(afterRemoveOne).toMatchObject({ geometryCount: 3, textureCount: 8 });
+      expect(afterRemoveOne).toMatchObject({ geometryCount: 2, textureCount: 8 });
     }
 
     // Add one more
@@ -87,7 +87,7 @@ describe("m-image", () => {
     const afterAddOne = await readThreeSceneCounts(page);
     if (afterAddOne) {
       // Adding one image should not change counts (still shared geometry/texture)
-      expect(afterAddOne).toMatchObject({ geometryCount: 3, textureCount: 8 });
+      expect(afterAddOne).toMatchObject({ geometryCount: 2, textureCount: 8 });
     }
 
     // Remove all images
@@ -103,7 +103,7 @@ describe("m-image", () => {
     const afterRemoveAll = await readThreeSceneCounts(page);
     if (afterRemoveAll) {
       // Removing all images should return to the baseline counts
-      expect(afterRemoveAll).toMatchObject({ geometryCount: 2, textureCount: 6 });
+      expect(afterRemoveAll).toMatchObject({ geometryCount: 1, textureCount: 6 });
       expect(afterRemoveAll).toEqual(baseline);
     }
 

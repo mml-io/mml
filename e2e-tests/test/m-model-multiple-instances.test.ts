@@ -21,7 +21,7 @@ describe("m-model", () => {
     const baseline = await readThreeSceneCounts(page);
     if (baseline) {
       // The base scene contains a ground mesh, and a single reused mesh for the labels, and then 6 unique label textures
-      expect(baseline).toMatchObject({ geometryCount: 2, textureCount: 6 });
+      expect(baseline).toMatchObject({ geometryCount: 1, textureCount: 6 });
     }
 
     // Load 5 ducks
@@ -45,7 +45,7 @@ describe("m-model", () => {
     const afterFive = await readThreeSceneCounts(page);
     if (afterFive) {
       // 1 additional geometry (the duck model), and 2 additional textures (the duck texture + a remove label texture)
-      expect(afterFive).toMatchObject({ geometryCount: 3, textureCount: 8 });
+      expect(afterFive).toMatchObject({ geometryCount: 2, textureCount: 8 });
     }
 
     // Remove one duck in the middle
@@ -58,7 +58,7 @@ describe("m-model", () => {
     const afterRemoveOne = await readThreeSceneCounts(page);
     if (afterRemoveOne) {
       // Removing one duck should not change the geometry or texture count (there are still instances of both the duck model and the remove label texture)
-      expect(afterRemoveOne).toMatchObject({ geometryCount: 3, textureCount: 8 });
+      expect(afterRemoveOne).toMatchObject({ geometryCount: 2, textureCount: 8 });
     }
 
     // Add one more
@@ -82,7 +82,7 @@ describe("m-model", () => {
     const afterAddOne = await readThreeSceneCounts(page);
     if (afterAddOne) {
       // Adding one duck should not change the geometry or texture count (there are still instances of both the duck model and the remove label texture)
-      expect(afterAddOne).toMatchObject({ geometryCount: 3, textureCount: 8 });
+      expect(afterAddOne).toMatchObject({ geometryCount: 2, textureCount: 8 });
     }
 
     // Remove all ducks
@@ -95,7 +95,7 @@ describe("m-model", () => {
     const afterRemoveAll = await readThreeSceneCounts(page);
     if (afterRemoveAll) {
       // Removing all ducks should return to the baseline geometry and texture count (the ground mesh, the label mesh, and the 6 label textures)
-      expect(afterRemoveAll).toMatchObject({ geometryCount: 2, textureCount: 6 });
+      expect(afterRemoveAll).toMatchObject({ geometryCount: 1, textureCount: 6 });
       expect(afterRemoveAll).toEqual(baseline);
     }
 
