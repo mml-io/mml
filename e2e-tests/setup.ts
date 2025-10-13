@@ -19,6 +19,9 @@ module.exports = async function () {
       // The flag is exposed via chrome://flags/#enable-canvas-noise and is backed by a FeatureList entry.
       // We pass a small set of likely feature names; unknown entries are ignored by Chromium.
       "--disable-features=CanvasReadbackNoise,CanvasNoise,CanvasImageDataNoise",
+      // Enable software rendering for WebGL in CI environments
+      "--use-gl=swiftshader",
+      "--enable-unsafe-swiftshader",
     ],
     headless: headless ? ("new" as any) : false,
   });
