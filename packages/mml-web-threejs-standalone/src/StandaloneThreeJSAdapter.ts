@@ -181,7 +181,7 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
     ThreeJSMemoryInspector.openMemoryReport(this.threeScene);
   }
 
-  public analyzeScene() {
+  public analyzeScene(): ReturnType<typeof ThreeJSMemoryInspector.analyzeScene> {
     return ThreeJSMemoryInspector.analyzeScene(this.threeScene);
   }
 
