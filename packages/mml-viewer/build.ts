@@ -25,6 +25,7 @@ const buildOptions: esbuild.BuildOptions = {
   metafile: true,
   publicPath: "",
   sourcemap: true,
+  minify: true,
   assetNames: "[name]-[hash]",
   preserveSymlinks: true,
   outdir: "./build/",

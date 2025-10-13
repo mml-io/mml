@@ -258,6 +258,8 @@ export class Label<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       }
     }
 
+    this.labelGraphics.allAttributesObserved();
+
     this.applyBounds();
     this.collideableHelper.updateCollider(this.labelGraphics?.getCollisionElement());
   }

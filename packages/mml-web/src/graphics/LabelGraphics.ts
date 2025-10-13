@@ -6,6 +6,8 @@ export abstract class LabelGraphics<G extends GraphicsAdapter = GraphicsAdapter>
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(element: Label<G>) {}
 
+  abstract allAttributesObserved(): void;
+
   abstract enable(): void;
 
   abstract disable(): void;

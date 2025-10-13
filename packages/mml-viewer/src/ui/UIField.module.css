@@ -56,3 +56,9 @@
   font-size: 11px;
   margin-right: 2px;
 }
+
+.action-field {
+  background: transparent;
+  border: none;
+  padding: 0;
+}

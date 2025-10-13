@@ -2,9 +2,10 @@ import { Animation, MElement, Model, TransformableElement } from "@mml-io/mml-we
 import { ModelGraphics } from "@mml-io/mml-web";
 import { LoadingInstanceManager } from "@mml-io/mml-web";
 import { IVect3 } from "@mml-io/mml-web";
-import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
+import { ModelLoadResult } from "@mml-io/model-loader";
 import * as THREE from "three";
 
+import { ThreeJSModelHandle } from "../resources/ThreeJSModelHandle";
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
 import { ThreeJSAnimationState } from "./ThreeJSAnimation";
 
@@ -62,11 +63,10 @@ type AttachmentAnimState = {
 };
 
 export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
-  private static modelLoader = new ModelLoader();
   private srcLoadingInstanceManager = new LoadingInstanceManager(`${Model.tagName}.src`);
   private animLoadingInstanceManager = new LoadingInstanceManager(`${Model.tagName}.anim`);
-  private latestSrcModelPromise: Promise<ModelLoadResult> | null = null;
-  private latestAnimPromise: Promise<ModelLoadResult> | null = null;
+  private latestSrcModelHandle: ThreeJSModelHandle | null = null;
+  private latestAnimModelHandle: ThreeJSModelHandle | null = null;
 
   private socketChildrenByBone = new Map<string, Set<MElement<ThreeJSGraphicsAdapter>>>();
 
@@ -309,6 +309,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setAnim(anim: string | null): void {
+    if (this.latestAnimModelHandle) {
+      this.latestAnimModelHandle.dispose();
+    }
+    this.latestAnimModelHandle = null;
+
     this.resetAnimationMixer();
     this.animState = null;
     for (const [, attachmentAnimState] of this.attachments) {
@@ -329,7 +334,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
 
     if (!anim) {
-      this.latestAnimPromise = null;
       this.animLoadingInstanceManager.abortIfLoading();
 
       // if the animation is removed then the model can be added to
@@ -375,38 +379,42 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
     const animSrc = this.model.contentSrcToContentAddress(anim);
     this.animLoadingInstanceManager.start(this.model.getLoadingProgressManager(), animSrc);
-    const animPromise = this.asyncLoadSourceAsset(animSrc, (loaded, total) => {
-      if (this.latestAnimPromise !== animPromise) {
+    const animModelHandle = this.model
+      .getScene()
+      .getGraphicsAdapter()
+      .getResourceManager()
+      .loadModel(animSrc);
+    this.latestAnimModelHandle = animModelHandle;
+    animModelHandle.onProgress((loaded, total) => {
+      if (this.latestAnimModelHandle !== animModelHandle) {
         return;
       }
       this.animLoadingInstanceManager.setProgress(loaded / total);
     });
-    this.latestAnimPromise = animPromise;
-    animPromise
-      .then((result) => {
-        if (this.latestAnimPromise !== animPromise || !this.model.isConnected) {
-          return;
-        }
-        this.latestAnimPromise = null;
-        const animationClip = result.animations[0];
-        if (this.loadedState) {
-          const filteredClip = createFilteredClip(animationClip, this.loadedState.nodeNames);
-          this.playAnimation(filteredClip);
-        } else {
-          this.playAnimation(animationClip);
-        }
+    animModelHandle.onLoad((result: ModelLoadResult | Error) => {
+      if (result instanceof Error) {
+        console.error("Error loading m-model.anim", result);
+        this.latestAnimModelHandle = null;
+        this.animLoadingInstanceManager.error(result);
+        return;
+      }
+      if (this.latestAnimModelHandle !== animModelHandle || !this.model.isConnected) {
+        return;
+      }
+      const animationClip = result.animations[0];
+      if (this.loadedState) {
+        const filteredClip = createFilteredClip(animationClip, this.loadedState.nodeNames);
+        this.playAnimation(filteredClip);
+      } else {
+        this.playAnimation(animationClip);
+      }
 
-        for (const [model] of this.attachments) {
-          this.registerAttachment(model);
-        }
+      for (const [model] of this.attachments) {
+        this.registerAttachment(model);
+      }
 
-        this.animLoadingInstanceManager.finish();
-      })
-      .catch((err) => {
-        console.error("Error loading m-model.anim", err);
-        this.latestAnimPromise = null;
-        this.animLoadingInstanceManager.error(err);
-      });
+      this.animLoadingInstanceManager.finish();
+    });
   }
 
   setAnimEnabled(): void {
@@ -455,6 +463,11 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setSrc(src: string | null): void {
+    if (this.latestSrcModelHandle) {
+      this.latestSrcModelHandle.dispose();
+    }
+    this.latestSrcModelHandle = null;
+
     if (this.loadedState !== null) {
       this.loadedState.group.removeFromParent();
       if (this.registeredParentAttachment) {
@@ -481,7 +494,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     }
 
     if (!src) {
-      this.latestSrcModelPromise = null;
+      this.latestSrcModelHandle = null;
       this.srcLoadingInstanceManager.abortIfLoading();
       this.socketChildrenByBone.forEach((children) => {
         children.forEach((child) => {
@@ -495,96 +508,95 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
 
     const contentSrc = this.model.contentSrcToContentAddress(src);
     this.srcLoadingInstanceManager.start(this.model.getLoadingProgressManager(), contentSrc);
-    const srcModelPromise = this.asyncLoadSourceAsset(contentSrc, (loaded, total) => {
-      if (this.latestSrcModelPromise !== srcModelPromise) {
+    const srcModelHandle = this.model
+      .getScene()
+      .getGraphicsAdapter()
+      .getResourceManager()
+      .loadModel(contentSrc);
+    this.latestSrcModelHandle = srcModelHandle;
+    srcModelHandle.onProgress((loaded, total) => {
+      if (this.latestSrcModelHandle !== srcModelHandle) {
         return;
       }
       this.srcLoadingInstanceManager.setProgress(loaded / total);
     });
-    this.latestSrcModelPromise = srcModelPromise;
-    srcModelPromise
-      .then((result) => {
-        if (this.latestSrcModelPromise !== srcModelPromise || !this.model.isConnected) {
-          // we've loaded a different model since, or we're no longer connected
-          // dispose of this one
-          ThreeJSModel.disposeOfGroup(result.group);
-          return;
+    srcModelHandle.onLoad((result: ModelLoadResult | Error) => {
+      if (result instanceof Error) {
+        console.error("Error loading m-model.src", result);
+        this.latestSrcModelHandle = null;
+        this.srcLoadingInstanceManager.error(result);
+        return;
+      }
+      result.group.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = this.model.props.castShadows;
+          child.receiveShadow = true;
         }
-        result.group.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = this.model.props.castShadows;
-            child.receiveShadow = true;
-          }
-        });
-        this.latestSrcModelPromise = null;
-        const group = result.group;
-        const bones = new Map<string, THREE.Bone>();
-        const nodeNames = new Set<string>();
-        group.traverse((object) => {
-          nodeNames.add(object.name);
-          if (object instanceof THREE.Bone) {
-            bones.set(object.name, object);
-          }
-        });
-
-        const boundingBox = new THREE.Box3();
-        group.updateWorldMatrix(true, true);
-        boundingBox.expandByObject(group);
-
-        this.loadedState = {
-          group,
-          bones,
-          nodeNames,
-          boundingBox: {
-            size: boundingBox.getSize(new THREE.Vector3(0, 0, 0)),
-            centerOffset: boundingBox.getCenter(new THREE.Vector3(0, 0, 0)),
-          },
-        };
-        this.model.getContainer().add(group);
-
-        this.childAnimationMixer = new THREE.AnimationMixer(group);
-
-        if (!this.documentTimeTickListener) {
-          this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
-            (documentTime: number) => {
-              this.updateAnimation(documentTime);
-            },
-          );
-        }
-
-        for (const [boneName, children] of this.socketChildrenByBone) {
-          const bone = bones.get(boneName);
-          if (bone) {
-            children.forEach((child) => {
-              bone.add(child.getContainer());
-            });
-          }
-        }
-
-        this.updateMeshCallback();
-
-        const parent = this.model.parentElement;
-        if (parent && Model.isModel(parent)) {
-          if (!this.latestAnimPromise && !this.animState) {
-            this.registeredParentAttachment = parent as Model<ThreeJSGraphicsAdapter>;
-            (parent.modelGraphics as ThreeJSModel).registerAttachment(this.model);
-          }
-        }
-
-        if (this.animState) {
-          this.playAnimation(this.animState.currentAnimationClip);
-        }
-        this.srcLoadingInstanceManager.finish();
-        this.updateDebugVisualisation();
-
-        for (const [animation, childAnimation] of this.childAnimations) {
-          this.updateChildAnimation(animation, childAnimation.animationState);
-        }
-      })
-      .catch((err) => {
-        console.error("Error loading m-model.src", err);
-        this.srcLoadingInstanceManager.error(err);
       });
+      const group = result.group;
+      const bones = new Map<string, THREE.Bone>();
+      const nodeNames = new Set<string>();
+      group.traverse((object) => {
+        nodeNames.add(object.name);
+        if (object instanceof THREE.Bone) {
+          bones.set(object.name, object);
+        }
+      });
+
+      const boundingBox = new THREE.Box3();
+      group.updateWorldMatrix(true, true);
+      boundingBox.expandByObject(group);
+
+      this.loadedState = {
+        group,
+        bones,
+        nodeNames,
+        boundingBox: {
+          size: boundingBox.getSize(new THREE.Vector3(0, 0, 0)),
+          centerOffset: boundingBox.getCenter(new THREE.Vector3(0, 0, 0)),
+        },
+      };
+      this.model.getContainer().add(group);
+
+      this.childAnimationMixer = new THREE.AnimationMixer(group);
+
+      if (!this.documentTimeTickListener) {
+        this.documentTimeTickListener = this.model.addDocumentTimeTickListener(
+          (documentTime: number) => {
+            this.updateAnimation(documentTime);
+          },
+        );
+      }
+
+      for (const [boneName, children] of this.socketChildrenByBone) {
+        const bone = bones.get(boneName);
+        if (bone) {
+          children.forEach((child) => {
+            bone.add(child.getContainer());
+          });
+        }
+      }
+
+      this.updateMeshCallback();
+
+      const parent = this.model.parentElement;
+      if (parent && Model.isModel(parent)) {
+        if (!this.latestAnimModelHandle && !this.animState) {
+          this.registeredParentAttachment = parent as Model<ThreeJSGraphicsAdapter>;
+          (parent.modelGraphics as ThreeJSModel).registerAttachment(this.model);
+        }
+      }
+
+      if (this.animState) {
+        this.playAnimation(this.animState.currentAnimationClip);
+      }
+      this.srcLoadingInstanceManager.finish();
+      this.updateDebugVisualisation();
+
+      for (const [animation, childAnimation] of this.childAnimations) {
+        this.updateChildAnimation(animation, childAnimation.animationState);
+      }
+    });
   }
 
   public registerAttachment(attachment: Model<ThreeJSGraphicsAdapter>) {
@@ -667,13 +679,6 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.debugBoundingBox.removeFromParent();
       this.debugBoundingBox = null;
     }
-  }
-
-  async asyncLoadSourceAsset(
-    url: string,
-    onProgress: (loaded: number, total: number) => void,
-  ): Promise<ModelLoadResult> {
-    return await ThreeJSModel.modelLoader.load(url, onProgress);
   }
 
   private resetAnimationMixer() {
@@ -932,8 +937,14 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       this.loadedState = null;
     }
     this.clearDebugVisualisation();
-    this.latestSrcModelPromise = null;
-    this.latestAnimPromise = null;
+    if (this.latestSrcModelHandle) {
+      this.latestSrcModelHandle.dispose();
+    }
+    this.latestSrcModelHandle = null;
+    if (this.latestAnimModelHandle) {
+      this.latestAnimModelHandle.dispose();
+    }
+    this.latestAnimModelHandle = null;
     this.animLoadingInstanceManager.dispose();
     this.srcLoadingInstanceManager.dispose();
 

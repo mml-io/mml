@@ -10,6 +10,8 @@ import {
   ThreeJSGraphicsAdapter,
   ThreeJSGraphicsInterface,
   ThreeJSInteractionAdapter,
+  ThreeJSMemoryInspector,
+  ThreeJSResourceManager,
 } from "@mml-io/mml-web-threejs";
 import * as THREE from "three";
 
@@ -41,6 +43,7 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
   private animationFrameRequest: number;
   private clickTrigger: ThreeJSClickTrigger;
   public controls: ThreeJSControls | null = null;
+  private resourceManager = new ThreeJSResourceManager();
 
   private constructor(
     private element: HTMLElement,
@@ -54,6 +57,10 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
     const adapter = new StandaloneThreeJSAdapter(element, options);
     await adapter.init();
     return adapter;
+  }
+
+  public getResourceManager(): ThreeJSResourceManager {
+    return this.resourceManager;
   }
 
   public interactionShouldShowDistance(interaction: Interaction<this>): number | null {
@@ -168,6 +175,14 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
     }
     renderer.domElement.style.pointerEvents = "none";
     return renderer;
+  }
+
+  public openMemoryReport() {
+    ThreeJSMemoryInspector.openMemoryReport(this.threeScene);
+  }
+
+  public analyzeScene(): ReturnType<typeof ThreeJSMemoryInspector.analyzeScene> {
+    return ThreeJSMemoryInspector.analyzeScene(this.threeScene);
   }
 
   disconnectRoot() {

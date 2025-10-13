@@ -105,6 +105,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Delay middleware - checks for delay query parameter
+app.use((req, res, next) => {
+  const delayParam = req.query.delay;
+  if (delayParam) {
+    const delayMs = parseInt(delayParam as string, 10);
+    if (!isNaN(delayMs) && delayMs > 0) {
+      console.log(`Delaying request by ${delayMs}ms`);
+      setTimeout(() => {
+        next();
+      }, delayMs);
+      return;
+    }
+  }
+  next();
+});
+
 app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>

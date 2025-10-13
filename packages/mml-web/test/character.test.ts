@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { ThreeJSModel } from "@mml-io/mml-web-threejs";
+import { ThreeJSResourceManager } from "@mml-io/mml-web-threejs";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
@@ -53,24 +53,29 @@ describe("m-character", () => {
     const testNode = new THREE.Group();
     testNode.name = "MY_LOADED_ASSET";
 
-    // mock the loader to return a specific THREE node
-    const mockGLTFLoad = jest
-      .spyOn(ThreeJSModel.prototype, "asyncLoadSourceAsset")
-      .mockResolvedValue({
-        animations: [],
-        group: testNode,
-      });
+    // mock the resource manager to return a handle that immediately loads our test node
+    const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
+    const rm = ga.getResourceManager() as ThreeJSResourceManager;
+    const loadModelSpy = jest.spyOn(rm, "loadModel").mockImplementation(() => {
+      const handle = {
+        onProgress: () => {},
+        onLoad: (cb: (result: { animations: any[]; group: THREE.Group } | Error) => void) => {
+          cb({ animations: [], group: testNode });
+        },
+        getResult: () => null,
+        dispose: () => {},
+      };
+      return handle as any;
+    });
 
     element.setAttribute("src", "some_asset_path");
-    expect(mockGLTFLoad).toBeCalledTimes(1);
-    expect((element as any).modelGraphics.latestSrcModelPromise).toBeTruthy();
-    await (element as any).modelGraphics.latestSrcModelPromise;
+    expect(loadModelSpy).toBeCalledTimes(1);
 
     const modelContainer = element.getContainer() as THREE.Object3D;
     const loadedModel = modelContainer.children[0];
     expect(loadedModel.name).toBe(testNode.name);
 
-    mockGLTFLoad.mockRestore();
+    loadModelSpy.mockRestore();
   });
 
   test("observes the schema-specified attributes", () => {

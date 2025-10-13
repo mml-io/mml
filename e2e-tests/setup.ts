@@ -13,7 +13,17 @@ if (process.env.HEADLESS === "true") {
 
 module.exports = async function () {
   const browser = await puppeteer.launch({
-    args: ["--no-sandbox"],
+    args: [
+      "--no-sandbox",
+      // Disable canvas readback noise to make screenshots deterministic
+      // The flag is exposed via chrome://flags/#enable-canvas-noise and is backed by a FeatureList entry.
+      // We pass a small set of likely feature names; unknown entries are ignored by Chromium.
+      "--disable-features=CanvasReadbackNoise,CanvasNoise,CanvasImageDataNoise",
+      // Enable software rendering for WebGL in CI environments
+      ...(process.env.RENDERER !== "playcanvas"
+        ? ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"]
+        : []),
+    ],
     headless: headless ? ("new" as any) : false,
   });
   // store the browser instance so we can teardown it later

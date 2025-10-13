@@ -12,6 +12,7 @@ export class UIField extends UIElement {
   private selectElement?: HTMLSelectElement;
 
   private submitButton?: HTMLButtonElement;
+  private actionButton?: HTMLButtonElement;
 
   constructor(
     public fieldDefinition: FieldDefinition,
@@ -25,7 +26,23 @@ export class UIField extends UIElement {
     this.label.textContent = fieldDefinition.label;
     this.element.append(this.label);
 
-    if (fieldDefinition.options) {
+    if (fieldDefinition.type === "action") {
+      this.element.classList.add(styles.actionField);
+      this.actionButton = document.createElement("button");
+      this.actionButton.classList.add(sharedStyles.button, styles.submitButton);
+      this.actionButton.textContent = fieldDefinition.label;
+      this.actionButton.addEventListener("click", () => {
+        try {
+          if (this.fieldDefinition.onClick) {
+            this.fieldDefinition.onClick();
+          }
+        } catch (e) {
+          console.warn("UI action handler threw:", e);
+        }
+      });
+      this.label.textContent = "";
+      this.element.append(this.actionButton);
+    } else if (fieldDefinition.options) {
       const selectElement = document.createElement("select");
       this.selectElement = selectElement;
       this.selectElement.className = styles.selectInput;
@@ -114,14 +131,19 @@ export class UIField extends UIElement {
       }
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const value = params.get(fieldDefinition.name);
-    if (value) {
-      this.setValue(value);
+    if (fieldDefinition.type !== "action") {
+      const params = new URLSearchParams(window.location.search);
+      const value = params.get(fieldDefinition.name);
+      if (value) {
+        this.setValue(value);
+      }
     }
   }
 
   setValue(value: string) {
+    if (this.fieldDefinition.type === "action") {
+      return;
+    }
     if (this.selectElement) {
       this.selectElement.value = value;
     } else if (this.input) {
@@ -134,6 +156,9 @@ export class UIField extends UIElement {
   }
 
   onChange(value: string) {
+    if (this.fieldDefinition.type === "action") {
+      return;
+    }
     if (this.fieldDefinition.type === "boolean") {
       value = value === "true" || value === "on" || value === "1" ? "true" : "false";
     }

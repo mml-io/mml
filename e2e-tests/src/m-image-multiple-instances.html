@@ -1,0 +1,206 @@
+<m-light type="point" intensity="900" x="0" y="10" z="10"></m-light>
+
+<!-- Control Labels -->
+<m-label id="load-1-image" font-size="30" x="-4" y="8" width="3" height="0.5" content="Load 1 Image" alignment="center" font-color="white" color="darkblue" border-radius="0.2"></m-label>
+<m-label id="load-5-images" font-size="30" x="0" y="8" width="3" height="0.5" content="Load 5 Images" alignment="center" font-color="white" color="darkgreen" border-radius="0.2"></m-label>
+<m-label id="remove-all-images" font-size="30" x="4" y="8" width="3" height="0.5" content="Remove All" alignment="center" font-color="white" color="darkred" border-radius="0.2"></m-label>
+
+<!-- Delay Control Labels -->
+<m-label id="load-1-image-delay-1s" font-size="25" x="-4" y="7" width="3" height="0.4" content="Load 1 Image (1s delay)" alignment="center" font-color="white" color="purple" border-radius="0.2"></m-label>
+<m-label id="load-1-image-delay-3s" font-size="25" x="0" y="7" width="3" height="0.4" content="Load 1 Image (3s delay)" alignment="center" font-color="white" color="black" border-radius="0.2"></m-label>
+<m-label id="load-1-image-delay-5s" font-size="25" x="4" y="7" width="3" height="0.4" content="Load 1 Image (5s delay)" alignment="center" font-color="white" color="brown" border-radius="0.2"></m-label>
+
+<!-- Image Container -->
+<m-group id="image-container"></m-group>
+
+<script>
+class ImageManager {
+    constructor() {
+        this.images = new Map(); // Map of imageId to position index
+        this.imageCounter = 0;
+        this.availablePositions = []; // Stack of available position indices
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Add click handlers for the control labels
+        const load1Image = document.getElementById("load-1-image");
+        const load5Images = document.getElementById("load-5-images");
+        const removeAllImages = document.getElementById("remove-all-images");
+        
+        // Add click handlers for the delay control labels
+        const load1ImageDelay1s = document.getElementById("load-1-image-delay-1s");
+        const load1ImageDelay3s = document.getElementById("load-1-image-delay-3s");
+        const load1ImageDelay5s = document.getElementById("load-1-image-delay-5s");
+        
+        if (load1Image) {
+            load1Image.addEventListener("click", () => this.loadImages(1));
+        }
+        
+        if (load5Images) {
+            load5Images.addEventListener("click", () => this.loadImages(5));
+        }
+        
+        if (removeAllImages) {
+            removeAllImages.addEventListener("click", () => this.removeAllImages());
+        }
+        
+        if (load1ImageDelay1s) {
+            load1ImageDelay1s.addEventListener("click", () => this.loadImageWithDelay(1000));
+        }
+        
+        if (load1ImageDelay3s) {
+            load1ImageDelay3s.addEventListener("click", () => this.loadImageWithDelay(3000));
+        }
+        
+        if (load1ImageDelay5s) {
+            load1ImageDelay5s.addEventListener("click", () => this.loadImageWithDelay(5000));
+        }
+    }
+
+    loadImages(count) {
+        for (let i = 0; i < count; i++) {
+            this.addImage();
+        }
+    }
+
+    loadImageWithDelay(delayMs) {
+        this.addImage(delayMs);
+    }
+
+    addImage(delayMs = 0) {
+        const imageId = `image-${this.imageCounter++}`;
+        
+        // Get position index - use available position if any, otherwise use next sequential position
+        let positionIndex;
+        if (this.availablePositions.length > 0) {
+            positionIndex = this.availablePositions.shift(); // Use the first available position (leftmost gap)
+        } else {
+            positionIndex = this.images.size; // Use next sequential position
+        }
+        
+        const position = this.getGridPosition(positionIndex);
+        const scale = this.getRandomScale(position);
+        
+        // Create image group container
+        const imageGroup = document.createElement("m-group");
+        imageGroup.id = imageId;
+        imageGroup.setAttribute("x", position.x.toString());
+        imageGroup.setAttribute("y", position.y.toString());
+        imageGroup.setAttribute("z", position.z.toString());
+        
+        // Create remove label (relative to group position)
+        const removeLabel = document.createElement("m-label");
+        removeLabel.setAttribute("font-size", "20");
+        removeLabel.setAttribute("x", "0");
+        removeLabel.setAttribute("y", "1.5");
+        removeLabel.setAttribute("z", "0");
+        removeLabel.setAttribute("width", "2");
+        removeLabel.setAttribute("height", "0.8");
+        removeLabel.setAttribute("content", "Remove");
+        removeLabel.setAttribute("color", "white");
+        removeLabel.setAttribute("background-color", "red");
+        removeLabel.style.cursor = "pointer";
+        
+        // Create image element (relative to group position)
+        const imageElement = document.createElement("m-image");
+        imageElement.setAttribute("x", "0");
+        imageElement.setAttribute("y", "0");
+        imageElement.setAttribute("z", "0");
+        imageElement.setAttribute("height", (2 * scale).toString());
+        
+        console.log(`Loading image with delay ${delayMs}`);
+        // Set the asset URL with optional delay parameter
+        const assetUrl = delayMs > 0 ? `/assets/test-image.png?delay=${delayMs}` : "/assets/test-image.png";
+        imageElement.setAttribute("src", assetUrl);
+        
+        // Add some visual variety with pseudorandom properties
+        const randomOpacity = this.getRandomOpacity(position);
+        const randomWidth = this.getRandomWidth(position);
+        
+        imageElement.setAttribute("opacity", randomOpacity.toString());
+        imageElement.setAttribute("width", randomWidth.toString());
+        
+        // Add click handler for removal
+        removeLabel.addEventListener("click", () => this.removeImage(imageId));
+        
+        // Append elements to group
+        imageGroup.appendChild(removeLabel);
+        imageGroup.appendChild(imageElement);
+        
+        // Add group to container and track
+        const container = document.getElementById("image-container");
+        container.appendChild(imageGroup);
+        this.images.set(imageId, positionIndex);
+    }
+
+    removeImage(imageId) {
+        const imageElement = document.getElementById(imageId);
+        if (imageElement) {
+            imageElement.remove();
+            
+            // Get the position index that was freed up
+            const positionIndex = this.images.get(imageId);
+            if (positionIndex !== undefined) {
+                // Add this position back to available positions
+                this.availablePositions.push(positionIndex);
+                this.images.delete(imageId);
+            }
+        }
+    }
+
+    removeAllImages() {
+        // Remove all image groups from the DOM
+        const container = document.getElementById("image-container");
+        container.innerHTML = "";
+        
+        // Clear the images map and available positions
+        this.images.clear();
+        this.availablePositions = [];
+    }
+
+    getGridPosition(index) {
+        // Grid parameters
+        const colsPerRow = 5; // 5 images per row
+        const spacing = 3; // Distance between grid points
+        
+        const row = Math.floor(index / colsPerRow);
+        const col = index % colsPerRow;
+        
+        // Center the grid
+        const startX = -(colsPerRow - 1) * spacing / 2;
+        const startZ = -row * spacing;
+        
+        const x = startX + col * spacing;
+        const z = startZ;
+        
+        return { x: x, y: 0, z: z };
+    }
+
+    getRandomScale(position) {
+        // Create pseudo-random scale based on position
+        const seed = Math.abs(position.x * 1000 + position.z * 1000);
+        const random = (Math.sin(seed) + 1) / 2; // Normalize to 0-1
+        return 0.5 + random * 1.5; // Scale between 0.5 and 2.0
+    }
+
+    getRandomOpacity(position) {
+        // Create pseudo-random opacity based on position
+        const seed = Math.abs(position.x * 2000 + position.z * 2000 + 1000);
+        const random = (Math.sin(seed) + 1) / 2; // Normalize to 0-1
+        return 0.5 + random * 0.5; // Opacity between 0.5 and 1.0
+    }
+
+    getRandomWidth(position) {
+        // Create pseudo-random width based on position
+        const seed = Math.abs(position.x * 1500 + position.z * 1500 + 2000);
+        const random = (Math.sin(seed) + 1) / 2; // Normalize to 0-1
+        return 1 + random * 3; // Width between 1 and 4
+    }
+}
+
+// Initialize the image manager when the page loads
+document.addEventListener("DOMContentLoaded", () => {
+    new ImageManager();
+});
+</script>

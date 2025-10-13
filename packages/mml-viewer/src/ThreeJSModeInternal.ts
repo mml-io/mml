@@ -22,6 +22,7 @@ import { FormIteration } from "./FormIteration";
 import { MMLSourceDefinition } from "./MMLSourceDefinition";
 import { parseXYZ } from "./parseXYZ";
 import { setDebugGlobals } from "./setDebugGlobals";
+import { FieldDefinition } from "./ui/FieldDefinition";
 import {
   ambientLightColorField,
   ambientLightField,
@@ -35,6 +36,7 @@ import {
   cameraOrbitSpeedField,
   cameraPositionField,
   characterAnimationField,
+  developerGroup,
   environmentMapField,
 } from "./ui/fields";
 
@@ -192,6 +194,22 @@ export class ThreeJSModeInternal {
 
     this.setCameraMode(formIteration, graphicsAdapter);
     this.applyCharacterAnimation(formIteration.getFieldValue(characterAnimationField));
+
+    const openMemoryReportField: FieldDefinition = {
+      name: "openMemoryReport",
+      label: "Open Memory Report",
+      type: "action",
+      defaultValue: "",
+      groupDefinition: developerGroup,
+      onClick: () => {
+        try {
+          this.loadedState?.graphicsAdapter.openMemoryReport();
+        } catch (e) {
+          console.warn("Failed to open memory report:", e);
+        }
+      },
+    };
+    formIteration.getFieldValue(openMemoryReportField);
 
     formIteration.completed();
   }

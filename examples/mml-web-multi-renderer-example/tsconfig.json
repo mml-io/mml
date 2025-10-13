@@ -10,7 +10,7 @@
     "types": ["node", "jest"],
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "downlevelIteration": true,
     "outDir": "./build",

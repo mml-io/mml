@@ -200,3 +200,19 @@ export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold =
     },
   });
 }
+
+export async function readThreeSceneCounts(page: puppeteer.Page): Promise<{
+  geometryCount: number;
+  textureCount: number;
+} | null> {
+  return page.evaluate(() => {
+    const adapter: any = (window as any)["mml-web-client"].mmlScene.getGraphicsAdapter();
+    if (!adapter || typeof adapter.getThreeScene !== "function") {
+      console.error("No adapter or adapter with getThreeScene function found");
+      return null;
+    }
+    const scene = adapter.getThreeScene();
+
+    return adapter.analyzeScene(scene).stats;
+  });
+}

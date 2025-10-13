@@ -1,0 +1,153 @@
+<m-light type="point" intensity="900" x="0" y="10" z="10"></m-light>
+
+<!-- Control Labels -->
+<m-label id="add-1-label" font-size="30" x="-4" y="8" width="3" height="0.5" content="Add 1 Label" alignment="center" font-color="white" color="darkblue" border-radius="0.2"></m-label>
+<m-label id="add-5-labels" font-size="30" x="0" y="8" width="3" height="0.5" content="Add 5 Labels" alignment="center" font-color="white" color="darkgreen" border-radius="0.2"></m-label>
+<m-label id="remove-all-labels" font-size="30" x="4" y="8" width="3" height="0.5" content="Remove All" alignment="center" font-color="white" color="darkred" border-radius="0.2"></m-label>
+
+<!-- Label Container -->
+<m-group id="label-container"></m-group>
+
+<script>
+class LabelManager {
+    constructor() {
+        this.labels = new Map();
+        this.labelCounter = 0;
+        this.availablePositions = [];
+        this.variants = [
+            { width: 1.5, height: 0.8, color: "rgba(135, 206, 235, 0.5)", content: "Info" },
+            { width: 2.5, height: 1.2, color: "seagreen", content: "Success" },
+            { width: 3.5, height: 1.6, color: "chocolate", content: "Warning" }
+        ];
+        this.variantIndex = 0;
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        const add1Label = document.getElementById("add-1-label");
+        const add5Labels = document.getElementById("add-5-labels");
+        const removeAllLabels = document.getElementById("remove-all-labels");
+
+        if (add1Label) {
+            add1Label.addEventListener("click", () => this.loadLabels(1));
+        }
+
+        if (add5Labels) {
+            add5Labels.addEventListener("click", () => this.loadLabels(5));
+        }
+
+        if (removeAllLabels) {
+            removeAllLabels.addEventListener("click", () => this.removeAllLabels());
+        }
+    }
+
+    loadLabels(count) {
+        for (let i = 0; i < count; i++) {
+            this.addLabel();
+        }
+    }
+
+    addLabel() {
+        const labelId = `label-${this.labelCounter++}`;
+
+        let positionIndex;
+        if (this.availablePositions.length > 0) {
+            positionIndex = this.availablePositions.shift();
+        } else {
+            positionIndex = this.labels.size;
+        }
+
+        const position = this.getGridPosition(positionIndex);
+
+        const labelGroup = document.createElement("m-group");
+        labelGroup.id = labelId;
+        labelGroup.setAttribute("x", position.x.toString());
+        labelGroup.setAttribute("y", position.y.toString());
+        labelGroup.setAttribute("z", position.z.toString());
+
+        // Remove button (relative to group)
+        const removeLabelBtn = document.createElement("m-label");
+        removeLabelBtn.setAttribute("font-size", "20");
+        removeLabelBtn.setAttribute("x", "0");
+        removeLabelBtn.setAttribute("y", "4.5");
+        removeLabelBtn.setAttribute("z", "0");
+        removeLabelBtn.setAttribute("width", "2");
+        removeLabelBtn.setAttribute("height", "0.8");
+        removeLabelBtn.setAttribute("content", "Remove");
+        removeLabelBtn.setAttribute("color", "white");
+        removeLabelBtn.setAttribute("background-color", "red");
+        removeLabelBtn.setAttribute("border-radius", "0.1");
+        removeLabelBtn.style.cursor = "pointer";
+
+        const mainLabel = document.createElement("m-label");
+        mainLabel.setAttribute("x", "0");
+        mainLabel.setAttribute("y", "2");
+        mainLabel.setAttribute("z", "0");
+        mainLabel.setAttribute("alignment", "center");
+
+        const variant = this.variants[this.variantIndex];
+        this.variantIndex = (this.variantIndex + 1) % this.variants.length;
+
+        mainLabel.setAttribute("width", variant.width.toString());
+        mainLabel.setAttribute("height", variant.height.toString());
+        mainLabel.setAttribute("font-size", "20");
+        mainLabel.setAttribute("content", variant.content);
+        mainLabel.setAttribute("font-color", "white");
+        mainLabel.setAttribute("color", variant.color);
+        mainLabel.setAttribute("border-radius", "0.1");
+
+        removeLabelBtn.addEventListener("click", () => this.removeLabel(labelId));
+
+        labelGroup.appendChild(removeLabelBtn);
+        labelGroup.appendChild(mainLabel);
+
+        const container = document.getElementById("label-container");
+        container.appendChild(labelGroup);
+        this.labels.set(labelId, positionIndex);
+    }
+
+    removeLabel(labelId) {
+        const labelElement = document.getElementById(labelId);
+        if (labelElement) {
+            labelElement.remove();
+
+            const positionIndex = this.labels.get(labelId);
+            if (positionIndex !== undefined) {
+                this.availablePositions.push(positionIndex);
+                this.labels.delete(labelId);
+            }
+        }
+    }
+
+    removeAllLabels() {
+        const container = document.getElementById("label-container");
+        container.innerHTML = "";
+        this.labels.clear();
+        this.availablePositions = [];
+    }
+
+    getGridPosition(index) {
+        const colsPerRow = 5;
+        const spacing = 3;
+
+        const row = Math.floor(index / colsPerRow);
+        const col = index % colsPerRow;
+
+        const startX = -(colsPerRow - 1) * spacing / 2;
+        const startZ = -row * spacing;
+
+        const x = startX + col * spacing;
+        const z = startZ;
+
+        return { x: x, y: 0, z: z };
+    }
+
+    
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    new LabelManager();
+});
+</script>
+
+
