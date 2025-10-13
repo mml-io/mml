@@ -64,8 +64,9 @@ export class ThreeJSMemoryInspector {
     const textureThumbnails = ThreeJSMemoryInspector.generateTextureThumbnails(scene);
     const geometryPreviews = ThreeJSMemoryInspector.generateGeometryPreviews(scene);
 
-    // Generate HTML content with embedded thumbnails
-    const htmlContent = ThreeJSMemoryInspector.generateReportHTML(
+    // Build the UI programmatically in the popup window
+    ThreeJSMemoryInspector.buildReportUI(
+      reportWindow.document,
       geometries,
       textures,
       materials,
@@ -73,9 +74,6 @@ export class ThreeJSMemoryInspector {
       textureThumbnails,
       geometryPreviews,
     );
-
-    reportWindow.document.write(htmlContent);
-    reportWindow.document.close();
   }
 
   public static analyzeScene(scene: THREE.Scene): {
@@ -942,67 +940,73 @@ export class ThreeJSMemoryInspector {
     }
   }
 
-  private static generateReportHTML(
+  private static buildReportUI(
+    doc: Document,
     geometries: Map<string, GeometryInfo>,
     textures: Map<string, TextureInfo>,
     materials: Map<string, MaterialInfo>,
     stats: MemoryStats,
     textureThumbnails: Map<string, string>,
     geometryPreviews: Map<string, string>,
-  ): string {
-    const formatBytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  ): void {
+    // Set document title
+    doc.title = "Three.js Memory Report";
 
-    const sortedGeometries = Array.from(geometries.values()).sort(
-      (a, b) => b.memoryBytes - a.memoryBytes,
+    // Add styles
+    const style = doc.createElement("style");
+    style.textContent = ThreeJSMemoryInspector.getReportStyles();
+    doc.head.appendChild(style);
+
+    // Clear body
+    doc.body.innerHTML = "";
+
+    // Create container
+    const container = doc.createElement("div");
+    container.className = "container";
+
+    // Create stats grid
+    const statsGrid = ThreeJSMemoryInspector.createStatsGrid(doc, stats);
+    container.appendChild(statsGrid);
+
+    // Create main section
+    const section = doc.createElement("div");
+    section.className = "section";
+
+    // Create controls
+    const controls = ThreeJSMemoryInspector.createControls(doc, stats);
+    section.appendChild(controls);
+
+    // Create content area
+    const sectionContent = doc.createElement("div");
+    sectionContent.className = "section-content";
+
+    const resultsInfo = doc.createElement("div");
+    resultsInfo.className = "results-info";
+    resultsInfo.id = "resultsInfo";
+    sectionContent.appendChild(resultsInfo);
+
+    const itemList = doc.createElement("div");
+    itemList.className = "item-list";
+    itemList.id = "itemList";
+    sectionContent.appendChild(itemList);
+
+    section.appendChild(sectionContent);
+    container.appendChild(section);
+
+    doc.body.appendChild(container);
+
+    // Initialize interactivity
+    ThreeJSMemoryInspector.initializeReportInteractivity(
+      doc,
+      geometries,
+      textures,
+      textureThumbnails,
+      geometryPreviews,
     );
-    const sortedTextures = Array.from(textures.values()).sort(
-      (a, b) => b.memoryBytes - a.memoryBytes,
-    );
+  }
 
-    // Prepare unified, serializable data for client-side filtering and rendering
-    const texturesData = sortedTextures.map((tex) => ({
-      type: "texture",
-      uuid: tex.uuid,
-      name: tex.name,
-      memoryBytes: tex.memoryBytes,
-      width: tex.width,
-      height: tex.height,
-      format: tex.format,
-      sourceType: tex.sourceType,
-      url: tex.url,
-      usedByObjects: tex.usedByObjects,
-      usedByObjectPaths: tex.usedByObjectPaths,
-      usedByObjectInstanceIds: tex.usedByObjectInstanceIds,
-      instanceCount: Array.isArray(tex.usedByObjectInstanceIds)
-        ? tex.usedByObjectInstanceIds.length
-        : tex.usedByObjects.length,
-      thumbnail: textureThumbnails.get(tex.uuid) || null,
-    }));
-
-    const geometriesData = sortedGeometries.map((geo) => ({
-      type: "geometry",
-      uuid: geo.uuid,
-      name: geo.name,
-      memoryBytes: geo.memoryBytes,
-      vertexCount: geo.vertexCount,
-      triangleCount: geo.triangleCount,
-      usedByObjects: geo.usedByObjects,
-      usedByObjectPaths: geo.objectPaths,
-      usedByObjectInstanceIds: geo.usedByObjectInstanceIds,
-      instanceCount: Array.isArray(geo.usedByObjectInstanceIds)
-        ? geo.usedByObjectInstanceIds.length
-        : geo.usedByObjects.length,
-      preview: geometryPreviews.get(geo.uuid) || null,
-    }));
-
+  private static getReportStyles(): string {
     return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Memory Report</title>
-    <style>
         * {
             margin: 0;
             padding: 0;
@@ -1020,25 +1024,6 @@ export class ThreeJSMemoryInspector {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            color: white;
-        }
-        
-        .header .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
         }
         
         .stats-grid {
@@ -1076,27 +1061,10 @@ export class ThreeJSMemoryInspector {
             border: 1px solid #444;
         }
         
-        .section-header {
-            background: #333;
-            padding: 20px;
-            border-bottom: 1px solid #444;
-        }
-        
-        .section-title {
-            font-size: 1.5em;
-            margin-bottom: 5px;
-        }
-        
-        .section-subtitle {
-            color: #aaa;
-            font-size: 0.9em;
-        }
-        
         .section-content {
             padding: 20px;
         }
         
-        /* Controls */
         .controls {
             display: flex;
             justify-content: space-between;
@@ -1137,7 +1105,6 @@ export class ThreeJSMemoryInspector {
         }
         .clear-btn:hover { border-color: #888; color: #fff; }
 
-        /* Unified list as rows */
         .item-list {
             display: flex;
             flex-direction: column;
@@ -1172,6 +1139,7 @@ export class ThreeJSMemoryInspector {
         .type-geometry { background: #263238; }
         .type-texture { background: #2e3a29; }
         .item-details { color: #ccc; font-size: 0.9em; }
+        .item-detail-line { margin-bottom: 2px; }
         .item-meta { min-width: 140px; text-align: right; }
         .item-size { background: #4CAF50; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; display: inline-block; }
         .item-usage { margin-top: 8px; color: #aaa; font-size: 0.85em; }
@@ -1179,193 +1147,399 @@ export class ThreeJSMemoryInspector {
         .usage-chip { background: #444; color: #ddd; border: 1px solid #666; border-radius: 14px; padding: 2px 8px; font-size: 0.75em; cursor: pointer; }
         .usage-chip:hover { background: #4a4a4a; border-color: #888; color: #fff; }
         .results-info { color: #aaa; font-size: 0.85em; margin-bottom: 12px; }
-
         .loading {
             text-align: center;
             color: #666;
             font-style: italic;
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value">${formatBytes(stats.totalMemory)}</div>
-                <div class="stat-label">Total Memory</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${formatBytes(stats.totalGeometryMemory)}</div>
-                <div class="stat-label">Geometry Memory</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${formatBytes(stats.totalTextureMemory)}</div>
-                <div class="stat-label">Texture Memory</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${stats.geometryCount}</div>
-                <div class="stat-label">Geometries</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${stats.textureCount}</div>
-                <div class="stat-label">Textures</div>
-            </div>
-            
-        </div>
-        
-        <div class="section">
-            <div class="controls">
-                <div class="control-group">
-                    <label class="checkbox"><input type="checkbox" id="toggleTextures" checked> Textures (${stats.textureCount})</label>
-                    <label class="checkbox"><input type="checkbox" id="toggleGeometries" checked> Geometries (${stats.geometryCount})</label>
-                </div>
-                <div class="filter-bar">
-                    <span id="filterStatus">No object filter</span>
-                    <button id="clearFilter" class="clear-btn" style="display:none">Clear filter</button>
-                </div>
-            </div>
-            <div class="section-content">
-                <div class="results-info" id="resultsInfo"></div>
-                <div id="itemList" class="item-list"></div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        (function(){
-            const TEXTURES = ${JSON.stringify(texturesData)};
-            const GEOMETRIES = ${JSON.stringify(geometriesData)};
+        .more-items {
+            color: #888;
+            font-size: 0.75em;
+            margin-left: 4px;
+        }
+    `;
+  }
 
-            const itemList = document.getElementById('itemList');
-            const resultsInfo = document.getElementById('resultsInfo');
-            const toggleTextures = document.getElementById('toggleTextures');
-            const toggleGeometries = document.getElementById('toggleGeometries');
-            const filterStatus = document.getElementById('filterStatus');
-            const clearFilterBtn = document.getElementById('clearFilter');
+  private static createStatsGrid(doc: Document, stats: MemoryStats): HTMLElement {
+    const statsGrid = doc.createElement("div");
+    statsGrid.className = "stats-grid";
 
-            let activeObjectFilter = null; // string | null
+    const formatBytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 
-            function formatBytes(bytes){ return (bytes / (1024 * 1024)).toFixed(2) + ' MB'; }
+    // Total Memory card
+    statsGrid.appendChild(
+      ThreeJSMemoryInspector.createStatCard(doc, formatBytes(stats.totalMemory), "Total Memory"),
+    );
 
-            function escapeHtml(s){
-                return String(s)
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
-            }
+    // Geometry Memory card
+    statsGrid.appendChild(
+      ThreeJSMemoryInspector.createStatCard(
+        doc,
+        formatBytes(stats.totalGeometryMemory),
+        "Geometry Memory",
+      ),
+    );
 
-            function render(){
-                const includeTextures = !!(toggleTextures && toggleTextures.checked);
-                const includeGeometries = !!(toggleGeometries && toggleGeometries.checked);
-                const all = [];
-                if (includeTextures) all.push(...TEXTURES);
-                if (includeGeometries) all.push(...GEOMETRIES);
+    // Texture Memory card
+    statsGrid.appendChild(
+      ThreeJSMemoryInspector.createStatCard(
+        doc,
+        formatBytes(stats.totalTextureMemory),
+        "Texture Memory",
+      ),
+    );
 
-                const total = all.length;
-                const filtered = activeObjectFilter
-                    ? all.filter(function(i){
-                        var ids = i.usedByObjectInstanceIds || [];
-                        return ids.indexOf(activeObjectFilter) !== -1;
-                      })
-                    : all;
+    // Geometries count card
+    statsGrid.appendChild(
+      ThreeJSMemoryInspector.createStatCard(doc, String(stats.geometryCount), "Geometries"),
+    );
 
-                // Sort by memory desc
-                filtered.sort((a,b) => (b.memoryBytes||0) - (a.memoryBytes||0));
+    // Textures count card
+    statsGrid.appendChild(
+      ThreeJSMemoryInspector.createStatCard(doc, String(stats.textureCount), "Textures"),
+    );
 
-                // Build HTML rows
-                const html = filtered.map(function(item){
-                    const isTexture = item.type === 'texture';
-                    const media = isTexture ? item.thumbnail : item.preview;
-                    var mediaHTML;
-                    if (media){
-                        mediaHTML = '<img src="' + String(media).replace(/"/g, '&quot;') + '" alt="' + escapeHtml(item.name) + '">';
-                    } else {
-                        mediaHTML = '<div class="placeholder">' + (isTexture ? (item.width + ' × ' + item.height) : (Number(item.vertexCount).toLocaleString() + ' vertices')) + '</div>';
-                    }
+    return statsGrid;
+  }
 
-                    var detailsHTML;
-                    if (isTexture){
-                        detailsHTML = '<div>' + item.width + ' × ' + item.height + ' • ' + item.format + '</div>' +
-                                      '<div>Source: ' + item.sourceType + '</div>' +
-                                      (item.url ? ('<div>URL: ' + escapeHtml(item.url) + '</div>') : '');
-                    } else {
-                        detailsHTML = '<div>' + Number(item.vertexCount).toLocaleString() + ' vertices • ' + Number(item.triangleCount).toLocaleString() + ' triangles</div>';
-                    }
+  private static createStatCard(doc: Document, value: string, label: string): HTMLElement {
+    const card = doc.createElement("div");
+    card.className = "stat-card";
 
-                    const usedBy = item.usedByObjects || [];
-                    const usedByPaths = item.usedByObjectPaths || usedBy;
-                    const usedByIds = item.usedByObjectInstanceIds || usedByPaths || usedBy;
-                    const chipsHTML = usedBy.slice(0, 10).map(function(obj, idx){
-                        var path = usedByPaths[idx] || obj;
-                        var id = usedByIds[idx] || path || obj;
-                        return '<button class="usage-chip" type="button" data-id="' + escapeHtml(id) + '" title="' + escapeHtml(path) + '">' + escapeHtml(obj) + '</button>';
-                    }).join('');
-                    const more = usedBy.length > 10 ? '<span style="color:#888; font-size:0.75em;">+' + (usedBy.length - 10) + ' more</span>' : '';
+    const valueDiv = doc.createElement("div");
+    valueDiv.className = "stat-value";
+    valueDiv.textContent = value;
+    card.appendChild(valueDiv);
 
-                    return (
-                        '<div class="item-row">' +
-                            '<div class="item-media">' + mediaHTML + '</div>' +
-                            '<div class="item-content">' +
-                                '<div class="item-title">' +
-                                    '<div class="item-name">' + escapeHtml(item.name) + '</div>' +
-                                    '<div class="type-badge ' + (isTexture ? 'type-texture' : 'type-geometry') + '">' + (isTexture ? 'Texture' : 'Geometry') + '</div>' +
-                                '</div>' +
-                                '<div class="item-details">' + detailsHTML + '</div>' +
-                                '<div class="item-usage">' +
-                                    '<div>Used by ' + usedBy.length + ' object(s):</div>' +
-                                    '<div class="usage-list">' + chipsHTML + ' ' + more + '</div>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div class="item-meta">' +
-                                '<div class="item-size">' + formatBytes(item.memoryBytes||0) + '</div>' +
-                                '<div style="margin-top:6px; color:#bbb; font-size:0.8em;">' + (item.instanceCount || usedBy.length) + ' instance(s)</div>' +
-                            '</div>' +
-                        '</div>'
-                    );
-                }).join('');
+    const labelDiv = doc.createElement("div");
+    labelDiv.className = "stat-label";
+    labelDiv.textContent = label;
+    card.appendChild(labelDiv);
 
-                itemList.innerHTML = html || '<div class="loading">No items match the current filters.</div>';
-                const shown = filtered.length;
-                resultsInfo.textContent = 'Showing ' + shown + ' of ' + total + ' item(s)';
-            }
+    return card;
+  }
 
-            function updateFilterBar(){
-                if (activeObjectFilter){
-                    filterStatus.textContent = 'Object filter: ' + activeObjectFilter;
-                    clearFilterBtn.style.display = '';
-                } else {
-                    filterStatus.textContent = 'No object filter';
-                    clearFilterBtn.style.display = 'none';
-                }
-            }
+  private static createControls(doc: Document, stats: MemoryStats): HTMLElement {
+    const controls = doc.createElement("div");
+    controls.className = "controls";
 
-            // Event listeners
-            toggleTextures.addEventListener('change', render);
-            toggleGeometries.addEventListener('change', render);
-            clearFilterBtn.addEventListener('click', function(){ activeObjectFilter = null; updateFilterBar(); render(); });
+    // Control group (checkboxes)
+    const controlGroup = doc.createElement("div");
+    controlGroup.className = "control-group";
 
-            // Delegate clicks on usage chips
-            itemList.addEventListener('click', function(e){
-                const t = e.target;
-                if (t && t.classList && t.classList.contains('usage-chip')){
-                    var id = t.getAttribute('data-id');
-                    activeObjectFilter = id || (t.textContent || null);
-                    updateFilterBar();
-                    render();
-                }
-            });
+    // Textures checkbox
+    const texturesLabel = doc.createElement("label");
+    texturesLabel.className = "checkbox";
 
-            // Initial render
-            updateFilterBar();
-            render();
-        })();
-        
-    </script>
-</body>
-</html>`;
+    const texturesCheckbox = doc.createElement("input");
+    texturesCheckbox.type = "checkbox";
+    texturesCheckbox.id = "toggleTextures";
+    texturesCheckbox.checked = true;
+    texturesLabel.appendChild(texturesCheckbox);
+
+    texturesLabel.appendChild(doc.createTextNode(` Textures (${stats.textureCount})`));
+    controlGroup.appendChild(texturesLabel);
+
+    // Geometries checkbox
+    const geometriesLabel = doc.createElement("label");
+    geometriesLabel.className = "checkbox";
+
+    const geometriesCheckbox = doc.createElement("input");
+    geometriesCheckbox.type = "checkbox";
+    geometriesCheckbox.id = "toggleGeometries";
+    geometriesCheckbox.checked = true;
+    geometriesLabel.appendChild(geometriesCheckbox);
+
+    geometriesLabel.appendChild(doc.createTextNode(` Geometries (${stats.geometryCount})`));
+    controlGroup.appendChild(geometriesLabel);
+
+    controls.appendChild(controlGroup);
+
+    // Filter bar
+    const filterBar = doc.createElement("div");
+    filterBar.className = "filter-bar";
+
+    const filterStatus = doc.createElement("span");
+    filterStatus.id = "filterStatus";
+    filterStatus.textContent = "No object filter";
+    filterBar.appendChild(filterStatus);
+
+    const clearButton = doc.createElement("button");
+    clearButton.id = "clearFilter";
+    clearButton.className = "clear-btn";
+    clearButton.textContent = "Clear filter";
+    clearButton.style.display = "none";
+    filterBar.appendChild(clearButton);
+
+    controls.appendChild(filterBar);
+
+    return controls;
+  }
+
+  private static initializeReportInteractivity(
+    doc: Document,
+    geometries: Map<string, GeometryInfo>,
+    textures: Map<string, TextureInfo>,
+    textureThumbnails: Map<string, string>,
+    geometryPreviews: Map<string, string>,
+  ): void {
+    // Prepare data arrays
+    const texturesData = Array.from(textures.values())
+      .map((tex) => ({
+        type: "texture" as const,
+        uuid: tex.uuid,
+        name: tex.name,
+        memoryBytes: tex.memoryBytes,
+        width: tex.width,
+        height: tex.height,
+        format: tex.format,
+        sourceType: tex.sourceType,
+        url: tex.url,
+        usedByObjects: tex.usedByObjects,
+        usedByObjectPaths: tex.usedByObjectPaths,
+        usedByObjectInstanceIds: tex.usedByObjectInstanceIds,
+        instanceCount: tex.usedByObjectInstanceIds.length,
+        thumbnail: textureThumbnails.get(tex.uuid) || null,
+      }))
+      .sort((a, b) => b.memoryBytes - a.memoryBytes);
+
+    const geometriesData = Array.from(geometries.values())
+      .map((geo) => ({
+        type: "geometry" as const,
+        uuid: geo.uuid,
+        name: geo.name,
+        memoryBytes: geo.memoryBytes,
+        vertexCount: geo.vertexCount,
+        triangleCount: geo.triangleCount,
+        usedByObjects: geo.usedByObjects,
+        usedByObjectPaths: geo.objectPaths,
+        usedByObjectInstanceIds: geo.usedByObjectInstanceIds,
+        instanceCount: geo.usedByObjectInstanceIds.length,
+        preview: geometryPreviews.get(geo.uuid) || null,
+      }))
+      .sort((a, b) => b.memoryBytes - a.memoryBytes);
+
+    const itemList = doc.getElementById("itemList");
+    const resultsInfo = doc.getElementById("resultsInfo");
+    const toggleTextures = doc.getElementById("toggleTextures") as HTMLInputElement | null;
+    const toggleGeometries = doc.getElementById("toggleGeometries") as HTMLInputElement | null;
+    const filterStatus = doc.getElementById("filterStatus");
+    const clearFilterBtn = doc.getElementById("clearFilter");
+
+    if (!itemList || !resultsInfo || !filterStatus || !clearFilterBtn) {
+      return;
+    }
+
+    let activeObjectFilter: string | null = null;
+
+    const formatBytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+
+    const render = () => {
+      const includeTextures = toggleTextures?.checked ?? true;
+      const includeGeometries = toggleGeometries?.checked ?? true;
+
+      let items: Array<(typeof texturesData)[0] | (typeof geometriesData)[0]> = [];
+      if (includeTextures) items.push(...texturesData);
+      if (includeGeometries) items.push(...geometriesData);
+
+      const total = items.length;
+
+      if (activeObjectFilter) {
+        items = items.filter((item) => item.usedByObjectInstanceIds.includes(activeObjectFilter!));
+      }
+
+      items.sort((a, b) => b.memoryBytes - a.memoryBytes);
+
+      // Clear item list
+      itemList.innerHTML = "";
+
+      if (items.length === 0) {
+        const loading = doc.createElement("div");
+        loading.className = "loading";
+        loading.textContent = "No items match the current filters.";
+        itemList.appendChild(loading);
+      } else {
+        items.forEach((item) => {
+          const itemRow = ThreeJSMemoryInspector.createItemRow(
+            doc,
+            item,
+            formatBytes,
+            (objectId: string) => {
+              activeObjectFilter = objectId;
+              updateFilterBar();
+              render();
+            },
+          );
+          itemList.appendChild(itemRow);
+        });
+      }
+
+      resultsInfo.textContent = `Showing ${items.length} of ${total} item(s)`;
+    };
+
+    const updateFilterBar = () => {
+      console.log("updateFilterBar", activeObjectFilter);
+      if (activeObjectFilter) {
+        filterStatus.textContent = `Object filter: ${activeObjectFilter}`;
+        clearFilterBtn.style.display = "";
+      } else {
+        filterStatus.textContent = "No object filter";
+        clearFilterBtn.style.display = "none";
+      }
+    };
+
+    // Event listeners
+    toggleTextures?.addEventListener("change", render);
+    toggleGeometries?.addEventListener("change", render);
+    clearFilterBtn.addEventListener("click", () => {
+      activeObjectFilter = null;
+      updateFilterBar();
+      render();
+    });
+
+    // Initial render
+    updateFilterBar();
+    render();
+  }
+
+  private static createItemRow(
+    doc: Document,
+    item: any,
+    formatBytes: (bytes: number) => string,
+    onObjectClick: (objectId: string) => void,
+  ): HTMLElement {
+    const itemRow = doc.createElement("div");
+    itemRow.className = "item-row";
+
+    // Media section
+    const itemMedia = doc.createElement("div");
+    itemMedia.className = "item-media";
+
+    const isTexture = item.type === "texture";
+    const mediaSource = isTexture ? item.thumbnail : item.preview;
+
+    if (mediaSource) {
+      const img = doc.createElement("img");
+      img.src = mediaSource;
+      img.alt = item.name;
+      itemMedia.appendChild(img);
+    } else {
+      const placeholder = doc.createElement("div");
+      placeholder.className = "placeholder";
+      placeholder.textContent = isTexture
+        ? `${item.width} × ${item.height}`
+        : `${item.vertexCount.toLocaleString()} vertices`;
+      itemMedia.appendChild(placeholder);
+    }
+
+    itemRow.appendChild(itemMedia);
+
+    // Content section
+    const itemContent = doc.createElement("div");
+    itemContent.className = "item-content";
+
+    // Title
+    const itemTitle = doc.createElement("div");
+    itemTitle.className = "item-title";
+
+    const itemName = doc.createElement("div");
+    itemName.className = "item-name";
+    itemName.textContent = item.name;
+    itemTitle.appendChild(itemName);
+
+    const typeBadge = doc.createElement("div");
+    typeBadge.className = `type-badge ${isTexture ? "type-texture" : "type-geometry"}`;
+    typeBadge.textContent = isTexture ? "Texture" : "Geometry";
+    itemTitle.appendChild(typeBadge);
+
+    itemContent.appendChild(itemTitle);
+
+    // Details
+    const itemDetails = doc.createElement("div");
+    itemDetails.className = "item-details";
+
+    if (isTexture) {
+      const line1 = doc.createElement("div");
+      line1.className = "item-detail-line";
+      line1.textContent = `${item.width} × ${item.height} • ${item.format}`;
+      itemDetails.appendChild(line1);
+
+      const line2 = doc.createElement("div");
+      line2.className = "item-detail-line";
+      line2.textContent = `Source: ${item.sourceType}`;
+      itemDetails.appendChild(line2);
+
+      if (item.url) {
+        const line3 = doc.createElement("div");
+        line3.className = "item-detail-line";
+        line3.textContent = `URL: ${item.url}`;
+        itemDetails.appendChild(line3);
+      }
+    } else {
+      const line1 = doc.createElement("div");
+      line1.className = "item-detail-line";
+      line1.textContent = `${item.vertexCount.toLocaleString()} vertices • ${item.triangleCount.toLocaleString()} triangles`;
+      itemDetails.appendChild(line1);
+    }
+
+    itemContent.appendChild(itemDetails);
+
+    // Usage section
+    const itemUsage = doc.createElement("div");
+    itemUsage.className = "item-usage";
+
+    const usageLabel = doc.createElement("div");
+    usageLabel.textContent = `Used by ${item.usedByObjects.length} object(s):`;
+    itemUsage.appendChild(usageLabel);
+
+    const usageList = doc.createElement("div");
+    usageList.className = "usage-list";
+
+    const maxChips = 10;
+    const objectsToShow = item.usedByObjects.slice(0, maxChips);
+
+    objectsToShow.forEach((objName: string, idx: number) => {
+      const chip = doc.createElement("button");
+      chip.className = "usage-chip";
+      chip.type = "button";
+      chip.textContent = objName;
+      chip.title = item.usedByObjectPaths[idx] || objName;
+      chip.addEventListener("click", () => {
+        onObjectClick(item.usedByObjectInstanceIds[idx]);
+      });
+      usageList.appendChild(chip);
+    });
+
+    if (item.usedByObjects.length > maxChips) {
+      const more = doc.createElement("span");
+      more.className = "more-items";
+      more.textContent = `+${item.usedByObjects.length - maxChips} more`;
+      usageList.appendChild(more);
+    }
+
+    itemUsage.appendChild(usageList);
+    itemContent.appendChild(itemUsage);
+
+    itemRow.appendChild(itemContent);
+
+    // Meta section
+    const itemMeta = doc.createElement("div");
+    itemMeta.className = "item-meta";
+
+    const itemSize = doc.createElement("div");
+    itemSize.className = "item-size";
+    itemSize.textContent = formatBytes(item.memoryBytes);
+    itemMeta.appendChild(itemSize);
+
+    const instanceCount = doc.createElement("div");
+    instanceCount.style.marginTop = "6px";
+    instanceCount.style.color = "#bbb";
+    instanceCount.style.fontSize = "0.8em";
+    instanceCount.textContent = `${item.instanceCount} instance(s)`;
+    itemMeta.appendChild(instanceCount);
+
+    itemRow.appendChild(itemMeta);
+
+    return itemRow;
   }
 }
