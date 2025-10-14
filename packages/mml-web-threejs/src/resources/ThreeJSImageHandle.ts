@@ -10,6 +10,7 @@ export interface ThreeJSImageResourceResult {
 }
 
 export interface ThreeJSImageHandle {
+  readonly url: string;
   onProgress(onProgress: (loaded: number, total: number) => void): void;
   onLoad(onLoad: (result: ThreeJSImageResourceResult | Error) => void): void;
   getResult(): ThreeJSImageResourceResult | Error | null;
@@ -20,8 +21,11 @@ export class ThreeJSImageHandleImpl implements ThreeJSImageHandle {
   private onLoadCallbacks = new Set<(result: ThreeJSImageResourceResult | Error) => void>();
   private onProgressCallbacks = new Set<(loaded: number, total: number) => void>();
   private result: ThreeJSImageResourceResult | Error | null = null;
+  public readonly url: string;
 
-  constructor(private imageResource: ThreeJSImageResource) {}
+  constructor(private imageResource: ThreeJSImageResource) {
+    this.url = imageResource.url;
+  }
 
   onProgress(onProgress: (loaded: number, total: number) => void): void {
     this.onProgressCallbacks.add(onProgress);

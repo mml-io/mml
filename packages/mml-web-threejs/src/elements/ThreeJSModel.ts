@@ -309,8 +309,13 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setAnim(anim: string | null): void {
+    if (this.latestAnimModelHandle?.url === anim) {
+      // already loading the same animation
+      return;
+    }
     if (this.latestAnimModelHandle) {
       this.latestAnimModelHandle.dispose();
+      this.animLoadingInstanceManager.abortIfLoading();
     }
     this.latestAnimModelHandle = null;
 
@@ -463,8 +468,13 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setSrc(src: string | null): void {
+    if (this.latestSrcModelHandle?.url === src) {
+      // already loading the same src
+      return;
+    }
     if (this.latestSrcModelHandle) {
       this.latestSrcModelHandle.dispose();
+      this.srcLoadingInstanceManager.abortIfLoading();
     }
     this.latestSrcModelHandle = null;
 

@@ -42,8 +42,13 @@ export class ThreeJSAnimation extends AnimationGraphics<ThreeJSGraphicsAdapter> 
   }
 
   setSrc(src: string | null): void {
+    if (this.latestSrcModelHandle?.url === src) {
+      // already loading the same src
+      return;
+    }
     if (this.latestSrcModelHandle) {
       this.latestSrcModelHandle.dispose();
+      this.loadingInstanceManager.abortIfLoading();
     }
     this.latestSrcModelHandle = null;
 
