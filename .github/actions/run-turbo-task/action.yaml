@@ -1,0 +1,25 @@
+---
+name: Run Turbo Task
+description: Run a task using Turbo with caching
+
+inputs:
+  task:
+    description: "Task to run (e.g., lint, test, type-check)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache Turbo Task outputs
+      uses: actions/cache@v4
+      id: cache-turbo-task-outputs
+      with:
+        path: .turbo
+        key: ${{ runner.os }}-turbo-${{ inputs.task }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-turbo-${{ inputs.task }}-
+
+    - name: Run Task
+      shell: bash
+      run: npm run ${{ inputs.task }}
+
