@@ -127,7 +127,10 @@ jobs:
 
       - name: Determine @mml-viewer version
         id: get-viewer-version
-        run: echo "version=$(node -p \"require('./packages/mml-viewer/package.json').version\")" >> $GITHUB_OUTPUT
+        shell: bash
+        run: |
+          VERSION=$(node -e "console.log(require('./packages/mml-viewer/package.json').version)")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Deploy versioned viewer to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
