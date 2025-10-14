@@ -5,6 +5,7 @@ import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { ThreeJSModelResource } from "./ThreeJSModelResource";
 
 export interface ThreeJSModelHandle {
+  readonly url: string;
   onProgress(onProgress: (loaded: number, total: number) => void): void;
   onLoad(onLoad: (result: ModelLoadResult | Error) => void): void;
   getResult(): ModelLoadResult | Error | null;
@@ -17,8 +18,11 @@ export class ThreeJSModelHandleImpl implements ThreeJSModelHandle {
   private onProgressCallbacks = new Set<(loaded: number, total: number) => void>();
 
   private result: ModelLoadResult | Error | null = null;
+  public readonly url: string;
 
-  constructor(private modelResource: ThreeJSModelResource) {}
+  constructor(private modelResource: ThreeJSModelResource) {
+    this.url = modelResource.url;
+  }
 
   onProgress(onProgress: (loaded: number, total: number) => void): void {
     this.onProgressCallbacks.add(onProgress);

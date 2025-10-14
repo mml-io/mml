@@ -19,7 +19,7 @@ export class ThreeJSModelResource {
   private abortController: AbortController | null = null;
 
   constructor(
-    private url: string,
+    public readonly url: string,
     private onRemove: () => void,
   ) {
     this.abortController = new AbortController();

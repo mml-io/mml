@@ -97,8 +97,13 @@ export class ThreeJSImage extends ImageGraphics<ThreeJSGraphicsAdapter> {
   }
 
   setSrc(newValue: string | null): void {
+    if (this.latestImageHandle?.url === newValue) {
+      // already loading the same src
+      return;
+    }
     if (this.latestImageHandle) {
       this.latestImageHandle.dispose();
+      this.srcLoadingInstanceManager.abortIfLoading();
     }
     this.latestImageHandle = null;
 
