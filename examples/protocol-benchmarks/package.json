@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/protocol-benchmarks",
-  "version": "0.21.3",
+  "version": "0.22.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,7 @@
     "benchmark-decoding": "npm run build && node ./build/decoding.js"
   },
   "devDependencies": {
-    "@mml-io/networked-dom-protocol": "^0.21.3",
+    "@mml-io/networked-dom-protocol": "^0.22.0",
     "@types/benchmark": "2.1.5",
     "benchmark": "2.1.4"
   }

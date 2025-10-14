@@ -109,3 +109,29 @@ jobs:
           ./node_modules/.bin/lerna publish from-package --no-private --dist-tag latest --ignore-scripts --ignore-changes --no-push --yes
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-versioned-viewer-gh-pages:
+    name: Publish Versioned Viewer to GitHub Pages
+    needs: [publish-release-packages]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+
+      - name: "Retrieve Dependencies and Build Artifacts"
+        id: retrieve-deps-and-build
+        uses: ./.github/actions/retrieve-deps-and-build
+
+      - name: Determine @mml-viewer version
+        id: get-viewer-version
+        run: echo "version=$(node -p \"require('./packages/mml-viewer/package.json').version\")" >> $GITHUB_OUTPUT
+
+      - name: Deploy versioned viewer to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./github-pages-publisher/build
+          destination_dir: v${{ steps.get-viewer-version.outputs.version }}
