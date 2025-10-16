@@ -169,6 +169,14 @@ export const environmentMapField: FieldDefinition = {
   groupDefinition: environmentGroup,
 };
 
+export const showEnvironmentMapField: FieldDefinition = {
+  name: "showEnvironmentMapField",
+  label: "Show Environment Map",
+  type: "boolean",
+  defaultValue: false,
+  groupDefinition: environmentGroup,
+};
+
 export const ambientLightField: FieldDefinition = {
   name: "ambientLight",
   label: "Ambient Light",
@@ -204,6 +212,7 @@ export const allFields = [
   cameraPositionField,
   cameraFovField,
   environmentMapField,
+  showEnvironmentMapField,
   urlField,
   loadingStyleField,
   rendererField,

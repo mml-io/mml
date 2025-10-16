@@ -38,6 +38,7 @@ import {
   characterAnimationField,
   developerGroup,
   environmentMapField,
+  showEnvironmentMapField,
 } from "./ui/fields";
 
 export type ThreeJSModeOptions = {
@@ -244,8 +245,16 @@ export class ThreeJSModeInternal {
       threeScene.backgroundIntensity = 1;
       threeScene.backgroundBlurriness = 0;
       threeScene.backgroundRotation = new THREE.Euler(0, -Math.PI / 2, 0);
-      threeScene.background = envMap;
       threeScene.environment = envMap;
+
+      console.log("showEnvironmentMapField", formIteration.getFieldValue(showEnvironmentMapField));
+      if (formIteration.getFieldValue(showEnvironmentMapField) === "true") {
+        threeScene.background = envMap;
+      } else {
+        console.log("setting background to null");
+        threeScene.background = null;
+      }
+      
       result.dispose();
     });
   }
