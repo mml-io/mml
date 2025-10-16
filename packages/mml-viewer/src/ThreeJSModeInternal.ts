@@ -249,7 +249,6 @@ export class ThreeJSModeInternal {
       if (formIteration.getFieldValue(showEnvironmentMapField) === "true") {
         threeScene.background = envMap;
       } else {
-        console.log("setting background to null");
         threeScene.background = null;
       }
 
