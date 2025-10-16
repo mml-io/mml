@@ -246,15 +246,13 @@ export class ThreeJSModeInternal {
       threeScene.backgroundBlurriness = 0;
       threeScene.backgroundRotation = new THREE.Euler(0, -Math.PI / 2, 0);
       threeScene.environment = envMap;
-
-      console.log("showEnvironmentMapField", formIteration.getFieldValue(showEnvironmentMapField));
       if (formIteration.getFieldValue(showEnvironmentMapField) === "true") {
         threeScene.background = envMap;
       } else {
         console.log("setting background to null");
         threeScene.background = null;
       }
-      
+
       result.dispose();
     });
   }
