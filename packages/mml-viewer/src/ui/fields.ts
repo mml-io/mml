@@ -173,7 +173,7 @@ export const showEnvironmentMapField: FieldDefinition = {
   name: "showEnvironmentMapField",
   label: "Show Environment Map",
   type: "boolean",
-  defaultValue: false,
+  defaultValue: true,
   groupDefinition: environmentGroup,
 };
 
