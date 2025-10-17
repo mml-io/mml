@@ -138,6 +138,10 @@ export class UIField extends UIElement {
         this.setValue(value);
       }
     }
+
+    if (fieldDefinition.type === "boolean") {
+      this.setValue(fieldDefinition.defaultValue.toString());
+    }
   }
 
   setValue(value: string) {
