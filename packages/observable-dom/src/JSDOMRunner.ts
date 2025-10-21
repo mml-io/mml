@@ -60,7 +60,8 @@ class AllowListResourceLoader extends ResourceLoader {
 }
 
 export type JSDOMRunnerOptions = {
-  allowResourceLoading: boolean | ResourceURL[];
+  allowResourceLoading?: boolean | ResourceURL[];
+  globals?: Record<string, any>;
 };
 
 /**
@@ -87,7 +88,7 @@ export class JSDOMRunner implements DOMRunnerInterface {
     htmlContents: string,
     params: object,
     callback: (domRunnerMessage: DOMRunnerMessage) => void,
-    { allowResourceLoading }: JSDOMRunnerOptions = { allowResourceLoading: false },
+    { allowResourceLoading = false, globals }: JSDOMRunnerOptions = {},
   ) {
     this.htmlPath = htmlPath;
     this.callback = callback;
@@ -122,6 +123,13 @@ export class JSDOMRunner implements DOMRunnerInterface {
 
         // JSON stringify and parse to avoid potential reference leaks from the params object
         window.params = JSON.parse(JSON.stringify(params));
+
+        // Inject any provided globals onto the window
+        if (globals) {
+          for (const [key, value] of Object.entries(globals)) {
+            (window as any)[key] = value;
+          }
+        }
 
         this.mutationObserver = new window.MutationObserver((mutationList) => {
           this.callback({

@@ -32,9 +32,15 @@ export class NetworkedDOMWebRunnerClient {
     if (!this.connectedState) {
       return;
     }
-    this.connectedState.document.removeWebSocket(
-      this.connectedState.fakeWebsocket.serverSideWebsocket as unknown as WebSocket,
-    );
+    if (
+      this.connectedState.document.hasWebSocket(
+        this.connectedState.fakeWebsocket.serverSideWebsocket as unknown as WebSocket,
+      )
+    ) {
+      this.connectedState.document.removeWebSocket(
+        this.connectedState.fakeWebsocket.serverSideWebsocket as unknown as WebSocket,
+      );
+    }
     this.connectedState = null;
   }
 
