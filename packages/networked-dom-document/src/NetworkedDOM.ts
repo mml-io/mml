@@ -1489,7 +1489,6 @@ export class NetworkedDOM {
     removed: Set<number>,
     mode: typeof VisibleToMode | typeof HiddenFromMode,
   ) {
-
     const priorVisibleToV01Connections = preVisibilityChangeRecords.priorVisibleToV01Connections;
     const priorVisibleToV02Connections = preVisibilityChangeRecords.priorVisibleToV02Connections;
 

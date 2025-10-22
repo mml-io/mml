@@ -29,25 +29,42 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 <script>
   const root = document.getElementById("root");
   const parent = document.getElementById("parent");
-  // Remove from client 1 by making it visible only to client 2
-  setTimeout(() => {
-    parent.setAttribute("visible-to", "2");
-    root.setAttribute("data-step", "1");
-    // Re-add for client 1 by removing visible-to (still hidden-from=1)
-    setTimeout(() => {
+  
+  let step = 0;
+  root.addEventListener("click", () => {
+    if (step === 0) {
+      // Remove from client 1 by making it visible only to client 2
+      parent.setAttribute("visible-to", "2");
+      root.setAttribute("data-step", "1");
+      step = 1;
+    } else if (step === 1) {
+      // Re-add for client 1 by removing visible-to (still hidden-from=1)
       parent.removeAttribute("visible-to");
       root.setAttribute("data-step", "2");
-    }, 100);
-  }, 100);
+      step = 2;
+    }
+  });
 </script>`);
 
       // Wait for initial snapshots to be delivered
       await client1.waitForAllClientMessages(isV01 ? 1 : 1);
       await client2.waitForAllClientMessages(isV01 ? 1 : 1);
 
-      // Now let the scripted attribute changes execute.
-      await client1.waitForAllClientMessages(isV01 ? 3 : 9, 2000);
-      await client2.waitForAllClientMessages(isV01 ? 3 : 9, 2000);
+      // Click to progress to step 1 (set visible-to="2")
+      client1.networkedDOMWebsocket.handleEvent(
+        client1.clientElement.querySelector("#root")!,
+        new CustomEvent("click"),
+      );
+      await client1.waitForAllClientMessages(isV01 ? 2 : 5);
+      await client2.waitForAllClientMessages(isV01 ? 2 : 5);
+
+      // Click to progress to step 2 (remove visible-to)
+      client1.networkedDOMWebsocket.handleEvent(
+        client1.clientElement.querySelector("#root")!,
+        new CustomEvent("click"),
+      );
+      await client1.waitForAllClientMessages(isV01 ? 3 : 9);
+      await client2.waitForAllClientMessages(isV01 ? 3 : 9);
 
       expect(consoleErrorSpy).not.toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
