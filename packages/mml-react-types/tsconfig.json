@@ -15,7 +15,9 @@
     "downlevelIteration": true,
     "outDir": "./build",
     "incremental": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationMap": true
   },
   "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
   "exclude": ["**/build/*", "types-src"]

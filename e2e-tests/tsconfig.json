@@ -13,7 +13,9 @@
     "moduleResolution": "node",
     "downlevelIteration": true,
     "outDir": "./build",
-    "incremental": true
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true
   },
   "include": ["**/*"],
   "exclude": ["**/build/*"]
