@@ -10,7 +10,9 @@
     "strict": true,
     "noImplicitAny": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["src/**/*.spec.ts", "node_modules"]

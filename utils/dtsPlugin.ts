@@ -83,6 +83,7 @@ export const dtsPlugin = (opts: DTSPluginOpts = {}) =>
         process.cwd(),
       ).options;
       copts.declaration = true;
+      copts.declarationMap = true;
       copts.emitDeclarationOnly = true;
       copts.incremental = true;
       if (!copts.declarationDir)
