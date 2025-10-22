@@ -1,5 +1,6 @@
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
+import { LogMessage } from "@mml-io/observable-dom-common";
 
 import { formatHTML, htmlStringWithFilters } from "./test-util";
 import { TestCaseNetworkedDOMClient } from "./TestCaseNetworkedDOMClient";
@@ -9,9 +10,12 @@ export class TestCaseNetworkedDOMDocument {
 
   constructor(ignoreTextNodes = true) {
     this.doc = new EditableNetworkedDOM(
-      "file://test.html",
+      "http://localhost/test-case-document",
       LocalObservableDOMFactory,
       ignoreTextNodes,
+      (logMessage: LogMessage) => {
+        console.log(`[NetworkedDOM Document] ${logMessage.level}: ${logMessage.content}`);
+      },
     );
   }
 

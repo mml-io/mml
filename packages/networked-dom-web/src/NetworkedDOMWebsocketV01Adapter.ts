@@ -75,47 +75,54 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
   }
 
   receiveMessage(event: MessageEvent) {
-    const messages = JSON.parse(event.data) as Array<NetworkedDOMV01ServerMessage>;
-    for (const message of messages) {
-      switch (message.type) {
-        case "error":
-          console.error("Error from server", message);
-          break;
-        case "warning":
-          console.warn("Warning from server", message);
-          break;
-        default: {
-          if (message.documentTime) {
-            if (this.timeCallback) {
-              this.timeCallback(message.documentTime);
+    try {
+      const messages = JSON.parse(event.data) as Array<NetworkedDOMV01ServerMessage>;
+      for (const message of messages) {
+        switch (message.type) {
+          case "error":
+            console.error("Error from server", message);
+            break;
+          case "warning":
+            console.warn("Warning from server", message);
+            break;
+          default: {
+            if (message.documentTime) {
+              if (this.timeCallback) {
+                this.timeCallback(message.documentTime);
+              }
             }
-          }
-          switch (message.type) {
-            case "snapshot":
-              this.handleSnapshot(message);
-              this.connectedCallback();
-              break;
-            case "attributeChange":
-              this.handleAttributeChange(message);
-              break;
-            case "childrenChanged":
-              this.handleChildrenChanged(message);
-              break;
-            case "textChanged":
-              this.handleTextChanged(message);
-              break;
-            case "ping":
-              this.send({
-                type: "pong",
-                pong: message.ping,
-              });
-              break;
-            default:
-              console.warn("unknown message type", message);
-              break;
+            switch (message.type) {
+              case "snapshot":
+                this.handleSnapshot(message);
+                this.connectedCallback();
+                break;
+              case "attributeChange":
+                this.handleAttributeChange(message);
+                break;
+              case "childrenChanged":
+                this.handleChildrenChanged(message);
+                break;
+              case "textChanged":
+                this.handleTextChanged(message);
+                break;
+              case "ping":
+                this.send({
+                  type: "pong",
+                  pong: message.ping,
+                });
+                break;
+              default:
+                console.warn("unknown message type", message);
+                break;
+            }
           }
         }
       }
+    } catch (e) {
+      console.error("Error handling websocket message", e);
+      // Close the websocket to avoid processing any more messages in this invalid state (1011 = "Internal Error")
+      this.websocket.close(1011, "Error handling websocket message");
+      throw e;
     }
   }
 
@@ -145,9 +152,6 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
     const parent = this.idToElement.get(nodeId);
     if (!parent) {
       throw new Error("No parent found for childrenChanged message");
-    }
-    if (!parent.isConnected) {
-      console.error("Parent is not connected", parent);
     }
     if (!isHTMLElement(parent, this.parentElement)) {
       throw new Error("Parent is not an HTMLElement (that supports children)");

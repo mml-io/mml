@@ -42,6 +42,7 @@ const hiddenTag = "x-hidden";
 export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAdapter {
   private idToElement = new Map<number, Node>();
   private elementToId = new Map<Node, number>();
+  private placeholderToId = new Map<Node, number>();
   private hiddenPlaceholderElements = new Map<
     number,
     {
@@ -114,26 +115,33 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
   }
 
   public receiveMessage(event: MessageEvent) {
-    const reader = new BufferReader(new Uint8Array(event.data));
-    const messages = decodeServerMessages(reader);
-    for (const message of messages) {
-      if (message.type === "batchStart") {
-        // Need to wait for batchEnd before applying messages
-        this.batchMode = true;
-      } else if (message.type === "batchEnd") {
-        // Apply all messages
-        this.batchMode = false;
-        for (const message of this.batchMessages) {
-          this.applyMessage(message);
-        }
-        this.batchMessages = [];
-      } else {
-        if (this.batchMode) {
-          this.batchMessages.push(message);
+    try {
+      const reader = new BufferReader(new Uint8Array(event.data));
+      const messages = decodeServerMessages(reader);
+      for (const message of messages) {
+        if (message.type === "batchStart") {
+          // Need to wait for batchEnd before applying messages
+          this.batchMode = true;
+        } else if (message.type === "batchEnd") {
+          // Apply all messages
+          this.batchMode = false;
+          for (const batchedMessage of this.batchMessages) {
+            this.applyMessage(batchedMessage);
+          }
+          this.batchMessages = [];
         } else {
-          this.applyMessage(message);
+          if (this.batchMode) {
+            this.batchMessages.push(message);
+          } else {
+            this.applyMessage(message);
+          }
         }
       }
+    } catch (e) {
+      console.error("Error handling websocket message", e);
+      // Close the websocket to avoid processing any more messages in this invalid state (1011 = "Internal Error")
+      this.websocket.close(1011, "Error handling websocket message");
+      throw e;
     }
   }
 
@@ -216,6 +224,7 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
       const placeholder = document.createElement(hiddenTag);
       parent.replaceChild(placeholder, node);
       this.hiddenPlaceholderElements.set(nodeId, { placeholder, element: node });
+      this.placeholderToId.set(placeholder, nodeId);
     } else if (removeHiddenFrom.length > 0 && removeHiddenFrom.indexOf(connectionId) !== -1) {
       // This element is being unhidden
       if (!hiddenElement) {
@@ -229,6 +238,7 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
       }
       parent.replaceChild(element, placeholder);
       this.hiddenPlaceholderElements.delete(nodeId);
+      this.placeholderToId.delete(placeholder);
     }
   }
 
@@ -247,10 +257,6 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
     if (hiddenParent) {
       // This element is hidden - add the children to the hidden element (not the placeholder)
       parent = hiddenParent.element;
-    } else {
-      if (!parent.isConnected) {
-        console.error("Parent is not connected", parent);
-      }
     }
     if (!isHTMLElement(parent, this.parentElement)) {
       throw new Error("Parent is not an HTMLElement (that supports children)");
@@ -303,9 +309,6 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
     if (!parent) {
       throw new Error("No parent found for childrenChanged message");
     }
-    if (!parent.isConnected) {
-      console.error("Parent is not connected", parent);
-    }
     if (!isHTMLElement(parent, this.parentElement)) {
       throw new Error("Parent is not an HTMLElement (that supports children)");
     }
@@ -317,14 +320,34 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
       }
       this.elementToId.delete(childElement);
       this.idToElement.delete(removedNode);
-      this.hiddenPlaceholderElements.delete(removedNode);
 
       const targetForRemoval = getRemovalTarget(parent);
 
-      targetForRemoval.removeChild(childElement);
-      if (isHTMLElement(childElement, this.parentElement)) {
-        // If child is capable of supporting children then remove any that exist
-        this.removeChildElementIds(childElement);
+      const hiddenElement = this.hiddenPlaceholderElements.get(removedNode);
+      if (hiddenElement) {
+        // This element was hidden so we remove the placeholder from the parent
+        const placeholder = hiddenElement.placeholder;
+        try {
+          targetForRemoval.removeChild(placeholder);
+        } catch (e) {
+          console.error("error removing placeholder child", e);
+        }
+        this.hiddenPlaceholderElements.delete(removedNode);
+        this.placeholderToId.delete(placeholder);
+        if (isHTMLElement(childElement, this.parentElement)) {
+          // If child is capable of supporting children then remove any that exist
+          this.removeChildElementIds(childElement);
+        }
+      } else {
+        try {
+          targetForRemoval.removeChild(childElement);
+        } catch (e) {
+          console.error("error removing child", e);
+        }
+        if (isHTMLElement(childElement, this.parentElement)) {
+          // If child is capable of supporting children then remove any that exist
+          this.removeChildElementIds(childElement);
+        }
       }
     }
   }
@@ -335,17 +358,37 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
     if (portal !== parent) {
       this.removeChildElementIds(portal as HTMLElement);
     }
-    for (let i = 0; i < parent.childNodes.length; i++) {
-      const child = parent.childNodes[i];
+    const childNodes = parent.childNodes;
+    for (let i = 0; i < childNodes.length; i++) {
+      const child = childNodes[i];
       const childId = this.elementToId.get(child as HTMLElement);
       if (!childId) {
-        console.error("Inner child of removed element had no id", child);
+        const placeholderId = this.placeholderToId.get(child);
+        if (placeholderId) {
+          const childElement = this.idToElement.get(placeholderId);
+          if (childElement) {
+            this.elementToId.delete(childElement);
+          } else {
+            console.error(
+              "Inner child of removed placeholder element not found by id",
+              placeholderId,
+            );
+          }
+          this.idToElement.delete(placeholderId);
+          this.placeholderToId.delete(child);
+          this.hiddenPlaceholderElements.delete(placeholderId);
+          this.removeChildElementIds(childElement as HTMLElement);
+        } else {
+          console.error(
+            "Inner child of removed element had no id",
+            (child as HTMLElement).outerHTML,
+          );
+        }
       } else {
         this.elementToId.delete(child);
         this.idToElement.delete(childId);
-        this.hiddenPlaceholderElements.delete(childId);
+        this.removeChildElementIds(child as HTMLElement);
       }
-      this.removeChildElementIds(child as HTMLElement);
     }
   }
 
@@ -423,7 +466,7 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
         nodeId,
         this.idToElement.get(nodeId),
       );
-      return null;
+      throw new Error("Received nodeId to add that is already present: " + nodeId);
     }
 
     if (tag === "#text") {
@@ -458,9 +501,13 @@ export class NetworkedDOMWebsocketV02Adapter implements NetworkedDOMWebsocketAda
     if (hiddenFrom && hiddenFrom.length > 0 && hiddenFrom.indexOf(connectionId) !== -1) {
       // This element is hidden - create a placeholder that will be in the DOM to maintain structure, but keep the underlying element hidden
       const placeholder = document.createElement(hiddenTag);
-      this.idToElement.set(nodeId, placeholder);
-      this.elementToId.set(placeholder, nodeId);
       this.hiddenPlaceholderElements.set(nodeId, { placeholder, element });
+      this.placeholderToId.set(placeholder, nodeId);
+
+      // The actual element is not added to the DOM, but it is stored for when it is unhidden (and should be the target for attribute changes, children additions, etc.)
+      this.idToElement.set(nodeId, element);
+      this.elementToId.set(element, nodeId);
+
       return placeholder;
     } else {
       this.idToElement.set(nodeId, element);

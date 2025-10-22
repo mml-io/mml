@@ -1544,6 +1544,8 @@ export class NetworkedDOM {
             if (previousNodeIsSubjectiveForV01) {
               // Go in reverse from the previousNodeIndex to the start of the children to see which of them this connection can see.
               // If we reach the start of the children, then send without the previousNodeId to tell the connection to put it at the start
+              previousNodeIdForClient = 0;
+
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               for (let i = previousNodeIndex!; i >= 0; i--) {
                 const child = node.parent.childNodes[i];
@@ -1608,6 +1610,8 @@ export class NetworkedDOM {
             if (previousNodeIsSubjectiveForV02) {
               // Go in reverse from the previousNodeIndex to the start of the children to see which of them this connection can see.
               // If we reach the start of the children, then send without the previousNodeId to tell the connection to put it at the start
+              previousNodeIdForClient = 0;
+
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               for (let i = previousNodeIndex!; i >= 0; i--) {
                 const child = node.parent.childNodes[i];
