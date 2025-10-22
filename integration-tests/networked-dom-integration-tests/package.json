@@ -6,7 +6,8 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "fuzz": "tsx ./scripts/run-networked-dom-fuzzes.ts"
   },
   "devDependencies": {
     "@mml-io/networked-dom-document": "^0.22.0",
