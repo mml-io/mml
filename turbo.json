@@ -25,38 +25,6 @@
     },
     "type-check": {
       "cache": true
-    },
-    "e2e-tests": {
-      "cache": true,
-      "outputs": ["test/__image_snapshots__/__diff_output__/**"]
-    },
-    "e2e-tests:threejs": {
-      "cache": true,
-      "outputs": ["test/__image_snapshots__/__diff_output__/**"]
-    },
-    "e2e-tests:playcanvas": {
-      "cache": true,
-      "outputs": ["test/__image_snapshots__/__diff_output__/**"]
-    },
-    "ci:e2e-tests": {
-      "cache": true,
-      "outputs": ["test/__image_snapshots__/__diff_output__/**"]
-    },
-    "ci:e2e-tests:threejs": {
-      "cache": true,
-      "outputs": ["test/__image_snapshots__/__diff_output__/**"]
-    },
-    "ci:e2e-tests:playcanvas": {
-      "cache": true,
-      "outputs": ["test/__image_snapshots__/__diff_output__/**"]
-    },
-    "ci:e2e-tests:threejs:shard": {
-      "cache": true,
-      "outputs": ["test/__image_snapshots__/__diff_output__/**"]
-    },
-    "ci:e2e-tests:playcanvas:shard": {
-      "cache": true,
-      "outputs": ["test/__image_snapshots__/__diff_output__/**"]
     }
   }
 }

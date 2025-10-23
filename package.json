@@ -17,14 +17,14 @@
     "link-all": "lerna exec \"npm link\" --no-private && npm run print-links",
     "print-links": "echo \"Run this command in the package you would like to link this repo's packages to:\n\"; echo \"npm link\" $(lerna ls --loglevel=error)",
     "version": "lerna version --no-push --force-publish",
-    "ci:e2e-tests": "turbo run ci:e2e-tests --output-logs=full",
-    "ci:e2e-tests:threejs": "turbo run ci:e2e-tests:threejs --output-logs=full",
-    "ci:e2e-tests:playcanvas": "turbo run ci:e2e-tests:playcanvas --output-logs=full",
-    "ci:e2e-tests:threejs:shard": "turbo run ci:e2e-tests:threejs:shard --output-logs=full",
-    "ci:e2e-tests:playcanvas:shard": "turbo run ci:e2e-tests:playcanvas:shard --output-logs=full",
-    "e2e-tests": "turbo run e2e-tests --output-logs=full",
-    "e2e-tests:threejs": "turbo run e2e-tests:threejs --output-logs=full",
-    "e2e-tests:playcanvas": "turbo run e2e-tests:playcanvas --output-logs=full"
+    "ci:e2e-tests": "npm run ci:e2e-tests -w e2e-tests",
+    "ci:e2e-tests:threejs": "npm run ci:e2e-tests:threejs -w e2e-tests",
+    "ci:e2e-tests:playcanvas": "npm run ci:e2e-tests:playcanvas -w e2e-tests",
+    "ci:e2e-tests:threejs:shard": "npm run ci:e2e-tests:threejs:shard -w e2e-tests",
+    "ci:e2e-tests:playcanvas:shard": "npm run ci:e2e-tests:playcanvas:shard -w e2e-tests",
+    "e2e-tests": "npm run e2e-tests -w e2e-tests",
+    "e2e-tests:threejs": "npm run e2e-tests:threejs -w e2e-tests",
+    "e2e-tests:playcanvas": "npm run e2e-tests:playcanvas -w e2e-tests"
   },
   "workspaces": [
     "packages/**/*",
