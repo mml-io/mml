@@ -42,7 +42,9 @@ jobs:
         uses: ./.github/actions/retrieve-deps-and-build
 
       - name: Test
-        run: npm run test-all
+        uses: ./.github/actions/run-turbo-task
+        with:
+          task: test-all
 
   type-check:
     name: Type Check
@@ -61,7 +63,9 @@ jobs:
         uses: ./.github/actions/retrieve-deps-and-build
 
       - name: Type Check
-        run: npm run type-check-all
+        uses: ./.github/actions/run-turbo-task
+        with:
+          task: type-check-all
 
   lint:
     name: Lint
@@ -80,7 +84,9 @@ jobs:
         uses: ./.github/actions/retrieve-deps-and-build
 
       - name: Lint
-        run: npm run lint-all
+        uses: ./.github/actions/run-turbo-task
+        with:
+          task: lint-all
 
   # TODO: Re-enable (https://github.com/mml-io/mml/issues/241)
   # e2e-test-playcanvas:

@@ -16,12 +16,6 @@ runs:
         node-version-file: ".nvmrc"
         cache: npm
 
-    # Set NX_REJECT_UNKNOWN_LOCAL_CACHE=0 to allow NX to use the local cache even if the cache was built by a different machine
-    # https://nx.dev/recipes/troubleshooting/unknown-local-cache
-    - name: Allow NX to use unknown local cache
-      shell: bash
-      run: echo "NX_REJECT_UNKNOWN_LOCAL_CACHE=0" >> $GITHUB_ENV
-
     - name: Cache NPM dependencies
       uses: actions/cache@v4
       id: cache-npm-deps
@@ -35,6 +29,15 @@ runs:
       if: steps.cache-npm-deps.outputs.cache-hit != 'true'
       shell: bash
       run: npm ci
+
+    - name: Cache Turbo build outputs
+      uses: actions/cache@v4
+      id: cache-turbo-build
+      with:
+        path: .turbo
+        key: ${{ runner.os }}-turbo-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-turbo-build-
 
     - name: Build
       shell: bash
