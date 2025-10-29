@@ -19,6 +19,7 @@ export type ThreeJSLabelResourceOptions = {
 };
 
 export class ThreeJSLabelResource {
+  private static readonly DEFAULT_MAX_TEXTURE_SIZE = 1024;
   private static sharedCanvasText: CanvasText | null = null;
   private handles = new Set<ThreeJSLabelHandleImpl>();
   private result: { texture: THREE.DataTexture; width: number; height: number } | null = null;
@@ -26,19 +27,32 @@ export class ThreeJSLabelResource {
   constructor(
     options: ThreeJSLabelResourceOptions,
     private onRemove: () => void,
+    private maxTextureSize: number = ThreeJSLabelResource.DEFAULT_MAX_TEXTURE_SIZE,
   ) {
     // Synchronously generate texture
     if (!ThreeJSLabelResource.sharedCanvasText) {
       ThreeJSLabelResource.sharedCanvasText = new CanvasText();
     }
+    const scale = Math.min(
+      1,
+      Math.min(
+        this.maxTextureSize / options.dimensions.width,
+        this.maxTextureSize / options.dimensions.height,
+      ),
+    );
+    const clampedDimensions = {
+      width: options.dimensions.width * scale,
+      height: options.dimensions.height * scale,
+    };
+
     const canvasText = ThreeJSLabelResource.sharedCanvasText;
     const canvas = canvasText.renderText(options.content, {
       bold: options.bold,
-      fontSize: options.fontSize,
-      paddingPx: options.paddingPx,
+      fontSize: options.fontSize * scale,
+      paddingPx: options.paddingPx * scale,
       textColorRGB255A1: options.textColorRGB255A1,
       backgroundColorRGB255A1: options.backgroundColorRGB255A1,
-      dimensions: options.dimensions,
+      dimensions: clampedDimensions,
       alignment: options.alignment,
     });
 

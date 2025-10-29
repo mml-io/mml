@@ -11,8 +11,6 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
   private latestLabelHandle: ThreeJSLabelHandle | null = null;
   private shouldDrawText: boolean = false;
 
-  private static readonly MAX_TEXTURE_SIZE = 1024;
-
   constructor(private label: Label<ThreeJSGraphicsAdapter>) {
     super(label);
 
@@ -100,13 +98,6 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
     // Clamp the width and height to 1024px whilst maintaining the aspect ratio
     const desiredWidth = this.label.props.width * 200;
     const desiredHeight = this.label.props.height * 200;
-    const scale = Math.min(
-      ThreeJSLabel.MAX_TEXTURE_SIZE / desiredWidth,
-      ThreeJSLabel.MAX_TEXTURE_SIZE / desiredHeight,
-    );
-    const clampedScale = Math.min(scale, 1);
-    const clampedWidth = desiredWidth * clampedScale;
-    const clampedHeight = desiredHeight * clampedScale;
 
     const handle = this.label
       .getScene()
@@ -114,8 +105,8 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
       .getResourceManager()
       .loadLabel({
         content: this.label.props.content,
-        fontSize: this.label.props.fontSize * 2 * clampedScale,
-        paddingPx: this.label.props.padding * clampedScale,
+        fontSize: this.label.props.fontSize * 2,
+        paddingPx: this.label.props.padding,
         textColorRGB255A1: {
           r: this.label.props.fontColor.r * 255,
           g: this.label.props.fontColor.g * 255,
@@ -129,8 +120,8 @@ export class ThreeJSLabel extends LabelGraphics<ThreeJSGraphicsAdapter> {
           a: this.label.props.color.a ?? 1,
         },
         dimensions: {
-          width: clampedWidth,
-          height: clampedHeight,
+          width: desiredWidth,
+          height: desiredHeight,
         },
         alignment: this.label.props.alignment,
         bold: true,

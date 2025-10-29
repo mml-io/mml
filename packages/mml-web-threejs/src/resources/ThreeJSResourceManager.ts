@@ -5,19 +5,28 @@ import { ThreeJSLabelResource, ThreeJSLabelResourceOptions } from "./ThreeJSLabe
 import { ThreeJSModelHandle } from "./ThreeJSModelHandle";
 import { ThreeJSModelResource } from "./ThreeJSModelResource";
 
+export type ThreeJSResourceManagerOptions = {
+  modelMaxTextureSize?: number;
+  labelMaxTextureSize?: number;
+};
+
 export class ThreeJSResourceManager {
   private modelResources = new Map<string, ThreeJSModelResource>();
   private imageResources = new Map<string, ThreeJSImageResource>();
   private labelResources = new Map<string, ThreeJSLabelResource>();
 
-  constructor() {}
+  constructor(private options: ThreeJSResourceManagerOptions = {}) {}
 
   public loadModel(url: string): ThreeJSModelHandle {
     let modelResource = this.modelResources.get(url);
     if (!modelResource) {
-      modelResource = new ThreeJSModelResource(url, () => {
-        this.modelResources.delete(url);
-      });
+      modelResource = new ThreeJSModelResource(
+        url,
+        () => {
+          this.modelResources.delete(url);
+        },
+        this.options.modelMaxTextureSize,
+      );
       this.modelResources.set(url, modelResource);
     }
     return modelResource.createHandle();
@@ -38,9 +47,13 @@ export class ThreeJSResourceManager {
     const key = buildLabelResourceKey(options);
     let labelResource = this.labelResources.get(key);
     if (!labelResource) {
-      labelResource = new ThreeJSLabelResource(options, () => {
-        this.labelResources.delete(key);
-      });
+      labelResource = new ThreeJSLabelResource(
+        options,
+        () => {
+          this.labelResources.delete(key);
+        },
+        this.options.labelMaxTextureSize,
+      );
       this.labelResources.set(key, labelResource);
     }
     return labelResource.createHandle();
