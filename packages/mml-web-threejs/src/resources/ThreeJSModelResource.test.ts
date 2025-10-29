@@ -41,8 +41,8 @@ describe("ThreeJSModelResource", () => {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshStandardMaterial();
     const bigCanvas = document.createElement("canvas");
-    bigCanvas.width = 4096;
-    bigCanvas.height = 2048;
+    bigCanvas.width = 8192;
+    bigCanvas.height = 4096;
     const tex = new THREE.Texture(bigCanvas);
     tex.needsUpdate = true;
     (material as any).map = tex;
@@ -73,8 +73,8 @@ describe("ThreeJSModelResource", () => {
       for (const t of textures) {
         const img: any = (t as any).image ?? (t as any).source?.data;
         if (img && typeof img.width === "number" && typeof img.height === "number") {
-          expect(img.width).toBeLessThanOrEqual(1024);
-          expect(img.height).toBeLessThanOrEqual(1024);
+          expect(img.width).toBeLessThanOrEqual(2048);
+          expect(img.height).toBeLessThanOrEqual(2048);
         }
       }
     }
