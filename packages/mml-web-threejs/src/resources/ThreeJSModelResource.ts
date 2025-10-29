@@ -4,6 +4,8 @@ import * as THREE from "three";
 import { ThreeJSModelHandle, ThreeJSModelHandleImpl } from "./ThreeJSModelHandle";
 
 export class ThreeJSModelResource {
+  private static readonly DEFAULT_MAX_TEXTURE_SIZE = 2048;
+
   private static modelLoader: ModelLoader | null = null;
   private static getModelLoader(): ModelLoader {
     if (!ThreeJSModelResource.modelLoader) {
@@ -11,7 +13,6 @@ export class ThreeJSModelResource {
     }
     return ThreeJSModelResource.modelLoader;
   }
-  private static readonly MAX_TEXTURE_SIZE = 1024;
 
   private modelHandles = new Set<ThreeJSModelHandleImpl>();
   private modelResult: ModelLoadResult | null = null;
@@ -21,6 +22,7 @@ export class ThreeJSModelResource {
   constructor(
     public readonly url: string,
     private onRemove: () => void,
+    private maxTextureSize: number = ThreeJSModelResource.DEFAULT_MAX_TEXTURE_SIZE,
   ) {
     this.abortController = new AbortController();
     ThreeJSModelResource.getModelLoader()
@@ -39,10 +41,7 @@ export class ThreeJSModelResource {
         this.modelResult = result;
         // Clamp all material textures on this model to a maximum size
         try {
-          ThreeJSModelResource.clampTexturesToMaxSize(
-            result.group,
-            ThreeJSModelResource.MAX_TEXTURE_SIZE,
-          );
+          ThreeJSModelResource.clampTexturesToMaxSize(result.group, this.maxTextureSize);
         } catch (e) {
           // Ignore texture clamping errors to avoid blocking model load
 
