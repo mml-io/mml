@@ -1,0 +1,28 @@
+<m-group id="scene-group">
+  <m-sun
+    id="sun"
+    priority="1"
+    intensity="1.3"
+    color="#fffafa"
+    azimuthal-angle="180"
+    polar-angle="46"
+    resolution="8192"
+    frustum="150"
+    turbidity="1.2"
+    rayleigh="0.7"
+  >
+    <m-attr-lerp attr="intensity,azimuthal-angle,polar-angle" duration="1000"></m-attr-lerp>
+  </m-sun>
+
+  <m-environment-light id="ambient-light" priority="1" intensity="0.1" color="#ffffff">
+    <m-attr-lerp attr="intensity" duration="50"></m-attr-lerp>
+  </m-environment-light>
+  <m-cube width="100" height="0.1" depth="100" y="-0.5" id="ground" nav-mesh="true" clickable="true"></m-cube>
+  <!--
+    Model by frostychaos144 (https://sketchfab.com/frostychaos144)
+    https://sketchfab.com/3d-models/arena-standoff-2-96f730c204994ce185a681c2af1d2c40
+    License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+  -->
+  <m-model id="arena" src="/assets/models/arena_01.glb" collide="true" nav-mesh="true" clickable="true"></m-model>
+  <m-model id="arena" src="/assets/models/arena_02.glb" collide="false" nav-mesh="false" clickable="false"></m-model>
+</m-group>

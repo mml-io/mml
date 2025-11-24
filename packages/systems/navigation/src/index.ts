@@ -941,6 +941,25 @@ class NavigationSystem implements ElementSystem {
     }
   }
 
+  stop(element: Element) {
+    if (!this.crowd) return;
+    const agentState = this.elementToAgent.get(element);
+    if (!agentState) return;
+    const ag = this.crowd.getAgent(agentState.agentId);
+    if (ag) {
+      // kind of a fake stop
+      // we're just setting the agent target to its
+      // current position.
+      // TODO: There's likely a better way to do this
+      const pos = ag.position();
+      ag.requestMoveTarget(pos);
+      this.agentCurrentTarget.delete(agentState.agentId);
+      if (this.config.debug) {
+        console.log("[navigation] stop", { agentId: agentState.agentId });
+      }
+    }
+  }
+
   private computeBoxObstacleFromElement(element: Element): {
     center: { x: number; y: number; z: number };
     halfExtents: { x: number; y: number; z: number };
