@@ -31,4 +31,9 @@ export class DebugHelper<G extends GraphicsAdapter = GraphicsAdapter> {
       }
     }
   }
+
+  public dispose() {
+    this.debugGraphics?.dispose();
+    this.debugGraphics = null;
+  }
 }
