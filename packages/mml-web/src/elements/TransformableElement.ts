@@ -115,6 +115,7 @@ export abstract class TransformableElement<
   disconnectedCallback(): void {
     this.transformableAnimatedAttributeHelper.reset();
     this.transformableElementGraphics?.dispose();
+    this.debugHelper.dispose();
     this.transformableElementGraphics = null;
     super.disconnectedCallback();
   }
