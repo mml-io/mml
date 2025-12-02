@@ -60,6 +60,12 @@ export class GameServer {
     this.scanner = new GameDirectoryScanner(options.gamesDirectory);
     this.mmlDocumentManager = this.options.mmlDocumentManager;
     this.htmlGenerator = new GameListHTMLGenerator(this.mmlDocumentManager);
+
+    // Set asset server URL for document manager so it can resolve relative URLs
+    const assetServerUrl = `http://${this.options.host}:${this.options.port}`;
+    this.mmlDocumentManager.setAssetServerUrl(assetServerUrl);
+    console.log(`Asset server URL set to: ${assetServerUrl}`);
+
     this.setupMiddleware();
     this.setupRoutes();
 
@@ -155,17 +161,29 @@ export class GameServer {
    */
   private setupRoutes(): void {
     // Serve assets from assets directory if provided
-    if (this.options.assetsDirectory && fs.existsSync(this.options.assetsDirectory)) {
-      this.app.use(
-        "/assets",
-        express.static(this.options.assetsDirectory, {
-          setHeaders: (res, _path) => {
-            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-            res.setHeader("Pragma", "no-cache");
-            res.setHeader("Expires", "0");
-          },
-        }),
-      );
+    if (this.options.assetsDirectory) {
+      const assetsPath = path.resolve(this.options.assetsDirectory);
+      console.log(`[GameServer] Assets directory configured: ${this.options.assetsDirectory}`);
+      console.log(`[GameServer] Assets directory resolved to: ${assetsPath}`);
+      console.log(`[GameServer] Assets directory exists: ${fs.existsSync(assetsPath)}`);
+
+      if (fs.existsSync(assetsPath)) {
+        this.app.use(
+          "/assets",
+          express.static(assetsPath, {
+            setHeaders: (res, _path) => {
+              res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+              res.setHeader("Pragma", "no-cache");
+              res.setHeader("Expires", "0");
+            },
+          }),
+        );
+        console.log(`[GameServer] Serving assets from /assets -> ${assetsPath}`);
+      } else {
+        console.warn(`[GameServer] Assets directory not found: ${assetsPath}`);
+      }
+    } else {
+      console.log(`[GameServer] No assets directory configured`);
     }
 
     // WebSocket route for MML documents

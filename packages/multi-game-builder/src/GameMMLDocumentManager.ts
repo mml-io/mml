@@ -15,6 +15,11 @@ export interface MMLDocument {
 
 export class GameMMLDocumentManager {
   private documents: Map<string, MMLDocument> = new Map();
+  private assetServerUrl: string = "http://localhost:3000";
+
+  setAssetServerUrl(url: string): void {
+    this.assetServerUrl = url;
+  }
 
   addGameDocument(gameDir: GameDirectory): void {
     const indexHtmlPath = path.join(gameDir.buildPath, "index.html");
@@ -38,8 +43,8 @@ export class GameMMLDocumentManager {
 
         // Only reload if document was already loaded
         if (existingDoc.loaded) {
-          console.log(`Reloading MML document 1: ${documentKey}`);
-          existingDoc.document.load(contents);
+          console.log(`Reloading MML document: ${documentKey}`);
+          existingDoc.document.load(contents, { __ASSET_SERVER_URL__: this.assetServerUrl });
         }
       } else {
         // Create new document
@@ -88,8 +93,8 @@ export class GameMMLDocumentManager {
 
         // Only reload if document was already loaded
         if (doc.loaded) {
-          console.log(`Reloading MML document 2: ${gameName}`);
-          doc.document.load(contents);
+          console.log(`Reloading MML document: ${gameName}`);
+          doc.document.load(contents, { __ASSET_SERVER_URL__: this.assetServerUrl });
         }
       } catch (error) {
         console.error(`Failed to update build/index.html for ${gameName}:`, error);
@@ -108,7 +113,8 @@ export class GameMMLDocumentManager {
 
     if (!docData.loaded) {
       console.log(`Loading MML document ${documentKey} on first access`);
-      docData.document.load(docData.contents);
+      // Pass asset server URL as param so systems can resolve relative URLs
+      docData.document.load(docData.contents, { __ASSET_SERVER_URL__: this.assetServerUrl });
       docData.loaded = true;
     }
 
