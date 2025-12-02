@@ -5,10 +5,17 @@ interface EnemyData {
   element: HTMLElement;
   walkAnim: HTMLElement;
   attackAnim: HTMLElement;
+  deathAnim: HTMLElement;
   isAttacking: boolean;
+  isDying: boolean;
+  attackDamageTimeout: number | null;
   connectionId?: number;
   health: number;
+  maxHealth: number;
+  healthBarGreen: HTMLElement;
+  healthBarRed: HTMLElement;
   clickHandler: (event: any) => void;
+  damageHandler: (event: any) => void;
 }
 
 export class Enemies {
@@ -72,12 +79,13 @@ export class Enemies {
         }
       });
 
-      if (nearestPlayer) {
+      if (nearestPlayer && !enemyData.isDying) {
         try {
           if (minDistance <= CONSTANTS.ENEMY_ATTACK_RANGE) {
             if (!enemyData.isAttacking) {
               enemyData.isAttacking = true;
               this.setAnimationState(enemyData, "attack");
+              this.scheduleAttackDamage(enemyData, nearestPlayer);
 
               (window as any).navigation.stop(enemy);
             }
@@ -91,6 +99,7 @@ export class Enemies {
             // Switch to chase mode
             if (enemyData.isAttacking) {
               enemyData.isAttacking = false;
+              this.cancelAttackDamage(enemyData);
               this.setAnimationState(enemyData, "walk");
             }
 
@@ -111,13 +120,99 @@ export class Enemies {
     });
   }
 
-  private setAnimationState(enemyData: EnemyData, state: "walk" | "attack"): void {
+  private setAnimationState(enemyData: EnemyData, state: "walk" | "attack" | "death"): void {
     if (state === "walk") {
       enemyData.walkAnim.setAttribute("weight", "1");
       enemyData.attackAnim.setAttribute("weight", "0");
-    } else {
+      enemyData.deathAnim.setAttribute("weight", "0");
+    } else if (state === "attack") {
+      // Sync attack animation to current time so damage timing is predictable
+      const currentTime = document.timeline.currentTime;
+      enemyData.attackAnim.setAttribute("start-time", currentTime.toString());
       enemyData.walkAnim.setAttribute("weight", "0");
       enemyData.attackAnim.setAttribute("weight", "1");
+      enemyData.deathAnim.setAttribute("weight", "0");
+    } else {
+      // Death state - sync animation to current time
+      const currentTime = document.timeline.currentTime;
+      enemyData.deathAnim.setAttribute("start-time", currentTime.toString());
+      enemyData.walkAnim.setAttribute("weight", "0");
+      enemyData.attackAnim.setAttribute("weight", "0");
+      enemyData.deathAnim.setAttribute("weight", "1");
+    }
+  }
+
+  private scheduleAttackDamage(enemyData: EnemyData, _targetPos: Position): void {
+    // Cancel any existing damage timeout
+    this.cancelAttackDamage(enemyData);
+
+    // Schedule damage check after the attack animation timing
+    enemyData.attackDamageTimeout = window.setTimeout(() => {
+      this.checkAttackDamage(enemyData);
+    }, CONSTANTS.ZOMBIE_ATTACK_DAMAGE_TIME);
+  }
+
+  private cancelAttackDamage(enemyData: EnemyData): void {
+    if (enemyData.attackDamageTimeout !== null) {
+      window.clearTimeout(enemyData.attackDamageTimeout);
+      enemyData.attackDamageTimeout = null;
+    }
+  }
+
+  private checkAttackDamage(enemyData: EnemyData): void {
+    enemyData.attackDamageTimeout = null;
+
+    // Only deal damage if zombie is still attacking
+    if (!enemyData.isAttacking) {
+      return;
+    }
+
+    const enemy = enemyData.element;
+    const enemyX = parseFloat(enemy.getAttribute("x") || "0");
+    const enemyZ = parseFloat(enemy.getAttribute("z") || "0");
+
+    // Find all players and check if any are in attack range
+    const players = document.querySelectorAll("[data-connection-id]");
+    players.forEach((player) => {
+      const playerX = parseFloat(player.getAttribute("x") || "0");
+      const playerZ = parseFloat(player.getAttribute("z") || "0");
+      const connectionId = parseInt((player as HTMLElement).dataset.connectionId || "0", 10);
+
+      const dx = playerX - enemyX;
+      const dz = playerZ - enemyZ;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+
+      if (distance <= CONSTANTS.ENEMY_ATTACK_RANGE) {
+        // Player is still in range - deal damage!
+        console.log(
+          `[Enemies] Zombie attack hit player ${connectionId}! Distance: ${distance.toFixed(2)}`,
+        );
+
+        // Dispatch player-damage event
+        const playerDamageEvent = new CustomEvent("player-damage", {
+          detail: {
+            connectionId,
+            damage: CONSTANTS.ZOMBIE_ATTACK_DAMAGE,
+          },
+          bubbles: true,
+        });
+        window.dispatchEvent(playerDamageEvent);
+      } else {
+        console.log(
+          `[Enemies] Zombie attack missed player ${connectionId}! Distance: ${distance.toFixed(2)} (needed <= ${CONSTANTS.ENEMY_ATTACK_RANGE})`,
+        );
+      }
+    });
+
+    // Schedule next attack damage if still attacking
+    if (enemyData.isAttacking) {
+      // Animation loops automatically, so the next apex occurs after one full animation cycle
+      const animDurationMs =
+        (CONSTANTS.ZOMBIE_ATTACK_TOTAL_FRAMES / CONSTANTS.ZOMBIE_ATTACK_ANIM_FPS) * 1000;
+
+      enemyData.attackDamageTimeout = window.setTimeout(() => {
+        this.checkAttackDamage(enemyData);
+      }, animDurationMs);
     }
   }
 
@@ -162,6 +257,45 @@ export class Enemies {
     this.addLerp(animation, 150, "weight");
     parent.appendChild(animation);
     return animation;
+  }
+
+  private createHealthBar(parent: HTMLElement): { green: HTMLElement; red: HTMLElement } {
+    // Create health bar container
+    const healthBarContainer = document.createElement("m-group");
+    healthBarContainer.setAttribute("y", CONSTANTS.HEALTH_BAR_Y_OFFSET.toString());
+    healthBarContainer.setAttribute("collide", "false");
+    parent.appendChild(healthBarContainer);
+
+    // Green foreground (starts at full width, shrinks as health decreases)
+    // Created first so it's the outer layer
+    const healthBarGreen = document.createElement("m-cube");
+    healthBarGreen.setAttribute("width", CONSTANTS.HEALTH_BAR_WIDTH.toString());
+    healthBarGreen.setAttribute("height", CONSTANTS.HEALTH_BAR_HEIGHT.toString());
+    healthBarGreen.setAttribute("depth", CONSTANTS.HEALTH_BAR_DEPTH.toString());
+    healthBarGreen.setAttribute("color", "#00ff00");
+    healthBarGreen.setAttribute("collide", "false");
+    healthBarContainer.appendChild(healthBarGreen);
+
+    // Red background (full width) - inside the green bar
+    const healthBarRed = document.createElement("m-cube");
+    healthBarRed.setAttribute("width", CONSTANTS.HEALTH_BAR_WIDTH.toString());
+    healthBarRed.setAttribute("height", (CONSTANTS.HEALTH_BAR_HEIGHT * 0.8).toString());
+    healthBarRed.setAttribute("depth", (CONSTANTS.HEALTH_BAR_DEPTH * 0.8).toString());
+    healthBarRed.setAttribute("color", "#ff0000");
+    healthBarRed.setAttribute("collide", "false");
+    healthBarContainer.appendChild(healthBarRed);
+
+    return { green: healthBarGreen, red: healthBarRed };
+  }
+
+  private updateHealthBar(enemyData: EnemyData): void {
+    const healthPercent = enemyData.health / enemyData.maxHealth;
+    const newWidth = CONSTANTS.HEALTH_BAR_WIDTH * healthPercent;
+    enemyData.healthBarGreen.setAttribute("width", newWidth.toString());
+
+    // Offset the green bar to align left edge
+    const offset = (CONSTANTS.HEALTH_BAR_WIDTH - newWidth) / 2;
+    enemyData.healthBarGreen.setAttribute("x", (-offset).toString());
   }
 
   public spawnEnemy(x: number, z: number, connectionId?: number): void {
@@ -223,15 +357,60 @@ export class Enemies {
     const attackAnim = this.createAnimation(enemy, CONSTANTS.ZOMBIE_ATTACK_ANIM, "attack", "0");
     attackAnim.setAttribute("start-time", animationStartTime.toString());
 
+    // Create death animation (starts inactive, no loop)
+    const deathAnim = this.createAnimation(enemy, CONSTANTS.ZOMBIE_DEATH_ANIM, "death", "0");
+    deathAnim.setAttribute("loop", "false");
+
+    // Create health bar
+    const healthBar = this.createHealthBar(enemyGroup);
+
+    // Add damage event listener
+    const damageHandler = (event: any) => {
+      console.log(`[Enemies] Enemy ${enemyId} received damage event:`, event.detail);
+      const damage = event.detail?.damage || 0;
+      const enemyData = this.enemies.get(enemyId);
+      if (enemyData) {
+        enemyData.health -= damage;
+        console.log(
+          `[Enemies] Enemy ${enemyId} took ${damage} damage. Health: ${enemyData.health}/${enemyData.maxHealth}`,
+        );
+
+        if (enemyData.health <= 0) {
+          console.log(`[Enemies] Enemy ${enemyId} defeated!`);
+
+          // Dispatch zombie-killed event for game state management
+          if (enemyData.connectionId !== undefined) {
+            const zombieKilledEvent = new CustomEvent("zombie-killed", {
+              detail: { connectionId: enemyData.connectionId },
+              bubbles: true,
+            });
+            window.dispatchEvent(zombieKilledEvent);
+          }
+
+          this.killEnemy(enemyId);
+        } else {
+          this.updateHealthBar(enemyData);
+        }
+      }
+    };
+    enemyGroup.addEventListener("enemy-damage", damageHandler);
+
     // Store enemy data
     const enemyData: EnemyData = {
       element: enemyGroup,
       walkAnim,
       attackAnim,
+      deathAnim,
       isAttacking: false,
+      isDying: false,
+      attackDamageTimeout: null,
       connectionId,
-      health: 100,
+      health: CONSTANTS.ZOMBIE_MAX_HEALTH,
+      maxHealth: CONSTANTS.ZOMBIE_MAX_HEALTH,
+      healthBarGreen: healthBar.green,
+      healthBarRed: healthBar.red,
       clickHandler,
+      damageHandler,
     };
 
     this.enemies.set(enemyId, enemyData);
@@ -240,11 +419,48 @@ export class Enemies {
     console.log(`Spawned ${isMan ? "zombie man" : "zombie girl"} ${enemyId} at (${x}, ${z})`);
   }
 
+  public killEnemy(enemyId: number): void {
+    const enemyData = this.enemies.get(enemyId);
+    if (enemyData && !enemyData.isDying) {
+      enemyData.isDying = true;
+      enemyData.isAttacking = false;
+      this.cancelAttackDamage(enemyData);
+
+      // Stop navigation
+      (window as any).navigation.stop(enemyData.element);
+
+      // Change ID so bullets pass through (Weapon.ts queries '[id^="enemy-"]')
+      enemyData.element.setAttribute("id", `dying-${enemyId}`);
+
+      // Remove from enemies map immediately so getEnemyCount() doesn't count it
+      this.enemies.delete(enemyId);
+      this.previousPositions.delete(enemyData.element);
+
+      // Hide health bar
+      enemyData.healthBarGreen.setAttribute("visible", "false");
+      enemyData.healthBarRed.setAttribute("visible", "false");
+
+      // Play death animation
+      this.setAnimationState(enemyData, "death");
+
+      // Remove from DOM after death animation completes
+      window.setTimeout(() => {
+        enemyData.element.removeEventListener("click", enemyData.clickHandler);
+        enemyData.element.removeEventListener("enemy-damage", enemyData.damageHandler);
+        if (enemyData.element.parentNode) {
+          enemyData.element.parentNode.removeChild(enemyData.element);
+        }
+      }, CONSTANTS.ZOMBIE_DEATH_ANIM_TIME);
+    }
+  }
+
   public removeEnemy(enemyId: number): void {
     const enemyData = this.enemies.get(enemyId);
     if (enemyData) {
+      this.cancelAttackDamage(enemyData);
       this.previousPositions.delete(enemyData.element);
       enemyData.element.removeEventListener("click", enemyData.clickHandler);
+      enemyData.element.removeEventListener("enemy-damage", enemyData.damageHandler);
       if (enemyData.element.parentNode) {
         enemyData.element.parentNode.removeChild(enemyData.element);
       }

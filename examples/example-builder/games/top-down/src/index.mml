@@ -23,6 +23,6 @@
     https://sketchfab.com/3d-models/arena-standoff-2-96f730c204994ce185a681c2af1d2c40
     License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
   -->
-  <m-model id="arena" src="/assets/models/arena_01.glb" collide="true" nav-mesh="true" clickable="true"></m-model>
+  <m-model id="arena" src="/assets/models/arena_01.glb" collide="true" clickable="true" rigidbody="true" kinematic="true" nav-mesh="true"></m-model>
   <m-model id="arena" src="/assets/models/arena_02.glb" collide="false" nav-mesh="false" clickable="false"></m-model>
 </m-group>

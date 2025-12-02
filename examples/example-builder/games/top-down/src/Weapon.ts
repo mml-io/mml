@@ -7,6 +7,11 @@ interface BulletData {
   direction: { x: number; y: number; z: number };
   startPos: Position;
   bulletId: number;
+  hitInfo?: {
+    enemyId: string;
+    hitDistance: number;
+    hitPosition: Position;
+  };
 }
 
 export class Weapon {
@@ -16,9 +21,40 @@ export class Weapon {
   private lastShotTime: number = 0;
   private updateInterval: number | null = null;
 
+  private shootSFXArray: HTMLElement[] = [];
+  private shootSFXIndex: number = 0;
+
   constructor(sceneGroup: HTMLElement) {
     this.sceneGroup = sceneGroup;
+    this.createShootSFX();
     this.startBulletUpdateLoop();
+  }
+
+  private createShootSFX(): void {
+    for (let i = 0; i < 6; i++) {
+      const audio = document.createElement("m-audio");
+      audio.setAttribute("id", `shoot-sfx-${i}`);
+      audio.setAttribute("src", CONSTANTS.SFX_SHOOT);
+      audio.setAttribute("volume", "0");
+      audio.setAttribute("loop", "false");
+      this.shootSFXArray.push(audio);
+      this.sceneGroup.appendChild(audio);
+    }
+  }
+
+  private playShootSFX(x: number, y: number, z: number): void {
+    const now = document.timeline.currentTime as number;
+    const audio = this.shootSFXArray[this.shootSFXIndex];
+    this.shootSFXIndex = (this.shootSFXIndex + 1) % this.shootSFXArray.length;
+    audio.setAttribute("x", x.toString());
+    audio.setAttribute("y", (50).toString());
+    audio.setAttribute("z", z.toString());
+    audio.setAttribute("start-time", now.toString());
+    audio.setAttribute("end-time", (now + 2000).toString());
+    audio.setAttribute("volume", "8");
+    setTimeout(() => {
+      audio.setAttribute("volume", "0");
+    }, 2000);
   }
 
   private startBulletUpdateLoop(): void {
@@ -63,8 +99,8 @@ export class Weapon {
       z: dz / length,
     };
 
-    this.createBullet(shootFrom, direction);
-    this.checkBulletHit(shootFrom, direction);
+    const hitInfo = this.checkBulletHit(shootFrom, direction);
+    this.createBullet(shootFrom, direction, hitInfo);
   }
 
   public shootForward(playerPos: Position, playerRotation: number, debugSphere: HTMLElement): void {
@@ -83,18 +119,22 @@ export class Weapon {
       z: Math.cos(rotRad),
     };
 
-    this.createBullet(shootFrom, direction);
-    this.checkBulletHit(shootFrom, direction);
+    const hitInfo = this.checkBulletHit(shootFrom, direction);
+    this.createBullet(shootFrom, direction, hitInfo);
   }
 
-  private createBullet(from: Position, direction: { x: number; y: number; z: number }): void {
+  private createBullet(
+    from: Position,
+    direction: { x: number; y: number; z: number },
+    hitInfo?: { enemyId: string; hitDistance: number; hitPosition: Position },
+  ): void {
     const bulletId = ++this.bulletIdCounter;
 
     const bullet = document.createElement("m-cylinder");
     bullet.setAttribute("id", `bullet-${bulletId}`);
-    bullet.setAttribute("radius", "0.05");
-    bullet.setAttribute("height", "0.5");
-    bullet.setAttribute("color", "#ffff00");
+    bullet.setAttribute("radius", "0.04");
+    bullet.setAttribute("height", "0.4");
+    bullet.setAttribute("color", "#ffee55");
     bullet.setAttribute("collide", "false");
     bullet.setAttribute("x", from.x.toString());
     bullet.setAttribute("y", from.y.toString());
@@ -107,12 +147,15 @@ export class Weapon {
 
     this.sceneGroup.appendChild(bullet);
 
+    this.playShootSFX(from.x, from.y, from.z);
+
     this.bullets.set(bulletId, {
       element: bullet,
       startTime: Date.now(),
       direction,
       startPos: { ...from },
       bulletId,
+      hitInfo,
     });
   }
 
@@ -125,6 +168,13 @@ export class Weapon {
       const distance = CONSTANTS.BULLET_SPEED * elapsed;
 
       if (distance > CONSTANTS.BULLET_MAX_DISTANCE || elapsed > CONSTANTS.BULLET_LIFETIME) {
+        bulletsToRemove.push(bulletId);
+        return;
+      }
+
+      // Check if bullet has reached its target
+      if (bulletData.hitInfo && distance >= bulletData.hitInfo.hitDistance) {
+        this.applyDamage(bulletData.hitInfo.enemyId, bulletData.hitInfo.hitPosition);
         bulletsToRemove.push(bulletId);
         return;
       }
@@ -153,39 +203,93 @@ export class Weapon {
     }
   }
 
-  private checkBulletHit(from: Position, direction: { x: number; y: number; z: number }): void {
-    if (!(window as any).physics) {
-      return;
-    }
+  private checkBulletHit(
+    from: Position,
+    direction: { x: number; y: number; z: number },
+  ): { enemyId: string; hitDistance: number; hitPosition: Position } | undefined {
+    // Check all enemies to see if bullet trajectory intersects them
+    const enemies = document.querySelectorAll('[id^="enemy-"]');
+    const hitRadius = 0.5; // Detection radius around zombie
 
-    const result = (window as any).physics.raycast(from, direction, CONSTANTS.BULLET_MAX_DISTANCE);
+    let closestHit: { element: Element; distance: number; hitPos: Position } | null = null;
 
-    if (result.hit) {
-      if (result.element && result.element.id && result.element.id.startsWith("enemy-")) {
-        console.log("[Weapon] Hit enemy:", result.element.id);
+    enemies.forEach((enemyElement) => {
+      const enemyX = parseFloat(enemyElement.getAttribute("x") || "0");
+      const enemyZ = parseFloat(enemyElement.getAttribute("z") || "0");
 
-        const damageEvent = new CustomEvent("enemy-damage", {
-          detail: {
-            damage: CONSTANTS.WEAPON_DAMAGE,
-            hitPosition: result.point,
-          },
-          bubbles: true,
-        });
-        result.element.dispatchEvent(damageEvent);
+      // Calculate closest point on ray to enemy position
+      const toEnemy = { x: enemyX - from.x, z: enemyZ - from.z };
+      const rayLength = direction.x * toEnemy.x + direction.z * toEnemy.z;
 
-        this.createHitEffect(result.point);
+      if (rayLength < 0 || rayLength > CONSTANTS.BULLET_MAX_DISTANCE) {
+        return; // Enemy behind shooter or too far
       }
+
+      const closestX = from.x + direction.x * rayLength;
+      const closestZ = from.z + direction.z * rayLength;
+
+      const distX = enemyX - closestX;
+      const distZ = enemyZ - closestZ;
+      const distanceToRay = Math.sqrt(distX * distX + distZ * distZ);
+
+      if (distanceToRay <= hitRadius) {
+        if (!closestHit || rayLength < closestHit.distance) {
+          closestHit = {
+            element: enemyElement,
+            distance: rayLength,
+            hitPos: { x: closestX, y: from.y, z: closestZ },
+          };
+        }
+      }
+    });
+
+    // Return hit info if we found a target
+    if (closestHit) {
+      console.log("[Weapon] Bullet will hit enemy:", closestHit.element.id);
+      return {
+        enemyId: closestHit.element.id,
+        hitDistance: closestHit.distance,
+        hitPosition: closestHit.hitPos,
+      };
     }
+
+    return undefined;
+  }
+
+  private applyDamage(enemyId: string, hitPosition: Position): void {
+    const enemyElement = document.getElementById(enemyId);
+    if (!enemyElement) {
+      return; // Enemy might have been removed already
+    }
+
+    console.log("[Weapon] Applying damage to enemy:", enemyId);
+
+    const damageEvent = new CustomEvent("enemy-damage", {
+      detail: {
+        damage: CONSTANTS.WEAPON_DAMAGE,
+        hitPosition,
+      },
+      bubbles: true,
+    });
+    enemyElement.dispatchEvent(damageEvent);
+
+    this.createHitEffect(hitPosition);
   }
 
   private createHitEffect(position: Position): void {
-    const hitEffect = document.createElement("m-sphere");
-    hitEffect.setAttribute("radius", "0.2");
-    hitEffect.setAttribute("color", "#ff0000");
+    const now = document.timeline.currentTime as number;
+    const hitEffect = document.createElement("m-video");
+    hitEffect.setAttribute("cast-shadows", "false");
     hitEffect.setAttribute("x", position.x.toString());
     hitEffect.setAttribute("y", position.y.toString());
     hitEffect.setAttribute("z", position.z.toString());
+    hitEffect.setAttribute("width", "4");
+    hitEffect.setAttribute("height", "3");
+    hitEffect.setAttribute("loop", "false");
+    hitEffect.setAttribute("transparent", "true");
     hitEffect.setAttribute("collide", "false");
+    hitEffect.setAttribute("src", CONSTANTS.BLOOD_SPRITE);
+    hitEffect.setAttribute("start-time", now.toString());
 
     this.sceneGroup.appendChild(hitEffect);
 
@@ -193,7 +297,7 @@ export class Weapon {
       if (hitEffect.parentNode) {
         hitEffect.parentNode.removeChild(hitEffect);
       }
-    }, 200);
+    }, 1000);
   }
 
   public dispose(): void {
