@@ -1,0 +1,16 @@
+{
+  "scripts": [
+    {
+      "src": "mml-game-math-system"
+    },
+    {
+      "src": "mml-game-physics-system",
+      "configName": "physics",
+      "config": {
+        "gravity": 9.81,
+        "debug": false
+      }
+    }
+  ]
+}
+

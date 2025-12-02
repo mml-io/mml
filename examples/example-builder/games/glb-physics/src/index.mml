@@ -1,0 +1,58 @@
+<m-group id="scene-group">
+  <m-sun
+    id="sun"
+    priority="1"
+    intensity="1.3"
+    color="#fffafa"
+    azimuthal-angle="180"
+    polar-angle="46"
+    resolution="8192"
+    frustum="150"
+    turbidity="1.2"
+    rayleigh="0.7"
+  >
+    <m-attr-lerp attr="intensity,azimuthal-angle,polar-angle" duration="1000"></m-attr-lerp>
+  </m-sun>
+
+  <m-environment-light id="ambient-light" priority="1" intensity="0.1" color="#ffffff">
+    <m-attr-lerp attr="intensity" duration="50"></m-attr-lerp>
+  </m-environment-light>
+
+  <!-- Ground plane -->
+  <m-cube 
+    width="20" 
+    height="0.1" 
+    depth="20" 
+    y="-0.5" 
+    color="#8B7355"
+    rigidbody="true"
+    kinematic="true"
+    collide="true">
+  </m-cube>
+
+  <!-- Funnel model - clickable to spawn ducks -->
+  <m-model 
+    id="funnel" 
+    src="/assets/models/funnel.glb" 
+    x="0"
+    y="0"
+    z="0"
+    sx="0.1"
+    sy="0.1"
+    sz="0.1"
+    clickable="true"
+    rigidbody="true"
+    kinematic="true"
+    collide="true">
+  </m-model>
+
+  <!-- Label instructions -->
+  <m-label 
+    content="Click the funnel to spawn a duck!" 
+    y="5" 
+    x="0"
+    z="0"
+    width="8">
+  </m-label>
+</m-group>
+
