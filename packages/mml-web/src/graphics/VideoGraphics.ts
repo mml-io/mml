@@ -29,6 +29,8 @@ export abstract class VideoGraphics<G extends GraphicsAdapter = GraphicsAdapter>
 
   abstract setEmissive(emissive: number, mVideoProps: MVideoProps): void;
 
+  abstract setTransparent(transparent: boolean, mVideoProps: MVideoProps): void;
+
   abstract setStartTime(startTime: number, mVideoProps: MVideoProps): void;
 
   abstract setPauseTime(pauseTime: number | null, mVideoProps: MVideoProps): void;

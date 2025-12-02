@@ -19,6 +19,7 @@ const defaultVideoPauseTime = null;
 const defaultVideoSrc = null;
 const defaultVideoCastShadows = true;
 const defaultVideoEmissive = 0;
+const defaultVideoTransparent = false;
 
 export type MVideoProps = {
   width: number | null;
@@ -31,6 +32,7 @@ export type MVideoProps = {
   volume: number;
   castShadows: boolean;
   emissive: number;
+  transparent: boolean;
 };
 
 export class Video<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
@@ -88,6 +90,7 @@ export class Video<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     height: defaultVideoHeight,
     castShadows: defaultVideoCastShadows,
     emissive: defaultVideoEmissive,
+    transparent: defaultVideoTransparent,
   };
 
   private static attributeHandler = new AttributeHandler<Video<GraphicsAdapter>>({
@@ -136,6 +139,10 @@ export class Video<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
         "emissive",
         parseFloatAttribute(newValue, defaultVideoEmissive),
       );
+    },
+    transparent: (instance, newValue) => {
+      instance.props.transparent = parseBoolAttribute(newValue, defaultVideoTransparent);
+      instance.videoGraphics?.setTransparent(instance.props.transparent, instance.props);
     },
   });
   private videoGraphics: VideoGraphics<G> | null;

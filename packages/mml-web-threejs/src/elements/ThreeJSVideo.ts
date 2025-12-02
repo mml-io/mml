@@ -15,6 +15,8 @@ const audioRolloffFactor = 1;
 
 const disabledVideoMaterial = new THREE.MeshStandardMaterial({
   color: 0x000000,
+  transparent: true,
+  opacity: 0,
   side: THREE.DoubleSide,
 });
 
@@ -43,7 +45,7 @@ export class ThreeJSVideo extends VideoGraphics<ThreeJSGraphicsAdapter> {
     // Video material is only applied once a video is played
     this.videoMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      transparent: false,
+      transparent: this.video.props.transparent,
       side: THREE.DoubleSide,
     });
     this.mesh = new THREE.Mesh(geometry, disabledVideoMaterial);
@@ -114,7 +116,7 @@ export class ThreeJSVideo extends VideoGraphics<ThreeJSGraphicsAdapter> {
   }
 
   public setCastShadows(): void {
-    this.updateVideo();
+    this.mesh.castShadow = this.video.props.castShadows;
   }
 
   public setLoop(): void {
@@ -130,6 +132,11 @@ export class ThreeJSVideo extends VideoGraphics<ThreeJSGraphicsAdapter> {
   public setEmissive(): void {
     this.updateVideo();
     this.updateMaterialEmissiveIntensity();
+  }
+
+  public setTransparent(): void {
+    this.videoMaterial.transparent = this.video.props.transparent;
+    this.videoMaterial.needsUpdate = true;
   }
 
   public setStartTime(): void {
@@ -203,6 +210,7 @@ export class ThreeJSVideo extends VideoGraphics<ThreeJSGraphicsAdapter> {
           this.videoMaterial.map = videoTexture;
           this.videoMaterial.needsUpdate = true;
           this.mesh.material = this.videoMaterial;
+          this.mesh.castShadow = this.video.props.castShadows;
           this.loadedVideoState.videoTexture = videoTexture;
 
           this.syncVideoTime();
