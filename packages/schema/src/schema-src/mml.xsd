@@ -1101,6 +1101,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="transparent" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                Whether the video should support transparency (true) or not (false). Default value is false.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="loop" type="xs:boolean">
             <xs:annotation>
               <xs:documentation>
