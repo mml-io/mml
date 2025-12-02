@@ -1,3 +1,4 @@
+import { ModelLoader } from "@mml-io/model-loader";
 import {
   computeWorldTransformFor as mathComputeWorldTransformFor,
   quaternionToEulerXYZ,
@@ -12,6 +13,7 @@ import {
   NavMeshQuery,
 } from "recast-navigation";
 import { generateTileCache } from "recast-navigation/generators";
+import * as THREE from "three";
 
 type DebugDrawMode =
   | "navmesh"
@@ -74,6 +76,7 @@ class NavigationSystem implements ElementSystem {
   private agentDebugLastLog = new Map<number, number>();
   private agentWaypointIndex = new Map<number, number>();
   private agentWaitUntil = new Map<number, number | null>();
+  private modelLoader = new ModelLoader();
   private config: Required<NavigationConfig> = {
     tileSize: 32,
     cellSize: 0.1,
@@ -127,6 +130,414 @@ class NavigationSystem implements ElementSystem {
     });
   }
 
+  /**
+   * Resolve relative asset URLs to absolute URLs for model loading
+   */
+  private resolveAssetURL(url: string): string {
+    // If the URL is already absolute (starts with http:// or https://), return as-is
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      console.log(
+        `[Navigation] Using absolute URL: ${url} ----------------------------------------------------`,
+      );
+      return url;
+    }
+
+    // If the URL is relative (starts with /), resolve it to an absolute URL
+    if (url.startsWith("/")) {
+      // Check if we have a params.__ASSET_SERVER_URL__ configured
+      if (
+        typeof window !== "undefined" &&
+        (window as any).params &&
+        (window as any).params.__ASSET_SERVER_URL__
+      ) {
+        const baseUrl = (window as any).params.__ASSET_SERVER_URL__;
+        console.log(`[Navigation] Using configured asset server URL from params: ${baseUrl}`);
+        return baseUrl + url;
+      }
+
+      // Try to use window.location.origin if available and it's HTTP
+      if (typeof window !== "undefined" && window.location && window.location.origin) {
+        const origin = window.location.origin;
+        console.log(`[Navigation] window.location.origin = ${origin}`);
+        // Only use it if it's an actual HTTP origin
+        if (origin.startsWith("http://") || origin.startsWith("https://")) {
+          console.log(`[Navigation] Using window.location.origin: ${origin}`);
+          return origin + url;
+        }
+      }
+
+      // Fallback: try to construct from window.location parts
+      if (typeof window !== "undefined" && window.location) {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        console.log(
+          `[Navigation] window.location: protocol=${protocol}, hostname=${hostname}, port=${port}`,
+        );
+
+        // Only construct if we have HTTP protocol
+        if (protocol && (protocol === "http:" || protocol === "https:")) {
+          const portPart = port ? `:${port}` : "";
+          const resolved = `${protocol}//${hostname}${portPart}${url}`;
+          console.log(`[Navigation] Constructed URL: ${resolved}`);
+          return resolved;
+        }
+      }
+
+      // Last resort fallback: assume localhost:3000
+      const fallbackUrl = `http://localhost:3000${url}`;
+      console.warn(
+        `[Navigation] Could not resolve origin for relative URL: ${url}, using fallback: ${fallbackUrl}`,
+      );
+      return fallbackUrl;
+    }
+
+    // Return as-is for other types of URLs
+    return url;
+  }
+
+  /**
+   * Parse GLB file and extract geometry directly without loading textures.
+   */
+  private parseGLBGeometry(
+    buffer: ArrayBuffer,
+  ): { vertices: Float32Array; indices: Uint32Array } | null {
+    const dataView = new DataView(buffer);
+
+    // Read GLB header
+    const magic = dataView.getUint32(0, true);
+    if (magic !== 0x46546c67) {
+      // 'glTF' in little-endian
+      console.error("[Navigation] Not a valid GLB file");
+      return null;
+    }
+
+    const version = dataView.getUint32(4, true);
+    if (version !== 2) {
+      console.error("[Navigation] Unsupported GLB version:", version);
+      return null;
+    }
+
+    // Read chunks
+    let offset = 12;
+    let jsonChunk: any = null;
+    let binChunk: ArrayBuffer | null = null;
+
+    while (offset < buffer.byteLength) {
+      const chunkLength = dataView.getUint32(offset, true);
+      const chunkType = dataView.getUint32(offset + 4, true);
+
+      if (chunkType === 0x4e4f534a) {
+        // 'JSON'
+        const jsonBytes = new Uint8Array(buffer, offset + 8, chunkLength);
+        const jsonString = new TextDecoder().decode(jsonBytes);
+        jsonChunk = JSON.parse(jsonString);
+      } else if (chunkType === 0x004e4942) {
+        // 'BIN\0'
+        binChunk = buffer.slice(offset + 8, offset + 8 + chunkLength);
+      }
+
+      offset += 8 + chunkLength;
+    }
+
+    if (!jsonChunk || !binChunk) {
+      console.error("[Navigation] Missing JSON or BIN chunk in GLB");
+      return null;
+    }
+
+    const allVertices: number[] = [];
+    const allIndices: number[] = [];
+    let vertexOffset = 0;
+
+    // Process all meshes
+    const meshes = jsonChunk.meshes || [];
+    const accessors = jsonChunk.accessors || [];
+    const bufferViews = jsonChunk.bufferViews || [];
+    const nodes = jsonChunk.nodes || [];
+
+    // Build node transform matrices with proper scene graph traversal
+    const scene = jsonChunk.scene || 0;
+    const scenes = jsonChunk.scenes || [];
+    const sceneNodes = scenes[scene]?.nodes || [];
+
+    // Helper to multiply 4x4 matrices (column-major as in GLTF)
+    const multiplyMatrices = (a: number[], b: number[]): number[] => {
+      const result = new Array(16);
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          result[i * 4 + j] =
+            a[i * 4 + 0] * b[0 * 4 + j] +
+            a[i * 4 + 1] * b[1 * 4 + j] +
+            a[i * 4 + 2] * b[2 * 4 + j] +
+            a[i * 4 + 3] * b[3 * 4 + j];
+        }
+      }
+      return result;
+    };
+
+    // Convert quaternion to rotation matrix
+    const quatToMatrix = (q: number[]): number[] => {
+      const [x, y, z, w] = q;
+      return [
+        1 - 2 * (y * y + z * z),
+        2 * (x * y - z * w),
+        2 * (x * z + y * w),
+        0,
+        2 * (x * y + z * w),
+        1 - 2 * (x * x + z * z),
+        2 * (y * z - x * w),
+        0,
+        2 * (x * z - y * w),
+        2 * (y * z + x * w),
+        1 - 2 * (x * x + y * y),
+        0,
+        0,
+        0,
+        0,
+        1,
+      ];
+    };
+
+    // Build node transform matrix
+    const getNodeMatrix = (
+      nodeIndex: number,
+      parentMatrix: number[] = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    ): number[] => {
+      const node = nodes[nodeIndex];
+      if (!node) return parentMatrix;
+
+      let localMatrix: number[];
+
+      if (node.matrix) {
+        localMatrix = node.matrix;
+      } else {
+        // Build from TRS
+        const t = node.translation || [0, 0, 0];
+        const r = node.rotation || [0, 0, 0, 1];
+        const s = node.scale || [1, 1, 1];
+
+        // Build TRS matrix: T * R * S
+        const rotMatrix = quatToMatrix(r);
+        const scaleMatrix = [s[0], 0, 0, 0, 0, s[1], 0, 0, 0, 0, s[2], 0, 0, 0, 0, 1];
+        const transMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, t[0], t[1], t[2], 1];
+
+        // Multiply: transMatrix * rotMatrix * scaleMatrix
+        const rotScale = multiplyMatrices(rotMatrix, scaleMatrix);
+        localMatrix = multiplyMatrices(transMatrix, rotScale);
+      }
+
+      // Multiply with parent matrix
+      return multiplyMatrices(parentMatrix, localMatrix);
+    };
+
+    // Traverse scene graph recursively
+    const traverseNode = (
+      nodeIndex: number,
+      parentMatrix: number[] = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    ) => {
+      const node = nodes[nodeIndex];
+      if (!node) return;
+
+      const worldMatrix = getNodeMatrix(nodeIndex, parentMatrix);
+
+      // Process mesh if present
+      if (node.mesh !== undefined) {
+        const mesh = meshes[node.mesh];
+        if (mesh && mesh.primitives) {
+          for (const primitive of mesh.primitives) {
+            // Get position accessor
+            const posAccessorIdx = primitive.attributes?.POSITION;
+            if (posAccessorIdx === undefined) continue;
+
+            const posAccessor = accessors[posAccessorIdx];
+            const posBufferView = bufferViews[posAccessor.bufferView];
+
+            const posOffset = (posBufferView.byteOffset || 0) + (posAccessor.byteOffset || 0);
+            const byteStride =
+              posBufferView.byteStride || (posAccessor.componentType === 5126 ? 12 : 0);
+            const stride = byteStride > 0 ? byteStride / 4 : 3;
+
+            const posData = new Float32Array(binChunk, posOffset, posAccessor.count * stride);
+
+            // Transform and add vertices
+            for (let i = 0; i < posAccessor.count; i++) {
+              const baseIdx = i * stride;
+              const x = posData[baseIdx];
+              const y = posData[baseIdx + 1];
+              const z = posData[baseIdx + 2];
+
+              // Apply world matrix (column-major)
+              const tx =
+                x * worldMatrix[0] + y * worldMatrix[4] + z * worldMatrix[8] + worldMatrix[12];
+              const ty =
+                x * worldMatrix[1] + y * worldMatrix[5] + z * worldMatrix[9] + worldMatrix[13];
+              const tz =
+                x * worldMatrix[2] + y * worldMatrix[6] + z * worldMatrix[10] + worldMatrix[14];
+
+              allVertices.push(tx, ty, tz);
+            }
+
+            // Get indices
+            if (primitive.indices !== undefined) {
+              const idxAccessor = accessors[primitive.indices];
+              const idxBufferView = bufferViews[idxAccessor.bufferView];
+              const idxOffset = (idxBufferView.byteOffset || 0) + (idxAccessor.byteOffset || 0);
+
+              let idxData: Uint16Array | Uint32Array;
+              if (idxAccessor.componentType === 5123) {
+                // UNSIGNED_SHORT
+                idxData = new Uint16Array(binChunk, idxOffset, idxAccessor.count);
+              } else if (idxAccessor.componentType === 5125) {
+                // UNSIGNED_INT
+                idxData = new Uint32Array(binChunk, idxOffset, idxAccessor.count);
+              } else {
+                console.warn(
+                  `[Navigation] Unsupported index component type: ${idxAccessor.componentType}`,
+                );
+                continue;
+              }
+
+              for (let i = 0; i < idxData.length; i++) {
+                allIndices.push(idxData[i] + vertexOffset);
+              }
+            } else {
+              // Generate indices for non-indexed geometry
+              for (let i = 0; i < posAccessor.count; i++) {
+                allIndices.push(i + vertexOffset);
+              }
+            }
+
+            vertexOffset += posAccessor.count;
+          }
+        }
+      }
+
+      // Traverse children
+      if (node.children) {
+        for (const childIdx of node.children) {
+          traverseNode(childIdx, worldMatrix);
+        }
+      }
+    };
+
+    // Start traversal from scene root nodes
+    for (const rootNodeIdx of sceneNodes) {
+      traverseNode(rootNodeIdx);
+    }
+
+    if (allVertices.length === 0 || allIndices.length === 0) {
+      console.warn("[Navigation] No geometry found in GLB");
+      return null;
+    }
+
+    console.log(
+      `[Navigation] Parsed GLB: ${allVertices.length / 3} vertices, ${allIndices.length / 3} triangles`,
+    );
+
+    return {
+      vertices: new Float32Array(allVertices),
+      indices: new Uint32Array(allIndices),
+    };
+  }
+
+  /**
+   * Extract geometry from a GLB model for navmesh generation
+   */
+  private async extractGeometryFromModel(src: string): Promise<{
+    vertices: Float32Array;
+    indices: Uint32Array;
+  } | null> {
+    try {
+      // Resolve relative URLs to absolute URLs
+      const resolvedSrc = this.resolveAssetURL(src);
+      console.log(`[Navigation] Loading model for navmesh: ${src} (resolved to: ${resolvedSrc})`);
+
+      // In Node.js/JSDOM environment, use custom GLB parser
+      if (typeof window !== "undefined" && window.fetch) {
+        try {
+          const response = await window.fetch(resolvedSrc);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const fetchedBuffer = await response.arrayBuffer();
+
+          // Create realm-local ArrayBuffer
+          const sourceView = new Uint8Array(fetchedBuffer);
+          const realmArrayBuffer = new ArrayBuffer(sourceView.byteLength);
+          const destView = new Uint8Array(realmArrayBuffer);
+          destView.set(sourceView);
+
+          console.log(
+            `[Navigation] Parsing GLB geometry from ${realmArrayBuffer.byteLength} bytes...`,
+          );
+
+          // Use custom GLB parser
+          const geometry = this.parseGLBGeometry(realmArrayBuffer);
+          if (geometry) {
+            return geometry;
+          }
+
+          console.warn(`[Navigation] Custom GLB parser failed, model may not have geometry`);
+          return null;
+        } catch (fetchError) {
+          console.error(`[Navigation] Failed to fetch/parse GLB:`, fetchError);
+          return null;
+        }
+      }
+
+      // Fallback for browser environment - use ModelLoader
+      const modelResult = await this.modelLoader.load(resolvedSrc);
+
+      if (!modelResult || !modelResult.group) {
+        console.error(`[Navigation] Model result is invalid`);
+        return null;
+      }
+
+      const { group } = modelResult;
+      const allVertices: number[] = [];
+      const allIndices: number[] = [];
+      let vertexOffset = 0;
+
+      group.traverse((child: THREE.Object3D) => {
+        const isMesh = child.type === "Mesh" || (child as any).isMesh === true;
+        if (isMesh && (child as THREE.Mesh).geometry) {
+          const geometry = (child as THREE.Mesh).geometry;
+          if (!geometry.attributes.position) return;
+
+          const positions = geometry.attributes.position.array;
+          child.updateMatrixWorld(true);
+          const matrix = child.matrixWorld;
+
+          for (let i = 0; i < positions.length; i += 3) {
+            const vertex = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
+            vertex.applyMatrix4(matrix);
+            allVertices.push(vertex.x, vertex.y, vertex.z);
+          }
+
+          const indices = geometry.index
+            ? Array.from(geometry.index.array)
+            : Array.from({ length: positions.length / 3 }, (_, i) => i);
+
+          for (const index of indices) {
+            allIndices.push(index + vertexOffset);
+          }
+          vertexOffset += positions.length / 3;
+        }
+      });
+
+      if (allVertices.length === 0) return null;
+
+      return {
+        vertices: new Float32Array(allVertices),
+        indices: new Uint32Array(allIndices),
+      };
+    } catch (error) {
+      console.error(`[Navigation] Failed to load model for navmesh: ${src}`, error);
+      return null;
+    }
+  }
+
   private deriveAgentDimensionsFromElement(element: Element): { radius: number; height: number } {
     const world = this.computeWorldTransformFor(element);
 
@@ -143,11 +554,11 @@ class NavigationSystem implements ElementSystem {
     await recastInit();
     this.config = { ...this.config, ...config };
     // Build initial navmesh from current scene
-    this.rebuildNavMeshFromScene();
+    await this.rebuildNavMeshFromScene();
     console.log("[navigation] init:done");
   }
 
-  private collectStaticGeometry(): { positions: number[]; indices: number[] } {
+  private async collectStaticGeometry(): Promise<{ positions: number[]; indices: number[] }> {
     // Use mml-web colliders as geometry source similar to physics approach
     // Fallback: approximate primitives into simple meshes
     const positions: number[] = [];
@@ -156,17 +567,83 @@ class NavigationSystem implements ElementSystem {
     const elements = document.querySelectorAll("m-cube, m-cylinder, m-sphere, m-plane, m-model");
     let vertexOffset = 0;
 
-    elements.forEach((element) => {
+    for (const element of Array.from(elements)) {
       // Skip agents and explicitly dynamic nav obstacles; they are handled via TileCache
       if (element.hasAttribute("nav-agent") || element.hasAttribute("nav-obstacle")) {
-        return;
+        continue;
+      }
+
+      // Check if element should be included in navmesh
+      const hasNavMesh = element.hasAttribute("nav-mesh");
+      const navMeshValue = element.getAttribute("nav-mesh");
+      const isNavMeshEnabled = hasNavMesh && navMeshValue !== "false";
+
+      // Skip elements that explicitly have nav-mesh="false"
+      if (hasNavMesh && navMeshValue === "false") {
+        continue;
       }
 
       // Only include static/kinematic colliders as navigation obstacles
       const isDynamic = element.hasAttribute("rigidbody") && !element.hasAttribute("kinematic");
-      if (isDynamic) return;
+      if (isDynamic) continue;
 
       const tag = element.tagName.toLowerCase();
+
+      // Handle m-model elements with GLB files
+      if (tag === "m-model") {
+        // Only process m-model elements that have nav-mesh="true"
+        if (!isNavMeshEnabled) {
+          continue;
+        }
+
+        const src = element.getAttribute("src");
+        if (!src) {
+          console.warn("[Navigation] m-model element has no src attribute, skipping");
+          continue;
+        }
+
+        console.log(`[Navigation] Processing m-model for navmesh: ${src}`);
+        const geometry = await this.extractGeometryFromModel(src);
+        if (geometry) {
+          const world = this.computeWorldTransformFor(element);
+
+          // Scale vertices by world transform
+          for (let i = 0; i < geometry.vertices.length; i += 3) {
+            const x = geometry.vertices[i];
+            const y = geometry.vertices[i + 1];
+            const z = geometry.vertices[i + 2];
+
+            // Apply world scale
+            const scaled = new Vec3(
+              x * Math.abs(world.scale.x),
+              y * Math.abs(world.scale.y),
+              z * Math.abs(world.scale.z),
+            );
+
+            // Apply world rotation
+            const rotated = world.rotation.rotateVector(scaled);
+
+            // Apply world translation
+            const final = rotated.add(world.position);
+
+            positions.push(final.x, final.y, final.z);
+          }
+
+          // Add indices with offset
+          for (let i = 0; i < geometry.indices.length; i++) {
+            indices.push(geometry.indices[i] + vertexOffset);
+          }
+
+          vertexOffset += geometry.vertices.length / 3;
+          console.log(
+            `[Navigation] Added m-model geometry: ${geometry.vertices.length / 3} vertices, ${geometry.indices.length / 3} triangles`,
+          );
+        } else {
+          console.warn(`[Navigation] Failed to extract geometry from m-model: ${src}`);
+        }
+        continue;
+      }
+
       const world = this.computeWorldTransformFor(element);
 
       if (tag === "m-cube" || tag === "m-plane") {
@@ -237,12 +714,12 @@ class NavigationSystem implements ElementSystem {
         indices.push(...inds);
         vertexOffset += 8;
       }
-    });
+    }
 
     return { positions, indices };
   }
 
-  private rebuildNavMeshFromScene() {
+  private async rebuildNavMeshFromScene() {
     console.log("[navigation] rebuild:begin");
     this.agentWaypoints.clear();
     this.agentCurrentTarget.clear();
@@ -253,7 +730,7 @@ class NavigationSystem implements ElementSystem {
     // Snapshot current agents to re-add after rebuild
     const currentAgents = Array.from(this.elementToAgent.values()).map((a) => a.element);
 
-    const { positions, indices } = this.collectStaticGeometry();
+    const { positions, indices } = await this.collectStaticGeometry();
     console.log("[navigation] geometry", {
       vertexCount: positions.length / 3,
       triangleCount: indices.length / 3,
@@ -296,7 +773,7 @@ class NavigationSystem implements ElementSystem {
     this.tileCache.update(navMesh);
 
     // Rebuild debug buffers for visualization
-    this.buildDebugBuffers();
+    await this.buildDebugBuffers();
 
     // Re-add agents to new crowd at current positions
     this.elementToAgent.clear();
@@ -427,7 +904,10 @@ class NavigationSystem implements ElementSystem {
           typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
         if (nowMs - this.lastDebugRebuildMs > 300) {
           this.lastDebugRebuildMs = nowMs;
-          this.buildDebugBuffers();
+          // Fire and forget - don't await to avoid blocking the step loop
+          this.buildDebugBuffers().catch((err) =>
+            console.error("[Navigation] Failed to build debug buffers:", err),
+          );
         }
       }
     }
@@ -1024,16 +1504,19 @@ class NavigationSystem implements ElementSystem {
     return res?.obstacle ?? null;
   }
 
-  rebuild() {
-    this.rebuildNavMeshFromScene();
+  async rebuild() {
+    await this.rebuildNavMeshFromScene();
   }
 
   setDebugDrawMode(mode: DebugDrawMode) {
     this.config.debugDrawMode = mode;
-    this.buildDebugBuffers();
+    // Fire and forget - don't block
+    this.buildDebugBuffers().catch((err) =>
+      console.error("[Navigation] Failed to build debug buffers:", err),
+    );
   }
 
-  private buildDebugBuffers() {
+  private async buildDebugBuffers() {
     if (!this.navMesh) {
       this.debugVertices = null;
       this.debugColors = null;
@@ -1171,7 +1654,8 @@ class NavigationSystem implements ElementSystem {
         break;
       }
       case "staticGeometry": {
-        const { positions: geomPositions, indices: geomIndices } = this.collectStaticGeometry();
+        const { positions: geomPositions, indices: geomIndices } =
+          await this.collectStaticGeometry();
         const staticLines: {
           type: "lines";
           vertices: [number, number, number, number, number, number, number][];

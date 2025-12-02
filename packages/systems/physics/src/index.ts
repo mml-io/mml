@@ -1,4 +1,5 @@
 import RAPIER from "@dimforge/rapier3d-compat";
+import { ModelLoader } from "@mml-io/model-loader";
 import {
   clampFinite,
   computeWorldTransformFor as mathComputeWorldTransformFor,
@@ -7,6 +8,7 @@ import {
   Vec3,
 } from "mml-game-math-system";
 import { ElementSystem, initElementSystem } from "mml-game-systems-common";
+import * as THREE from "three";
 
 export type PhysicsConfig = {
   gravity?: number;
@@ -58,6 +60,8 @@ class PhysicsSystem implements ElementSystem {
   private debugUpdateCallback:
     | ((buffers: { vertices: Float32Array; colors: Float32Array }) => void)
     | null = null;
+  private modelLoader = new ModelLoader();
+  private debugMeshElements = new Map<Element, HTMLElement>();
 
   private computeWorldTransformFor(element: Element | null) {
     return mathComputeWorldTransformFor(element, {
@@ -66,6 +70,518 @@ class PhysicsSystem implements ElementSystem {
         return state?.rigidbody || null;
       },
     });
+  }
+
+  /**
+   * Extracts geometry from a GLB model and creates a trimesh collider
+   * @private
+   */
+  private resolveAssetURL(url: string): string {
+    // If the URL is already absolute (starts with http:// or https://), return as-is
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      console.log(
+        `[Physics] Using absolute URL: ${url} ----------------------------------------------------`,
+      );
+      return url;
+    }
+
+    // If the URL is relative (starts with /), resolve it to an absolute URL
+    if (url.startsWith("/")) {
+      // Check if we have a params.__ASSET_SERVER_URL__ configured (injected by GameMMLDocumentManager)
+      if (
+        typeof window !== "undefined" &&
+        (window as any).params &&
+        (window as any).params.__ASSET_SERVER_URL__
+      ) {
+        const baseUrl = (window as any).params.__ASSET_SERVER_URL__;
+        console.log(`[Physics] Using configured asset server URL from params: ${baseUrl}`);
+        return baseUrl + url;
+      }
+
+      // Try to use window.location.origin if available and it's HTTP
+      if (typeof window !== "undefined" && window.location && window.location.origin) {
+        const origin = window.location.origin;
+        console.log(`[Physics] window.location.origin = ${origin}`);
+        // Only use it if it's an actual HTTP origin
+        if (origin.startsWith("http://") || origin.startsWith("https://")) {
+          console.log(`[Physics] Using window.location.origin: ${origin}`);
+          return origin + url;
+        }
+      }
+
+      // Fallback: try to construct from window.location parts
+      if (typeof window !== "undefined" && window.location) {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        console.log(
+          `[Physics] window.location: protocol=${protocol}, hostname=${hostname}, port=${port}`,
+        );
+
+        // Only construct if we have HTTP protocol
+        if (protocol && (protocol === "http:" || protocol === "https:")) {
+          const portPart = port ? `:${port}` : "";
+          const resolved = `${protocol}//${hostname}${portPart}${url}`;
+          console.log(`[Physics] Constructed URL: ${resolved}`);
+          return resolved;
+        }
+      }
+
+      // Last resort fallback: assume localhost:3000
+      const fallbackUrl = `http://localhost:3000${url}`;
+      console.warn(
+        `[Physics] Could not resolve origin for relative URL: ${url}, using fallback: ${fallbackUrl}`,
+      );
+      return fallbackUrl;
+    }
+
+    // Return as-is for other types of URLs
+    return url;
+  }
+
+  /**
+   * Parse GLB file and extract geometry directly without loading textures.
+   * This is necessary because GLTFLoader hangs in JSDOM when textures fail to load.
+   */
+  private parseGLBGeometry(
+    buffer: ArrayBuffer,
+  ): { vertices: Float32Array; indices: Uint32Array } | null {
+    const dataView = new DataView(buffer);
+
+    // Read GLB header
+    const magic = dataView.getUint32(0, true);
+    if (magic !== 0x46546c67) {
+      // 'glTF' in little-endian
+      console.error("[Physics] Not a valid GLB file");
+      return null;
+    }
+
+    const version = dataView.getUint32(4, true);
+    if (version !== 2) {
+      console.error("[Physics] Unsupported GLB version:", version);
+      return null;
+    }
+
+    // Read chunks
+    let offset = 12;
+    let jsonChunk: any = null;
+    let binChunk: ArrayBuffer | null = null;
+
+    while (offset < buffer.byteLength) {
+      const chunkLength = dataView.getUint32(offset, true);
+      const chunkType = dataView.getUint32(offset + 4, true);
+
+      if (chunkType === 0x4e4f534a) {
+        // 'JSON'
+        const jsonBytes = new Uint8Array(buffer, offset + 8, chunkLength);
+        const jsonString = new TextDecoder().decode(jsonBytes);
+        jsonChunk = JSON.parse(jsonString);
+      } else if (chunkType === 0x004e4942) {
+        // 'BIN\0'
+        binChunk = buffer.slice(offset + 8, offset + 8 + chunkLength);
+      }
+
+      offset += 8 + chunkLength;
+    }
+
+    if (!jsonChunk || !binChunk) {
+      console.error("[Physics] Missing JSON or BIN chunk in GLB");
+      return null;
+    }
+
+    const allVertices: number[] = [];
+    const allIndices: number[] = [];
+    let vertexOffset = 0;
+
+    // Process all meshes
+    const meshes = jsonChunk.meshes || [];
+    const accessors = jsonChunk.accessors || [];
+    const bufferViews = jsonChunk.bufferViews || [];
+    const nodes = jsonChunk.nodes || [];
+
+    // Build node transform matrices with proper scene graph traversal
+    const scene = jsonChunk.scene || 0;
+    const scenes = jsonChunk.scenes || [];
+    const sceneNodes = scenes[scene]?.nodes || [];
+
+    // Helper to multiply 4x4 matrices (column-major as in GLTF)
+    const multiplyMatrices = (a: number[], b: number[]): number[] => {
+      const result = new Array(16);
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          result[i * 4 + j] =
+            a[i * 4 + 0] * b[0 * 4 + j] +
+            a[i * 4 + 1] * b[1 * 4 + j] +
+            a[i * 4 + 2] * b[2 * 4 + j] +
+            a[i * 4 + 3] * b[3 * 4 + j];
+        }
+      }
+      return result;
+    };
+
+    // Convert quaternion to rotation matrix
+    const quatToMatrix = (q: number[]): number[] => {
+      const [x, y, z, w] = q;
+      return [
+        1 - 2 * (y * y + z * z),
+        2 * (x * y - z * w),
+        2 * (x * z + y * w),
+        0,
+        2 * (x * y + z * w),
+        1 - 2 * (x * x + z * z),
+        2 * (y * z - x * w),
+        0,
+        2 * (x * z - y * w),
+        2 * (y * z + x * w),
+        1 - 2 * (x * x + y * y),
+        0,
+        0,
+        0,
+        0,
+        1,
+      ];
+    };
+
+    // Build node transform matrix
+    const getNodeMatrix = (
+      nodeIndex: number,
+      parentMatrix: number[] = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    ): number[] => {
+      const node = nodes[nodeIndex];
+      if (!node) return parentMatrix;
+
+      let localMatrix: number[];
+
+      if (node.matrix) {
+        localMatrix = node.matrix;
+      } else {
+        // Build from TRS
+        const t = node.translation || [0, 0, 0];
+        const r = node.rotation || [0, 0, 0, 1];
+        const s = node.scale || [1, 1, 1];
+
+        // Build TRS matrix: T * R * S
+        const rotMatrix = quatToMatrix(r);
+        const scaleMatrix = [s[0], 0, 0, 0, 0, s[1], 0, 0, 0, 0, s[2], 0, 0, 0, 0, 1];
+        const transMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, t[0], t[1], t[2], 1];
+
+        // Multiply: transMatrix * rotMatrix * scaleMatrix
+        const rotScale = multiplyMatrices(rotMatrix, scaleMatrix);
+        localMatrix = multiplyMatrices(transMatrix, rotScale);
+      }
+
+      // Multiply with parent matrix
+      return multiplyMatrices(parentMatrix, localMatrix);
+    };
+
+    // Traverse scene graph recursively
+    const traverseNode = (
+      nodeIndex: number,
+      parentMatrix: number[] = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    ) => {
+      const node = nodes[nodeIndex];
+      if (!node) return;
+
+      const worldMatrix = getNodeMatrix(nodeIndex, parentMatrix);
+
+      // Process mesh if present
+      if (node.mesh !== undefined) {
+        const mesh = meshes[node.mesh];
+        if (mesh && mesh.primitives) {
+          for (const primitive of mesh.primitives) {
+            // Get position accessor
+            const posAccessorIdx = primitive.attributes?.POSITION;
+            if (posAccessorIdx === undefined) continue;
+
+            const posAccessor = accessors[posAccessorIdx];
+            const posBufferView = bufferViews[posAccessor.bufferView];
+
+            const posOffset = (posBufferView.byteOffset || 0) + (posAccessor.byteOffset || 0);
+            const byteStride =
+              posBufferView.byteStride || (posAccessor.componentType === 5126 ? 12 : 0);
+            const stride = byteStride > 0 ? byteStride / 4 : 3;
+
+            const posData = new Float32Array(binChunk, posOffset, posAccessor.count * stride);
+
+            // Transform and add vertices
+            for (let i = 0; i < posAccessor.count; i++) {
+              const baseIdx = i * stride;
+              const x = posData[baseIdx];
+              const y = posData[baseIdx + 1];
+              const z = posData[baseIdx + 2];
+
+              // Apply world matrix (column-major)
+              const tx =
+                x * worldMatrix[0] + y * worldMatrix[4] + z * worldMatrix[8] + worldMatrix[12];
+              const ty =
+                x * worldMatrix[1] + y * worldMatrix[5] + z * worldMatrix[9] + worldMatrix[13];
+              const tz =
+                x * worldMatrix[2] + y * worldMatrix[6] + z * worldMatrix[10] + worldMatrix[14];
+
+              allVertices.push(tx, ty, tz);
+            }
+
+            // Get indices
+            if (primitive.indices !== undefined) {
+              const idxAccessor = accessors[primitive.indices];
+              const idxBufferView = bufferViews[idxAccessor.bufferView];
+              const idxOffset = (idxBufferView.byteOffset || 0) + (idxAccessor.byteOffset || 0);
+
+              let idxData: Uint16Array | Uint32Array;
+              if (idxAccessor.componentType === 5123) {
+                // UNSIGNED_SHORT
+                idxData = new Uint16Array(binChunk, idxOffset, idxAccessor.count);
+              } else if (idxAccessor.componentType === 5125) {
+                // UNSIGNED_INT
+                idxData = new Uint32Array(binChunk, idxOffset, idxAccessor.count);
+              } else {
+                console.warn(
+                  `[Physics] Unsupported index component type: ${idxAccessor.componentType}`,
+                );
+                continue;
+              }
+
+              for (let i = 0; i < idxData.length; i++) {
+                allIndices.push(idxData[i] + vertexOffset);
+              }
+            } else {
+              // Generate indices for non-indexed geometry
+              for (let i = 0; i < posAccessor.count; i++) {
+                allIndices.push(i + vertexOffset);
+              }
+            }
+
+            vertexOffset += posAccessor.count;
+          }
+        }
+      }
+
+      // Traverse children
+      if (node.children) {
+        for (const childIdx of node.children) {
+          traverseNode(childIdx, worldMatrix);
+        }
+      }
+    };
+
+    // Start traversal from scene root nodes
+    for (const rootNodeIdx of sceneNodes) {
+      traverseNode(rootNodeIdx);
+    }
+
+    if (allVertices.length === 0 || allIndices.length === 0) {
+      console.warn("[Physics] No geometry found in GLB");
+      return null;
+    }
+
+    console.log(
+      `[Physics] Parsed GLB: ${allVertices.length / 3} vertices, ${allIndices.length / 3} triangles`,
+    );
+
+    return {
+      vertices: new Float32Array(allVertices),
+      indices: new Uint32Array(allIndices),
+    };
+  }
+
+  private async extractGeometryFromModel(src: string): Promise<{
+    vertices: Float32Array;
+    indices: Uint32Array;
+  } | null> {
+    try {
+      // Resolve relative URLs to absolute URLs for server-side loading
+      const resolvedSrc = this.resolveAssetURL(src);
+      console.log(`[Physics] Loading model for collision: ${src} (resolved to: ${resolvedSrc})`);
+
+      // In Node.js/JSDOM environment, use our custom GLB parser to avoid texture loading hangs
+      if (typeof window !== "undefined" && window.fetch) {
+        try {
+          const response = await window.fetch(resolvedSrc);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const fetchedBuffer = await response.arrayBuffer();
+
+          // Create realm-local ArrayBuffer
+          const sourceView = new Uint8Array(fetchedBuffer);
+          const realmArrayBuffer = new ArrayBuffer(sourceView.byteLength);
+          const destView = new Uint8Array(realmArrayBuffer);
+          destView.set(sourceView);
+
+          console.log(
+            `[Physics] Parsing GLB geometry from ${realmArrayBuffer.byteLength} bytes...`,
+          );
+
+          // Use our custom GLB parser that doesn't load textures
+          const geometry = this.parseGLBGeometry(realmArrayBuffer);
+          if (geometry) {
+            return geometry;
+          }
+
+          console.warn(`[Physics] Custom GLB parser failed, model may not have geometry`);
+          return null;
+        } catch (fetchError) {
+          console.error(`[Physics] Failed to fetch/parse GLB:`, fetchError);
+          return null;
+        }
+      }
+
+      // Fallback for browser environment - use ModelLoader
+      const modelResult = await this.modelLoader.load(resolvedSrc);
+
+      if (!modelResult || !modelResult.group) {
+        console.error(`[Physics] Model result is invalid`);
+        return null;
+      }
+
+      const { group } = modelResult;
+      const allVertices: number[] = [];
+      const allIndices: number[] = [];
+      let vertexOffset = 0;
+
+      group.traverse((child: THREE.Object3D) => {
+        const isMesh = child.type === "Mesh" || (child as any).isMesh === true;
+        if (isMesh && (child as THREE.Mesh).geometry) {
+          const geometry = (child as THREE.Mesh).geometry;
+          if (!geometry.attributes.position) return;
+
+          const positions = geometry.attributes.position.array;
+          child.updateMatrixWorld(true);
+          const matrix = child.matrixWorld;
+
+          for (let i = 0; i < positions.length; i += 3) {
+            const vertex = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
+            vertex.applyMatrix4(matrix);
+            allVertices.push(vertex.x, vertex.y, vertex.z);
+          }
+
+          const indices = geometry.index
+            ? Array.from(geometry.index.array)
+            : Array.from({ length: positions.length / 3 }, (_, i) => i);
+
+          for (const index of indices) {
+            allIndices.push(index + vertexOffset);
+          }
+          vertexOffset += positions.length / 3;
+        }
+      });
+
+      if (allVertices.length === 0) return null;
+
+      return {
+        vertices: new Float32Array(allVertices),
+        indices: new Uint32Array(allIndices),
+      };
+    } catch (error) {
+      console.error(`[Physics] Failed to load model for collision: ${src}`, error);
+      return null;
+    }
+  }
+
+  private createDebugVisualization(
+    element: Element,
+    geometry: { vertices: Float32Array; indices: Uint32Array },
+    worldPosition: { x: number; y: number; z: number },
+  ): void {
+    try {
+      // Create a group to hold all debug lines
+      const debugGroup = document.createElement("m-group");
+      debugGroup.setAttribute("id", `physics-debug-${Date.now()}`);
+
+      // Position debug group at element's world position
+      debugGroup.setAttribute("x", worldPosition.x.toFixed(3));
+      debugGroup.setAttribute("y", worldPosition.y.toFixed(3));
+      debugGroup.setAttribute("z", worldPosition.z.toFixed(3));
+
+      // Draw edges of triangles from the trimesh
+      const triangleCount = geometry.indices.length / 3;
+      console.log(`[Physics Debug] Creating visualization for ${triangleCount} triangles`);
+
+      // Sample a subset of triangles to avoid overwhelming the scene
+      const maxTrianglesToShow = 500;
+      const stride = Math.max(1, Math.floor(triangleCount / maxTrianglesToShow));
+
+      for (let i = 0; i < triangleCount; i += stride) {
+        const idx0 = geometry.indices[i * 3] * 3;
+        const idx1 = geometry.indices[i * 3 + 1] * 3;
+        const idx2 = geometry.indices[i * 3 + 2] * 3;
+
+        // Get triangle vertices (already scaled)
+        const v0 = {
+          x: geometry.vertices[idx0],
+          y: geometry.vertices[idx0 + 1],
+          z: geometry.vertices[idx0 + 2],
+        };
+        const v1 = {
+          x: geometry.vertices[idx1],
+          y: geometry.vertices[idx1 + 1],
+          z: geometry.vertices[idx1 + 2],
+        };
+        const v2 = {
+          x: geometry.vertices[idx2],
+          y: geometry.vertices[idx2 + 1],
+          z: geometry.vertices[idx2 + 2],
+        };
+
+        // Create lines for each edge of the triangle
+        this.createDebugLine(debugGroup, v0, v1);
+        this.createDebugLine(debugGroup, v1, v2);
+        this.createDebugLine(debugGroup, v2, v0);
+      }
+
+      // Append the debug group as a sibling to the physics element
+      if (element.parentElement) {
+        element.parentElement.appendChild(debugGroup);
+        this.debugMeshElements.set(element, debugGroup);
+        console.log(
+          `[Physics Debug] Created wireframe visualization (${Math.ceil(triangleCount / stride)} triangles shown) at (${worldPosition.x.toFixed(2)}, ${worldPosition.y.toFixed(2)}, ${worldPosition.z.toFixed(2)})`,
+        );
+      }
+    } catch (error) {
+      console.error(`[Physics Debug] Failed to create visualization:`, error);
+    }
+  }
+
+  private createDebugLine(
+    parent: HTMLElement,
+    start: { x: number; y: number; z: number },
+    end: { x: number; y: number; z: number },
+  ): void {
+    // Use m-cube as thin wireframe segments since m-line might not exist
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+    const midZ = (start.z + end.z) / 2;
+
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const dz = end.z - start.z;
+    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    if (length < 0.001) return; // Skip zero-length lines
+
+    const line = document.createElement("m-cube");
+    line.setAttribute("x", midX.toFixed(3));
+    line.setAttribute("y", midY.toFixed(3));
+    line.setAttribute("z", midZ.toFixed(3));
+    line.setAttribute("width", "0.05");
+    line.setAttribute("height", "0.05");
+    line.setAttribute("depth", length.toFixed(3));
+    line.setAttribute("color", "#00ff00"); // Green for visibility
+    line.setAttribute("opacity", "0.8");
+    line.setAttribute("collide", "false");
+
+    // Rotate to align with line direction
+    if (Math.abs(dz) > 0.001 || Math.abs(dx) > 0.001) {
+      const yaw = (Math.atan2(dx, dz) * 180) / Math.PI;
+      line.setAttribute("ry", yaw.toFixed(1));
+    }
+    if (Math.abs(dy) > 0.001) {
+      const pitch = (Math.asin(dy / length) * 180) / Math.PI;
+      line.setAttribute("rx", pitch.toFixed(1));
+    }
+
+    parent.appendChild(line);
   }
 
   async init(config: PhysicsConfig = {}) {
@@ -78,8 +594,19 @@ class PhysicsSystem implements ElementSystem {
     try {
       await RAPIER.init();
 
-      // Merge config with defaults
+      // Merge config with defaults - check window.systemsConfig first if config is empty
+      if (
+        Object.keys(config).length === 0 &&
+        typeof window !== "undefined" &&
+        (window as any).systemsConfig
+      ) {
+        const savedConfig = (window as any).systemsConfig["physics"];
+        if (savedConfig) {
+          config = savedConfig;
+        }
+      }
       this.config = { ...this.config, ...config };
+      console.log(`[Physics] Config applied:`, this.config);
 
       // Create physics world
       const gravity = new RAPIER.Vector3(0.0, -this.config.gravity, 0.0);
@@ -137,7 +664,7 @@ class PhysicsSystem implements ElementSystem {
   }
 
   /**
-   * @description Adds physics behavior to an MML element
+   * @description Adds physics behavior to an MML element like m-cube, m-sphere, m-cylinder, or m-model
    * @example
    * const cube = document.querySelector('m-cube');
    * physics.addRigidbody(cube, {
@@ -145,8 +672,12 @@ class PhysicsSystem implements ElementSystem {
    *     friction: 0.8,
    *     restitution: 0.3 // bounciness
    * });
+   *
+   * // For m-model with GLB collision geometry:
+   * const model = document.querySelector('m-model');
+   * await physics.addRigidbody(model, { kinematic: true });
    */
-  addRigidbody(
+  async addRigidbody(
     element: Element,
     options: {
       mass?: number;
@@ -159,6 +690,12 @@ class PhysicsSystem implements ElementSystem {
   ) {
     if (!this.world) {
       console.error("Physics world not initialized");
+      return;
+    }
+
+    // Check if element already has a rigidbody to prevent duplicates
+    if (this.elementToBody.has(element)) {
+      console.warn("[Physics] Element already has rigidbody, skipping duplicate add");
       return;
     }
 
@@ -234,6 +771,62 @@ class PhysicsSystem implements ElementSystem {
         const halfY = worldScale.y / 2;
         const halfZ = worldScale.z / 2;
         colliderDesc = RAPIER.ColliderDesc.cuboid(halfX, Math.max(halfY, 0.005), halfZ);
+        break;
+      }
+
+      case "m-model": {
+        // Extract geometry from GLB and create trimesh collider
+        const src = element.getAttribute("src");
+        if (!src) {
+          console.warn("[Physics] m-model has no src attribute, using default box collider");
+          colliderDesc = RAPIER.ColliderDesc.cuboid(
+            0.5 * worldScale.x,
+            0.5 * worldScale.y,
+            0.5 * worldScale.z,
+          );
+        } else {
+          const geometry = await this.extractGeometryFromModel(src);
+          if (geometry) {
+            // Scale vertices by worldScale to match element's visual scale
+            const scaledVertices = new Float32Array(geometry.vertices.length);
+            for (let i = 0; i < geometry.vertices.length; i += 3) {
+              scaledVertices[i] = geometry.vertices[i] * worldScale.x;
+              scaledVertices[i + 1] = geometry.vertices[i + 1] * worldScale.y;
+              scaledVertices[i + 2] = geometry.vertices[i + 2] * worldScale.z;
+            }
+
+            // Create scaled geometry object for debug visualization
+            const scaledGeometry = {
+              vertices: scaledVertices,
+              indices: geometry.indices,
+            };
+
+            // Create trimesh collider from scaled geometry
+            colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVertices, geometry.indices);
+            console.log(
+              `[Physics] Created trimesh collider for m-model: ${src} (scaled by ${worldScale.x}, ${worldScale.y}, ${worldScale.z})`,
+            );
+
+            // Create debug visualization if debug mode is enabled
+            // Check both this.config and window.systemsConfig (in case init hasn't completed yet)
+            const debugEnabled =
+              this.config.debug ||
+              (typeof window !== "undefined" &&
+                (window as any).systemsConfig?.physics?.debug === true);
+            if (debugEnabled) {
+              this.createDebugVisualization(element, scaledGeometry, worldPosition);
+            }
+          } else {
+            console.warn(
+              `[Physics] Failed to extract geometry from ${src}, using default box collider`,
+            );
+            colliderDesc = RAPIER.ColliderDesc.cuboid(
+              0.5 * worldScale.x,
+              0.5 * worldScale.y,
+              0.5 * worldScale.z,
+            );
+          }
+        }
         break;
       }
 
@@ -474,8 +1067,15 @@ class PhysicsSystem implements ElementSystem {
   }
 
   // Update physics simulation
+  private stepCount = 0;
   step(deltaTime?: number) {
     if (!this.world || !this.isRunning) return;
+
+    this.stepCount++;
+    if (this.stepCount % 600 === 0) {
+      // Log every 600 steps (~10 seconds)
+      console.log(`[Physics] Step ${this.stepCount}, bodies: ${this.elementToBody.size}`);
+    }
 
     const dt = deltaTime || this.config.timeStep;
 
@@ -578,6 +1178,14 @@ class PhysicsSystem implements ElementSystem {
         element.setAttribute("x", clampFinite(localPos.x, 0).toFixed(3));
         element.setAttribute("y", clampFinite(localPos.y, 0).toFixed(3));
         element.setAttribute("z", clampFinite(localPos.z, 0).toFixed(3));
+
+        // Update debug visualization position to match element
+        const debugGroup = this.debugMeshElements.get(element);
+        if (debugGroup) {
+          debugGroup.setAttribute("x", clampFinite(localPos.x, 0).toFixed(3));
+          debugGroup.setAttribute("y", clampFinite(localPos.y, 0).toFixed(3));
+          debugGroup.setAttribute("z", clampFinite(localPos.z, 0).toFixed(3));
+        }
 
         // Update rotation attributes only for non-kinematic bodies to avoid stomping
         // externally-driven visual rotation (e.g., navigation facing logic)
@@ -717,8 +1325,10 @@ class PhysicsSystem implements ElementSystem {
       }
     }
 
-    // Add rigidbody to physics system
-    this.addRigidbody(element, options);
+    // Add rigidbody to physics system (async, but don't await to avoid blocking)
+    this.addRigidbody(element, options).catch((err) => {
+      console.error("[Physics] Failed to add rigidbody:", err);
+    });
   }
 }
 

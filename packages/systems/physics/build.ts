@@ -30,6 +30,28 @@ const buildOptions: esbuild.BuildOptions = {
     target: "es2020",
     mainFields: ["module", "main"],
     conditions: ["import", "module", "default"],
+    banner: {
+        js: `// Polyfill for TextEncoder/TextDecoder (needed by Rapier WASM)
+if (typeof TextEncoder === "undefined") {
+  globalThis.TextEncoder = class TextEncoder {
+    encode(str) {
+      const buf = new ArrayBuffer(str.length);
+      const bufView = new Uint8Array(buf);
+      for (let i = 0; i < str.length; i++) {
+        bufView[i] = str.charCodeAt(i);
+      }
+      return bufView;
+    }
+  };
+}
+if (typeof TextDecoder === "undefined") {
+  globalThis.TextDecoder = class TextDecoder {
+    decode(arr) {
+      return String.fromCharCode(...arr);
+    }
+  };
+}`,
+    },
     plugins: [
         ...(mode === watchMode ? [
             rebuildOnDependencyChangesPlugin()

@@ -28,8 +28,10 @@
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.18.0-beta.0",
+    "@mml-io/model-loader": "^0.21.3",
     "mml-game-math-system": "*",
-    "mml-game-systems-common": "file:../systems-common"
+    "mml-game-systems-common": "file:../systems-common",
+    "three": "^0.178.0"
   },
   "devDependencies": {
     "@types/node": "20.19.10",
