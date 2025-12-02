@@ -450,6 +450,7 @@ export type MControlProps = {
   button?: string; // button index ("0" for primary button)
   hint?: string; // optional hint text for UI
   debug?: boolean;
+  enableMouse?: boolean; // enable mouse input for axis controls (desktop only)
 };
 
 export type InputEventDetail = {
@@ -526,7 +527,6 @@ export class ControlGraphics {
   }
 
   dispose() {
-    console.log("m-control dispose");
     this.clearDebugVisualisation();
 
     this.control.stopInputPolling();
@@ -546,12 +546,17 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   private animationFrameId: number | null = null;
   public scene: MMLScene<GameThreeJSAdapter>;
 
+  // Mouse input state
+  private mouseAxisValues: { x: number; y: number } = { x: 0, y: 0 };
+  private mouseListenerCleanup: (() => void) | null = null;
+
   public props: MControlProps = {
     type: "axis",
     axis: "0,1",
     button: "0",
     hint: "",
     debug: false,
+    enableMouse: false,
   };
 
   private static attributeHandler = new AttributeHandler<MControl<GameThreeJSAdapter>>({
@@ -574,6 +579,10 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     debug: (instance, newValue) => {
       instance.props.debug = newValue !== null ? newValue === "true" : false;
       instance.controlGraphics?.setDebug(instance.props.debug, instance.props);
+    },
+    "enable-mouse": (instance, newValue) => {
+      instance.props.enableMouse = newValue !== null ? newValue === "true" : false;
+      instance.updateMouseInput();
     },
   });
 
@@ -619,6 +628,73 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   }
 
   /**
+   * Setup or cleanup mouse input based on enableMouse prop
+   */
+  private updateMouseInput(): void {
+    // Cleanup existing mouse listener if any
+    if (this.mouseListenerCleanup) {
+      this.mouseListenerCleanup();
+      this.mouseListenerCleanup = null;
+      this.mouseAxisValues = { x: 0, y: 0 };
+    }
+
+    // Only setup mouse input if enabled, on desktop, and for axis controls
+    if (!this.props.enableMouse || isMobileDevice() || this.props.type !== "axis") {
+      return;
+    }
+
+    // Only setup if we're already connected (have scene)
+    if (this.scene && this.scene.hasGraphicsAdapter()) {
+      this.setupMouseInput();
+    }
+  }
+
+  /**
+   * Setup mouse input tracking
+   */
+  private setupMouseInput(): void {
+    if (!this.scene) return;
+
+    const graphicsAdapter = this.scene.getGraphicsAdapter();
+    if (!graphicsAdapter || !("getCanvasElement" in graphicsAdapter)) {
+      return;
+    }
+
+    const canvas = (graphicsAdapter as any).getCanvasElement();
+    if (!canvas) return;
+
+    // Enable pointer events on canvas for mouse input
+    canvas.style.pointerEvents = "auto";
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      // Get mouse position relative to canvas
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      // Convert to normalized coordinates (-1 to 1) relative to center
+      this.mouseAxisValues.x = (mouseX - centerX) / centerX;
+      this.mouseAxisValues.y = -(mouseY - centerY) / centerY; // Invert Y for intuitive up/down
+
+      // Clamp to -1, 1 range
+      this.mouseAxisValues.x = Math.max(-1, Math.min(1, this.mouseAxisValues.x));
+      this.mouseAxisValues.y = Math.max(-1, Math.min(1, this.mouseAxisValues.y));
+    };
+
+    canvas.addEventListener("mousemove", handleMouseMove);
+
+    // Store cleanup function
+    this.mouseListenerCleanup = () => {
+      canvas.removeEventListener("mousemove", handleMouseMove);
+      // Reset pointer events when cleaning up
+      canvas.style.pointerEvents = "none";
+    };
+  }
+
+  /**
    * Start input polling for axis and button controls.
    * This is needed because virtual controls update inputState and expect polling.
    * Swipe controls call dispatchInputEvent directly.
@@ -650,6 +726,11 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    // Cleanup mouse input
+    if (this.mouseListenerCleanup) {
+      this.mouseListenerCleanup();
+      this.mouseListenerCleanup = null;
+    }
   }
 
   /**
@@ -661,14 +742,27 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
 
       if (axisIndices.length === 1) {
         // single axis (val)
-        const value = inputState.axes[axisIndices[0]] || 0;
+        let value: number;
+        if (this.props.enableMouse && !isMobileDevice()) {
+          // Use mouse X for single axis when mouse is enabled
+          value = this.mouseAxisValues.x;
+        } else {
+          value = inputState.axes[axisIndices[0]] || 0;
+        }
         this.dispatchInputEvent(inputState.connectionId, { value });
       } else if (axisIndices.length >= 2) {
         // multi-axis (vector)
-        const vector = {
-          x: inputState.axes[axisIndices[0]] || 0,
-          y: inputState.axes[axisIndices[1]] || 0,
-        };
+        let x: number, y: number;
+        if (this.props.enableMouse && !isMobileDevice()) {
+          // Use mouse input
+          x = this.mouseAxisValues.x;
+          y = this.mouseAxisValues.y;
+        } else {
+          // Use gamepad/keyboard input
+          x = inputState.axes[axisIndices[0]] || 0;
+          y = inputState.axes[axisIndices[1]] || 0;
+        }
+        const vector = { x, y };
         this.dispatchInputEvent(inputState.connectionId, { value: vector });
       }
     } else if (this.props.type === "button" && this.props.button) {
@@ -679,6 +773,9 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
+    if (!this.controlGraphics) {
+      return;
+    }
     super.attributeChangedCallback(name, oldValue, newValue);
     MControl.attributeHandler.handle(this, name, newValue);
   }
@@ -705,6 +802,14 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       if (value !== null) {
         this.attributeChangedCallback(name, null, value);
       }
+    }
+
+    // Setup mouse input if enabled (now that scene is available)
+    this.updateMouseInput();
+
+    // Start input polling AFTER attributes are initialized
+    if (this.props.type === "axis" || this.props.type === "button") {
+      this.startInputPolling();
     }
   }
 

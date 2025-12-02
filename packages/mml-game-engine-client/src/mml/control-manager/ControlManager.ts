@@ -220,9 +220,8 @@ export class ControlManager {
       controlInfo.visualComponent = this.createVisualComponent(controlInfo);
     }
 
-    if (controlInfo.type === "axis" || controlInfo.type === "button") {
-      element.startInputPolling();
-    }
+    // startInputPolling is now called by the control itself in connectedCallback
+    // after attributes are initialized
 
     this.updateLayout();
   }
