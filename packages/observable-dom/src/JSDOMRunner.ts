@@ -12,6 +12,7 @@ import {
 } from "jsdom";
 import * as nodeFetch from "node-fetch";
 import nodeFetchFn from "node-fetch";
+import { TextDecoder, TextEncoder } from "util";
 import vm from "vm";
 
 import { DOMRunnerFactory, DOMRunnerInterface, DOMRunnerMessage } from "./ObservableDOM";
@@ -111,6 +112,26 @@ export class JSDOMRunner implements DOMRunnerInterface {
         this.domWindow.Headers = nodeFetch.Headers as unknown as typeof Headers;
         this.domWindow.Request = nodeFetch.Request as unknown as typeof Request;
         this.domWindow.Response = nodeFetch.Response as unknown as typeof Response;
+
+        // Polyfills for TextEncoder/TextDecoder (needed by packages/systems)
+        (this.domWindow as any).TextEncoder = TextEncoder;
+        (this.domWindow as any).TextDecoder = TextDecoder;
+
+        // Polyfill for URL.createObjectURL and URL.revokeObjectURL (needed by recast-navigation)
+        const blobURLs = new Map<string, Blob>();
+        let blobURLCounter = 0;
+        if (!this.domWindow.URL.createObjectURL) {
+          this.domWindow.URL.createObjectURL = function (blob: Blob): string {
+            const url = `blob:nodedata:${blobURLCounter++}`;
+            blobURLs.set(url, blob);
+            return url;
+          };
+        }
+        if (!this.domWindow.URL.revokeObjectURL) {
+          this.domWindow.URL.revokeObjectURL = function (url: string): void {
+            blobURLs.delete(url);
+          };
+        }
 
         // This is a polyfill for https://developer.mozilla.org/en-US/docs/Web/API/Document/timeline
         const timeline = {};
