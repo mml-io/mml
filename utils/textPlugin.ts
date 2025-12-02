@@ -17,9 +17,17 @@ export function textPlugin() {
           const modulePath = resolve.sync(importPath, {
             basedir: args.resolveDir,
             extensions: [".js", ".jsx", ".ts", ".tsx"],
+            preserveSymlinks: false,
           });
-          return { path: modulePath, watchFiles: [modulePath], namespace: "text" };
-        } catch {
+
+          // Verify the file exists before returning
+          if (fs.existsSync(modulePath)) {
+            return { path: modulePath, watchFiles: [modulePath], namespace: "text" };
+          }
+
+          // File doesn't exist yet, throw to trigger fallback
+          throw new Error(`Module resolved to ${modulePath} but file does not exist`);
+        } catch (_error) {
           // If not found in node_modules, fallback to resolve as a regular file path
           const filePath = path.isAbsolute(importPath)
             ? importPath
