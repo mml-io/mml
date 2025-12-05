@@ -1,0 +1,44 @@
+{
+  "name": "@mml-io/mml-editor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit -p ./tsconfig.json",
+    "pre:build": "npm run build",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "@fontsource/geist-mono": "^5.0.0",
+    "@mml-io/mml-web": "^0.21.1",
+    "@mml-io/networked-dom-document": "^0.21.1",
+    "@monaco-editor/react": "^4.6.0",
+    "@tailwindcss/cli": "^4.1.17",
+    "express": "^4.19.2",
+    "mml-game-engine-client": "^0.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.17",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@craftamap/esbuild-plugin-html": "^0.7.0",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.22",
+    "esbuild": "0.20.2",
+    "esbuild-style-plugin": "^1.6.3",
+    "postcss-import": "^16.1.1",
+    "postcss-modules": "^6.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

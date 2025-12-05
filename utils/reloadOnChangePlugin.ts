@@ -3,9 +3,8 @@ import * as esbuild from "esbuild";
 import * as http from "http";
 import { AddressInfo } from "net";
 import WebSocket from "ws";
-import type { Server as WebSocketServerCtor } from "ws";
 
-const WebSocketServer = (WebSocket as any).Server as typeof WebSocketServerCtor;
+const WebSocketServer = WebSocket.Server;
 
 /**
  * Creates an esbuild plugin that automatically reloads the page when files change.
