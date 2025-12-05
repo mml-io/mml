@@ -18,6 +18,8 @@ export * from "./ThreeJSPlane";
 export * from "./ThreeJSPositionProbe";
 export * from "./ThreeJSPrompt";
 export * from "./ThreeJSRemoteDocument";
+export * from "./ThreeJSHighlight";
 export * from "./ThreeJSSphere";
 export * from "./ThreeJSTransformable";
+export * from "./ThreeJSTransformWidget";
 export * from "./ThreeJSVideo";

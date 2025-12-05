@@ -1,15 +1,21 @@
 import {
+  EditorGraphicsSupport,
+  HighlightManager,
   Interaction,
   MElement,
   MMLGraphicsInterface,
   radToDeg,
   StandaloneGraphicsAdapter,
+  TransformWidgetGraphics,
 } from "@mml-io/mml-web";
 import {
+  SceneClickCallback,
   ThreeJSClickTrigger,
   ThreeJSGraphicsAdapter,
   ThreeJSGraphicsInterface,
+  ThreeJSHighlightManager,
   ThreeJSInteractionAdapter,
+  ThreeJSTransformWidget,
 } from "@mml-io/mml-web-threejs";
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
@@ -44,7 +50,9 @@ export type GameThreeJSAdapterOptions = {
   autoConnectRoot?: boolean;
 };
 
-export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGraphicsAdapter {
+export class GameThreeJSAdapter
+  implements ThreeJSGraphicsAdapter, StandaloneGraphicsAdapter, EditorGraphicsSupport<GameThreeJSAdapter>
+{
   collisionType: THREE.Object3D;
   containerType: THREE.Object3D;
 
@@ -61,9 +69,9 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
   // Postprocessing for outline highlighting
   private composer: EffectComposer | null = null;
   private renderPass: RenderPass | null = null;
-  private outlinePass: OutlinePass | null = null;
   private outputPass: OutputPass | null = null;
-  private highlightedObjects: THREE.Object3D[] = [];
+  private highlightManager: ThreeJSHighlightManager | null = null;
+  private currentOutlinePasses: OutlinePass[] = [];
 
   private cameraManager = new CameraManager();
   private environmentManager: EnvironmentManager;
@@ -273,23 +281,20 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
         this.composer = new EffectComposer(this.renderer);
         this.composer.setPixelRatio(this.renderer.getPixelRatio());
         this.renderPass = new RenderPass(this.threeScene, this.getCamera());
-        this.outlinePass = new OutlinePass(
+        this.outputPass = new OutputPass();
+
+        // Initialize highlight manager for multi-highlight support
+        this.highlightManager = new ThreeJSHighlightManager(
           new THREE.Vector2(width, height),
           this.threeScene,
           this.getCamera(),
         );
-        // Outline style similar to UE5 selection
-        this.outlinePass.edgeStrength = 4.0;
-        this.outlinePass.edgeGlow = 0.0;
-        this.outlinePass.edgeThickness = 1.5;
-        this.outlinePass.pulsePeriod = 0;
-        this.outlinePass.visibleEdgeColor.set(0xffcc00);
-        this.outlinePass.hiddenEdgeColor.set(0xffcc00);
-        this.outlinePass.selectedObjects = this.highlightedObjects;
+        this.highlightManager.setListener({
+          onPassesChanged: (passes) => this.rebuildComposerPasses(passes),
+        });
 
+        // Initial composer setup (just render + output, outline passes added dynamically)
         this.composer.addPass(this.renderPass);
-        this.composer.addPass(this.outlinePass);
-        this.outputPass = new OutputPass();
         this.composer.addPass(this.outputPass);
       }
 
@@ -323,21 +328,27 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
         camera.aspect =
           this.renderer.domElement.clientWidth / this.renderer.domElement.clientHeight;
         camera.updateProjectionMatrix();
-        if (
-          this.composer &&
-          this.renderPass &&
-          this.outlinePass &&
-          this.highlightedObjects.length > 0
-        ) {
+
+        // Update highlight manager (processes dirty state)
+        if (this.highlightManager) {
+          this.highlightManager.update();
+        }
+
+        const hasHighlights = this.highlightManager?.hasHighlightedObjects() ?? false;
+        if (this.composer && this.renderPass && hasHighlights) {
           // Ensure passes use the active camera
           this.renderPass.camera = camera;
-          this.outlinePass.renderCamera = camera;
+          if (this.highlightManager) {
+            this.highlightManager.setCamera(camera);
+          }
           // Keep composer resolution perfectly synced with renderer before rendering
           const size = new THREE.Vector2();
           this.renderer.getSize(size);
           this.composer.setSize(size.x, size.y);
           this.composer.setPixelRatio(this.renderer.getPixelRatio());
-          this.outlinePass.setSize(size.x, size.y);
+          if (this.highlightManager) {
+            this.highlightManager.setSize(size.x, size.y);
+          }
           this.composer.render();
         } else {
           this.renderer.render(this.threeScene, camera);
@@ -466,8 +477,8 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
       this.composer.setSize(width, height);
       this.composer.setPixelRatio(this.renderer.getPixelRatio());
     }
-    if (this.outlinePass) {
-      this.outlinePass.setSize(width, height);
+    if (this.highlightManager) {
+      this.highlightManager.setSize(width, height);
     }
   }
 
@@ -568,41 +579,51 @@ export class GameThreeJSAdapter implements ThreeJSGraphicsAdapter, StandaloneGra
     };
   }
 
-  // Outline highlight controls
-  public setHighlightedObjects(objects: THREE.Object3D[]) {
-    this.highlightedObjects.length = 0;
-    objects.forEach((obj) => this.highlightedObjects.push(obj));
-    if (this.outlinePass) {
-      this.outlinePass.selectedObjects = this.highlightedObjects;
-      // Ensure composer sizing is correct when enabling highlighting
-      if (this.highlightedObjects.length > 0 && this.composer) {
-        const canvas = this.renderer.domElement;
-        const width = canvas.clientWidth;
-        const height = canvas.clientHeight;
-        this.composer.setSize(width, height);
-        this.composer.setPixelRatio(this.renderer.getPixelRatio());
-        this.outlinePass.setSize(width, height);
-      }
+  // Editor graphics support
+  public getHighlightManager(): HighlightManager<GameThreeJSAdapter> {
+    if (!this.highlightManager) {
+      throw new Error("Highlight manager not initialized (may be in jsdom environment)");
     }
+    return this.highlightManager as unknown as HighlightManager<GameThreeJSAdapter>;
   }
 
-  public clearHighlightedObjects() {
-    this.setHighlightedObjects([]);
+  public createTransformWidget(domElement: HTMLElement): TransformWidgetGraphics<GameThreeJSAdapter> {
+    return new ThreeJSTransformWidget(
+      this.threeScene,
+      this.getCamera(),
+      domElement,
+      this.overlayScene,
+    );
   }
 
-  public setOutlineParams(params: {
-    color?: number | string;
-    strength?: number;
-    thickness?: number;
-    glow?: number;
-  }) {
-    if (!this.outlinePass) return;
-    if (params.color !== undefined) {
-      this.outlinePass.visibleEdgeColor.set(params.color as any);
-      this.outlinePass.hiddenEdgeColor.set(params.color as any);
+  /**
+   * Rebuild the composer passes when highlight passes change.
+   * @internal
+   */
+  private rebuildComposerPasses(outlinePasses: OutlinePass[]): void {
+    if (!this.composer || !this.renderPass || !this.outputPass) return;
+
+    // Remove old outline passes
+    for (const pass of this.currentOutlinePasses) {
+      this.composer.removePass(pass);
     }
-    if (params.strength !== undefined) this.outlinePass.edgeStrength = params.strength;
-    if (params.thickness !== undefined) this.outlinePass.edgeThickness = params.thickness;
-    if (params.glow !== undefined) this.outlinePass.edgeGlow = params.glow;
+
+    // Clear and rebuild: render → outline passes → output
+    this.composer.passes.length = 0;
+    this.composer.addPass(this.renderPass);
+    for (const pass of outlinePasses) {
+      this.composer.addPass(pass);
+    }
+    this.composer.addPass(this.outputPass);
+
+    this.currentOutlinePasses = outlinePasses;
+  }
+
+
+  /**
+   * Set a callback to be invoked on every scene click for selection handling.
+   */
+  public setSceneClickCallback(callback: SceneClickCallback | null): void {
+    this.clickTrigger.setSceneClickCallback(callback);
   }
 }

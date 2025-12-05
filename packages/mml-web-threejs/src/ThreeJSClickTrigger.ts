@@ -9,6 +9,15 @@ const mouseMovePixelsThreshold = 10;
 const mouseMoveTimeThresholdMilliseconds = 500;
 
 /**
+ * Callback type for scene clicks. Receives the clicked MElement (or null if nothing was hit).
+ * Return true to prevent the default click event dispatch.
+ */
+export type SceneClickCallback = (
+  element: MElement<any> | null,
+  event: MouseEvent,
+) => boolean | void;
+
+/**
  * The ThreeJSClickTrigger class is responsible for handling click events on the MML scene and raycasts into the scene to
  * determine which object was clicked and then dispatches events to those elements.
  */
@@ -17,6 +26,7 @@ export class ThreeJSClickTrigger {
   private raycaster: THREE.Raycaster;
   private mouseDownTime: number | null = null;
   private mouseMoveDelta = 0;
+  private sceneClickCallback: SceneClickCallback | null = null;
 
   static init(
     clickTarget: Document | HTMLElement,
@@ -36,6 +46,14 @@ export class ThreeJSClickTrigger {
     this.eventHandlerCollection.add(clickTarget, "mousedown", this.handleMouseDown.bind(this));
     this.eventHandlerCollection.add(clickTarget, "mouseup", this.handleMouseUp.bind(this));
     this.eventHandlerCollection.add(clickTarget, "mousemove", this.handleMouseMove.bind(this));
+  }
+
+  /**
+   * Set a callback to be invoked on every scene click.
+   * The callback receives the clicked MElement (or null) and can return true to prevent default handling.
+   */
+  public setSceneClickCallback(callback: SceneClickCallback | null): void {
+    this.sceneClickCallback = callback;
   }
 
   private handleMouseDown() {
@@ -82,14 +100,20 @@ export class ThreeJSClickTrigger {
     }
     this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
     const intersections = this.raycaster.intersectObject(this.rootContainer, true);
+
+    // Find the first valid MElement hit (for selection callback)
+    let hitElement: MElement<any> | null = null;
+    let hitIntersection: THREE.Intersection | null = null;
+
     if (intersections.length > 0) {
       for (const intersection of intersections) {
         let obj: THREE.Object3D | null = intersection.object;
         currentIntersection: while (obj) {
           /*
              Ignore scene objects that have a transparent or wireframe material
+             (skip this check in editor mode - when sceneClickCallback is set)
             */
-          if (this.isMaterialIgnored(obj)) {
+          if (!this.sceneClickCallback && this.isMaterialIgnored(obj)) {
             break currentIntersection;
           }
 
@@ -100,36 +124,46 @@ export class ThreeJSClickTrigger {
             continue currentIntersection;
           }
 
-          if (!mElement.isClickable()) {
-            // This is not a clickable element (or it is explicitly set to not be clickable), so we ignore it and pass through to the next intersection
-            break currentIntersection;
-          }
-
-          // This is a clickable element, so we dispatch the click event to it
-          const elementRelative = getRelativePositionAndRotationRelativeToObject(
-            {
-              position: intersection.point,
-              rotation: {
-                x: 0,
-                y: 0,
-                z: 0,
-              },
-            },
-            mElement,
-          );
-          mElement.dispatchEvent(
-            new CustomEvent("click", {
-              bubbles: true,
-              detail: {
-                position: {
-                  ...elementRelative.position,
-                },
-              },
-            }),
-          );
-          return;
+          // Found a valid MElement
+          hitElement = mElement;
+          hitIntersection = intersection;
+          break;
         }
+        if (hitElement) break;
       }
+    }
+
+    // Call scene click callback first (for selection handling)
+    if (this.sceneClickCallback) {
+      const preventDefault = this.sceneClickCallback(hitElement, event);
+      if (preventDefault) {
+        return;
+      }
+    }
+
+    // Default click event dispatch for clickable elements
+    if (hitElement && hitIntersection && hitElement.isClickable()) {
+      const elementRelative = getRelativePositionAndRotationRelativeToObject(
+        {
+          position: hitIntersection.point,
+          rotation: {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+        },
+        hitElement,
+      );
+      hitElement.dispatchEvent(
+        new CustomEvent("click", {
+          bubbles: true,
+          detail: {
+            position: {
+              ...elementRelative.position,
+            },
+          },
+        }),
+      );
     }
   }
 

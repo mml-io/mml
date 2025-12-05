@@ -1,28 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { CodeEditor } from "./components/CodeEditor";
-import { EditorToHostMessage } from "./lib/host/HostChannel";
 import { useEditorStore } from "./state/editorStore";
 import EditorClient from "./components/FloatingClient";
 
+/**
+ * Strip all script tags from MML code for static document loading.
+ * This prevents script execution in edit mode while preserving the visual elements.
+ */
+function stripScriptTags(code: string): string {
+  return code.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+}
+
 export const App = () => {
-
-  useEffect(() => {
-    // Setup communication with host (parent window or VS Code webview)
-    const sendMessage = (msg: EditorToHostMessage) => {
-      // In VS Code webview, acquireVsCodeApi() is used.
-      // Here we assume window.postMessage for iframe embedding or similar.
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage(msg, "*");
-      } else if ((window as any).vscode) {
-        (window as any).vscode.postMessage(msg);
-      } else {
-        console.log("Host message:", msg);
-      }
-    };
-
-
-  }, []);
-
   // Temporary initial code for testing if none supplied
   const { code, setCode, staticDocument } = useEditorStore();
   useEffect(() => {
@@ -54,9 +43,13 @@ export const App = () => {
 
   // when code changes, update the static document
   useEffect(() => {
-    if (staticDocument && code) {
-      staticDocument.load(code);
-    }
+    if (!staticDocument || !code) return;
+
+    const timeoutId = setTimeout(() => {
+      staticDocument.load(stripScriptTags(code));
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [code, staticDocument]);
 
   return (
