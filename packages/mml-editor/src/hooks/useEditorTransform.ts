@@ -16,7 +16,8 @@ import { TransformValues, useEditorStore } from "../state/editorStore";
  * - Editor callbacks (selection, transform commit, drag state)
  * - Bidirectional selection sync between paths and viewport
  * - Gizmo mode/space/snapping sync
- * - Keyboard shortcuts for gizmo controls
+ * - Visualizer visibility sync
+ * - Keyboard shortcuts for gizmo controls and visualizer toggle
  *
  * @param clientRef Reference to the MMLWebClient instance
  */
@@ -32,6 +33,8 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
     toggleGizmoSpace,
     snappingEnabled,
     setSnappingEnabled,
+    visualizersVisible,
+    toggleVisualizersVisible,
     setCode,
   } = useEditorStore();
 
@@ -145,7 +148,15 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
     client.setSnapping(snappingEnabled);
   }, [snappingEnabled, clientRef]);
 
-  // Keyboard shortcuts for gizmo modes
+  // Sync visualizers visibility to viewport
+  useEffect(() => {
+    const client = clientRef.current;
+    if (!client) return;
+
+    client.setVisualizersVisible(visualizersVisible);
+  }, [visualizersVisible, clientRef]);
+
+  // Keyboard shortcuts for gizmo modes and visualizer toggle
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Don't handle if typing in an input
@@ -165,6 +176,9 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
           break;
         case "q":
           toggleGizmoSpace();
+          break;
+        case "g":
+          toggleVisualizersVisible();
           break;
         case "shift":
           setSnappingEnabled(true);
@@ -192,8 +206,7 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [setGizmoMode, toggleGizmoSpace, setSnappingEnabled, clearSelection]);
+  }, [setGizmoMode, toggleGizmoSpace, setSnappingEnabled, clearSelection, toggleVisualizersVisible]);
 
   return { setupEditorCallbacks };
 }
-

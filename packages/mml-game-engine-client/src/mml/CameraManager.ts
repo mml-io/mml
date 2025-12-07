@@ -14,8 +14,10 @@ export class CameraManager {
   private sortedMMLCharacterControllers: MCharacterController<GameThreeJSAdapter>[] = [];
 
   private camera: THREE.PerspectiveCamera;
+  private enabled: boolean;
 
-  constructor() {
+  constructor(enabled: boolean = true) {
+    this.enabled = enabled;
     this.camera = new THREE.PerspectiveCamera(
       75,
       1, // maybe we'll update more settings other than FOV after init
@@ -31,6 +33,9 @@ export class CameraManager {
   }
 
   getCamera() {
+    if (!this.enabled) {
+      return this.camera;
+    }
     // Only re-sort if cameras have been added/removed
     if (this.camerasDirty) {
       this.sortedCameras = this.cameras.slice().sort((a, b) => {
@@ -112,6 +117,10 @@ export class CameraManager {
 
   updateCharacterController() {
     this.controllersDirty = true;
+  }
+
+  setEnabled(enabled: boolean) {
+    this.enabled = enabled;
   }
 
   unregisterCharacterController(controller: MCharacterController<GameThreeJSAdapter>) {

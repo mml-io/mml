@@ -1,5 +1,5 @@
 import { createMMLGameClient, MMLWebClient } from "mml-game-engine-client";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useEditorTransform } from "../hooks/useEditorTransform";
 import { useEditorStore } from "../state/editorStore";
@@ -7,6 +7,7 @@ import { useEditorStore } from "../state/editorStore";
 function EditorClient() {
   const clientRef = useRef<MMLWebClient | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [clientReady, setClientReady] = useState(false);
 
   const {
     staticDocument,
@@ -22,25 +23,12 @@ function EditorClient() {
     clientRef.current?.fitContainer();
   }, []);
 
-  // Update client to show correct document as the viewport mode changes
-  useEffect(() => {
-    const client = clientRef.current;
-    if (!client) return;
-
-    const url = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
-    if (viewportMode === "edit") {
-      client.connectToDocument(staticDocument, url);
-    } else if (localDocument) {
-      client.connectToDocument(localDocument, url);
-    }
-  }, [viewportMode, staticDocument, localDocument, clientRef.current]);
-
   // Initialize client
   useEffect(() => {
     let disposed = false;
     let runnerClient: MMLWebClient | null = null;
 
-    createMMLGameClient().then(async (client: MMLWebClient) => {
+    createMMLGameClient({ mode: "editor" }).then(async (client: MMLWebClient) => {
       runnerClient = client;
       if (disposed) {
         runnerClient.dispose();
@@ -48,17 +36,11 @@ function EditorClient() {
       }
 
       clientRef.current = runnerClient;
+      setClientReady(true);
 
       // Set up editor callbacks via hook
       console.log("[FloatingClient] Setting up editor callbacks");
       setupEditorCallbacks(runnerClient);
-
-      // Expose remote holder to store
-      setTimeout(() => {
-        if (disposed) return;
-
-        setRemoteHolderElement(runnerClient!.remoteDocumentHolder);
-      }, 50);
 
       // Force re-render to trigger other effects
       fitContainer();
@@ -72,6 +54,22 @@ function EditorClient() {
       }
     };
   }, [setupEditorCallbacks]);
+
+  // Update client to show correct document as the viewport mode changes
+  useEffect(() => {
+    if (!clientReady) return;
+    const client = clientRef.current;
+    if (!client) return;
+
+    const url = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
+    if (viewportMode === "edit") {
+      client.connectToDocument(staticDocument, url);
+    } else if (localDocument) {
+      client.connectToDocument(localDocument, url);
+    }
+
+    setRemoteHolderElement(client.remoteDocumentHolder);
+  }, [viewportMode, staticDocument, localDocument, clientReady, setRemoteHolderElement]);
 
   // Handle resize events
   useEffect(() => {

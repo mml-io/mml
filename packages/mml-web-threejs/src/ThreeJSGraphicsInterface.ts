@@ -3,6 +3,9 @@ import { MMLGraphicsInterface } from "@mml-io/mml-web";
 import * as ThreeJSElements from "./elements";
 import { ThreeJSGraphicsAdapter } from "./ThreeJSGraphicsAdapter";
 
+// Singleton instance of the element visualizer factory
+const elementVisualizerFactory = new ThreeJSElements.ThreeJSElementVisualizerFactory();
+
 export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapter> = {
   MElementGraphicsInterface: (element) => new ThreeJSElements.ThreeJSMElement(element),
   MMLDebugHelperGraphicsInterface: (debugHelper) =>
@@ -31,4 +34,5 @@ export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapt
     new ThreeJSElements.ThreeJSVideo(element, updateMeshCallback),
   MMLAnimationGraphicsInterface: (element) => new ThreeJSElements.ThreeJSAnimation(element),
   RemoteDocumentGraphicsInterface: (element) => new ThreeJSElements.ThreeJSRemoteDocument(element),
+  getElementVisualizerFactory: () => elementVisualizerFactory,
 };

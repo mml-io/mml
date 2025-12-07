@@ -155,8 +155,19 @@ export class TransformWidgetController<G extends GraphicsAdapter = GraphicsAdapt
     elements: TransformableElement<G>[],
     lastSelectedIndex?: number,
   ): void {
+    // Clear isSelected on previously selected elements
+    for (const el of this.selectedElements) {
+      el.isSelected = false;
+    }
+    
     this.selectedElements = elements;
     this.lastSelectedIndex = lastSelectedIndex ?? elements.length - 1;
+    
+    // Set isSelected on newly selected elements
+    for (const el of this.selectedElements) {
+      el.isSelected = true;
+    }
+    
     this.syncGraphics();
     this.callbacks.onSelectionChange?.(elements.length > 0 ? elements : null);
   }
@@ -165,6 +176,11 @@ export class TransformWidgetController<G extends GraphicsAdapter = GraphicsAdapt
    * Clear selection.
    */
   public clearSelection(): void {
+    // Clear isSelected on all previously selected elements
+    for (const el of this.selectedElements) {
+      el.isSelected = false;
+    }
+    
     this.selectedElements = [];
     this.lastSelectedIndex = -1;
     this.syncGraphics();

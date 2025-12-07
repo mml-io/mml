@@ -7,6 +7,7 @@ import {
   radToDeg,
   StandaloneGraphicsAdapter,
   TransformWidgetGraphics,
+  VisualizerHandler,
 } from "@mml-io/mml-web";
 import {
   SceneClickCallback,
@@ -48,6 +49,7 @@ export enum GameThreeJSAdapterControlsType {
 export type GameThreeJSAdapterOptions = {
   controlsType?: GameThreeJSAdapterControlsType;
   autoConnectRoot?: boolean;
+  cameraManagerEnabled?: boolean;
 };
 
 export class GameThreeJSAdapter
@@ -73,7 +75,7 @@ export class GameThreeJSAdapter
   private highlightManager: ThreeJSHighlightManager | null = null;
   private currentOutlinePasses: OutlinePass[] = [];
 
-  private cameraManager = new CameraManager();
+  private cameraManager: CameraManager;
   private environmentManager: EnvironmentManager;
 
   private mmlControls: MControl<GameThreeJSAdapter>[] = [];
@@ -82,10 +84,16 @@ export class GameThreeJSAdapter
   private resizeHandler: (() => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
 
+  // Element visualizer management
+  private visualizerHandlers = new Set<VisualizerHandler>();
+  private _visualizersVisible = true;
+
   private constructor(
     private element: HTMLElement,
     private options: GameThreeJSAdapterOptions,
-  ) {}
+  ) {
+    this.cameraManager = new CameraManager(options.cameraManagerEnabled ?? true);
+  }
 
   public static async create(
     element: HTMLElement,
@@ -625,5 +633,40 @@ export class GameThreeJSAdapter
    */
   public setSceneClickCallback(callback: SceneClickCallback | null): void {
     this.clickTrigger.setSceneClickCallback(callback);
+  }
+
+  // ==================== Element Visualizer Management ====================
+
+  /**
+   * Register a visualizer handler to receive visibility change notifications.
+   */
+  public registerVisualizerHandler(handler: VisualizerHandler): void {
+    this.visualizerHandlers.add(handler);
+    // Apply current visibility state to newly registered handler
+    handler.setVisualizerVisible(this._visualizersVisible);
+  }
+
+  /**
+   * Unregister a visualizer handler.
+   */
+  public unregisterVisualizerHandler(handler: VisualizerHandler): void {
+    this.visualizerHandlers.delete(handler);
+  }
+
+  /**
+   * Set the visibility of all element visualizers (lights, cameras, etc.)
+   */
+  public setVisualizersVisible(visible: boolean): void {
+    this._visualizersVisible = visible;
+    for (const handler of this.visualizerHandlers) {
+      handler.setVisualizerVisible(visible);
+    }
+  }
+
+  /**
+   * Get the current visibility state of element visualizers.
+   */
+  public getVisualizersVisible(): boolean {
+    return this._visualizersVisible;
   }
 }

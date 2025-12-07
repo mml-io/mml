@@ -9,6 +9,14 @@ import { TransformWidgetGraphics } from "./TransformWidgetGraphics";
 export type SceneClickCallback = (element: HTMLElement | null, event: MouseEvent) => boolean | void;
 
 /**
+ * Interface for objects that can have their visualizer visibility toggled.
+ * Used by element graphics implementations that support visualizers.
+ */
+export interface VisualizerHandler {
+  setVisualizerVisible(visible: boolean): void;
+}
+
+/**
  * Interface for graphics adapters that support editor functionality.
  * This provides a way to create selection highlights, transform widgets, and handle clicks
  * without depending on specific graphics implementations.
@@ -30,6 +38,26 @@ export interface EditorGraphicsSupport<G extends GraphicsAdapter = GraphicsAdapt
    * @param callback The callback function, or null to clear
    */
   setSceneClickCallback(callback: SceneClickCallback | null): void;
+
+  /**
+   * Register a visualizer handler to receive visibility change notifications.
+   */
+  registerVisualizerHandler(handler: VisualizerHandler): void;
+
+  /**
+   * Unregister a visualizer handler.
+   */
+  unregisterVisualizerHandler(handler: VisualizerHandler): void;
+
+  /**
+   * Set the visibility of all element visualizers (lights, cameras, etc.)
+   */
+  setVisualizersVisible(visible: boolean): void;
+
+  /**
+   * Get the current visibility state of element visualizers.
+   */
+  getVisualizersVisible(): boolean;
 }
 
 /**

@@ -1,6 +1,4 @@
-import { Light, LightTypes } from "@mml-io/mml-web";
-import { LightGraphics } from "@mml-io/mml-web";
-import { MMLColor } from "@mml-io/mml-web";
+import { Light, LightGraphics, LightTypes, MMLColor } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
@@ -91,10 +89,10 @@ export class ThreeJSLight extends LightGraphics<ThreeJSGraphicsAdapter> {
       this.threeLightHelper = null;
     }
 
-    if (this.light instanceof THREE.PointLight) {
-      this.threeLightHelper = new THREE.PointLightHelper(this.light, debugSphereSize);
-    } else if (this.light instanceof THREE.SpotLight) {
-      this.threeLightHelper = new THREE.SpotLightHelper(this.light);
+    if (this.threeLight instanceof THREE.PointLight) {
+      this.threeLightHelper = new THREE.PointLightHelper(this.threeLight, debugSphereSize);
+    } else if (this.threeLight instanceof THREE.SpotLight) {
+      this.threeLightHelper = new THREE.SpotLightHelper(this.threeLight);
     }
 
     if (this.threeLightHelper) {

@@ -16,6 +16,7 @@ export function bodyFromRemoteHolderElement(remoteHolderElement: HTMLElement): H
     }
 
     for (let i = 0; i < element.children.length; i++) {
+      console.log("child", element.children[i].tagName);
       const child = element.children[i] as HTMLElement;
       const result = findBodyElement(child);
       if (result) {
@@ -26,7 +27,15 @@ export function bodyFromRemoteHolderElement(remoteHolderElement: HTMLElement): H
     return null;
   };
 
-  return findBodyElement(remoteHolderElement);
+  const body = findBodyElement(remoteHolderElement);
+  if (body) return body;
+
+  // Fallback to a remote document element if present (some environments mount the DOM there)
+  const remoteDoc = remoteHolderElement.querySelector("m-remote-document") as HTMLElement | null;
+  if (remoteDoc) return remoteDoc;
+
+  // Final fallback to the holder itself so callers can still traverse children
+  return remoteHolderElement;
 }
 
 /**
@@ -197,16 +206,18 @@ function findElementInCode(code: string, element: HTMLElement): { start: number;
   return bestMatch;
 }
 
+export type AttributeValue = string | number | boolean | null | undefined;
+
 /**
  * Update an attribute value in a tag string.
  * If the attribute exists, updates it. If not, adds it.
- * If value is undefined, removes the attribute.
+ * If value is undefined or null, removes the attribute.
  */
-function updateAttributeInTag(tagContent: string, attrName: string, value: number | undefined): string {
+function updateAttributeInTag(tagContent: string, attrName: string, value: AttributeValue): string {
   const attrRegex = new RegExp(`\\s*\\b${attrName}=["'][^"']*["']`, "i");
   const hasAttr = attrRegex.test(tagContent);
   
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     // Remove the attribute
     if (hasAttr) {
       return tagContent.replace(attrRegex, "");
@@ -257,5 +268,51 @@ export function updateElementTransformInCode(
   const newCode = code.substring(0, elementPos.start) + newTagContent + code.substring(elementPos.end);
   
   return newCode;
+}
+
+/**
+ * Update a set of attributes on a single element inside the code string.
+ * Returns the updated code or null if the element could not be found.
+ */
+export function updateElementAttributesInCode(
+  code: string,
+  element: HTMLElement,
+  attributes: Record<string, AttributeValue>,
+): string | null {
+  const elementPos = findElementInCode(code, element);
+  if (!elementPos) {
+    console.error("[domUtils] Could not find element in code for attribute update");
+    return null;
+  }
+
+  let newTagContent = elementPos.tagContent;
+  for (const [attrName, value] of Object.entries(attributes)) {
+    newTagContent = updateAttributeInTag(newTagContent, attrName, value);
+  }
+
+  return code.substring(0, elementPos.start) + newTagContent + code.substring(elementPos.end);
+}
+
+/**
+ * Update the same set of attributes for multiple elements in the code string.
+ * Uses the current code after each element update to preserve offsets.
+ * Returns the updated code or null if any element cannot be located.
+ */
+export function updateElementsAttributesInCode(
+  code: string,
+  elements: HTMLElement[],
+  attributes: Record<string, AttributeValue>,
+): string | null {
+  let updatedCode = code;
+
+  for (const element of elements) {
+    const nextCode = updateElementAttributesInCode(updatedCode, element, attributes);
+    if (!nextCode) {
+      return null;
+    }
+    updatedCode = nextCode;
+  }
+
+  return updatedCode;
 }
 

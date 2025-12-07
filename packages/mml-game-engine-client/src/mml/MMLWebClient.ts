@@ -33,6 +33,11 @@ export interface MMLWebClientEditorCallbacks {
   onDragStateChange?: (isDragging: boolean) => void;
 }
 
+export type MMLWebClientOptions = {
+  controlManagerConfig?: Partial<ControlManagerConfig>;
+  isEditorMode?: boolean;
+};
+
 export class MMLWebClient {
   public readonly element: HTMLDivElement;
   public remoteDocumentHolder: HTMLElement;
@@ -44,6 +49,8 @@ export class MMLWebClient {
   private debugOverlay?: PhysicsDebugOverlay;
   private navmeshOverlay?: NavMeshDebugOverlay;
   private debugMessageHandler?: (event: MessageEvent) => void;
+  private controlManagerConfig?: Partial<ControlManagerConfig>;
+  private isEditorMode: boolean;
 
   // Editor selection/transform support
   private transformController?: TransformWidgetController<GameThreeJSAdapter>;
@@ -59,13 +66,13 @@ export class MMLWebClient {
     windowTarget: Window,
     remoteHolderElement: HTMLElement,
     interactive: boolean,
-    controlManagerConfig?: Partial<ControlManagerConfig>,
+    options: MMLWebClientOptions = {},
   ): Promise<MMLWebClient> {
     const client = new MMLWebClient(
       windowTarget,
       remoteHolderElement,
       interactive,
-      controlManagerConfig,
+      options,
     );
     await client.init();
     return client;
@@ -75,10 +82,12 @@ export class MMLWebClient {
     private windowTarget: Window,
     private remoteHolderElement: HTMLElement,
     private interactive: boolean,
-    private controlManagerConfig?: Partial<ControlManagerConfig>,
+    options: MMLWebClientOptions = {},
   ) {
     this.windowTarget = windowTarget;
     this.remoteHolderElement = remoteHolderElement;
+    this.controlManagerConfig = options.controlManagerConfig;
+    this.isEditorMode = options.isEditorMode ?? false;
 
     // Create element the scene will be rendered in
     this.element = document.createElement("div");
@@ -93,6 +102,7 @@ export class MMLWebClient {
   private async init() {
     const graphicsAdapter = await GameThreeJSAdapter.create(this.element, {
       controlsType: GameThreeJSAdapterControlsType.DragFly,
+      cameraManagerEnabled: !this.isEditorMode,
     });
 
     if (!this.interactive) {
@@ -367,17 +377,14 @@ export class MMLWebClient {
   }
 
   /**
-   * Enable editor mode (selection and transform).
+   * Set the visibility of element visualizers (lights, cameras, etc.)
+   * @param visible Whether visualizers should be visible
    */
-  public enableEditorMode(): void {
-    this.transformController?.enable();
-  }
-
-  /**
-   * Disable editor mode (clears selection and hides gizmo).
-   */
-  public disableEditorMode(): void {
-    this.transformController?.disable();
+  public setVisualizersVisible(visible: boolean): void {
+    const graphicsAdapter = this.mScene.getGraphicsAdapter();
+    if (graphicsAdapter && "setVisualizersVisible" in graphicsAdapter) {
+      (graphicsAdapter as any).setVisualizersVisible(visible);
+    }
   }
 
   // ==================== End Editor API ====================

@@ -49,6 +49,7 @@ import {
   StandaloneGraphicsAdapter,
   TransformableGraphics,
   VideoGraphics,
+  ElementVisualizerFactory,
 } from "../graphics";
 import { InteractionManager } from "../interaction-ui";
 import { LoadingProgressManager } from "../loading";
@@ -87,6 +88,11 @@ export interface MMLGraphicsInterface<C extends GraphicsAdapter> {
     element: Model<C>,
     updateMeshCallback: () => void,
   ) => ModelGraphics<C>;
+  /**
+   * Get the element visualizer factory for creating editor visualizers from descriptors.
+   * Returns null if this adapter doesn't support editor visualizers.
+   */
+  getElementVisualizerFactory?: () => ElementVisualizerFactory<C> | null;
 }
 
 export type PositionAndRotation = {

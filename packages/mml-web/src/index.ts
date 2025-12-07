@@ -24,6 +24,7 @@ export * from "./time";
 export * from "./utils/calculateContentSize";
 export * from "./utils/EventHandlerCollection";
 export * from "./video";
+export * from "./visuals";
 export {
   NetworkedDOMWebsocket,
   NetworkedDOMWebsocketStatus,

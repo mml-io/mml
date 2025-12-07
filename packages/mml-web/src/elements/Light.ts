@@ -9,6 +9,7 @@ import {
 import { OrientedBoundingBox } from "../bounding-box";
 import { MMLColor } from "../color";
 import { GraphicsAdapter, LightGraphics } from "../graphics";
+import { getLightSelectedVisualizer, getLightVisualizer, VisualizerDescriptor } from "../visuals";
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
@@ -50,6 +51,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       (newValue: MMLColor) => {
         this.props.color = newValue;
         this.lightGraphics?.setColor(newValue, this.props);
+        this.notifyVisualizerChanged();
       },
     ],
     intensity: [
@@ -66,6 +68,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       (newValue: number) => {
         this.props.angleDeg = newValue;
         this.lightGraphics?.setAngle(newValue, this.props);
+        this.notifyVisualizerChanged();
       },
     ],
     distance: [
@@ -74,6 +77,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       (newValue: number) => {
         this.props.distance = newValue;
         this.lightGraphics?.setDistance(newValue, this.props);
+        this.notifyVisualizerChanged();
       },
     ],
   });
@@ -129,6 +133,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     type: (instance, newValue) => {
       instance.props.type = parseEnumAttribute(newValue, LightTypes, defaultLightType);
       instance.lightGraphics?.setType(instance.props.type, instance.props);
+      instance.notifyVisualizerChanged();
     },
   });
 
@@ -181,6 +186,12 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
 
   public isClickable(): boolean {
     return false;
+  }
+
+  public override getElementVisualizer(isSelected: boolean): VisualizerDescriptor | null {
+    return isSelected
+      ? getLightSelectedVisualizer(this.props.type, this.props.color, this.props.angleDeg, this.props.distance)
+      : getLightVisualizer(this.props.color);
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {

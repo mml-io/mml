@@ -90,6 +90,11 @@ export interface EditorState {
   snappingEnabled: boolean;
   setSnappingEnabled: (enabled: boolean) => void;
 
+  // Element visualizers visibility
+  visualizersVisible: boolean;
+  setVisualizersVisible: (visible: boolean) => void;
+  toggleVisualizersVisible: () => void;
+
   contentSources: ContentSource[];
   addContentSource: (source: ContentSource) => void;
   removeContentSource: (id: string) => void;
@@ -263,6 +268,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   // Snapping
   snappingEnabled: false,
   setSnappingEnabled: (snappingEnabled) => set({ snappingEnabled }),
+
+  // Element visualizers visibility
+  visualizersVisible: true,
+  setVisualizersVisible: (visualizersVisible) => set({ visualizersVisible }),
+  toggleVisualizersVisible: () =>
+    set((state) => ({ visualizersVisible: !state.visualizersVisible })),
 
   contentSources: [],
   addContentSource: (source) =>
