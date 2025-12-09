@@ -113,7 +113,9 @@ export class MMLWebClient {
     this.mScene.init(graphicsAdapter);
 
     // Initialize transform controller for editor support
-    this.initializeTransformController(graphicsAdapter);
+    if (this.isEditorMode) {
+      this.initializeTransformController(graphicsAdapter);
+    }
 
     // Attach physics debug overlay and message bridge from remote physics system
     try {
