@@ -20,7 +20,7 @@ const buildOptions: esbuild.BuildOptions = {
     index: "src/index.ts",
   },
   bundle: true,
-  external: ["node:crypto"],
+  external: ["node:crypto", "node:worker_threads"],
   write: true,
   metafile: true,
   publicPath: "",

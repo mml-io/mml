@@ -11,6 +11,8 @@ const buildOptions: esbuild.BuildOptions = {
   write: true,
   sourcemap: true,
   outdir: "build",
+  platform: "browser",
+  external: ["node:worker_threads"],
 };
 
 const args = process.argv.splice(2);

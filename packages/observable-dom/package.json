@@ -20,12 +20,12 @@
   },
   "dependencies": {
     "@mml-io/observable-dom-common": "^0.23.0",
-    "canvas": "3.1.2",
-    "jsdom": "26.1.0",
+    "canvas": "3.2.0",
+    "jsdom": "27.3.0",
     "node-fetch": "3.3.2"
   },
   "devDependencies": {
-    "@types/jsdom": "^21.1.7",
-    "@types/node-fetch": "2.6.12"
+    "@types/jsdom": "^27.0.0",
+    "@types/node-fetch": "2.6.13"
   }
 }
