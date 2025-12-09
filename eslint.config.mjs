@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/node_modules", "**/build", "**/coverage", "**/vendor", "**/wasm"],
+    ignores: ["**/node_modules", "**/build", "**/coverage", "**/vendor", "**/wasm", "**/__mocks__"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
