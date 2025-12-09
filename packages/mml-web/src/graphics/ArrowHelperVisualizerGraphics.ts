@@ -3,24 +3,21 @@ import { MElement } from "../elements/MElement";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 import { VisualizerOptions } from "./Visualizer";
 
-export abstract class SpotLightHelperVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
+export abstract class ArrowHelperVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   protected element: MElement<G>;
   protected clickable: boolean;
 
   constructor(
     element: MElement<G>,
-    _angleDeg: number,
     _distance: number | null,
     _color: MMLColor,
     options?: VisualizerOptions,
   ) {
     this.element = element;
-    this.clickable = options?.clickable ?? false;
+    this.clickable = options?.clickable ?? true;
   }
 
   abstract setVisible(visible: boolean): void;
-
-  abstract setAngle(angleDeg: number): void;
 
   abstract setDistance(distance: number | null): void;
 
@@ -32,4 +29,5 @@ export abstract class SpotLightHelperVisualizerGraphics<G extends GraphicsAdapte
     return this.clickable;
   }
 }
+
 

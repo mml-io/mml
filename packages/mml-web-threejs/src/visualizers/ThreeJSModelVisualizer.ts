@@ -1,4 +1,4 @@
-import { MElement, ModelVisualizerGraphics } from "@mml-io/mml-web";
+import { MElement, ModelVisualizerGraphics, VisualizerOptions } from "@mml-io/mml-web";
 import { ModelLoader } from "@mml-io/model-loader";
 import * as THREE from "three";
 
@@ -28,11 +28,17 @@ export class ThreeJSModelVisualizer extends ModelVisualizerGraphics<ThreeJSGraph
   private currentModel: THREE.Object3D | null = null;
   private disposed = false;
 
-  constructor(element: MElement<ThreeJSGraphicsAdapter>, url: string, scale: number) {
-    super(element, url, scale);
+  constructor(
+    element: MElement<ThreeJSGraphicsAdapter>,
+    url: string,
+    scale: number,
+    options?: VisualizerOptions,
+  ) {
+    super(element, url, scale, options);
     this.group = new THREE.Group();
     this.group.visible = true;
     this.group.name = "ModelVisualizer";
+    this.group.userData.visualizerClickable = this.isClickable();
     this.element.getContainer().add(this.group);
     this.loadModel(url);
     console.log("ThreeJSModelVisualizer created", this.group, this.element.getContainer());

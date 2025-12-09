@@ -1,4 +1,4 @@
-import { MElement, MMLColor, MMLGraphicsInterface } from "@mml-io/mml-web";
+import { MElement, MMLColor, MMLGraphicsInterface, VisualizerOptions } from "@mml-io/mml-web";
 
 import * as ThreeJSElements from "./elements";
 import { ThreeJSGraphicsAdapter } from "./ThreeJSGraphicsAdapter";
@@ -37,21 +37,33 @@ export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapt
     svgContent: string,
     size: number,
     color?: MMLColor,
-  ) => new ThreeJSVisualizers.ThreeJSBillboardVisualizer(element, svgContent, size, color),
+    options?: VisualizerOptions,
+  ) => new ThreeJSVisualizers.ThreeJSBillboardVisualizer(element, svgContent, size, color, options),
   ModelVisualizerGraphicsInterface: (
     element: MElement<ThreeJSGraphicsAdapter>,
     url: string,
     scale: number,
-  ) => new ThreeJSVisualizers.ThreeJSModelVisualizer(element, url, scale),
+    options?: VisualizerOptions,
+  ) => new ThreeJSVisualizers.ThreeJSModelVisualizer(element, url, scale, options),
+  ArrowHelperVisualizerGraphicsInterface: (
+    element: MElement<ThreeJSGraphicsAdapter>,
+    distance: number | null,
+    color: MMLColor,
+    options?: VisualizerOptions,
+  ) => new ThreeJSVisualizers.ThreeJSArrowHelperVisualizer(element, distance, color, options),
   PointLightHelperVisualizerGraphicsInterface: (
     element: MElement<ThreeJSGraphicsAdapter>,
     distance: number | null,
     color: MMLColor,
-  ) => new ThreeJSVisualizers.ThreeJSPointLightHelperVisualizer(element, distance, color),
+    options?: VisualizerOptions,
+  ) =>
+    new ThreeJSVisualizers.ThreeJSPointLightHelperVisualizer(element, distance, color, options),
   SpotLightHelperVisualizerGraphicsInterface: (
     element: MElement<ThreeJSGraphicsAdapter>,
     angleDeg: number,
     distance: number | null,
     color: MMLColor,
-  ) => new ThreeJSVisualizers.ThreeJSSpotLightHelperVisualizer(element, angleDeg, distance, color),
+    options?: VisualizerOptions,
+  ) =>
+    new ThreeJSVisualizers.ThreeJSSpotLightHelperVisualizer(element, angleDeg, distance, color, options),
 };

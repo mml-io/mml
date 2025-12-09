@@ -1,18 +1,27 @@
 import { MMLColor } from "../color";
 import { MElement } from "../elements/MElement";
 import { GraphicsAdapter } from "./GraphicsAdapter";
+import { VisualizerOptions } from "./Visualizer";
 
 export abstract class BillboardVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter> {
   protected element: MElement<G>;
   protected svgContent: string;
   protected size: number;
   protected color?: MMLColor;
+  protected clickable: boolean;
 
-  constructor(element: MElement<G>, svgContent: string, size: number, color?: MMLColor) {
+  constructor(
+    element: MElement<G>,
+    svgContent: string,
+    size: number,
+    color?: MMLColor,
+    options?: VisualizerOptions,
+  ) {
     this.element = element;
     this.svgContent = svgContent;
     this.size = size;
     this.color = color;
+    this.clickable = options?.clickable ?? true;
   }
 
   abstract enable(): void;
@@ -26,4 +35,8 @@ export abstract class BillboardVisualizerGraphics<G extends GraphicsAdapter = Gr
   abstract setColor(color: MMLColor): void;
 
   abstract dispose(): void;
+
+  public isClickable(): boolean {
+    return this.clickable;
+  }
 }

@@ -1,4 +1,4 @@
-import { BillboardVisualizerGraphics, ElementVisualizer, MElement, MMLColor } from "@mml-io/mml-web";
+import { BillboardVisualizerGraphics, MElement, MMLColor, VisualizerOptions } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
@@ -56,9 +56,16 @@ function createSvgBillboard(svgContent: string, size: number, color?: MMLColor):
 export class ThreeJSBillboardVisualizer extends BillboardVisualizerGraphics<ThreeJSGraphicsAdapter> {
   private sprite: THREE.Sprite;
 
-  constructor(element: MElement<ThreeJSGraphicsAdapter>, svgContent: string, size: number, color?: MMLColor) {
-    super(element, svgContent, size, color);
+  constructor(
+    element: MElement<ThreeJSGraphicsAdapter>,
+    svgContent: string,
+    size: number,
+    color?: MMLColor,
+    options?: VisualizerOptions,
+  ) {
+    super(element, svgContent, size, color, options);
     this.sprite = createSvgBillboard(this.svgContent, this.size, this.color);
+    this.sprite.userData.visualizerClickable = this.isClickable();
     this.element.getContainer().add(this.sprite);
   }
 

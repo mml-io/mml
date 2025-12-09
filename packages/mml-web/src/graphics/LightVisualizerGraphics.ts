@@ -1,5 +1,6 @@
 import { MMLColor } from "../color";
 import { Light, LightTypes } from "../elements";
+import { ArrowHelperVisualizerGraphics } from "./ArrowHelperVisualizerGraphics";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 import { BillboardVisualizerGraphics } from "./BillboardVisualizerGraphics";
 import { PointLightHelperVisualizerGraphics } from "./PointLightHelperVisualizerGraphics";
@@ -17,6 +18,8 @@ const LIGHT_BULB_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 
 
 const LIGHT_ICON_SIZE = 0.5;
 
+const ARROW_LENGTH = 0.75;
+
 type LightHelperVisualizer =
   | PointLightHelperVisualizerGraphics
   | SpotLightHelperVisualizerGraphics;
@@ -30,6 +33,7 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
 {
   private lightBillboardIconGraphics: BillboardVisualizerGraphics;
   private lightHelperGraphics: LightHelperVisualizer;
+  private arrowVisualizer: ArrowHelperVisualizerGraphics | null;
   private container: LightVisualizerContainer = { visible: true };
   private selected = false;
   private enabled = true;
@@ -49,6 +53,12 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
       type: light.props.type,
       angleDeg: light.props.angleDeg,
       distance: light.props.distance,
+      color: light.props.color,
+    });
+
+    this.arrowVisualizer = this.createArrowVisualizer({
+      type: light.props.type,
+      distance: ARROW_LENGTH,
       color: light.props.color,
     });
   }
@@ -103,6 +113,15 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
       distance: this.light.props.distance,
       color: this.light.props.color,
     });
+
+    if (this.arrowVisualizer) {
+      this.arrowVisualizer.dispose();
+    }
+    this.arrowVisualizer = this.createArrowVisualizer({
+      type,
+      distance: ARROW_LENGTH,
+      color: this.light.props.color,
+    });
     this.updateVisibility();
   }
 
@@ -113,11 +132,16 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
     } else if (this.lightHelperGraphics instanceof PointLightHelperVisualizerGraphics) {
       this.lightHelperGraphics.setColor(color);
     }
+
+    if (this.arrowVisualizer) {
+      this.arrowVisualizer.setColor(color);
+    }
   }
 
   dispose(): void {
     this.lightBillboardIconGraphics.dispose();
     this.lightHelperGraphics.dispose();
+    this.arrowVisualizer?.dispose();
     this.container = null as unknown as LightVisualizerContainer;
   }
 
@@ -127,8 +151,11 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
     if (!shouldShow) {
       // this.lightBillboardIconGraphics.disable();
       this.lightHelperGraphics?.setVisible(false);
+      this.arrowVisualizer?.setVisible(false);
       return;
     }
+
+    this.arrowVisualizer?.setVisible(true);
 
     if (this.selected) {
       // this.lightBillboardIconGraphics.disable();
@@ -155,13 +182,35 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
         .getScene()
         .getGraphicsAdapter()
         .getGraphicsAdapterFactory()
-        .PointLightHelperVisualizerGraphicsInterface(this.light, distance, color);
+        .PointLightHelperVisualizerGraphicsInterface(this.light, distance, color, { clickable: false });
     }
 
     return this.light
       .getScene()
       .getGraphicsAdapter()
       .getGraphicsAdapterFactory()
-      .SpotLightHelperVisualizerGraphicsInterface(this.light, angleDeg, distance, color);
+      .SpotLightHelperVisualizerGraphicsInterface(this.light, angleDeg, distance, color, {
+        clickable: false,
+      });
+  }
+
+  private createArrowVisualizer({
+    type,
+    distance,
+    color,
+  }: {
+    type: LightTypes;
+    distance: number | null;
+    color: MMLColor;
+  }): ArrowHelperVisualizerGraphics | null {
+    if (type !== LightTypes.spotlight) {
+      return null;
+    }
+
+    return this.light
+      .getScene()
+      .getGraphicsAdapter()
+      .getGraphicsAdapterFactory()
+      .ArrowHelperVisualizerGraphicsInterface(this.light, distance, color, { clickable: false });
   }
 }

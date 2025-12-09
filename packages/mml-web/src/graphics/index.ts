@@ -30,5 +30,6 @@ export * from "./TransformableGraphics";
 export * from "./TransformWidgetGraphics";
 export * from "./VideoGraphics";
 export * from "./BillboardVisualizerGraphics";
+export * from "./ArrowHelperVisualizerGraphics";
 export * from "./PointLightHelperVisualizerGraphics";
 export * from "./SpotLightHelperVisualizerGraphics";

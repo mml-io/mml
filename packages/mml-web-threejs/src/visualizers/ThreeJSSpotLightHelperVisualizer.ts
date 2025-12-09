@@ -1,4 +1,10 @@
-import { ElementVisualizer, MElement, MMLColor, SpotLightHelperVisualizerGraphics } from "@mml-io/mml-web";
+import {
+  ElementVisualizer,
+  MElement,
+  MMLColor,
+  SpotLightHelperVisualizerGraphics,
+  VisualizerOptions,
+} from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
@@ -19,13 +25,20 @@ export class ThreeJSSpotLightHelperVisualizer
   private currentDistance: number | null;
   private currentColor: MMLColor;
 
-  constructor(element: MElement<ThreeJSGraphicsAdapter>, angleDeg: number, distance: number | null, color: MMLColor) {
-    super(element, angleDeg, distance, color);
+  constructor(
+    element: MElement<ThreeJSGraphicsAdapter>,
+    angleDeg: number,
+    distance: number | null,
+    color: MMLColor,
+    options?: VisualizerOptions,
+  ) {
+    super(element, angleDeg, distance, color, options);
     this.currentAngle = angleDeg;
     this.currentDistance = distance;
     this.currentColor = color;
     this.helper = new THREE.Object3D();
     this.createCone(angleDeg, distance, color);
+    this.helper.userData.visualizerClickable = this.isClickable();
     this.element.getContainer().add(this.helper);
   }
 
@@ -91,10 +104,11 @@ export class ThreeJSSpotLightHelperVisualizer
     const length = distance ?? 10;
     const angleRad = THREE.MathUtils.degToRad(angleDeg);
     const radius = Math.tan(angleRad) * length;
+    const threeColor = mmlColorToThree(color);
 
     const geometry = new THREE.ConeGeometry(radius, length, 16, 1, true);
     const material = new THREE.MeshBasicMaterial({
-      color: mmlColorToThree(color),
+      color: threeColor,
       wireframe: true,
       transparent: true,
       opacity: 0.3,

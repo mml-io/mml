@@ -1,4 +1,9 @@
-import { MElement, MMLColor, PointLightHelperVisualizerGraphics } from "@mml-io/mml-web";
+import {
+  MElement,
+  MMLColor,
+  PointLightHelperVisualizerGraphics,
+  VisualizerOptions,
+} from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
@@ -10,33 +15,48 @@ function mmlColorToThree(color: MMLColor): THREE.Color {
 }
 
 /**
- * ThreeJS point light helper visualizer (range sphere + center marker).
+ * ThreeJS point light helper visualizer (perpendicular range circles + center marker).
  */
 export class ThreeJSPointLightHelperVisualizer extends PointLightHelperVisualizerGraphics<ThreeJSGraphicsAdapter> {
   private helper: THREE.Object3D;
+  private circleLines: THREE.Line[];
+  private center: THREE.Mesh;
   private currentDistance: number | null;
   private currentColor: MMLColor;
 
-  constructor(element: MElement<ThreeJSGraphicsAdapter>, distance: number | null, color: MMLColor) {
-    super(element, distance, color);
+  constructor(
+    element: MElement<ThreeJSGraphicsAdapter>,
+    distance: number | null,
+    color: MMLColor,
+    options?: VisualizerOptions,
+  ) {
+    super(element, distance, color, options);
     this.currentDistance = distance;
     this.currentColor = color;
     const radius = distance ?? 10;
-    const geometry = new THREE.SphereGeometry(radius, 16, 12);
-    const material = new THREE.MeshBasicMaterial({
+    this.helper = new THREE.Object3D();
+
+    const circleMaterialOne = new THREE.LineBasicMaterial({
       color: mmlColorToThree(color),
-      wireframe: true,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.5,
     });
-    this.helper = new THREE.Mesh(geometry, material);
+    const circleMaterialTwo = circleMaterialOne.clone();
+
+    const circleOne = this.createCircleLine(radius, circleMaterialOne);
+    const circleTwo = this.createCircleLine(radius, circleMaterialTwo);
+    circleTwo.rotation.x = Math.PI / 2;
+
+    this.circleLines = [circleOne, circleTwo];
+    this.circleLines.forEach((line) => this.helper.add(line));
 
     const centerGeometry = new THREE.SphereGeometry(POINT_LIGHT_HELPER_SIZE, 8, 6);
     const centerMaterial = new THREE.MeshBasicMaterial({
       color: mmlColorToThree(color),
     });
-    const center = new THREE.Mesh(centerGeometry, centerMaterial);
-    this.helper.add(center);
+    this.center = new THREE.Mesh(centerGeometry, centerMaterial);
+    this.helper.add(this.center);
+    this.helper.userData.visualizerClickable = this.isClickable();
     this.element.getContainer().add(this.helper);
   }
 
@@ -63,26 +83,39 @@ export class ThreeJSPointLightHelperVisualizer extends PointLightHelperVisualize
   }
 
   update(distance: number | null, color: MMLColor): void {
-    const mesh = this.helper as THREE.Mesh;
-    const material = mesh.material as THREE.MeshBasicMaterial;
-    material.color = mmlColorToThree(color);
-
+    const newColor = mmlColorToThree(color);
     const newRadius = distance ?? 10;
-    mesh.geometry.dispose();
-    mesh.geometry = new THREE.SphereGeometry(newRadius, 16, 12);
+
+    this.circleLines.forEach((line) => {
+      const material = line.material as THREE.LineBasicMaterial;
+      material.color = newColor;
+      line.geometry.dispose();
+      line.geometry = this.createCircleGeometry(newRadius);
+    });
+
+    const centerMaterial = this.center.material as THREE.MeshBasicMaterial;
+    centerMaterial.color = newColor;
   }
 
   dispose(): void {
     this.helper.removeFromParent();
-    const mesh = this.helper as THREE.Mesh;
-    mesh.geometry.dispose();
-    (mesh.material as THREE.Material).dispose();
-    this.helper.children.forEach((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.geometry.dispose();
-        (child.material as THREE.Material).dispose();
-      }
+    this.circleLines.forEach((line) => {
+      line.geometry.dispose();
+      (line.material as THREE.Material).dispose();
     });
+    this.center.geometry.dispose();
+    (this.center.material as THREE.Material).dispose();
+  }
+
+  private createCircleGeometry(radius: number): THREE.BufferGeometry {
+    const segments = 48;
+    const points = new THREE.Path().absarc(0, 0, radius, 0, Math.PI * 2).getSpacedPoints(segments);
+    return new THREE.BufferGeometry().setFromPoints(points);
+  }
+
+  private createCircleLine(radius: number, material: THREE.LineBasicMaterial): THREE.Line {
+    const geometry = this.createCircleGeometry(radius);
+    return new THREE.LineLoop(geometry, material);
   }
 }
 

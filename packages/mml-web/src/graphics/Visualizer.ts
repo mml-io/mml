@@ -1,5 +1,13 @@
 import { GraphicsAdapter } from "./GraphicsAdapter";
 
+export type VisualizerOptions = {
+  /**
+   * Whether the visualizer should be hit-testable/clickable.
+   * Defaults to true.
+   */
+  clickable?: boolean;
+};
+
 /**
  * Interface for a rendered element visualizer that can be shown/hidden and disposed.
  */

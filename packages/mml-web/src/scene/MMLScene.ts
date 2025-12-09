@@ -27,6 +27,7 @@ import {
 import {
   AnimationGraphics,
   AudioGraphics,
+  ArrowHelperVisualizerGraphics,
   BillboardVisualizerGraphics,
   ChatProbeGraphics,
   CubeGraphics,
@@ -55,6 +56,7 @@ import {
   StandaloneGraphicsAdapter,
   TransformableGraphics,
   VideoGraphics,
+  VisualizerOptions,
 } from "../graphics";
 import { InteractionManager } from "../interaction-ui";
 import { LoadingProgressManager } from "../loading";
@@ -98,22 +100,32 @@ export interface MMLGraphicsInterface<C extends GraphicsAdapter> {
     svgContent: string,
     size: number,
     color?: MMLColor,
+    options?: VisualizerOptions,
   ) => BillboardVisualizerGraphics<C>;
   ModelVisualizerGraphicsInterface: (
     element: MElement<C>,
     url: string,
     scale: number,
+    options?: VisualizerOptions,
   ) => ModelVisualizerGraphics<C>;
+  ArrowHelperVisualizerGraphicsInterface: (
+    element: MElement<C>,
+    distance: number | null,
+    color: MMLColor,
+    options?: VisualizerOptions,
+  ) => ArrowHelperVisualizerGraphics<C>;
   PointLightHelperVisualizerGraphicsInterface: (
     element: MElement<C>,
     distance: number | null,
     color: MMLColor,
+    options?: VisualizerOptions,
   ) => PointLightHelperVisualizerGraphics<C>;
   SpotLightHelperVisualizerGraphicsInterface: (
     element: MElement<C>,
     angleDeg: number,
     distance: number | null,
     color: MMLColor,
+    options?: VisualizerOptions,
   ) => SpotLightHelperVisualizerGraphics<C>;
 }
 

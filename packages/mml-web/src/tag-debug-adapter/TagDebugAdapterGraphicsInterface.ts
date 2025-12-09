@@ -1,9 +1,11 @@
 import { MMLColor } from "../color";
 import {
+  ArrowHelperVisualizerGraphics,
   BillboardVisualizerGraphics,
   ModelVisualizerGraphics,
   PointLightHelperVisualizerGraphics,
   SpotLightHelperVisualizerGraphics,
+  VisualizerOptions,
 } from "../graphics";
 import { Matr4, Vect3 } from "../math";
 import { MMLGraphicsInterface } from "../scene";
@@ -57,6 +59,24 @@ class TagDebugModelVisualizerGraphics extends ModelVisualizerGraphics<TagDebugGr
   }
 }
 
+class TagDebugArrowHelperVisualizerGraphics extends ArrowHelperVisualizerGraphics<TagDebugGraphicsAdapter> {
+  setVisible(_visible: boolean): void {
+    // no-op
+  }
+
+  setDistance(_distance: number | null): void {
+    // no-op
+  }
+
+  setColor(_color: MMLColor): void {
+    // no-op
+  }
+
+  dispose(): void {
+    // no-op
+  }
+}
+
 class TagDebugPointLightHelperVisualizerGraphics extends PointLightHelperVisualizerGraphics<TagDebugGraphicsAdapter> {
   setVisible(_visible: boolean): void {
     // no-op
@@ -103,23 +123,33 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
     svgContent: string,
     size: number,
     color?: MMLColor,
-  ) => new TagDebugBillboardVisualizerGraphics(element, svgContent, size, color),
+    options?: VisualizerOptions,
+  ) => new TagDebugBillboardVisualizerGraphics(element, svgContent, size, color, options),
   ModelVisualizerGraphicsInterface: (
     element: MElement<TagDebugGraphicsAdapter>,
     url: string,
     scale: number,
-  ) => new TagDebugModelVisualizerGraphics(element, url, scale),
+    options?: VisualizerOptions,
+  ) => new TagDebugModelVisualizerGraphics(element, url, scale, options),
+  ArrowHelperVisualizerGraphicsInterface: (
+    element: MElement<TagDebugGraphicsAdapter>,
+    distance: number | null,
+    color: MMLColor,
+    options?: VisualizerOptions,
+  ) => new TagDebugArrowHelperVisualizerGraphics(element, distance, color, options),
   PointLightHelperVisualizerGraphicsInterface: (
     element: MElement<TagDebugGraphicsAdapter>,
     distance: number | null,
     color: MMLColor,
-  ) => new TagDebugPointLightHelperVisualizerGraphics(element, distance, color),
+    options?: VisualizerOptions,
+  ) => new TagDebugPointLightHelperVisualizerGraphics(element, distance, color, options),
   SpotLightHelperVisualizerGraphicsInterface: (
     element: MElement<TagDebugGraphicsAdapter>,
     angleDeg: number,
     distance: number | null,
     color: MMLColor,
-  ) => new TagDebugSpotLightHelperVisualizerGraphics(element, angleDeg, distance, color),
+    options?: VisualizerOptions,
+  ) => new TagDebugSpotLightHelperVisualizerGraphics(element, angleDeg, distance, color, options),
   MElementGraphicsInterface: (element) => new TagDebugMElement(element),
   MMLDebugHelperGraphicsInterface: (debugHelper) => new TagDebugAdapterDebugHelper(debugHelper),
   MMLCapsuleGraphicsInterface: TagDebugAdapterElement(

@@ -244,6 +244,45 @@ export function offsetsToCodeRange(code: string, start: number, end: number): Co
 }
 
 /**
+ * Find the matching closing tag for a given tag name, starting the search after the opening tag.
+ * Returns the start/end offsets of the closing tag or null if not found.
+ */
+function findMatchingClosingTagRange(
+  code: string,
+  tagName: string,
+  searchFrom: number,
+): { start: number; end: number } | null {
+  const tagPattern = new RegExp(`<\\/?\\s*${tagName}\\b[^>]*>`, "gi");
+  tagPattern.lastIndex = searchFrom;
+
+  let depth = 0;
+
+  while (true) {
+    const match = tagPattern.exec(code);
+    if (!match) {
+      return null;
+    }
+
+    const text = match[0];
+    const isClosing = text.startsWith("</");
+    const isSelfClosing = /\/\s*>$/.test(text);
+
+    if (!isClosing && !isSelfClosing) {
+      // Nested same tag increases depth
+      depth += 1;
+      continue;
+    }
+
+    if (isClosing) {
+      if (depth === 0) {
+        return { start: match.index, end: match.index + text.length };
+      }
+      depth -= 1;
+    }
+  }
+}
+
+/**
  * Compute the code range that corresponds to an element's opening tag.
  * Returns null if the element cannot be located in the provided code.
  */
@@ -253,6 +292,19 @@ export function getElementCodeRange(code: string, element: HTMLElement): CodeRan
     return null;
   }
 
+  const tagName = element.tagName.toLowerCase();
+  const isSelfClosing = /\/\s*>$/.test(elementPos.tagContent);
+
+  if (isSelfClosing) {
+    return offsetsToCodeRange(code, elementPos.start, elementPos.end);
+  }
+
+  const closingPos = findMatchingClosingTagRange(code, tagName, elementPos.end);
+  if (closingPos) {
+    return offsetsToCodeRange(code, elementPos.start, closingPos.end);
+  }
+
+  // Fallback to opening tag range if no closing tag is found
   return offsetsToCodeRange(code, elementPos.start, elementPos.end);
 }
 

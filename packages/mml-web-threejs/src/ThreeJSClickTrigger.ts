@@ -107,6 +107,10 @@ export class ThreeJSClickTrigger {
 
     if (intersections.length > 0) {
       for (const intersection of intersections) {
+        if (this.shouldIgnoreForSelection(intersection.object)) {
+          continue;
+        }
+
         let obj: THREE.Object3D | null = intersection.object;
         currentIntersection: while (obj) {
           /*
@@ -169,6 +173,17 @@ export class ThreeJSClickTrigger {
 
   dispose() {
     this.eventHandlerCollection.clear();
+  }
+
+  private shouldIgnoreForSelection(object: THREE.Object3D): boolean {
+    let current: THREE.Object3D | null = object;
+    while (current) {
+      if (current.userData?.visualizerClickable === false) {
+        return true;
+      }
+      current = current.parent;
+    }
+    return false;
   }
 
   private isMaterialIgnored(obj: THREE.Object3D): boolean {
