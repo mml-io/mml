@@ -1,4 +1,8 @@
-declare function acquireVsCodeApi<T>(): T & { postMessage: (message: unknown) => void; setState: (state: unknown) => void; getState: () => unknown };
+declare function acquireVsCodeApi<T>(): T & {
+  postMessage: (message: unknown) => void;
+  setState: (state: unknown) => void;
+  getState: () => unknown;
+};
 
 import {
   createMMLGameClient,
@@ -107,7 +111,11 @@ function setFileLabel(label: string) {
   }
 }
 
-function getElementSignature(element: HTMLElement): { tagName: string; id?: string; attrs: Map<string, string> } {
+function getElementSignature(element: HTMLElement): {
+  tagName: string;
+  id?: string;
+  attrs: Map<string, string>;
+} {
   const tagName = element.tagName.toLowerCase();
   const id = element.id || undefined;
   const attrs = new Map<string, string>();
@@ -121,7 +129,10 @@ function getElementSignature(element: HTMLElement): { tagName: string; id?: stri
   return { tagName, id, attrs };
 }
 
-function findElementInCode(code: string, element: HTMLElement): { start: number; end: number; tagContent: string } | null {
+function findElementInCode(
+  code: string,
+  element: HTMLElement,
+): { start: number; end: number; tagContent: string } | null {
   const signature = getElementSignature(element);
   const tagRegex = new RegExp(`<${signature.tagName}\\b[^>]*>`, "gi");
 
@@ -145,7 +156,10 @@ function findElementInCode(code: string, element: HTMLElement): { start: number;
       const attrMatch = tagContent.match(attrRegex);
       if (attrMatch) {
         score += 1;
-        if (attrMatch[1] === attrValue && !["x", "y", "z", "rx", "ry", "rz", "sx", "sy", "sz"].includes(attrName)) {
+        if (
+          attrMatch[1] === attrValue &&
+          !["x", "y", "z", "rx", "ry", "rz", "sx", "sy", "sz"].includes(attrName)
+        ) {
           score += 5;
         }
       }
@@ -206,7 +220,11 @@ function updateAttributeInTag(tagContent: string, attrName: string, value: Attri
   return tagContent.replace(/>$/, ` ${attrName}="${formattedValue}">`);
 }
 
-function updateElementTransformInCode(code: string, element: HTMLElement, values: TransformValues): string | null {
+function updateElementTransformInCode(
+  code: string,
+  element: HTMLElement,
+  values: TransformValues,
+): string | null {
   const elementPos = findElementInCode(code, element);
   if (!elementPos) {
     console.error("[webview] Could not find element in code for transform update");
@@ -271,7 +289,11 @@ async function boot() {
 
   console.log("Booting MML preview");
 
-  staticDocument = new EditableNetworkedDOM("vscode-mml-preview", IframeObservableDOMFactory, false);
+  staticDocument = new EditableNetworkedDOM(
+    "vscode-mml-preview",
+    IframeObservableDOMFactory,
+    false,
+  );
   client = await createMMLGameClient({ mode: "editor" });
   console.log("MML client created", client);
 
@@ -288,7 +310,8 @@ async function boot() {
 
   client.setEditorCallbacks({
     onSelectionChange: (elements) => postSelectionChange(elements as HTMLElement[] | null),
-    onTransformCommit: (element, values) => handleTransformCommit(element, values as TransformValues),
+    onTransformCommit: (element, values) =>
+      handleTransformCommit(element, values as TransformValues),
   });
 
   window.addEventListener("resize", () => client?.fitContainer());
@@ -323,4 +346,3 @@ boot().catch((error) => {
   console.error("Failed to start MML preview", error);
   setFileLabel("Failed to start preview");
 });
-

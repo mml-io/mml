@@ -94,4 +94,3 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
   </body>
 </html>`;
 }
-

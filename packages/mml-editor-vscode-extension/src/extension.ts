@@ -133,10 +133,15 @@ function schedulePush(currentSession: PreviewSession, doc: vscode.TextDocument) 
   }, 150);
 }
 
-function pushDocumentContent(currentSession: PreviewSession, doc: vscode.TextDocument, force: boolean) {
+function pushDocumentContent(
+  currentSession: PreviewSession,
+  doc: vscode.TextDocument,
+  force: boolean,
+) {
   const text = doc.getText();
   const uri = doc.uri.toString();
-  const fileName = doc.uri.scheme === "file" ? doc.uri.path.split("/").pop() ?? doc.uri.toString() : uri;
+  const fileName =
+    doc.uri.scheme === "file" ? (doc.uri.path.split("/").pop() ?? doc.uri.toString()) : uri;
 
   currentSession.panel.webview.postMessage({
     type: "setContent",
@@ -223,4 +228,3 @@ function applySelectionHighlight(
     }
   });
 }
-
