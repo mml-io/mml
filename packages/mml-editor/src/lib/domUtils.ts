@@ -45,13 +45,13 @@ export function elementToPath(remoteHolder: HTMLElement, element: HTMLElement): 
   const root = bodyFromRemoteHolderElement(remoteHolder);
   const path: number[] = [];
   let currentElement: HTMLElement | undefined = element;
-  
+
   while (currentElement && currentElement !== root) {
     const parentChildren = Array.from(currentElement?.parentElement?.children || []);
     path.push(parentChildren.indexOf(currentElement));
     currentElement = currentElement.parentElement || undefined;
   }
-  
+
   return path.reverse();
 }
 
@@ -61,7 +61,7 @@ export function elementToPath(remoteHolder: HTMLElement, element: HTMLElement): 
  */
 export function pathToElement(root: HTMLElement | null, path: number[]): HTMLElement | null {
   if (!root) return null;
-  
+
   let currentElement: HTMLElement | null = root;
   for (const index of path) {
     if (!currentElement || index < 0 || index >= currentElement.children.length) {
@@ -69,7 +69,7 @@ export function pathToElement(root: HTMLElement | null, path: number[]): HTMLEle
     }
     currentElement = currentElement.children[index] as HTMLElement;
   }
-  
+
   return currentElement;
 }
 
@@ -103,10 +103,10 @@ export function resolvePathsToElements(
   paths: number[][],
 ): HTMLElement[] {
   if (!remoteHolder) return [];
-  
+
   const root = bodyFromRemoteHolderElement(remoteHolder);
   if (!root) return [];
-  
+
   return paths
     .map((path) => pathToElement(root, path))
     .filter((el): el is HTMLElement => el !== null);
@@ -131,18 +131,22 @@ const TRANSFORM_ATTR_MAP: Record<keyof TransformValues, string> = {
  * Get a unique identifier for an element to find it in the code.
  * Uses tag name, id, and other unique attributes.
  */
-function getElementSignature(element: HTMLElement): { tagName: string; id?: string; attrs: Map<string, string> } {
+function getElementSignature(element: HTMLElement): {
+  tagName: string;
+  id?: string;
+  attrs: Map<string, string>;
+} {
   const tagName = element.tagName.toLowerCase();
   const id = element.id || undefined;
   const attrs = new Map<string, string>();
-  
+
   // Collect attributes for matching
   for (const attr of Array.from(element.attributes)) {
     if (attr.name !== "id") {
       attrs.set(attr.name, attr.value);
     }
   }
-  
+
   return { tagName, id, attrs };
 }
 
@@ -155,19 +159,23 @@ export function findElementInCode(
   element: HTMLElement,
 ): { start: number; end: number; tagContent: string } | null {
   const signature = getElementSignature(element);
-  console.log("[domUtils] Finding element in code:", signature.tagName, signature.id ? `#${signature.id}` : "");
-  
+  console.log(
+    "[domUtils] Finding element in code:",
+    signature.tagName,
+    signature.id ? `#${signature.id}` : "",
+  );
+
   // Create regex to find the opening tag
   const tagRegex = new RegExp(`<${signature.tagName}\\b[^>]*>`, "gi");
-  
+
   let match;
   let bestMatch: { start: number; end: number; tagContent: string } | null = null;
   let bestScore = -1;
-  
+
   while ((match = tagRegex.exec(code)) !== null) {
     const tagContent = match[0];
     let score = 0;
-    
+
     // Score based on attribute matches
     if (signature.id) {
       const idMatch = tagContent.match(/\bid=["']([^"']*)["']/i);
@@ -175,7 +183,7 @@ export function findElementInCode(
         score += 100; // Strong match on ID
       }
     }
-    
+
     // Match other attributes
     for (const [attrName, attrValue] of signature.attrs) {
       const attrRegex = new RegExp(`\\b${attrName}=["']([^"']*)["']`, "i");
@@ -183,12 +191,15 @@ export function findElementInCode(
       if (attrMatch) {
         score += 1;
         // Bonus for exact value match (except transform attrs which may differ)
-        if (attrMatch[1] === attrValue && !["x", "y", "z", "rx", "ry", "rz", "sx", "sy", "sz"].includes(attrName)) {
+        if (
+          attrMatch[1] === attrValue &&
+          !["x", "y", "z", "rx", "ry", "rz", "sx", "sy", "sz"].includes(attrName)
+        ) {
           score += 5;
         }
       }
     }
-    
+
     if (score > bestScore) {
       bestScore = score;
       bestMatch = {
@@ -198,13 +209,13 @@ export function findElementInCode(
       };
     }
   }
-  
+
   if (bestMatch) {
     console.log("[domUtils] Found element at index", bestMatch.start, "with score", bestScore);
   } else {
     console.log("[domUtils] Could not find element in code");
   }
-  
+
   return bestMatch;
 }
 
@@ -318,7 +329,7 @@ export type AttributeValue = string | number | boolean | null | undefined;
 function updateAttributeInTag(tagContent: string, attrName: string, value: AttributeValue): string {
   const attrRegex = new RegExp(`\\s*\\b${attrName}=["'][^"']*["']`, "i");
   const hasAttr = attrRegex.test(tagContent);
-  
+
   if (value === undefined || value === null) {
     // Remove the attribute
     if (hasAttr) {
@@ -326,9 +337,9 @@ function updateAttributeInTag(tagContent: string, attrName: string, value: Attri
     }
     return tagContent;
   }
-  
+
   const formattedValue = value.toString();
-  
+
   if (hasAttr) {
     // Update existing attribute
     return tagContent.replace(attrRegex, ` ${attrName}="${formattedValue}"`);
@@ -348,27 +359,28 @@ export function updateElementTransformInCode(
   values: TransformValues,
 ): string | null {
   console.log("[domUtils] updateElementTransformInCode called with values:", values);
-  
+
   const elementPos = findElementInCode(code, element);
   if (!elementPos) {
     console.error("[domUtils] Could not find element in code");
     return null;
   }
-  
+
   let newTagContent = elementPos.tagContent;
-  
+
   // Update each transform attribute
   for (const [key, attrName] of Object.entries(TRANSFORM_ATTR_MAP)) {
     const value = values[key as keyof TransformValues];
     newTagContent = updateAttributeInTag(newTagContent, attrName, value);
   }
-  
+
   console.log("[domUtils] Original tag:", elementPos.tagContent);
   console.log("[domUtils] Updated tag:", newTagContent);
-  
+
   // Replace the tag in the code
-  const newCode = code.substring(0, elementPos.start) + newTagContent + code.substring(elementPos.end);
-  
+  const newCode =
+    code.substring(0, elementPos.start) + newTagContent + code.substring(elementPos.end);
+
   return newCode;
 }
 
@@ -417,4 +429,3 @@ export function updateElementsAttributesInCode(
 
   return updatedCode;
 }
-

@@ -1,5 +1,5 @@
 import { MMLWebClient } from "mml-game-engine-client";
-import { useEffect, useCallback, MutableRefObject } from "react";
+import { MutableRefObject, useCallback, useEffect } from "react";
 
 import {
   bodyFromRemoteHolderElement,
@@ -12,7 +12,7 @@ import {
 import { TransformValues, useEditorStore } from "../state/editorStore";
 
 const applyTransformValuesToElement = (el: HTMLElement, values: TransformValues) => {
-  const maybeSet = (name: keyof TransformValues, emptyValue: number | undefined) => {
+  const maybeSet = (name: keyof TransformValues) => {
     const val = values[name];
     if (val === undefined || val === null) {
       el.removeAttribute(name);
@@ -21,15 +21,15 @@ const applyTransformValuesToElement = (el: HTMLElement, values: TransformValues)
     }
   };
 
-  maybeSet("x", 0);
-  maybeSet("y", 0);
-  maybeSet("z", 0);
-  maybeSet("rx", 0);
-  maybeSet("ry", 0);
-  maybeSet("rz", 0);
-  maybeSet("sx", 1);
-  maybeSet("sy", 1);
-  maybeSet("sz", 1);
+  maybeSet("x");
+  maybeSet("y");
+  maybeSet("z");
+  maybeSet("rx");
+  maybeSet("ry");
+  maybeSet("rz");
+  maybeSet("sx");
+  maybeSet("sy");
+  maybeSet("sz");
 };
 
 /**
@@ -67,7 +67,11 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
   const handleTransformCommit = useCallback(
     (element: HTMLElement, values: TransformValues) => {
       console.log("[useEditorTransform] handleTransformCommit called");
-      console.log("[useEditorTransform] Element:", element.tagName, element.id ? `#${element.id}` : "");
+      console.log(
+        "[useEditorTransform] Element:",
+        element.tagName,
+        element.id ? `#${element.id}` : "",
+      );
       console.log("[useEditorTransform] Values:", values);
 
       const currentCode = useEditorStore.getState().code;
@@ -96,7 +100,7 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
         onSelectionChange: (elements) => {
           console.log("[useEditorTransform] onSelectionChange callback fired");
           console.log("[useEditorTransform] Selected elements:", elements?.length ?? 0);
-          
+
           // Convert elements to paths when selection changes from viewport
           const holder = useEditorStore.getState().remoteHolderElement;
           if (elements && elements.length > 0 && holder) {
@@ -263,7 +267,6 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
       if (["INPUT", "TEXTAREA"].includes((event.target as HTMLElement)?.tagName)) {
         return;
       }
-
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -273,7 +276,13 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [setGizmoMode, toggleGizmoSpace, setSnappingEnabled, clearSelection, toggleVisualizersVisible]);
+  }, [
+    setGizmoMode,
+    toggleGizmoSpace,
+    setSnappingEnabled,
+    clearSelection,
+    toggleVisualizersVisible,
+  ]);
 
   return { setupEditorCallbacks };
 }

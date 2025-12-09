@@ -1,11 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  AttributeValue,
+  resolvePathsToElements,
+  updateElementsAttributesInCode,
+} from "../lib/domUtils";
+import {
   ElementPropertyDefinition,
   getDefaultValueForProperty,
   getSharedElementPropertyDefinitions,
 } from "../lib/elementProperties";
-import { AttributeValue, resolvePathsToElements, updateElementsAttributesInCode } from "../lib/domUtils";
 import { useEditorStore } from "../state/editorStore";
 
 type SharedValue = {
@@ -56,7 +60,8 @@ const useClickSelectAll = <T extends HTMLInputElement | HTMLTextAreaElement>(
       return;
     }
     const moved =
-      Math.abs(event.clientX - start.x) > dragTolerance || Math.abs(event.clientY - start.y) > dragTolerance;
+      Math.abs(event.clientX - start.x) > dragTolerance ||
+      Math.abs(event.clientY - start.y) > dragTolerance;
     if (moved) {
       return;
     }
@@ -88,7 +93,11 @@ function getElementValue(element: HTMLElement, prop: ElementPropertyDefinition):
 }
 
 function MixedBadge() {
-  return <span className="ml-2 text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">mixed</span>;
+  return (
+    <span className="ml-2 text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">
+      mixed
+    </span>
+  );
 }
 
 function PropertyRow({
@@ -155,7 +164,9 @@ function PropertyRow({
   const inputType = prop.type === "color" ? "color" : prop.type === "number" ? "number" : "text";
   const resolvedValue = sharedValue.mixed ? "" : sharedValue.value;
   const inputValue =
-    prop.type === "color" && resolvedValue === "" ? getDefaultValueForProperty(prop) || "#ffffff" : resolvedValue;
+    prop.type === "color" && resolvedValue === ""
+      ? getDefaultValueForProperty(prop) || "#ffffff"
+      : resolvedValue;
 
   return (
     <div className="flex flex-col gap-1 py-2">
@@ -189,10 +200,10 @@ const clamp = (value: number, min?: number, max?: number) => {
 };
 
 const getStepPrecision = (step?: number) => {
-  if (!Number.isFinite(step)) {
+  if (step === undefined || !Number.isFinite(step)) {
     return 6;
   }
-  const asString = step!.toString();
+  const asString = step.toString();
   const decimal = asString.split(".")[1];
   return Math.min(10, Math.max(0, decimal ? decimal.length : 0));
 };
@@ -359,7 +370,6 @@ function DraggableNumberInput({
       }
     };
     // Intentionally empty dependency array so cleanup only runs on unmount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -414,7 +424,9 @@ function TransformGroupRow({
       <div className="grid grid-cols-3 gap-2">
         {props.map((prop) => (
           <div key={prop.name} className="flex flex-col gap-1">
-            <div className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase">{prop.name}</div>
+            <div className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase">
+              {prop.name}
+            </div>
             <DraggableNumberInput
               prop={prop}
               sharedValue={sharedValues[prop.name] ?? { value: "", mixed: false }}
@@ -437,7 +449,8 @@ type ElementSettingsPanelProps = {
 };
 
 export function ElementSettingsPanel({ className }: ElementSettingsPanelProps) {
-  const { pathSelection, remoteHolderElement, code, setCode, snappingEnabled, snappingConfig } = useEditorStore();
+  const { pathSelection, remoteHolderElement, code, setCode, snappingEnabled, snappingConfig } =
+    useEditorStore();
   const [selectionAttrVersion, setSelectionAttrVersion] = useState(0);
   const [scaleLocked, setScaleLocked] = useState(false);
   const scaleLockStartValuesRef = useRef<Map<HTMLElement, ScaleAttributes> | null>(null);
@@ -660,9 +673,9 @@ export function ElementSettingsPanel({ className }: ElementSettingsPanelProps) {
     if (selectedElements.length === 0) {
       return "Nothing selected";
     }
-    const tags = Array.from(
-      new Set(selectedElements.map((el) => el.tagName.toLowerCase())),
-    ).join(", ");
+    const tags = Array.from(new Set(selectedElements.map((el) => el.tagName.toLowerCase()))).join(
+      ", ",
+    );
     return `${selectedElements.length} selected (${tags})`;
   }, [selectedElements]);
 
@@ -701,23 +714,21 @@ export function ElementSettingsPanel({ className }: ElementSettingsPanelProps) {
                 .map((key) => transformProps.find((p) => p.name === key))
                 .filter((p): p is ElementPropertyDefinition => Boolean(p));
               const headerAddon =
-                group.title === "Scale"
-                  ? (
-                      <button
-                        type="button"
-                        aria-pressed={scaleLocked}
-                        onClick={() => setScaleLocked((locked) => !locked)}
-                        className={`text-[10px] px-2 py-[3px] rounded border transition-colors ${
-                          scaleLocked
-                            ? "bg-[var(--color-accent)] text-[var(--color-bg)] border-[var(--color-accent)]"
-                            : "bg-[var(--color-panel)] text-[var(--color-text)] border-[var(--color-border)] hover:border-[var(--color-accent)]"
-                        }`}
-                        title="When enabled, scale axes update together"
-                      >
-                        {scaleLocked ? "Uniform on" : "Uniform off"}
-                      </button>
-                    )
-                  : undefined;
+                group.title === "Scale" ? (
+                  <button
+                    type="button"
+                    aria-pressed={scaleLocked}
+                    onClick={() => setScaleLocked((locked) => !locked)}
+                    className={`text-[10px] px-2 py-[3px] rounded border transition-colors ${
+                      scaleLocked
+                        ? "bg-[var(--color-accent)] text-[var(--color-bg)] border-[var(--color-accent)]"
+                        : "bg-[var(--color-panel)] text-[var(--color-text)] border-[var(--color-border)] hover:border-[var(--color-accent)]"
+                    }`}
+                    title="When enabled, scale axes update together"
+                  >
+                    {scaleLocked ? "Uniform on" : "Uniform off"}
+                  </button>
+                ) : undefined;
               return (
                 <TransformGroupRow
                   key={group.title}
@@ -750,4 +761,3 @@ export function ElementSettingsPanel({ className }: ElementSettingsPanelProps) {
 }
 
 export default ElementSettingsPanel;
-

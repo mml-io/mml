@@ -2,12 +2,12 @@ import {
   AnimatedAttributeHelper,
   AnimationType,
   AttributeHandler,
+  CameraVisualizerGraphics,
   floatParser,
+  isEditorModeScene,
   MElement,
   MMLScene,
   TransformableElement,
-  CameraVisualizerGraphics,
-  isEditorModeScene,
 } from "@mml-io/mml-web";
 import { PerspectiveCamera } from "three";
 
@@ -129,7 +129,6 @@ export class MCamera<G extends GameThreeJSAdapter> extends TransformableElement<
   public isClickable(): boolean {
     return false;
   }
-
 
   public getCameraGraphics(): CameraGraphics | null {
     return this.cameraGraphics;

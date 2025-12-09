@@ -51,7 +51,10 @@ export type GameThreeJSAdapterOptions = {
 };
 
 export class GameThreeJSAdapter
-  implements ThreeJSGraphicsAdapter, StandaloneGraphicsAdapter, EditorGraphicsSupport<GameThreeJSAdapter>
+  implements
+    ThreeJSGraphicsAdapter,
+    StandaloneGraphicsAdapter,
+    EditorGraphicsSupport<GameThreeJSAdapter>
 {
   collisionType: THREE.Object3D;
   containerType: THREE.Object3D;
@@ -587,7 +590,9 @@ export class GameThreeJSAdapter
     return this.highlightManager as unknown as HighlightManager<GameThreeJSAdapter>;
   }
 
-  public createTransformWidget(domElement: HTMLElement): TransformWidgetGraphics<GameThreeJSAdapter> {
+  public createTransformWidget(
+    domElement: HTMLElement,
+  ): TransformWidgetGraphics<GameThreeJSAdapter> {
     return new ThreeJSTransformWidget(
       this.threeScene,
       this.getCamera(),
@@ -618,7 +623,6 @@ export class GameThreeJSAdapter
 
     this.currentOutlinePasses = outlinePasses;
   }
-
 
   /**
    * Set a callback to be invoked on every scene click for selection handling.

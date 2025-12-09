@@ -118,7 +118,7 @@ function pathsEqual(a: number[], b: number[]): boolean {
   return a.every((val, idx) => val === b[idx]);
 }
 
-export const useEditorStore = create<EditorState>((set, get) => ({
+export const useEditorStore = create<EditorState>((set, _get) => ({
   code: loadCodeFromStorage(),
   setCode: (code) => {
     saveCodeToStorage(code);

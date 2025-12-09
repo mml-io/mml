@@ -9,12 +9,7 @@ function EditorClient() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [clientReady, setClientReady] = useState(false);
 
-  const {
-    staticDocument,
-    localDocument,
-    viewportMode,
-    setRemoteHolderElement,
-  } = useEditorStore();
+  const { staticDocument, localDocument, viewportMode, setRemoteHolderElement } = useEditorStore();
 
   // Use the editor transform hook for gizmo and selection management
   const { setupEditorCallbacks } = useEditorTransform(clientRef);
@@ -28,7 +23,7 @@ function EditorClient() {
     let disposed = false;
     let runnerClient: MMLWebClient | null = null;
 
-    createMMLGameClient({ mode: "editor" }).then(async (client: MMLWebClient) => {
+    createMMLGameClient({ mode: "editor" }).then((client: MMLWebClient) => {
       runnerClient = client;
       if (disposed) {
         runnerClient.dispose();

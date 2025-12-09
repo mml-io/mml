@@ -5,13 +5,13 @@ import {
   SceneClickCallback,
   TransformableElement,
   TransformMode,
-  TransformSpace,
   TransformSnapping,
+  TransformSpace,
   TransformValues,
   TransformWidgetController,
   TransformWidgetControllerCallbacks,
   VisualizerManager,
-} from "@mml-io/mml-web"; 
+} from "@mml-io/mml-web";
 import { EditableNetworkedDOM, NetworkedDOM } from "@mml-io/networked-dom-document";
 import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
 import { FakeWebsocket } from "@mml-io/networked-dom-web-runner";
@@ -72,12 +72,7 @@ export class MMLWebClient {
     interactive: boolean,
     options: MMLWebClientOptions = {},
   ): Promise<MMLWebClient> {
-    const client = new MMLWebClient(
-      windowTarget,
-      remoteHolderElement,
-      interactive,
-      options,
-    );
+    const client = new MMLWebClient(windowTarget, remoteHolderElement, interactive, options);
     await client.init();
     return client;
   }
@@ -238,7 +233,11 @@ export class MMLWebClient {
     // Set up callbacks
     const callbacks: TransformWidgetControllerCallbacks = {
       onSelectionChange: (elements) => {
-        console.log("[MMLWebClient] onSelectionChange callback:", elements?.length ?? 0, "elements");
+        console.log(
+          "[MMLWebClient] onSelectionChange callback:",
+          elements?.length ?? 0,
+          "elements",
+        );
         this.editorCallbacks.onSelectionChange?.(elements as HTMLElement[] | null);
       },
       onTransformPreview: (element, values) => {
@@ -301,17 +300,15 @@ export class MMLWebClient {
    * @param elements Array of elements to select
    * @param lastSelectedIndex Index of the last selected element (for gizmo pivot)
    */
-  public setSelectedElements(
-    elements: HTMLElement[],
-    lastSelectedIndex?: number,
-  ): void {
+  public setSelectedElements(elements: HTMLElement[], lastSelectedIndex?: number): void {
     if (!this.transformController) return;
 
     // Convert HTMLElements to TransformableElements
-    const transformableElements = elements
-      .filter((el): el is TransformableElement<GameThreeJSAdapter> => {
+    const transformableElements = elements.filter(
+      (el): el is TransformableElement<GameThreeJSAdapter> => {
         return MElement.isMElement(el) && "isTransformableElement" in el;
-      });
+      },
+    );
 
     if (transformableElements.length > 0) {
       this.transformController.setSelectedElements(transformableElements, lastSelectedIndex);

@@ -95,7 +95,13 @@ const tagExtras: Record<string, ElementPropertyDefinition[]> = {
     { name: "end", label: "End", type: "text", defaultValue: "0" },
     { name: "loop", label: "Loop", type: "boolean", defaultValue: "true" },
     { name: "ping-pong", label: "Ping Pong", type: "boolean", defaultValue: "false" },
-    { name: "ping-pong-delay", label: "Ping Pong Delay", type: "number", step: 10, defaultValue: "0" },
+    {
+      name: "ping-pong-delay",
+      label: "Ping Pong Delay",
+      type: "number",
+      step: 10,
+      defaultValue: "0",
+    },
     { name: "easing", label: "Easing", type: "text", defaultValue: "" },
     { name: "start-time", label: "Start Time", type: "number", step: 10, defaultValue: "0" },
     { name: "pause-time", label: "Pause Time", type: "number", step: 10, defaultValue: "" },
@@ -160,7 +166,9 @@ export function getElementPropertyDefinitions(element: HTMLElement): ElementProp
   return dedupe([...defs, ...attributeDefs]);
 }
 
-export function getSharedElementPropertyDefinitions(elements: HTMLElement[]): ElementPropertyDefinition[] {
+export function getSharedElementPropertyDefinitions(
+  elements: HTMLElement[],
+): ElementPropertyDefinition[] {
   if (elements.length === 0) {
     return [];
   }
@@ -176,4 +184,3 @@ export function getSharedElementPropertyDefinitions(elements: HTMLElement[]): El
 export function getDefaultValueForProperty(def: ElementPropertyDefinition): string {
   return def.defaultValue ?? "";
 }
-

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from "react";
 import Editor, { Monaco, OnMount } from "@monaco-editor/react";
+import React, { useEffect, useRef } from "react";
+
 import { useEditorStore } from "../state/editorStore";
 
 interface CodeEditorProps {
@@ -114,4 +115,3 @@ export function CodeEditor({ initialCode = "" }: CodeEditorProps) {
     </div>
   );
 }
-

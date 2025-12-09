@@ -12,7 +12,14 @@ type SceneNodeProps = {
   onSelect: (element: HTMLElement, event: React.MouseEvent) => void;
 };
 
-function SceneNode({ element, path, depth, selectedPaths, structureVersion, onSelect }: SceneNodeProps) {
+function SceneNode({
+  element,
+  path,
+  depth,
+  selectedPaths,
+  structureVersion,
+  onSelect,
+}: SceneNodeProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   const children = useMemo(
@@ -25,7 +32,10 @@ function SceneNode({ element, path, depth, selectedPaths, structureVersion, onSe
   const tagRaw = element.tagName.toLowerCase();
   const idPart = element.id ? `#${element.id}` : "";
   const classPart = element.classList.length
-    ? " " + Array.from(element.classList).map((c) => "." + c).join(" ")
+    ? " " +
+      Array.from(element.classList)
+        .map((c) => "." + c)
+        .join(" ")
     : "";
   const rawTitle = `<${tagRaw}${idPart}${classPart}>`;
 
@@ -80,9 +90,23 @@ function SceneNode({ element, path, depth, selectedPaths, structureVersion, onSe
           >
             <svg viewBox="0 0 16 16" className="w-3 h-3" aria-hidden="true">
               {collapsed ? (
-                <path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M6 3l5 5-5 5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               ) : (
-                <path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M3 6l5 5 5-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               )}
             </svg>
           </button>
@@ -163,7 +187,9 @@ export function ScenePanel({ className }: ScenePanelProps) {
 
       if (isMulti) {
         const exists = current.some((item) => pathsEqual(item, path));
-        const next = exists ? current.filter((item) => !pathsEqual(item, path)) : [...current, path];
+        const next = exists
+          ? current.filter((item) => !pathsEqual(item, path))
+          : [...current, path];
         setSelectedPaths(next, path);
       } else {
         setSelectedPaths([path], path);
@@ -218,4 +244,3 @@ export function ScenePanel({ className }: ScenePanelProps) {
     </div>
   );
 }
-

@@ -1,9 +1,9 @@
+import { isEditorModeScene } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { CameraGraphics } from "./elements/Camera";
 import { MCharacterController } from "./elements/CharacterController";
 import { GameThreeJSAdapter } from "./GameThreeJSAdapter";
-import { isEditorModeScene } from "@mml-io/mml-web";
 
 export class CameraManager {
   private cameras: CameraGraphics[] = [];
