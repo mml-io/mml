@@ -307,7 +307,19 @@ export class MMLWebClient {
         return MElement.isMElement(el) && "isTransformableElement" in el;
       });
 
-    this.transformController.setSelectedElements(transformableElements, lastSelectedIndex);
+    if (transformableElements.length > 0) {
+      this.transformController.setSelectedElements(transformableElements, lastSelectedIndex);
+      return;
+    }
+
+    if (elements.length > 0) {
+      // Detach any gizmo selection but keep editor selection for non-transformable elements
+      this.transformController.clearSelection(true);
+      this.editorCallbacks.onSelectionChange?.(elements as HTMLElement[] | null);
+      return;
+    }
+
+    this.transformController.clearSelection();
   }
 
   /**

@@ -154,6 +154,7 @@ export class TransformWidgetController<G extends GraphicsAdapter = GraphicsAdapt
   public setSelectedElements(
     elements: TransformableElement<G>[],
     lastSelectedIndex?: number,
+    suppressCallback = false,
   ): void {
     // Clear isSelected on previously selected elements
     for (const el of this.selectedElements) {
@@ -169,13 +170,15 @@ export class TransformWidgetController<G extends GraphicsAdapter = GraphicsAdapt
     }
     
     this.syncGraphics();
-    this.callbacks.onSelectionChange?.(elements.length > 0 ? elements : null);
+    if (!suppressCallback) {
+      this.callbacks.onSelectionChange?.(elements.length > 0 ? elements : null);
+    }
   }
 
   /**
    * Clear selection.
    */
-  public clearSelection(): void {
+  public clearSelection(suppressCallback = false): void {
     // Clear isSelected on all previously selected elements
     for (const el of this.selectedElements) {
       el.isSelected = false;
@@ -184,7 +187,9 @@ export class TransformWidgetController<G extends GraphicsAdapter = GraphicsAdapt
     this.selectedElements = [];
     this.lastSelectedIndex = -1;
     this.syncGraphics();
-    this.callbacks.onSelectionChange?.(null);
+    if (!suppressCallback) {
+      this.callbacks.onSelectionChange?.(null);
+    }
   }
 
   /**
