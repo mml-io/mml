@@ -4,7 +4,6 @@ import { MElementGraphics } from "../graphics";
 import { LoadingProgressManager } from "../loading";
 import { IMMLScene, PositionAndRotation } from "../scene";
 import { MMLDocumentTimeManager } from "../time";
-import type { VisualizerDescriptor } from "../visuals/VisualDescriptor";
 import type { RemoteDocument } from "./RemoteDocument";
 
 export const MELEMENT_PROPERTY_NAME = "m-element-property";
@@ -74,28 +73,6 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
 
   public abstract parentTransformed(): void;
 
-  /**
-   * Get the default visualizer descriptor for this element.
-   * Returns null for elements that have no visualizer.
-   * This visualizer is shown when visualizers are enabled.
-   */
-  public getVisualizer(_isSelected: boolean): VisualizerDescriptor | null {
-    return null;
-  }
-
-  /**
-   * Notify the visualizer controller that descriptor inputs changed.
-   */
-
-  // This is extra information that can be displayed to provide help in usage, such as cones/bounding boxes/etc.
-  public getVisualDebugComponent(): G["containerType"] | null {
-    return null;
-  }
-
-  // This is the main component that is displayed in the scene.
-  public getVisualComponent(): G["containerType"] | null {
-    return null;
-  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public addSideEffectChild(child: MElement<G>): void {

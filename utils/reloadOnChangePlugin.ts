@@ -2,9 +2,7 @@ import * as chokidar from "chokidar";
 import * as esbuild from "esbuild";
 import * as http from "http";
 import { AddressInfo } from "net";
-import WebSocket from "ws";
-
-const WebSocketServer = WebSocket.Server;
+import { WebSocketServer, WebSocket } from "ws";
 
 /**
  * Creates an esbuild plugin that automatically reloads the page when files change.

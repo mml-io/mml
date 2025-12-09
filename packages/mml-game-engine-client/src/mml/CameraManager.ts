@@ -1,4 +1,3 @@
-import { isEditorModeScene } from "@mml-io/mml-web";
 import * as THREE from "three";
 
 import { CameraGraphics } from "./elements/Camera";

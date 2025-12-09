@@ -60,7 +60,6 @@ const previewRoot = document.getElementById("preview-root") as HTMLDivElement | 
 
 let staticDocument: EditableNetworkedDOM | null = null;
 let client: MMLWebClient | null = null;
-let ready = false;
 let lastSanitizedContent: string | null = null;
 let currentRawContent: string | null = null;
 let currentUri: string | null = null;
@@ -99,7 +98,6 @@ function ensureHTMLDocument(code: string): string {
 }
 
 function setReadyState(isReady: boolean) {
-  ready = isReady;
   if (statusDot) {
     statusDot.classList.toggle("ready", isReady);
   }
