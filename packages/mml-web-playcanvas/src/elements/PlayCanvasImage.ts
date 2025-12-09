@@ -76,7 +76,7 @@ export class PlayCanvasImage extends ImageGraphics<PlayCanvasGraphicsAdapter> {
   }
 
   private updateWidthAndHeight() {
-    const loadedImage = this.loadedState?.asset.resource;
+    const loadedImage = this.loadedState?.asset.resource as playcanvas.Texture | undefined;
 
     const { width, height } = calculateContentSize({
       content: loadedImage ? { width: loadedImage.width, height: loadedImage.height } : undefined,
@@ -144,7 +144,7 @@ export class PlayCanvasImage extends ImageGraphics<PlayCanvasGraphicsAdapter> {
           asset,
         };
 
-        const texture = asset.resource;
+        const texture = asset.resource as playcanvas.Texture;
         texture.premultiplyAlpha = true;
         this.material.diffuseMap = texture;
         this.material.blendType = playcanvas.BLEND_NORMAL;

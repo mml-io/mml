@@ -69,7 +69,7 @@ describe("m-model", () => {
     });
 
     element.setAttribute("src", "some_asset_path");
-    expect(loadModelSpy).toBeCalledTimes(1);
+    expect(loadModelSpy).toHaveBeenCalledTimes(1);
 
     const modelContainer = element.getContainer() as THREE.Object3D;
     const loadedModel = modelContainer.children[0];
@@ -107,16 +107,16 @@ describe("m-model", () => {
     // Setting the attribute should not cause the model to be loaded as the element is not connected
     element.setAttribute("src", "some_asset_path");
 
-    expect(loadModelSpy).toBeCalledTimes(0);
-    expect(firstGeometryDisposeSpy).toBeCalledTimes(0);
-    expect(firstMaterialDisposeSpy).toBeCalledTimes(0);
+    expect(loadModelSpy).toHaveBeenCalledTimes(0);
+    expect(firstGeometryDisposeSpy).toHaveBeenCalledTimes(0);
+    expect(firstMaterialDisposeSpy).toHaveBeenCalledTimes(0);
 
     // Appending the element to the document should cause the model to be loaded
     remoteDocument.append(element);
 
-    expect(loadModelSpy).toBeCalledTimes(1);
-    expect(firstGeometryDisposeSpy).toBeCalledTimes(0);
-    expect(firstMaterialDisposeSpy).toBeCalledTimes(0);
+    expect(loadModelSpy).toHaveBeenCalledTimes(1);
+    expect(firstGeometryDisposeSpy).toHaveBeenCalledTimes(0);
+    expect(firstMaterialDisposeSpy).toHaveBeenCalledTimes(0);
 
     // loaded synchronously by our mock
 
@@ -129,8 +129,8 @@ describe("m-model", () => {
     element.remove();
 
     // The geometry and material should be disposed of when the element is removed to avoid leaks
-    expect(firstGeometryDisposeSpy).toBeCalledTimes(1);
-    expect(firstMaterialDisposeSpy).toBeCalledTimes(1);
+    expect(firstGeometryDisposeSpy).toHaveBeenCalledTimes(1);
+    expect(firstMaterialDisposeSpy).toHaveBeenCalledTimes(1);
 
     const secondBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
     const secondMaterial = new THREE.MeshStandardMaterial();

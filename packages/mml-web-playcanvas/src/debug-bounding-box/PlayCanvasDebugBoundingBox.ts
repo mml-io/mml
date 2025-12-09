@@ -11,9 +11,11 @@ export function createPlayCanvasDebugBoundingBox(
     type: "box",
     material,
   });
-  entity.model?.model.meshInstances.forEach((mi) => {
-    mi.renderStyle = playcanvas.RENDERSTYLE_WIREFRAME;
-    mi.castShadow = false;
-  });
+  if (entity.model?.model) {
+    entity.model.model.meshInstances.forEach((mi) => {
+      mi.renderStyle = playcanvas.RENDERSTYLE_WIREFRAME;
+      mi.castShadow = false;
+    });
+  }
   return entity;
 }

@@ -203,10 +203,8 @@ export class PlayCanvasModeInternal {
       environmentMap = foundEnvMap.url;
     }
     if (!environmentMap) {
-      // @ts-expect-error - PlayCanvas types don't accept null, but it works
-      playcanvasScene.envAtlas = null;
-      // @ts-expect-error - PlayCanvas types don't accept null, but it works
-      playcanvasScene.skybox = null;
+      playcanvasScene.envAtlas = null as any;
+      playcanvasScene.skybox = null as any;
       this.environmentMap = null;
       return;
     }
@@ -219,9 +217,9 @@ export class PlayCanvasModeInternal {
     playCanvasApp.assets.load(envMapAsset);
 
     const onEnvMapAssetLoad = (texture: playcanvas.Texture) => {
-      const skybox = playcanvas.EnvLighting.generateSkyboxCubemap(texture);
+      const skybox = playcanvas.EnvLighting.generateSkyboxCubemap(texture) as playcanvas.Texture;
       const lighting = playcanvas.EnvLighting.generateLightingSource(texture);
-      const envAtlas = playcanvas.EnvLighting.generateAtlas(lighting, {});
+      const envAtlas = playcanvas.EnvLighting.generateAtlas(lighting, {}) as playcanvas.Texture;
       lighting.destroy();
       playcanvasScene.envAtlas = envAtlas;
       playcanvasScene.skybox = skybox;
@@ -229,10 +227,10 @@ export class PlayCanvasModeInternal {
     };
 
     if (envMapAsset.loaded) {
-      onEnvMapAssetLoad(envMapAsset.resource);
+      onEnvMapAssetLoad(envMapAsset.resource as playcanvas.Texture);
     } else {
       envMapAsset.on("load", (envMapAsset: playcanvas.Asset) => {
-        onEnvMapAssetLoad(envMapAsset.resource);
+        onEnvMapAssetLoad(envMapAsset.resource as playcanvas.Texture);
       });
     }
   }

@@ -93,10 +93,10 @@ export class PlayCanvasVideo extends VideoGraphics<PlayCanvasGraphicsAdapter> {
   private getAudioContext(): AudioContext {
     const playcanvasApp = this.getPlayCanvasApp();
     const soundSystem = playcanvasApp.systems.sound;
-    if (!soundSystem) {
-      throw new Error("Playcanvas sound system not enabled");
+    if (!soundSystem || !soundSystem.context) {
+      throw new Error("Playcanvas sound system not enabled or context not available");
     }
-    return soundSystem.context;
+    return soundSystem.context as AudioContext;
   }
 
   public syncVideoTime() {
