@@ -6,6 +6,7 @@ import {
   TransformableElement,
   TransformMode,
   TransformSpace,
+  TransformSnapping,
   TransformValues,
   TransformWidgetController,
   TransformWidgetControllerCallbacks,
@@ -29,6 +30,8 @@ export interface MMLWebClientEditorCallbacks {
   onSelectionChange?: (elements: HTMLElement[] | null) => void;
   /** Called when a transform operation completes */
   onTransformCommit?: (element: HTMLElement, values: TransformValues) => void;
+  /** Called during transform drag for live preview */
+  onTransformPreview?: (element: HTMLElement, values: TransformValues) => void;
   /** Called when drag state changes */
   onDragStateChange?: (isDragging: boolean) => void;
 }
@@ -95,7 +98,7 @@ export class MMLWebClient {
     this.element.style.width = "100%";
     this.element.style.height = "100%";
     this.mScene = this.interactive
-      ? new InteractiveMMLScene(this.element)
+      ? new InteractiveMMLScene(this.element, { isEditorMode: this.isEditorMode })
       : new NonInteractiveMMLScene(this.element);
   }
 
@@ -238,6 +241,9 @@ export class MMLWebClient {
         console.log("[MMLWebClient] onSelectionChange callback:", elements?.length ?? 0, "elements");
         this.editorCallbacks.onSelectionChange?.(elements as HTMLElement[] | null);
       },
+      onTransformPreview: (element, values) => {
+        this.editorCallbacks.onTransformPreview?.(element as HTMLElement, values);
+      },
       onTransformCommit: (element, values) => {
         console.log("[MMLWebClient] onTransformCommit callback fired");
         console.log("[MMLWebClient] Element:", (element as HTMLElement).tagName);
@@ -379,6 +385,13 @@ export class MMLWebClient {
    */
   public setSnapping(enabled: boolean): void {
     this.transformController?.setSnappingEnabled(enabled);
+  }
+
+  /**
+   * Configure snapping increments for translation, rotation, and scale.
+   */
+  public setSnappingConfig(config: TransformSnapping): void {
+    this.transformController?.setSnappingConfig(config);
   }
 
   /**

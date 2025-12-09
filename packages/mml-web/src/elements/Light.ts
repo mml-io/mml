@@ -9,6 +9,7 @@ import {
 import { OrientedBoundingBox } from "../bounding-box";
 import { MMLColor } from "../color";
 import { GraphicsAdapter, LightGraphics, LightVisualizerGraphics } from "../graphics";
+import { isEditorModeScene } from "../scene";
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
@@ -214,9 +215,8 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
 
     const factory = graphicsAdapter.getGraphicsAdapterFactory();
     this.lightGraphics = factory.MMLLightGraphicsInterface(this);
-    // create light visualizer graphics if in editor
-    if (true) {
-    this.lightVisualizerGraphics = new LightVisualizerGraphics<G>(this);
+    if (isEditorModeScene(this.getScene())) {
+      this.lightVisualizerGraphics = new LightVisualizerGraphics<G>(this);
     }
 
     for (const name of Light.observedAttributes) {

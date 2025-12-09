@@ -1,4 +1,5 @@
 import { TransformableElement } from "../elements";
+import { EditorGraphicsSupport, hasEditorSupport, VisualizerHandler } from "./EditorGraphicsSupport";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 import { ModelVisualizerGraphics } from "./ModelVisualizerGraphics";
 import { ElementVisualizer } from "./Visualizer";
@@ -14,12 +15,13 @@ type CameraVisualizerContainer = {
  * Visualizer controller for cameras that drives a model visualizer instance.
  */
 export class CameraVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter>
-  implements ElementVisualizer<G>
+  implements ElementVisualizer<G>, VisualizerHandler
 {
   private container: CameraVisualizerContainer = { visible: true };
   private selected = false;
   private enabled = true;
   private cameraModelGraphics: ModelVisualizerGraphics<G>;
+  private editorSupport: EditorGraphicsSupport<G> | null = null;
 
   constructor(private camera: TransformableElement<G>) {
     const graphicsAdapter = this.camera.getScene().getGraphicsAdapter();
@@ -32,6 +34,11 @@ export class CameraVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapte
     );
 
     this.updateVisibility();
+
+    if (hasEditorSupport(graphicsAdapter)) {
+      this.editorSupport = graphicsAdapter;
+      this.editorSupport.registerVisualizerHandler(this);
+    }
   }
 
   getContainer(): G["containerType"] {
@@ -46,6 +53,10 @@ export class CameraVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapte
   setVisible(visible: boolean): void {
     this.container.visible = visible;
     this.updateVisibility();
+  }
+
+  setVisualizerVisible(visible: boolean): void {
+    this.setVisible(visible);
   }
 
   enable(): void {
@@ -70,6 +81,8 @@ export class CameraVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapte
   }
 
   dispose(): void {
+    this.editorSupport?.unregisterVisualizerHandler(this);
+    this.editorSupport = null;
     this.cameraModelGraphics.dispose();
     this.container = null as unknown as CameraVisualizerContainer;
   }

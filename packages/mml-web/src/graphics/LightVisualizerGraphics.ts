@@ -1,6 +1,7 @@
 import { MMLColor } from "../color";
 import { Light, LightTypes } from "../elements";
 import { ArrowHelperVisualizerGraphics } from "./ArrowHelperVisualizerGraphics";
+import { EditorGraphicsSupport, hasEditorSupport, VisualizerHandler } from "./EditorGraphicsSupport";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 import { BillboardVisualizerGraphics } from "./BillboardVisualizerGraphics";
 import { PointLightHelperVisualizerGraphics } from "./PointLightHelperVisualizerGraphics";
@@ -29,7 +30,7 @@ type LightVisualizerContainer = {
 };
 
 export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter>
-  implements ElementVisualizer<G>
+  implements ElementVisualizer<G>, VisualizerHandler
 {
   private lightBillboardIconGraphics: BillboardVisualizerGraphics;
   private lightHelperGraphics: LightHelperVisualizer;
@@ -37,6 +38,7 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
   private container: LightVisualizerContainer = { visible: true };
   private selected = false;
   private enabled = true;
+  private editorSupport: EditorGraphicsSupport<G> | null = null;
 
   constructor(private light: Light<G>) {
     const graphicsAdapter = this.light.getScene().getGraphicsAdapter();
@@ -61,6 +63,11 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
       distance: ARROW_LENGTH,
       color: light.props.color,
     });
+
+    if (hasEditorSupport(graphicsAdapter)) {
+      this.editorSupport = graphicsAdapter;
+      this.editorSupport.registerVisualizerHandler(this);
+    }
   }
 
   getContainer(): G["containerType"] {
@@ -75,6 +82,10 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
   setVisible(visible: boolean): void {
     this.container.visible = visible;
     this.updateVisibility();
+  }
+
+  setVisualizerVisible(visible: boolean): void {
+    this.setVisible(visible);
   }
 
   enable(): void {
@@ -139,6 +150,8 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
   }
 
   dispose(): void {
+    this.editorSupport?.unregisterVisualizerHandler(this);
+    this.editorSupport = null;
     this.lightBillboardIconGraphics.dispose();
     this.lightHelperGraphics.dispose();
     this.arrowVisualizer?.dispose();
@@ -149,19 +162,22 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
     const shouldShow = this.container.visible && this.enabled;
 
     if (!shouldShow) {
-      // this.lightBillboardIconGraphics.disable();
+      this.lightBillboardIconGraphics.disable();
       this.lightHelperGraphics?.setVisible(false);
       this.arrowVisualizer?.setVisible(false);
       return;
     }
 
     this.arrowVisualizer?.setVisible(true);
+    if (this.selected) {
+      this.lightBillboardIconGraphics.disable();
+    } else {
+      this.lightBillboardIconGraphics.enable();
+    }
 
     if (this.selected) {
-      // this.lightBillboardIconGraphics.disable();
       this.lightHelperGraphics?.setVisible(true);
     } else {
-      // this.lightBillboardIconGraphics.enable();
       this.lightHelperGraphics?.setVisible(false);
     }
   }

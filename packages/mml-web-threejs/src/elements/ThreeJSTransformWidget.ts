@@ -28,8 +28,8 @@ export class ThreeJSTransformWidget extends TransformWidgetGraphics<ThreeJSGraph
   private currentMode: TransformMode = "translate";
   private currentSpace: TransformSpace = "local";
   private snappingConfig: TransformSnapping = {
-    translation: 1,
-    rotation: 45,
+    translation: 0.1,
+    rotation: 10,
     scale: 0.25,
   };
   private snappingEnabled: boolean = false;
@@ -195,6 +195,8 @@ export class ThreeJSTransformWidget extends TransformWidgetGraphics<ThreeJSGraph
       ) {
         this.applyMultiSelectionTransform();
       }
+
+      this.emitTransformPreview();
     });
   }
 
@@ -361,6 +363,39 @@ export class ThreeJSTransformWidget extends TransformWidgetGraphics<ThreeJSGraph
 
       console.log("[ThreeJSTransformWidget] Emitting values:", values);
       this.callbacks.onDragEnd!(element, values);
+    });
+  }
+
+  private emitTransformPreview(): void {
+    if (!this.callbacks.onDragChange) {
+      return;
+    }
+
+    const round = (num: number) => Math.round(num * 1000) / 1000;
+
+    this.attachedElements.forEach((element) => {
+      const container = element.getContainer() as THREE.Object3D | undefined;
+      if (!container) {
+        return;
+      }
+
+      const pos = container.position;
+      const rot = container.rotation;
+      const scale = container.scale;
+
+      const values: TransformValues = {
+        x: pos.x === 0.0 ? undefined : round(pos.x),
+        y: pos.y === 0.0 ? undefined : round(pos.y),
+        z: pos.z === 0.0 ? undefined : round(pos.z),
+        rx: rot.x === 0.0 ? undefined : round(THREE.MathUtils.RAD2DEG * rot.x),
+        ry: rot.y === 0.0 ? undefined : round(THREE.MathUtils.RAD2DEG * rot.y),
+        rz: rot.z === 0.0 ? undefined : round(THREE.MathUtils.RAD2DEG * rot.z),
+        sx: scale.x === 1.0 ? undefined : round(scale.x),
+        sy: scale.y === 1.0 ? undefined : round(scale.y),
+        sz: scale.z === 1.0 ? undefined : round(scale.z),
+      };
+
+      this.callbacks.onDragChange?.(element, values);
     });
   }
 }

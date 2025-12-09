@@ -1,3 +1,4 @@
+import { TransformSnapping } from "@mml-io/mml-web";
 import { EditableNetworkedDOM, IframeObservableDOMFactory } from "mml-game-engine-client";
 import { create } from "zustand";
 
@@ -89,6 +90,8 @@ export interface EditorState {
   // Snapping
   snappingEnabled: boolean;
   setSnappingEnabled: (enabled: boolean) => void;
+  snappingConfig: TransformSnapping;
+  setSnappingConfig: (config: TransformSnapping) => void;
 
   // Element visualizers visibility
   visualizersVisible: boolean;
@@ -266,8 +269,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     })),
 
   // Snapping
-  snappingEnabled: false,
+  snappingEnabled: true,
   setSnappingEnabled: (snappingEnabled) => set({ snappingEnabled }),
+  snappingConfig: {
+    translation: 0.1,
+    rotation: 10,
+    scale: 0.25,
+  },
+  setSnappingConfig: (config) =>
+    set((state) => ({
+      snappingConfig: { ...state.snappingConfig, ...config },
+    })),
 
   // Element visualizers visibility
   visualizersVisible: true,

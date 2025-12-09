@@ -32,6 +32,8 @@ export interface TransformWidgetControllerCallbacks {
   onSelectionChange?: (elements: TransformableElement<any>[] | null) => void;
   /** Called when a transform operation completes */
   onTransformCommit?: (element: TransformableElement<any>, values: TransformValues) => void;
+  /** Called during transform drag with current values */
+  onTransformPreview?: (element: TransformableElement<any>, values: TransformValues) => void;
   /** Called when drag state changes */
   onDragStateChange?: (isDragging: boolean) => void;
   /** Called when camera controls should be enabled/disabled */
@@ -47,10 +49,10 @@ export class TransformWidgetController<G extends GraphicsAdapter = GraphicsAdapt
   private lastSelectedIndex: number = -1;
   private mode: TransformMode = "translate";
   private space: TransformSpace = "local";
-  private snappingEnabled: boolean = false;
+  private snappingEnabled: boolean = true;
   private snappingConfig: TransformSnapping = {
-    translation: 1,
-    rotation: 45,
+    translation: 0.1,
+    rotation: 10,
     scale: 0.25,
   };
   private enabled: boolean = true;
@@ -100,6 +102,9 @@ export class TransformWidgetController<G extends GraphicsAdapter = GraphicsAdapt
         console.log("[TransformWidgetController] onDragStart");
         this.callbacks.onDragStateChange?.(true);
       },
+      onDragChange: (element, values) => {
+        this.callbacks.onTransformPreview?.(element, values);
+      },
       onDragEnd: (element, values) => {
         console.log("[TransformWidgetController] onDragEnd");
         console.log("[TransformWidgetController] Element:", element);
@@ -130,6 +135,9 @@ export class TransformWidgetController<G extends GraphicsAdapter = GraphicsAdapt
         onDragStart: () => {
           console.log("[TransformWidgetController] onDragStart (from setCallbacks)");
           this.callbacks.onDragStateChange?.(true);
+        },
+        onDragChange: (element, values) => {
+          this.callbacks.onTransformPreview?.(element, values);
         },
         onDragEnd: (element, values) => {
           console.log("[TransformWidgetController] onDragEnd (from setCallbacks)");

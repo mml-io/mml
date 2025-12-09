@@ -54,9 +54,48 @@ const EyeOffIcon = () => (
   </svg>
 );
 
+type SnapSelectProps = {
+  label: string;
+  value: number | null | undefined;
+  options: number[];
+  suffix?: string;
+  onChange: (value: number | null) => void;
+};
+
+const SnapSelect = ({ label, value, options, suffix, onChange }: SnapSelectProps) => (
+  <label className="flex items-center gap-1 text-[11px] text-[var(--color-text)]/70">
+    <span className="uppercase tracking-wide text-[10px] text-[var(--color-text)]/60">{label}</span>
+    <select
+      className="h-7 rounded border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-[11px] text-[var(--color-text)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+      value={value ?? 0}
+      onChange={(event) => {
+        const parsed = Number(event.target.value);
+        onChange(Number.isFinite(parsed) && parsed > 0 ? parsed : null);
+      }}
+    >
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
+    {suffix ? <span className="text-[10px] text-[var(--color-text)]/50">{suffix}</span> : null}
+  </label>
+);
+
 export const App = () => {
   // Temporary initial code for testing if none supplied
-  const { code, setCode, staticDocument, visualizersVisible, toggleVisualizersVisible } = useEditorStore();
+  const {
+    code,
+    setCode,
+    staticDocument,
+    visualizersVisible,
+    toggleVisualizersVisible,
+    snappingEnabled,
+    setSnappingEnabled,
+    snappingConfig,
+    setSnappingConfig,
+  } = useEditorStore();
   useEffect(() => {
     if (!code) {
       setCode(`<m-light y="50" x="-50" z="50" intensity="10000" type="point"></m-light>
@@ -112,17 +151,40 @@ export const App = () => {
         <div className="flex-[1.4] flex flex-col relative bg-black min-w-[360px]">
           <div className="h-10 flex items-center justify-between px-4 border-b-2 border-[var(--color-border)] text-sm font-bold text-[var(--color-text)] uppercase tracking-widest bg-[var(--color-bg)]">
             <span>Preview</span>
-            <button
-              onClick={toggleVisualizersVisible}
-              className={`p-1.5 rounded transition-colors ${
-                visualizersVisible
-                  ? "text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20"
-                  : "text-[var(--color-text-muted)] hover:bg-[var(--color-text-muted)]/20"
-              }`}
-              title={`${visualizersVisible ? "Hide" : "Show"} element visualizers (G)`}
-            >
-              {visualizersVisible ? <EyeIcon /> : <EyeOffIcon />}
-            </button>
+            <div className="flex items-center gap-3 text-[11px] font-normal normal-case tracking-normal">
+              <button
+                onClick={toggleVisualizersVisible}
+                className={`p-1.5 rounded transition-colors ${
+                  visualizersVisible
+                    ? "text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20"
+                    : "text-[var(--color-text-muted)] hover:bg-[var(--color-text-muted)]/20"
+                }`}
+                title={`${visualizersVisible ? "Hide" : "Show"} element visualizers (G)`}
+              >
+                {visualizersVisible ? <EyeIcon /> : <EyeOffIcon />}
+              </button>
+              <div className="w-px h-6 bg-[var(--color-border)]/60" />
+              <SnapSelect
+                label="Move"
+                value={snappingConfig.translation}
+                options={[0, 0.01, 0.05, 0.1, 0.5, 1, 10, 100]}
+                suffix="m"
+                onChange={(value) => setSnappingConfig({ translation: value })}
+              />
+              <SnapSelect
+                label="Rotate"
+                value={snappingConfig.rotation}
+                options={[0, 1, 5, 10, 15, 30, 45, 90]}
+                suffix="°"
+                onChange={(value) => setSnappingConfig({ rotation: value })}
+              />
+              <SnapSelect
+                label="Scale"
+                value={snappingConfig.scale}
+                options={[0, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2]}
+                onChange={(value) => setSnappingConfig({ scale: value })}
+              />
+            </div>
           </div>
           <div className="flex-1 bg-black overflow-hidden relative flex">
             <div className="flex-1 flex justify-center items-center">

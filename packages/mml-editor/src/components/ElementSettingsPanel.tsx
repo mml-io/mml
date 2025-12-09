@@ -19,6 +19,59 @@ const transformGroups = [
   { title: "Rotation", keys: ["rx", "ry", "rz"] },
   { title: "Scale", keys: ["sx", "sy", "sz"] },
 ];
+const scaleKeys = ["sx", "sy", "sz"] as const;
+type ScaleKey = (typeof scaleKeys)[number];
+type ScaleAttributes = Record<ScaleKey, string | null>;
+const scalePropNames = new Set<ScaleKey>(scaleKeys);
+
+const isScalePropName = (name: string): name is ScaleKey => scalePropNames.has(name as ScaleKey);
+
+type BasicMouseEvent = {
+  button: number;
+  clientX: number;
+  clientY: number;
+};
+
+const useClickSelectAll = <T extends HTMLInputElement | HTMLTextAreaElement>(
+  ref: React.RefObject<T>,
+  dragTolerance = 3,
+) => {
+  const startRef = useRef<{ x: number; y: number } | null>(null);
+
+  const recordMouseDown = (event: BasicMouseEvent) => {
+    if (event.button !== 0) {
+      return;
+    }
+    startRef.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const selectAllIfNoDrag = (event: BasicMouseEvent) => {
+    if (event.button !== 0) {
+      startRef.current = null;
+      return;
+    }
+    const start = startRef.current;
+    startRef.current = null;
+    if (!start || !ref.current) {
+      return;
+    }
+    const moved =
+      Math.abs(event.clientX - start.x) > dragTolerance || Math.abs(event.clientY - start.y) > dragTolerance;
+    if (moved) {
+      return;
+    }
+    const input = ref.current;
+    if (document.activeElement !== input) {
+      input.focus({ preventScroll: true });
+    }
+    input.select();
+  };
+
+  const onMouseDown: React.MouseEventHandler<T> = (event) => recordMouseDown(event);
+  const onMouseUp: React.MouseEventHandler<T> = (event) => selectAllIfNoDrag(event);
+
+  return { onMouseDown, onMouseUp, recordMouseDown, selectAllIfNoDrag };
+};
 
 function getElementValue(element: HTMLElement, prop: ElementPropertyDefinition): string {
   const attrValue = element.getAttribute(prop.name);
@@ -44,6 +97,8 @@ const PropertyRow: React.FC<{
   onChange: (newValue: string | boolean) => void;
 }> = ({ prop, sharedValue, onChange }) => {
   const checkboxRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const clickSelectHandlers = useClickSelectAll(inputRef);
 
   useEffect(() => {
     if (checkboxRef.current) {
@@ -110,6 +165,9 @@ const PropertyRow: React.FC<{
         value={inputValue}
         placeholder={sharedValue.mixed ? "Multiple values" : prop.placeholder}
         onChange={(e) => onChange(e.target.value)}
+        ref={inputRef}
+        onMouseDown={clickSelectHandlers.onMouseDown}
+        onMouseUp={clickSelectHandlers.onMouseUp}
       />
     </div>
   );
@@ -126,70 +184,164 @@ const clamp = (value: number, min?: number, max?: number) => {
   return result;
 };
 
+const getStepPrecision = (step?: number) => {
+  if (!Number.isFinite(step)) {
+    return 6;
+  }
+  const asString = step!.toString();
+  const decimal = asString.split(".")[1];
+  return Math.min(10, Math.max(0, decimal ? decimal.length : 0));
+};
+
+const roundToPrecision = (value: number, precision: number) => {
+  return Number(value.toFixed(precision));
+};
+
 const DraggableNumberInput: React.FC<{
   prop: ElementPropertyDefinition;
   sharedValue: SharedValue;
-  onChange: (newValue: string) => void;
-}> = ({ prop, sharedValue, onChange }) => {
+  onStart: (initialValue: string) => void;
+  onPreview: (newValue: string) => void;
+  onCommit: (newValue: string) => void;
+  onCancel: (initialValue: string) => void;
+}> = ({ prop, sharedValue, onStart, onPreview, onCommit, onCancel }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
   const startXRef = useRef(0);
   const startValueRef = useRef(0);
+  const startSerializedRef = useRef<string>("");
+  const pendingDragRef = useRef(false);
   const draggingRef = useRef(false);
+  const previousUserSelectRef = useRef<string | null>(null);
+  const [previewValue, setPreviewValue] = useState<string | null>(null);
+  const keydownAttachedRef = useRef(false);
+  const clickSelectHandlers = useClickSelectAll(inputRef);
 
-  const currentValue = sharedValue.mixed ? "" : sharedValue.value;
+  const currentValue = previewValue ?? (sharedValue.mixed ? "" : sharedValue.value);
   const displayValue = currentValue === "" ? getDefaultValueForProperty(prop) : currentValue;
 
   const step = prop.step ?? 0.1;
+  const stepPrecision = getStepPrecision(prop.step ?? 0.1);
+  const dragThreshold = 2;
 
-  const handleMouseMove = (event: MouseEvent) => {
+  const handleKeyDown = (event: KeyboardEvent) => {
     if (!draggingRef.current) {
       return;
     }
-    const deltaX = event.clientX - startXRef.current;
-    const multiplier = event.shiftKey ? step * 0.1 : event.altKey ? step * 0.01 : step;
-    const nextValue = clamp(startValueRef.current + deltaX * multiplier, prop.min, prop.max);
-    onChange(nextValue.toString());
+    if (event.key === "Escape") {
+      setPreviewValue(startSerializedRef.current);
+      onCancel(startSerializedRef.current);
+      finishDrag();
+      event.preventDefault();
+    }
   };
 
-  const handleMouseUp = () => {
-    if (!draggingRef.current) {
-      return;
+  const cleanupKeydown = () => {
+    if (keydownAttachedRef.current) {
+      window.removeEventListener("keydown", handleKeyDown);
+      keydownAttachedRef.current = false;
     }
+  };
+
+  const finishDrag = () => {
+    pendingDragRef.current = false;
     draggingRef.current = false;
+    cleanupKeydown();
+    if (previousUserSelectRef.current !== null) {
+      document.body.style.userSelect = previousUserSelectRef.current;
+      previousUserSelectRef.current = null;
+    }
     window.removeEventListener("mousemove", handleMouseMove);
     window.removeEventListener("mouseup", handleMouseUp);
   };
 
-  const handleMouseDown: React.MouseEventHandler<HTMLInputElement> = (event) => {
-    const parsed = Number(displayValue);
-    startValueRef.current = Number.isFinite(parsed) ? parsed : 0;
-    startXRef.current = event.clientX;
-    draggingRef.current = true;
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+  const handleMouseMove = (event: MouseEvent) => {
+    if (!pendingDragRef.current && !draggingRef.current) {
+      return;
+    }
+
+    const deltaX = event.clientX - startXRef.current;
+
+    if (!draggingRef.current) {
+      if (Math.abs(deltaX) < dragThreshold) {
+        return;
+      }
+      draggingRef.current = true;
+      startSerializedRef.current = displayValue ?? "";
+      onStart(startSerializedRef.current);
+      window.addEventListener("keydown", handleKeyDown);
+      keydownAttachedRef.current = true;
+      inputRef.current?.blur();
+      previousUserSelectRef.current = document.body.style.userSelect;
+      document.body.style.userSelect = "none";
+      window.getSelection()?.removeAllRanges();
+    }
+
+    const multiplier = event.shiftKey ? step * 0.1 : event.altKey ? step * 0.01 : step;
+    const nextValue = clamp(startValueRef.current + deltaX * multiplier, prop.min, prop.max);
+    const rounded = roundToPrecision(nextValue, stepPrecision);
+    const asString = rounded.toString();
+    setPreviewValue(asString);
+    onPreview(asString);
     event.preventDefault();
   };
 
-  useEffect(
-    () => () => {
-      if (draggingRef.current) {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-        draggingRef.current = false;
+  const handleMouseUp = (event: MouseEvent) => {
+    if (pendingDragRef.current && !draggingRef.current) {
+      // Click without dragging: manually focus so the caret shows only after mouse up.
+      pendingDragRef.current = false;
+      clickSelectHandlers.selectAllIfNoDrag(event);
+    }
+
+    if (draggingRef.current) {
+      // Ensure the final value reflects the total drag distance even if there was no final mousemove.
+      const deltaX = event.clientX - startXRef.current;
+      const multiplier = event.shiftKey ? step * 0.1 : event.altKey ? step * 0.01 : step;
+      const nextValue = clamp(startValueRef.current + deltaX * multiplier, prop.min, prop.max);
+      const rounded = roundToPrecision(nextValue, stepPrecision);
+      const asString = rounded.toString();
+      setPreviewValue(null);
+      onCommit(asString);
+    }
+
+    pendingDragRef.current = false;
+    draggingRef.current = false;
+    finishDrag();
+  };
+
+  const handleMouseDown: React.MouseEventHandler<HTMLInputElement> = (event) => {
+    clickSelectHandlers.recordMouseDown(event);
+    const parsed = Number(displayValue);
+    startValueRef.current = Number.isFinite(parsed) ? parsed : 0;
+    startXRef.current = event.clientX;
+    pendingDragRef.current = true;
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    // Prevent immediate focus so caret does not appear while determining drag.
+    event.preventDefault();
+  };
+
+  // Cleanup listeners if the component unmounts mid-drag.
+  useEffect(() => {
+    return () => {
+      if (pendingDragRef.current || draggingRef.current) {
+        finishDrag();
       }
-    },
-    [handleMouseMove, handleMouseUp],
-  );
+    };
+    // Intentionally empty dependency array so cleanup only runs on unmount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <input
+      ref={inputRef}
       type="number"
       step={prop.step}
       min={prop.min}
       max={prop.max}
-      className="w-full bg-[var(--color-panel)] border border-[var(--color-border)] rounded px-2 py-1 text-xs text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]"
+      className="w-full bg-[var(--color-panel)] border border-[var(--color-border)] rounded px-2 py-1 text-xs text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)] cursor-ew-resize focus:cursor-text"
       value={currentValue}
       placeholder={sharedValue.mixed ? "Multiple" : prop.placeholder}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onCommit(e.target.value)}
       onMouseDown={handleMouseDown}
     />
   );
@@ -199,16 +351,21 @@ const TransformGroupRow: React.FC<{
   title: string;
   props: ElementPropertyDefinition[];
   sharedValues: Record<string, SharedValue>;
-  onChange: (prop: ElementPropertyDefinition, value: string) => void;
-}> = ({ title, props, sharedValues, onChange }) => {
+  onStart: (prop: ElementPropertyDefinition, value: string) => void;
+  onPreview: (prop: ElementPropertyDefinition, value: string) => void;
+  onCommit: (prop: ElementPropertyDefinition, value: string) => void;
+  onCancel: (prop: ElementPropertyDefinition, value: string) => void;
+  headerAddon?: React.ReactNode;
+}> = ({ title, props, sharedValues, onStart, onPreview, onCommit, onCancel, headerAddon }) => {
   if (props.length === 0) {
     return null;
   }
 
   return (
     <div className="py-2">
-      <div className="text-[11px] font-semibold text-[var(--color-text-muted)] mb-1 uppercase tracking-wide">
-        {title}
+      <div className="text-[11px] font-semibold text-[var(--color-text-muted)] mb-1 uppercase tracking-wide flex items-center justify-between gap-2">
+        <span>{title}</span>
+        {headerAddon}
       </div>
       <div className="grid grid-cols-3 gap-2">
         {props.map((prop) => (
@@ -217,7 +374,10 @@ const TransformGroupRow: React.FC<{
             <DraggableNumberInput
               prop={prop}
               sharedValue={sharedValues[prop.name] ?? { value: "", mixed: false }}
-              onChange={(value) => onChange(prop, value)}
+              onStart={(value) => onStart(prop, value)}
+              onPreview={(value) => onPreview(prop, value)}
+              onCommit={(value) => onCommit(prop, value)}
+              onCancel={(value) => onCancel(prop, value)}
             />
           </div>
         ))}
@@ -233,6 +393,8 @@ type ElementSettingsPanelProps = {
 export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ className }) => {
   const { pathSelection, remoteHolderElement, code, setCode } = useEditorStore();
   const [selectionAttrVersion, setSelectionAttrVersion] = useState(0);
+  const [scaleLocked, setScaleLocked] = useState(false);
+  const scaleLockStartValuesRef = useRef<Map<HTMLElement, ScaleAttributes> | null>(null);
 
   const selectedElements = useMemo(
     () => resolvePathsToElements(remoteHolderElement, pathSelection.selectedPaths),
@@ -297,7 +459,13 @@ export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ clas
       serialized = rawValue ? "true" : "false";
     } else if (typeof rawValue === "string") {
       if (prop.type === "number") {
-        serialized = rawValue.trim() === "" ? undefined : Number(rawValue).toString();
+        if (rawValue.trim() === "") {
+          serialized = undefined;
+        } else {
+          const precision = prop.step !== undefined ? getStepPrecision(prop.step) : 6;
+          const rounded = roundToPrecision(Number(rawValue), precision);
+          serialized = rounded.toString();
+        }
       } else {
         serialized = rawValue.trim() === "" ? undefined : rawValue;
       }
@@ -321,8 +489,102 @@ export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ clas
     }
   };
 
+  const applyLockedScaleChange = (rawValue: string) => {
+    scaleKeys.forEach((key) => {
+      const scaleProp = transformProps.find((p) => p.name === key);
+      if (scaleProp) {
+        handleChange(scaleProp, rawValue);
+      }
+    });
+    scaleLockStartValuesRef.current = null;
+  };
+
   const handleTransformChange = (prop: ElementPropertyDefinition, rawValue: string) => {
+    if (scaleLocked && isScalePropName(prop.name)) {
+      applyLockedScaleChange(rawValue);
+      return;
+    }
     handleChange(prop, rawValue);
+  };
+
+  const handleTransformStart = (prop: ElementPropertyDefinition, _startValue: string) => {
+    if (scaleLocked && isScalePropName(prop.name) && selectedElements.length > 0) {
+      const initial = new Map<HTMLElement, ScaleAttributes>();
+      selectedElements.forEach((el) => {
+        initial.set(el, {
+          sx: el.getAttribute("sx"),
+          sy: el.getAttribute("sy"),
+          sz: el.getAttribute("sz"),
+        });
+      });
+      scaleLockStartValuesRef.current = initial;
+      return;
+    }
+    scaleLockStartValuesRef.current = null;
+  };
+
+  const handleTransformPreview = (prop: ElementPropertyDefinition, rawValue: string) => {
+    if (selectedElements.length === 0) {
+      return;
+    }
+
+    if (scaleLocked && isScalePropName(prop.name)) {
+      const trimmed = rawValue.trim();
+      const serialized = trimmed === "" ? undefined : trimmed;
+
+      selectedElements.forEach((el) => {
+        scaleKeys.forEach((key) => {
+          if (serialized === undefined) {
+            el.removeAttribute(key);
+          } else {
+            el.setAttribute(key, serialized);
+          }
+        });
+      });
+      return;
+    }
+
+    const trimmed = rawValue.trim();
+    const serialized = trimmed === "" ? undefined : trimmed;
+
+    selectedElements.forEach((el) => {
+      if (serialized === undefined) {
+        el.removeAttribute(prop.name);
+      } else {
+        el.setAttribute(prop.name, serialized);
+      }
+    });
+  };
+
+  const handleTransformCancel = (prop: ElementPropertyDefinition, startValue: string) => {
+    if (selectedElements.length === 0) {
+      return;
+    }
+    if (scaleLocked && isScalePropName(prop.name) && scaleLockStartValuesRef.current) {
+      scaleLockStartValuesRef.current.forEach((values, el) => {
+        scaleKeys.forEach((key) => {
+          const startAttr = values[key];
+          if (startAttr === null) {
+            el.removeAttribute(key);
+          } else {
+            el.setAttribute(key, startAttr);
+          }
+        });
+      });
+      scaleLockStartValuesRef.current = null;
+      setSelectionAttrVersion((v) => v + 1);
+      return;
+    }
+    const trimmed = startValue.trim();
+    const serialized = trimmed === "" ? undefined : trimmed;
+    selectedElements.forEach((el) => {
+      if (serialized === undefined) {
+        el.removeAttribute(prop.name);
+      } else {
+        el.setAttribute(prop.name, serialized);
+      }
+    });
+    setSelectionAttrVersion((v) => v + 1);
   };
 
   const selectionSummary = useMemo(() => {
@@ -369,13 +631,35 @@ export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ clas
               const propsInGroup = group.keys
                 .map((key) => transformProps.find((p) => p.name === key))
                 .filter((p): p is ElementPropertyDefinition => Boolean(p));
+              const headerAddon =
+                group.title === "Scale"
+                  ? (
+                      <button
+                        type="button"
+                        aria-pressed={scaleLocked}
+                        onClick={() => setScaleLocked((locked) => !locked)}
+                        className={`text-[10px] px-2 py-[3px] rounded border transition-colors ${
+                          scaleLocked
+                            ? "bg-[var(--color-accent)] text-[var(--color-bg)] border-[var(--color-accent)]"
+                            : "bg-[var(--color-panel)] text-[var(--color-text)] border-[var(--color-border)] hover:border-[var(--color-accent)]"
+                        }`}
+                        title="When enabled, scale axes update together"
+                      >
+                        {scaleLocked ? "Uniform on" : "Uniform off"}
+                      </button>
+                    )
+                  : undefined;
               return (
                 <TransformGroupRow
                   key={group.title}
                   title={group.title}
                   props={propsInGroup}
                   sharedValues={sharedValues}
-                  onChange={handleTransformChange}
+                  onStart={handleTransformStart}
+                  onPreview={handleTransformPreview}
+                  onCommit={handleTransformChange}
+                  onCancel={handleTransformCancel}
+                  headerAddon={headerAddon}
                 />
               );
             })}

@@ -7,6 +7,7 @@ import {
   MMLScene,
   TransformableElement,
   CameraVisualizerGraphics,
+  isEditorModeScene,
 } from "@mml-io/mml-web";
 import { PerspectiveCamera } from "three";
 
@@ -159,7 +160,9 @@ export class MCamera<G extends GameThreeJSAdapter> extends TransformableElement<
     }
 
     this.cameraGraphics = new CameraGraphics(this);
-    this.cameraVisualizerGraphics = new CameraVisualizerGraphics<G>(this);
+    if (isEditorModeScene(this.getScene())) {
+      this.cameraVisualizerGraphics = new CameraVisualizerGraphics<G>(this);
+    }
 
     for (const name of MCamera.observedAttributes) {
       const value = this.getAttribute(name);

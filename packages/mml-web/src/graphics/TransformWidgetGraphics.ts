@@ -56,8 +56,8 @@ export interface TransformSnapping {
 export interface TransformWidgetCallbacks {
   /** Called when drag starts */
   onDragStart?: () => void;
-  /** Called during drag with delta values */
-  onDragChange?: (delta: TransformDelta) => void;
+  /** Called during drag with current values for each element */
+  onDragChange?: (element: TransformableElement<any>, values: TransformValues) => void;
   /** Called when drag ends with final values for each element */
   onDragEnd?: (element: TransformableElement<any>, values: TransformValues) => void;
   /** Called when controls state changes (enabled/disabled) */

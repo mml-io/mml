@@ -11,6 +11,27 @@ import {
 } from "../lib/domUtils";
 import { TransformValues, useEditorStore } from "../state/editorStore";
 
+const applyTransformValuesToElement = (el: HTMLElement, values: TransformValues) => {
+  const maybeSet = (name: keyof TransformValues, emptyValue: number | undefined) => {
+    const val = values[name];
+    if (val === undefined || val === null) {
+      el.removeAttribute(name);
+    } else {
+      el.setAttribute(name, val.toString());
+    }
+  };
+
+  maybeSet("x", 0);
+  maybeSet("y", 0);
+  maybeSet("z", 0);
+  maybeSet("rx", 0);
+  maybeSet("ry", 0);
+  maybeSet("rz", 0);
+  maybeSet("sx", 1);
+  maybeSet("sy", 1);
+  maybeSet("sz", 1);
+};
+
 /**
  * Hook that manages editor transform controller functionality.
  * Handles:
@@ -34,6 +55,7 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
     gizmoSpace,
     toggleGizmoSpace,
     snappingEnabled,
+    snappingConfig,
     setSnappingEnabled,
     visualizersVisible,
     toggleVisualizersVisible,
@@ -69,7 +91,7 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
   const setupEditorCallbacks = useCallback(
     (client: MMLWebClient) => {
       console.log("[useEditorTransform] Setting up editor callbacks");
-      
+
       client.setEditorCallbacks({
         onSelectionChange: (elements) => {
           console.log("[useEditorTransform] onSelectionChange callback fired");
@@ -86,6 +108,16 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
             clearSelection();
           }
         },
+        onTransformPreview: (element, values) => {
+          const holder = useEditorStore.getState().remoteHolderElement;
+          if (!holder) return;
+
+          const path = elementToPath(holder, element);
+          const target = pathToElement(bodyFromRemoteHolderElement(holder), path);
+          if (!target) return;
+
+          applyTransformValuesToElement(target, values);
+        },
         onTransformCommit: (element, values) => {
           console.log("[useEditorTransform] onTransformCommit callback fired from client");
           handleTransformCommit(element, values as TransformValues);
@@ -94,6 +126,13 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
           console.log("[useEditorTransform] onDragStateChange:", isDragging);
         },
       });
+
+      // Apply initial gizmo state to freshly created client
+      const state = useEditorStore.getState();
+      client.setGizmoMode(state.gizmoMode);
+      client.setGizmoSpace(state.gizmoSpace);
+      client.setSnapping(state.snappingEnabled);
+      client.setSnappingConfig(state.snappingConfig);
     },
     [setSelectedPaths, clearSelection, handleTransformCommit],
   );
@@ -174,6 +213,14 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
     client.setSnapping(snappingEnabled);
   }, [snappingEnabled, clientRef]);
 
+  // Sync snapping configuration to viewport
+  useEffect(() => {
+    const client = clientRef.current;
+    if (!client) return;
+
+    client.setSnappingConfig(snappingConfig);
+  }, [snappingConfig, clientRef]);
+
   // Sync visualizers visibility to viewport
   useEffect(() => {
     const client = clientRef.current;
@@ -206,9 +253,6 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
         case "g":
           toggleVisualizersVisible();
           break;
-        case "shift":
-          setSnappingEnabled(true);
-          break;
         case "escape":
           clearSelection();
           break;
@@ -220,9 +264,6 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
         return;
       }
 
-      if (event.key === "Shift") {
-        setSnappingEnabled(false);
-      }
     };
 
     window.addEventListener("keydown", handleKeyDown);

@@ -221,8 +221,10 @@ export class MMLScene<G extends StandaloneGraphicsAdapter> implements IMMLScene<
   private loadingProgressManager: LoadingProgressManager;
 
   private graphicsAdapter: G | null = null;
+  private readonly editorMode: boolean;
 
-  constructor(public element: HTMLElement) {
+  constructor(public element: HTMLElement, options?: { isEditorMode?: boolean }) {
+    this.editorMode = options?.isEditorMode ?? false;
     this.loadingProgressManager = new LoadingProgressManager();
   }
 
@@ -257,6 +259,10 @@ export class MMLScene<G extends StandaloneGraphicsAdapter> implements IMMLScene<
 
   public getOverlayElement(): HTMLElement | null {
     return this.element;
+  }
+
+  public isEditorMode(): boolean {
+    return this.editorMode;
   }
 
   public getGraphicsAdapter(): G {
@@ -403,4 +409,10 @@ export class MMLScene<G extends StandaloneGraphicsAdapter> implements IMMLScene<
   public removeChatProbeListener(listener: ChatProbeListener<G>): void {
     this.chatProbeListeners.delete(listener);
   }
+}
+
+export function isEditorModeScene<G extends GraphicsAdapter = GraphicsAdapter>(
+  scene: IMMLScene<G>,
+): boolean {
+  return typeof (scene as any).isEditorMode === "function" ? (scene as any).isEditorMode() : false;
 }
