@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global process console */
 
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -6,7 +7,8 @@ import { resolve } from "path";
 let nvmrc;
 try {
   nvmrc = readFileSync(resolve(process.cwd(), ".nvmrc"), { encoding: "utf8" });
-} catch (e) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+} catch (_err) {
   console.error("No .nvmrc file present");
   process.exit(1);
 }
