@@ -1,5 +1,5 @@
 {
-  "name": "@mml-io/mml-vscode-extension",
+  "name": "mml-editor-vscode-extension",
   "displayName": "MML Preview",
   "description": "Preview MML scenes from the active VS Code editor using the mml-editor preview client.",
   "version": "0.1.0",
