@@ -13,8 +13,6 @@ describe("m-video", () => {
 
     await navigateToTestPage(page, "m-video-test.html/reset");
 
-    // adds extra time for src set and loading
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     await renderFrame(page);
 
     // Wait for the m-video content to load

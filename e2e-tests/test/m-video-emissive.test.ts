@@ -13,8 +13,6 @@ describe("m-video-emissive", () => {
 
     await navigateToTestPage(page, "m-video-emissive-test.html/reset");
 
-    // adds extra time for loading
-    await new Promise((resolve) => setTimeout(resolve, 500));
     await renderFrame(page);
 
     // Wait for the m-video content to load
