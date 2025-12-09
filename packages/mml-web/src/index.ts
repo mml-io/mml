@@ -20,6 +20,7 @@ export * from "./remote-document";
 export * from "./scene";
 export * from "./status-ui";
 export * from "./tag-debug-adapter";
+export * from "./transform-widget";
 export * from "./time";
 export * from "./utils/calculateContentSize";
 export * from "./utils/EventHandlerCollection";
