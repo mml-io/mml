@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   ElementPropertyDefinition,
@@ -204,7 +204,9 @@ const DraggableNumberInput: React.FC<{
   onPreview: (newValue: string) => void;
   onCommit: (newValue: string) => void;
   onCancel: (initialValue: string) => void;
-}> = ({ prop, sharedValue, onStart, onPreview, onCommit, onCancel }) => {
+  snappingEnabled: boolean;
+  snapIncrement?: number;
+}> = ({ prop, sharedValue, onStart, onPreview, onCommit, onCancel, snappingEnabled, snapIncrement }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const startXRef = useRef(0);
   const startValueRef = useRef(0);
@@ -221,7 +223,17 @@ const DraggableNumberInput: React.FC<{
 
   const step = prop.step ?? 0.1;
   const stepPrecision = getStepPrecision(prop.step ?? 0.1);
+  const snapPrecision = snapIncrement ? getStepPrecision(snapIncrement) : 0;
+  const roundingPrecision = Math.max(stepPrecision, snapPrecision);
   const dragThreshold = 2;
+
+  const applySnapping = (value: number) => {
+    if (!snappingEnabled || snapIncrement === undefined || snapIncrement <= 0) {
+      return value;
+    }
+    const snapped = Math.round(value / snapIncrement) * snapIncrement;
+    return roundToPrecision(snapped, roundingPrecision);
+  };
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (!draggingRef.current) {
@@ -277,8 +289,11 @@ const DraggableNumberInput: React.FC<{
     }
 
     const multiplier = event.shiftKey ? step * 0.1 : event.altKey ? step * 0.01 : step;
-    const nextValue = clamp(startValueRef.current + deltaX * multiplier, prop.min, prop.max);
-    const rounded = roundToPrecision(nextValue, stepPrecision);
+    const unclamped = startValueRef.current + deltaX * multiplier;
+    const clamped = clamp(unclamped, prop.min, prop.max);
+    const snapped = applySnapping(clamped);
+    const finalValue = clamp(snapped, prop.min, prop.max);
+    const rounded = roundToPrecision(finalValue, roundingPrecision);
     const asString = rounded.toString();
     setPreviewValue(asString);
     onPreview(asString);
@@ -296,8 +311,11 @@ const DraggableNumberInput: React.FC<{
       // Ensure the final value reflects the total drag distance even if there was no final mousemove.
       const deltaX = event.clientX - startXRef.current;
       const multiplier = event.shiftKey ? step * 0.1 : event.altKey ? step * 0.01 : step;
-      const nextValue = clamp(startValueRef.current + deltaX * multiplier, prop.min, prop.max);
-      const rounded = roundToPrecision(nextValue, stepPrecision);
+      const unclamped = startValueRef.current + deltaX * multiplier;
+      const clamped = clamp(unclamped, prop.min, prop.max);
+      const snapped = applySnapping(clamped);
+      const finalValue = clamp(snapped, prop.min, prop.max);
+      const rounded = roundToPrecision(finalValue, roundingPrecision);
       const asString = rounded.toString();
       setPreviewValue(null);
       onCommit(asString);
@@ -355,8 +373,21 @@ const TransformGroupRow: React.FC<{
   onPreview: (prop: ElementPropertyDefinition, value: string) => void;
   onCommit: (prop: ElementPropertyDefinition, value: string) => void;
   onCancel: (prop: ElementPropertyDefinition, value: string) => void;
+  snappingEnabled: boolean;
+  getSnapIncrement: (propName: string) => number | undefined;
   headerAddon?: React.ReactNode;
-}> = ({ title, props, sharedValues, onStart, onPreview, onCommit, onCancel, headerAddon }) => {
+}> = ({
+  title,
+  props,
+  sharedValues,
+  onStart,
+  onPreview,
+  onCommit,
+  onCancel,
+  snappingEnabled,
+  getSnapIncrement,
+  headerAddon,
+}) => {
   if (props.length === 0) {
     return null;
   }
@@ -378,6 +409,8 @@ const TransformGroupRow: React.FC<{
               onPreview={(value) => onPreview(prop, value)}
               onCommit={(value) => onCommit(prop, value)}
               onCancel={(value) => onCancel(prop, value)}
+              snappingEnabled={snappingEnabled}
+              snapIncrement={getSnapIncrement(prop.name)}
             />
           </div>
         ))}
@@ -391,7 +424,7 @@ type ElementSettingsPanelProps = {
 };
 
 export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ className }) => {
-  const { pathSelection, remoteHolderElement, code, setCode } = useEditorStore();
+  const { pathSelection, remoteHolderElement, code, setCode, snappingEnabled, snappingConfig } = useEditorStore();
   const [selectionAttrVersion, setSelectionAttrVersion] = useState(0);
   const [scaleLocked, setScaleLocked] = useState(false);
   const scaleLockStartValuesRef = useRef<Map<HTMLElement, ScaleAttributes> | null>(null);
@@ -448,6 +481,29 @@ export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ clas
     });
     return values;
   }, [selectedElements, sharedProperties]);
+
+  const normalizeSnapValue = (value: number | null | undefined) => {
+    return typeof value === "number" ? value : undefined;
+  };
+
+  const getSnapIncrement = useCallback(
+    (propName: string) => {
+      if (!snappingEnabled) {
+        return undefined;
+      }
+      if (["x", "y", "z"].includes(propName)) {
+        return normalizeSnapValue(snappingConfig.translation);
+      }
+      if (["rx", "ry", "rz"].includes(propName)) {
+        return normalizeSnapValue(snappingConfig.rotation);
+      }
+      if (isScalePropName(propName)) {
+        return normalizeSnapValue(snappingConfig.scale);
+      }
+      return undefined;
+    },
+    [snappingConfig, snappingEnabled],
+  );
 
   const handleChange = (prop: ElementPropertyDefinition, rawValue: string | boolean) => {
     if (!code || selectedElements.length === 0) {
@@ -659,6 +715,8 @@ export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ clas
                   onPreview={handleTransformPreview}
                   onCommit={handleTransformChange}
                   onCancel={handleTransformCancel}
+                  snappingEnabled={snappingEnabled}
+                  getSnapIncrement={getSnapIncrement}
                   headerAddon={headerAddon}
                 />
               );

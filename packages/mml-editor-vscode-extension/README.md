@@ -1,4 +1,4 @@
-# MML VSCode Extension
+# MML Editor VSCode Extension
 
 ## Iterative development
 
@@ -8,19 +8,19 @@ To iterate, first add a new debug launch configuration in VSCode/Cursor:
 
 ```json
     {
-      "name": "Run MML VSCode Extension",
+      "name": "Run MML Editor VSCode Extension",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": [
         // Point this to the extension package directory
-        "--extensionDevelopmentPath=${workspaceFolder}/packages/mml-vscode-extension"
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/mml-editor-vscode-extension"
         // Optional: open a separate test workspace:
         // "--extensionDevelopmentPath=${workspaceFolder}/packages/your-extension",
         // "${workspaceFolder}/.vscode-dev-playground"
       ],
       "outFiles": [
-        "${workspaceFolder}/packages/mml-vscode-extension/dist/**/*.js"
+        "${workspaceFolder}/packages/mml-editor-vscode-extension/dist/**/*.js"
       ],
       // "preLaunchTask": "watch-extension",  // ensures watcher is running
       "skipFiles": [
