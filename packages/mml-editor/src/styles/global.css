@@ -35,3 +35,9 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text);
 }
+
+/* Code selection highlight in Monaco */
+.monaco-editor .mml-code-selection-highlight-line {
+  background-color: rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 185, 0, 0.45);
+}

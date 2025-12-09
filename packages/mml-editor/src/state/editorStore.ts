@@ -76,8 +76,8 @@ export interface EditorState {
   clearSelection: () => void;
 
   // Monaco code range (derived from selection for editor highlighting)
-  codeRange: CodeRange | null;
-  setCodeRange: (range: CodeRange | null) => void;
+  codeRange: CodeRange[] | null;
+  setCodeRange: (range: CodeRange[] | null) => void;
 
   // Gizmo state
   gizmoMode: GizmoMode;

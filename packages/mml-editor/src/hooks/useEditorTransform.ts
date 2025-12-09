@@ -4,6 +4,7 @@ import { useEffect, useCallback, MutableRefObject } from "react";
 import {
   bodyFromRemoteHolderElement,
   elementToPath,
+  getElementCodeRange,
   pathToElement,
   resolvePathsToElements,
   updateElementTransformInCode,
@@ -27,6 +28,7 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
     pathSelection,
     setSelectedPaths,
     clearSelection,
+    code,
     gizmoMode,
     setGizmoMode,
     gizmoSpace,
@@ -36,6 +38,7 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
     visualizersVisible,
     toggleVisualizersVisible,
     setCode,
+    setCodeRange,
   } = useEditorStore();
 
   // Handle transform commit - update the code with new transform values
@@ -123,6 +126,29 @@ export function useEditorTransform(clientRef: MutableRefObject<MMLWebClient | nu
       client.clearSelection();
     }
   }, [pathSelection, remoteHolderElement, clientRef]);
+
+  // Derive code highlight ranges from all selected elements
+  useEffect(() => {
+    if (!remoteHolderElement || !code) {
+      setCodeRange(null);
+      return;
+    }
+
+    const root = bodyFromRemoteHolderElement(remoteHolderElement);
+    const targetPaths = pathSelection.selectedPaths;
+    if (!root || targetPaths.length === 0) {
+      setCodeRange(null);
+      return;
+    }
+
+    const ranges = targetPaths
+      .map((p) => pathToElement(root, p))
+      .filter((el): el is HTMLElement => !!el)
+      .map((el) => getElementCodeRange(code, el))
+      .filter((r): r is NonNullable<typeof r> => !!r);
+
+    setCodeRange(ranges.length > 0 ? ranges : null);
+  }, [code, pathSelection, remoteHolderElement, setCodeRange]);
 
   // Sync gizmo mode to viewport
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { TransformValues } from "../state/editorStore";
+import { CodeRange, TransformValues } from "../state/editorStore";
 
 /**
  * DOM utilities for element path-based selection tracking.
@@ -150,7 +150,10 @@ function getElementSignature(element: HTMLElement): { tagName: string; id?: stri
  * Find an element's opening tag in the code and return its position info.
  * Returns the start index, end index of the opening tag, and the tag content.
  */
-function findElementInCode(code: string, element: HTMLElement): { start: number; end: number; tagContent: string } | null {
+export function findElementInCode(
+  code: string,
+  element: HTMLElement,
+): { start: number; end: number; tagContent: string } | null {
   const signature = getElementSignature(element);
   console.log("[domUtils] Finding element in code:", signature.tagName, signature.id ? `#${signature.id}` : "");
   
@@ -203,6 +206,54 @@ function findElementInCode(code: string, element: HTMLElement): { start: number;
   }
   
   return bestMatch;
+}
+
+/**
+ * Convert a character offset in code into a Monaco-compatible position (1-based line/column).
+ */
+function offsetToLineColumn(code: string, offset: number): { line: number; column: number } {
+  const clamped = Math.max(0, Math.min(offset, code.length));
+  let line = 1;
+  let column = 1;
+
+  for (let i = 0; i < clamped; i++) {
+    if (code[i] === "\n") {
+      line += 1;
+      column = 1;
+    } else {
+      column += 1;
+    }
+  }
+
+  return { line, column };
+}
+
+/**
+ * Convert start/end offsets into a Monaco code range.
+ */
+export function offsetsToCodeRange(code: string, start: number, end: number): CodeRange {
+  const startPos = offsetToLineColumn(code, start);
+  const endPos = offsetToLineColumn(code, end);
+
+  return {
+    startLine: startPos.line,
+    startColumn: startPos.column,
+    endLine: endPos.line,
+    endColumn: endPos.column,
+  };
+}
+
+/**
+ * Compute the code range that corresponds to an element's opening tag.
+ * Returns null if the element cannot be located in the provided code.
+ */
+export function getElementCodeRange(code: string, element: HTMLElement): CodeRange | null {
+  const elementPos = findElementInCode(code, element);
+  if (!elementPos) {
+    return null;
+  }
+
+  return offsetsToCodeRange(code, elementPos.start, elementPos.end);
 }
 
 export type AttributeValue = string | number | boolean | null | undefined;

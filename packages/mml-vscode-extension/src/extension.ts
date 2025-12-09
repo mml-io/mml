@@ -8,9 +8,12 @@ type PreviewSession = {
   disposables: vscode.Disposable[];
   pendingUpdate: ReturnType<typeof setTimeout> | null;
   suppressChangeCount: number;
+  selectionDecoration: vscode.TextEditorDecorationType;
 };
 
 const COMMAND_ID = "mml.preview";
+
+type SelectionRangeMessage = { start: number; end: number };
 
 export function activate(context: vscode.ExtensionContext) {
   const openPreview = vscode.commands.registerCommand(COMMAND_ID, () => {
@@ -54,6 +57,10 @@ function createOrRevealPreview(context: vscode.ExtensionContext, initialDoc: vsc
   panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri);
 
   const disposables: vscode.Disposable[] = [];
+  const selectionDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: "rgba(255, 215, 0, 0.25)",
+    border: "1px solid rgba(255, 185, 0, 0.6)",
+  });
 
   const newSession: PreviewSession = {
     panel,
@@ -61,6 +68,7 @@ function createOrRevealPreview(context: vscode.ExtensionContext, initialDoc: vsc
     disposables,
     pendingUpdate: null,
     suppressChangeCount: 0,
+    selectionDecoration,
   };
   session = newSession;
 
@@ -70,6 +78,7 @@ function createOrRevealPreview(context: vscode.ExtensionContext, initialDoc: vsc
       session = null;
     }),
   );
+  disposables.push(selectionDecoration);
 
   disposables.push(
     panel.webview.onDidReceiveMessage(async (message) => {
@@ -78,6 +87,9 @@ function createOrRevealPreview(context: vscode.ExtensionContext, initialDoc: vsc
       }
       if (message?.type === "updateContent" && typeof message.content === "string") {
         await applyWebviewContentUpdate(newSession, message.content, message.uri);
+      }
+      if (message?.type === "selectionChange" && Array.isArray(message.ranges)) {
+        applySelectionHighlight(newSession, message.ranges as SelectionRangeMessage[], message.uri);
       }
     }),
   );
@@ -159,5 +171,40 @@ async function applyWebviewContentUpdate(
   if (!success) {
     currentSession.suppressChangeCount = Math.max(0, currentSession.suppressChangeCount - 1);
   }
+}
+
+function applySelectionHighlight(
+  currentSession: PreviewSession,
+  ranges: SelectionRangeMessage[],
+  sourceUri?: string,
+) {
+  const doc = currentSession.trackedDocument;
+  if (!doc || doc.isClosed) {
+    return;
+  }
+
+  const docUri = doc.uri.toString();
+  if (sourceUri && docUri !== sourceUri) {
+    return;
+  }
+
+  const text = doc.getText();
+  const textLength = text.length;
+  const targetEditors = vscode.window.visibleTextEditors.filter(
+    (editor) => editor.document.uri.toString() === docUri,
+  );
+
+  const vscodeRanges = ranges.map((range) => {
+    const startPos = doc.positionAt(Math.max(0, Math.min(range.start, textLength)));
+    const endPos = doc.positionAt(Math.max(0, Math.min(range.end, textLength)));
+    return new vscode.Range(startPos, endPos);
+  });
+
+  targetEditors.forEach((editor) => {
+    editor.setDecorations(currentSession.selectionDecoration, vscodeRanges);
+    if (vscodeRanges[0]) {
+      editor.revealRange(vscodeRanges[0], vscode.TextEditorRevealType.InCenter);
+    }
+  });
 }
 

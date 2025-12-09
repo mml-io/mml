@@ -7,9 +7,10 @@ interface CodeEditorProps {
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({ initialCode = "" }) => {
-  const { code, setCode, selection } = useEditorStore();
+  const { code, setCode, codeRange } = useEditorStore();
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<Monaco | null>(null);
+  const decorationIdsRef = useRef<string[]>([]);
 
   // Sync local code from props if provided and store is empty (initial load)
   useEffect(() => {
@@ -56,29 +57,39 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ initialCode = "" }) => {
 
   // React to selection changes from the store (e.g. from Viewport)
   useEffect(() => {
-    if (editorRef.current && selection.range) {
-      const { startLine, endLine, startColumn, endColumn } = selection.range;
-      
-      // Reveal the range
-      editorRef.current.revealRangeInCenter({
-        startLineNumber: startLine,
-        startColumn,
-        endLineNumber: endLine,
-        endColumn,
-      });
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco) return;
 
-      // Set selection or highlight
-      editorRef.current.setSelection({
-        startLineNumber: startLine,
-        startColumn,
-        endLineNumber: endLine,
-        endColumn,
-      });
-      
-      // Focus editor
-      editorRef.current.focus();
+    const model = editor.getModel();
+    if (!model) return;
+
+    const ranges =
+      codeRange?.map(
+        (r) =>
+          new monaco.Range(
+            r.startLine,
+            1, // whole line highlight
+            r.endLine,
+            1,
+          ),
+      ) ?? [];
+
+    decorationIdsRef.current = editor.deltaDecorations(
+      decorationIdsRef.current,
+      ranges.map((range) => ({
+        range,
+        options: {
+          isWholeLine: true,
+          className: "mml-code-selection-highlight-line",
+        },
+      })),
+    );
+
+    if (ranges[0]) {
+      editor.revealRangeInCenter(ranges[0]);
     }
-  }, [selection]);
+  }, [codeRange]);
 
   return (
     <div style={{ width: "100%", height: "100%" }}>

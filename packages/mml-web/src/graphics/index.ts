@@ -29,7 +29,6 @@ export * from "./SphereGraphics";
 export * from "./TransformableGraphics";
 export * from "./TransformWidgetGraphics";
 export * from "./VideoGraphics";
-export * from "./VisualGraphics";
 export * from "./BillboardVisualizerGraphics";
 export * from "./PointLightHelperVisualizerGraphics";
 export * from "./SpotLightHelperVisualizerGraphics";

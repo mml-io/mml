@@ -32,6 +32,11 @@ type UpdateContentMessage = {
   uri?: string;
 };
 
+type SelectionRangeMessage = {
+  start: number;
+  end: number;
+};
+
 type IncomingMessage = SetContentMessage | { type: "ping" | "forceRefresh" };
 
 type PersistedState = {
@@ -161,6 +166,26 @@ function findElementInCode(code: string, element: HTMLElement): { start: number;
 
 type AttributeValue = string | number | boolean | null | undefined;
 
+function getElementOffsets(element: HTMLElement): SelectionRangeMessage | null {
+  if (!currentRawContent) return null;
+  const pos = findElementInCode(currentRawContent, element);
+  if (!pos) return null;
+  return { start: pos.start, end: pos.end };
+}
+
+function postSelectionChange(elements: HTMLElement[] | null) {
+  const ranges =
+    elements
+      ?.map((el) => getElementOffsets(el))
+      .filter((range): range is SelectionRangeMessage => !!range) ?? [];
+
+  vscode.postMessage({
+    type: "selectionChange",
+    ranges,
+    uri: currentUri ?? undefined,
+  });
+}
+
 function updateAttributeInTag(tagContent: string, attrName: string, value: AttributeValue): string {
   const attrRegex = new RegExp(`\\s*\\b${attrName}=["'][^"']*["']`, "i");
   const hasAttr = attrRegex.test(tagContent);
@@ -262,6 +287,7 @@ async function boot() {
   console.log("Document connected");
 
   client.setEditorCallbacks({
+    onSelectionChange: (elements) => postSelectionChange(elements as HTMLElement[] | null),
     onTransformCommit: (element, values) => handleTransformCommit(element, values as TransformValues),
   });
 
