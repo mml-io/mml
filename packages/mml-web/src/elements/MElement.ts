@@ -4,7 +4,6 @@ import { MElementGraphics } from "../graphics";
 import { LoadingProgressManager } from "../loading";
 import { IMMLScene, PositionAndRotation } from "../scene";
 import { MMLDocumentTimeManager } from "../time";
-import { ElementVisualizerController } from "../visuals/ElementVisualizerController";
 import type { VisualizerDescriptor } from "../visuals/VisualDescriptor";
 import type { RemoteDocument } from "./RemoteDocument";
 
@@ -24,7 +23,6 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   private mElementGraphics: MElementGraphics<G> | null = null;
   private cachedScene: IMMLScene<G> | null = null;
   private cachedRemoteDocument: RemoteDocument<G> | null = null;
-  private visualizerController: ElementVisualizerController<G> | null = null;
 
   /**
    * Selection state for editor mode. When true, the selected visualizer should be shown.
@@ -61,7 +59,6 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
     if (this._isSelected !== value) {
       this._isSelected = value;
       this.onSelectionChanged(value);
-      this.visualizerController?.handleSelectionChanged();
     }
   }
 
@@ -82,16 +79,13 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
    * Returns null for elements that have no visualizer.
    * This visualizer is shown when visualizers are enabled.
    */
-  public getElementVisualizer(_isSelected: boolean): VisualizerDescriptor | null {
+  public getVisualizer(_isSelected: boolean): VisualizerDescriptor | null {
     return null;
   }
 
   /**
    * Notify the visualizer controller that descriptor inputs changed.
    */
-  protected notifyVisualizerChanged(): void {
-    this.visualizerController?.refreshVisualizer();
-  }
 
   // This is extra information that can be displayed to provide help in usage, such as cones/bounding boxes/etc.
   public getVisualDebugComponent(): G["containerType"] | null {
@@ -335,16 +329,9 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
     this.mElementGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()
       .MElementGraphicsInterface(this);
-
-    const visualizerFactory = graphicsAdapter.getGraphicsAdapterFactory().getElementVisualizerFactory?.();
-    if (visualizerFactory) {
-      this.visualizerController = new ElementVisualizerController(this, visualizerFactory, graphicsAdapter);
-    }
   }
 
   disconnectedCallback() {
-    this.visualizerController?.dispose();
-    this.visualizerController = null;
     this.mElementGraphics?.dispose();
     this.mElementGraphics = null;
   }

@@ -1,3 +1,4 @@
+import { MMLColor } from "../color";
 import { DebugHelper } from "../debug-helper";
 import {
   Animation,
@@ -26,30 +27,34 @@ import {
 import {
   AnimationGraphics,
   AudioGraphics,
-  CapsuleGraphics,
+  BillboardVisualizerGraphics,
   ChatProbeGraphics,
   CubeGraphics,
   CylinderGraphics,
   DebugHelperGraphics,
+  ElementVisualizer,
   FrameGraphics,
   GraphicsAdapter,
   ImageGraphics,
   InteractionGraphics,
   LabelGraphics,
   LightGraphics,
+  LightVisualizerGraphics,
+  ModelVisualizerGraphics,
   LinkGraphics,
   MElementGraphics,
   ModelGraphics,
   OverlayGraphics,
   PlaneGraphics,
+  PointLightHelperVisualizerGraphics,
   PositionProbeGraphics,
   PromptGraphics,
   RemoteDocumentGraphics,
   SphereGraphics,
+  SpotLightHelperVisualizerGraphics,
   StandaloneGraphicsAdapter,
   TransformableGraphics,
   VideoGraphics,
-  ElementVisualizerFactory,
 } from "../graphics";
 import { InteractionManager } from "../interaction-ui";
 import { LoadingProgressManager } from "../loading";
@@ -88,11 +93,28 @@ export interface MMLGraphicsInterface<C extends GraphicsAdapter> {
     element: Model<C>,
     updateMeshCallback: () => void,
   ) => ModelGraphics<C>;
-  /**
-   * Get the element visualizer factory for creating editor visualizers from descriptors.
-   * Returns null if this adapter doesn't support editor visualizers.
-   */
-  getElementVisualizerFactory?: () => ElementVisualizerFactory<C> | null;
+  BillboardVisualizerGraphicsInterface: (
+    element: MElement<C>,
+    svgContent: string,
+    size: number,
+    color?: MMLColor,
+  ) => BillboardVisualizerGraphics<C>;
+  ModelVisualizerGraphicsInterface: (
+    element: MElement<C>,
+    url: string,
+    scale: number,
+  ) => ModelVisualizerGraphics<C>;
+  PointLightHelperVisualizerGraphicsInterface: (
+    element: MElement<C>,
+    distance: number | null,
+    color: MMLColor,
+  ) => PointLightHelperVisualizerGraphics<C>;
+  SpotLightHelperVisualizerGraphicsInterface: (
+    element: MElement<C>,
+    angleDeg: number,
+    distance: number | null,
+    color: MMLColor,
+  ) => SpotLightHelperVisualizerGraphics<C>;
 }
 
 export type PositionAndRotation = {

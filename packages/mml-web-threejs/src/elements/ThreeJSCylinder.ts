@@ -24,9 +24,9 @@ export class ThreeJSCylinder extends CylinderGraphics<ThreeJSGraphicsAdapter> {
     this.cylinder.getContainer().add(this.mesh);
   }
 
-  disable(): void {}
+  disable(): void { }
 
-  enable(): void {}
+  enable(): void { }
 
   getCollisionElement(): THREE.Object3D {
     return this.mesh;
@@ -56,5 +56,5 @@ export class ThreeJSCylinder extends CylinderGraphics<ThreeJSGraphicsAdapter> {
     this.material.opacity = opacity;
   }
 
-  dispose() {}
+  dispose() { }
 }

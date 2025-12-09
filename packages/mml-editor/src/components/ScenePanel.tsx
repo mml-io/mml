@@ -117,7 +117,6 @@ type ScenePanelProps = {
 
 export function ScenePanel({ className }: ScenePanelProps) {
   const { remoteHolderElement, pathSelection, setSelectedPaths, clearSelection } = useEditorStore();
-  console.log("remoteHolderElement", remoteHolderElement);
 
   const [structureVersion, setStructureVersion] = useState(0);
 
@@ -172,8 +171,6 @@ export function ScenePanel({ className }: ScenePanelProps) {
     },
     [remoteHolderElement, setSelectedPaths],
   );
-
-  console.log("bodyElement", bodyElement);
 
   const containerClass =
     className ??

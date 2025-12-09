@@ -1,10 +1,8 @@
-import { MMLGraphicsInterface } from "@mml-io/mml-web";
+import { MElement, MMLColor, MMLGraphicsInterface } from "@mml-io/mml-web";
 
 import * as ThreeJSElements from "./elements";
 import { ThreeJSGraphicsAdapter } from "./ThreeJSGraphicsAdapter";
-
-// Singleton instance of the element visualizer factory
-const elementVisualizerFactory = new ThreeJSElements.ThreeJSElementVisualizerFactory();
+import * as ThreeJSVisualizers from "./visualizers";
 
 export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapter> = {
   MElementGraphicsInterface: (element) => new ThreeJSElements.ThreeJSMElement(element),
@@ -34,5 +32,26 @@ export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapt
     new ThreeJSElements.ThreeJSVideo(element, updateMeshCallback),
   MMLAnimationGraphicsInterface: (element) => new ThreeJSElements.ThreeJSAnimation(element),
   RemoteDocumentGraphicsInterface: (element) => new ThreeJSElements.ThreeJSRemoteDocument(element),
-  getElementVisualizerFactory: () => elementVisualizerFactory,
+  BillboardVisualizerGraphicsInterface: (
+    element: MElement<ThreeJSGraphicsAdapter>,
+    svgContent: string,
+    size: number,
+    color?: MMLColor,
+  ) => new ThreeJSVisualizers.ThreeJSBillboardVisualizer(element, svgContent, size, color),
+  ModelVisualizerGraphicsInterface: (
+    element: MElement<ThreeJSGraphicsAdapter>,
+    url: string,
+    scale: number,
+  ) => new ThreeJSVisualizers.ThreeJSModelVisualizer(element, url, scale),
+  PointLightHelperVisualizerGraphicsInterface: (
+    element: MElement<ThreeJSGraphicsAdapter>,
+    distance: number | null,
+    color: MMLColor,
+  ) => new ThreeJSVisualizers.ThreeJSPointLightHelperVisualizer(element, distance, color),
+  SpotLightHelperVisualizerGraphicsInterface: (
+    element: MElement<ThreeJSGraphicsAdapter>,
+    angleDeg: number,
+    distance: number | null,
+    color: MMLColor,
+  ) => new ThreeJSVisualizers.ThreeJSSpotLightHelperVisualizer(element, angleDeg, distance, color),
 };

@@ -1,11 +1,125 @@
+import { MMLColor } from "../color";
+import {
+  BillboardVisualizerGraphics,
+  ModelVisualizerGraphics,
+  PointLightHelperVisualizerGraphics,
+  SpotLightHelperVisualizerGraphics,
+} from "../graphics";
 import { Matr4, Vect3 } from "../math";
 import { MMLGraphicsInterface } from "../scene";
 import { TagDebugGraphicsAdapter } from "./StandaloneTagDebugAdapter";
 import { TagDebugAdapterDebugHelper } from "./TagDebugAdapterDebugHelper";
 import { TagDebugAdapterElement } from "./TagDebugAdapterElement";
 import { TagDebugMElement } from "./TagDebugMElement";
+import { MElement } from "../elements";
+
+class TagDebugBillboardVisualizerGraphics extends BillboardVisualizerGraphics<TagDebugGraphicsAdapter> {
+  enable(): void {
+    // no-op
+  }
+
+  disable(): void {
+    // no-op
+  }
+
+  setSvgContent(svgContent: string): void {
+    this.svgContent = svgContent;
+  }
+
+  setSize(size: number): void {
+    this.size = size;
+  }
+
+  setColor(color: MMLColor): void {
+    this.color = color;
+  }
+
+  dispose(): void {
+    // no-op
+  }
+}
+
+class TagDebugModelVisualizerGraphics extends ModelVisualizerGraphics<TagDebugGraphicsAdapter> {
+  setVisible(_visible: boolean): void {
+    // no-op
+  }
+
+  setScale(_scale: number): void {
+    // no-op
+  }
+
+  setUrl(url: string): void {
+    this.url = url;
+  }
+
+  dispose(): void {
+    // no-op
+  }
+}
+
+class TagDebugPointLightHelperVisualizerGraphics extends PointLightHelperVisualizerGraphics<TagDebugGraphicsAdapter> {
+  setVisible(_visible: boolean): void {
+    // no-op
+  }
+
+  setDistance(_distance: number | null): void {
+    // no-op
+  }
+
+  setColor(_color: MMLColor): void {
+    // no-op
+  }
+
+  dispose(): void {
+    // no-op
+  }
+}
+
+class TagDebugSpotLightHelperVisualizerGraphics extends SpotLightHelperVisualizerGraphics<TagDebugGraphicsAdapter> {
+  setVisible(_visible: boolean): void {
+    // no-op
+  }
+
+  setAngle(_angleDeg: number): void {
+    // no-op
+  }
+
+  setDistance(_distance: number | null): void {
+    // no-op
+  }
+
+  setColor(_color: MMLColor): void {
+    // no-op
+  }
+
+  dispose(): void {
+    // no-op
+  }
+}
 
 export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGraphicsAdapter> = {
+  BillboardVisualizerGraphicsInterface: (
+    element: MElement<TagDebugGraphicsAdapter>,
+    svgContent: string,
+    size: number,
+    color?: MMLColor,
+  ) => new TagDebugBillboardVisualizerGraphics(element, svgContent, size, color),
+  ModelVisualizerGraphicsInterface: (
+    element: MElement<TagDebugGraphicsAdapter>,
+    url: string,
+    scale: number,
+  ) => new TagDebugModelVisualizerGraphics(element, url, scale),
+  PointLightHelperVisualizerGraphicsInterface: (
+    element: MElement<TagDebugGraphicsAdapter>,
+    distance: number | null,
+    color: MMLColor,
+  ) => new TagDebugPointLightHelperVisualizerGraphics(element, distance, color),
+  SpotLightHelperVisualizerGraphicsInterface: (
+    element: MElement<TagDebugGraphicsAdapter>,
+    angleDeg: number,
+    distance: number | null,
+    color: MMLColor,
+  ) => new TagDebugSpotLightHelperVisualizerGraphics(element, angleDeg, distance, color),
   MElementGraphicsInterface: (element) => new TagDebugMElement(element),
   MMLDebugHelperGraphicsInterface: (debugHelper) => new TagDebugAdapterDebugHelper(debugHelper),
   MMLCapsuleGraphicsInterface: TagDebugAdapterElement(

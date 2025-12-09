@@ -8,8 +8,7 @@ import {
 } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
 import { MMLColor } from "../color";
-import { GraphicsAdapter, LightGraphics } from "../graphics";
-import { getLightSelectedVisualizer, getLightVisualizer, VisualizerDescriptor } from "../visuals";
+import { GraphicsAdapter, LightGraphics, LightVisualizerGraphics } from "../graphics";
 import { AnimationType, AttributeAnimation } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
@@ -43,7 +42,8 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   static tagName = "m-light";
 
   private lightGraphics: LightGraphics<G> | null;
-
+  private lightVisualizerGraphics: LightVisualizerGraphics<G> | null;
+  
   private lightAnimatedAttributeHelper = new AnimatedAttributeHelper(this, {
     color: [
       AnimationType.Color,
@@ -51,7 +51,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       (newValue: MMLColor) => {
         this.props.color = newValue;
         this.lightGraphics?.setColor(newValue, this.props);
-        this.notifyVisualizerChanged();
+        this.lightVisualizerGraphics?.setColor(newValue);
       },
     ],
     intensity: [
@@ -68,7 +68,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       (newValue: number) => {
         this.props.angleDeg = newValue;
         this.lightGraphics?.setAngle(newValue, this.props);
-        this.notifyVisualizerChanged();
+        this.lightVisualizerGraphics?.setAngle(newValue);
       },
     ],
     distance: [
@@ -77,7 +77,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
       (newValue: number) => {
         this.props.distance = newValue;
         this.lightGraphics?.setDistance(newValue, this.props);
-        this.notifyVisualizerChanged();
+        this.lightVisualizerGraphics?.setDistance(newValue);
       },
     ],
   });
@@ -121,6 +121,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     enabled: (instance, newValue) => {
       instance.props.enabled = parseBoolAttribute(newValue, defaultLightEnabled);
       instance.lightGraphics?.setEnabled(instance.props.enabled, instance.props);
+      instance.lightVisualizerGraphics?.setEnabled(instance.props.enabled);
     },
     "cast-shadows": (instance, newValue) => {
       instance.props.castShadows = parseBoolAttribute(newValue, defaultLightCastShadows);
@@ -133,7 +134,7 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     type: (instance, newValue) => {
       instance.props.type = parseEnumAttribute(newValue, LightTypes, defaultLightType);
       instance.lightGraphics?.setType(instance.props.type, instance.props);
-      instance.notifyVisualizerChanged();
+      instance.lightVisualizerGraphics?.setType(instance.props.type);
     },
   });
 
@@ -188,10 +189,11 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     return false;
   }
 
-  public override getElementVisualizer(isSelected: boolean): VisualizerDescriptor | null {
-    return isSelected
-      ? getLightSelectedVisualizer(this.props.type, this.props.color, this.props.angleDeg, this.props.distance)
-      : getLightVisualizer(this.props.color);
+  /**
+   * Called when selection state changes. Notifies the graphics layer.
+   */
+  protected onSelectionChanged(selected: boolean): void {
+    this.lightVisualizerGraphics?.setSelected(selected);
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string) {
@@ -210,9 +212,12 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
     }
     const graphicsAdapter = this.getScene().getGraphicsAdapter();
 
-    this.lightGraphics = graphicsAdapter
-      .getGraphicsAdapterFactory()
-      .MMLLightGraphicsInterface(this);
+    const factory = graphicsAdapter.getGraphicsAdapterFactory();
+    this.lightGraphics = factory.MMLLightGraphicsInterface(this);
+    // create light visualizer graphics if in editor
+    if (true) {
+    this.lightVisualizerGraphics = new LightVisualizerGraphics<G>(this);
+    }
 
     for (const name of Light.observedAttributes) {
       const value = this.getAttribute(name);
@@ -225,7 +230,9 @@ export class Light<G extends GraphicsAdapter = GraphicsAdapter> extends Transfor
   public disconnectedCallback() {
     this.lightAnimatedAttributeHelper.reset();
     this.lightGraphics?.dispose();
+    this.lightVisualizerGraphics?.dispose();
     this.lightGraphics = null;
+    this.lightVisualizerGraphics = null;
     super.disconnectedCallback();
   }
 }

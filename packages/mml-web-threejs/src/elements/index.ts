@@ -23,4 +23,3 @@ export * from "./ThreeJSSphere";
 export * from "./ThreeJSTransformable";
 export * from "./ThreeJSTransformWidget";
 export * from "./ThreeJSVideo";
-export * from "./ThreeJSVisualGraphics";

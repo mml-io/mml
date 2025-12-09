@@ -3,12 +3,10 @@ import {
   AnimationType,
   AttributeHandler,
   floatParser,
-  getCameraVisualizer,
-  getCameraSelectedVisualizer,
   MElement,
   MMLScene,
   TransformableElement,
-  VisualizerDescriptor,
+  CameraVisualizerGraphics,
 } from "@mml-io/mml-web";
 import { PerspectiveCamera } from "three";
 
@@ -63,6 +61,7 @@ export class MCamera<G extends GameThreeJSAdapter> extends TransformableElement<
   static tagName = "m-camera";
 
   private cameraGraphics: CameraGraphics | null = null;
+  private cameraVisualizerGraphics: CameraVisualizerGraphics<G> | null = null;
 
   public props: MCameraProps = {
     fov: defaultCameraFov,
@@ -126,9 +125,9 @@ export class MCamera<G extends GameThreeJSAdapter> extends TransformableElement<
     return false;
   }
 
-  public override getElementVisualizer(isSelected: boolean): VisualizerDescriptor | null {
-    return isSelected ? getCameraSelectedVisualizer() : getCameraVisualizer();
-  }
+  // protected onSelectionChanged(selected: boolean): void {
+    // this.cameraVisualizerGraphics?.setSelected(selected);
+  // }
 
   public getCameraGraphics(): CameraGraphics | null {
     return this.cameraGraphics;
@@ -160,6 +159,7 @@ export class MCamera<G extends GameThreeJSAdapter> extends TransformableElement<
     }
 
     this.cameraGraphics = new CameraGraphics(this);
+    this.cameraVisualizerGraphics = new CameraVisualizerGraphics<G>(this);
 
     for (const name of MCamera.observedAttributes) {
       const value = this.getAttribute(name);
@@ -172,7 +172,9 @@ export class MCamera<G extends GameThreeJSAdapter> extends TransformableElement<
   public disconnectedCallback(): void {
     this.cameraAnimatedAttributeHelper.reset();
     this.cameraGraphics?.dispose();
+    this.cameraVisualizerGraphics?.dispose();
     this.cameraGraphics = null;
+    this.cameraVisualizerGraphics = null;
     super.disconnectedCallback();
   }
 }

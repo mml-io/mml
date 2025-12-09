@@ -16,7 +16,6 @@ export function bodyFromRemoteHolderElement(remoteHolderElement: HTMLElement): H
     }
 
     for (let i = 0; i < element.children.length; i++) {
-      console.log("child", element.children[i].tagName);
       const child = element.children[i] as HTMLElement;
       const result = findBodyElement(child);
       if (result) {
