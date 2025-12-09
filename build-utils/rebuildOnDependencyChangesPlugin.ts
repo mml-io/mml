@@ -31,14 +31,15 @@ export const rebuildOnDependencyChangesPlugin = {
       console.log("Build finished. (Re)starting process");
       if (runningProcess) {
         await new Promise<void>((resolve) => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          kill(runningProcess!.pid!, "SIGTERM", (err) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unused-vars
+          kill(runningProcess!.pid!, "SIGTERM", (_err) => {
             resolve();
           });
         });
       }
       runningProcess = spawn("npm", ["run", "start-server"], {
         stdio: "inherit",
+        shell: true,
       });
     });
   },

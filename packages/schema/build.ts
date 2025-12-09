@@ -47,7 +47,10 @@ handleLibraryBuild(
 
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const project = (await app.convert())!;
-          const eventDefinitions = app.serializer.projectToObject(project, process.cwd());
+          const eventDefinitions = app.serializer.projectToObject(
+            project,
+            TypeDoc.normalizePath(dirname),
+          );
 
           return {
             contents: JSON.stringify(eventDefinitions),
