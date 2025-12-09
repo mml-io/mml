@@ -1,6 +1,5 @@
 import {
   ArrowHelperVisualizerGraphics,
-  ElementVisualizer,
   MElement,
   MMLColor,
   VisualizerOptions,
@@ -20,7 +19,6 @@ function mmlColorToThree(color: MMLColor): THREE.Color {
  */
 export class ThreeJSArrowHelperVisualizer
   extends ArrowHelperVisualizerGraphics<ThreeJSGraphicsAdapter>
-  implements ElementVisualizer<ThreeJSGraphicsAdapter>
 {
   private helper: THREE.Object3D;
   private arrowGroup: THREE.Group;

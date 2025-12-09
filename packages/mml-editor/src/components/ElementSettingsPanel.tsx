@@ -91,11 +91,15 @@ function MixedBadge() {
   return <span className="ml-2 text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">mixed</span>;
 }
 
-const PropertyRow: React.FC<{
+function PropertyRow({
+  prop,
+  sharedValue,
+  onChange,
+}: {
   prop: ElementPropertyDefinition;
   sharedValue: SharedValue;
   onChange: (newValue: string | boolean) => void;
-}> = ({ prop, sharedValue, onChange }) => {
+}) {
   const checkboxRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const clickSelectHandlers = useClickSelectAll(inputRef);
@@ -171,7 +175,7 @@ const PropertyRow: React.FC<{
       />
     </div>
   );
-};
+}
 
 const clamp = (value: number, min?: number, max?: number) => {
   let result = value;
@@ -197,7 +201,16 @@ const roundToPrecision = (value: number, precision: number) => {
   return Number(value.toFixed(precision));
 };
 
-const DraggableNumberInput: React.FC<{
+function DraggableNumberInput({
+  prop,
+  sharedValue,
+  onStart,
+  onPreview,
+  onCommit,
+  onCancel,
+  snappingEnabled,
+  snapIncrement,
+}: {
   prop: ElementPropertyDefinition;
   sharedValue: SharedValue;
   onStart: (initialValue: string) => void;
@@ -206,7 +219,7 @@ const DraggableNumberInput: React.FC<{
   onCancel: (initialValue: string) => void;
   snappingEnabled: boolean;
   snapIncrement?: number;
-}> = ({ prop, sharedValue, onStart, onPreview, onCommit, onCancel, snappingEnabled, snapIncrement }) => {
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const startXRef = useRef(0);
   const startValueRef = useRef(0);
@@ -363,20 +376,9 @@ const DraggableNumberInput: React.FC<{
       onMouseDown={handleMouseDown}
     />
   );
-};
+}
 
-const TransformGroupRow: React.FC<{
-  title: string;
-  props: ElementPropertyDefinition[];
-  sharedValues: Record<string, SharedValue>;
-  onStart: (prop: ElementPropertyDefinition, value: string) => void;
-  onPreview: (prop: ElementPropertyDefinition, value: string) => void;
-  onCommit: (prop: ElementPropertyDefinition, value: string) => void;
-  onCancel: (prop: ElementPropertyDefinition, value: string) => void;
-  snappingEnabled: boolean;
-  getSnapIncrement: (propName: string) => number | undefined;
-  headerAddon?: React.ReactNode;
-}> = ({
+function TransformGroupRow({
   title,
   props,
   sharedValues,
@@ -387,7 +389,18 @@ const TransformGroupRow: React.FC<{
   snappingEnabled,
   getSnapIncrement,
   headerAddon,
-}) => {
+}: {
+  title: string;
+  props: ElementPropertyDefinition[];
+  sharedValues: Record<string, SharedValue>;
+  onStart: (prop: ElementPropertyDefinition, value: string) => void;
+  onPreview: (prop: ElementPropertyDefinition, value: string) => void;
+  onCommit: (prop: ElementPropertyDefinition, value: string) => void;
+  onCancel: (prop: ElementPropertyDefinition, value: string) => void;
+  snappingEnabled: boolean;
+  getSnapIncrement: (propName: string) => number | undefined;
+  headerAddon?: React.ReactNode;
+}) {
   if (props.length === 0) {
     return null;
   }
@@ -417,13 +430,13 @@ const TransformGroupRow: React.FC<{
       </div>
     </div>
   );
-};
+}
 
 type ElementSettingsPanelProps = {
   className?: string;
 };
 
-export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ className }) => {
+export function ElementSettingsPanel({ className }: ElementSettingsPanelProps) {
   const { pathSelection, remoteHolderElement, code, setCode, snappingEnabled, snappingConfig } = useEditorStore();
   const [selectionAttrVersion, setSelectionAttrVersion] = useState(0);
   const [scaleLocked, setScaleLocked] = useState(false);
@@ -734,7 +747,7 @@ export const ElementSettingsPanel: React.FC<ElementSettingsPanelProps> = ({ clas
       </div>
     </div>
   );
-};
+}
 
 export default ElementSettingsPanel;
 

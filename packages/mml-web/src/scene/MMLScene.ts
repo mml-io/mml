@@ -33,14 +33,12 @@ import {
   CubeGraphics,
   CylinderGraphics,
   DebugHelperGraphics,
-  ElementVisualizer,
   FrameGraphics,
   GraphicsAdapter,
   ImageGraphics,
   InteractionGraphics,
   LabelGraphics,
   LightGraphics,
-  LightVisualizerGraphics,
   ModelVisualizerGraphics,
   LinkGraphics,
   MElementGraphics,
@@ -414,5 +412,5 @@ export class MMLScene<G extends StandaloneGraphicsAdapter> implements IMMLScene<
 export function isEditorModeScene<G extends GraphicsAdapter = GraphicsAdapter>(
   scene: IMMLScene<G>,
 ): boolean {
-  return typeof (scene as any).isEditorMode === "function" ? (scene as any).isEditorMode() : false;
+  return typeof (scene as unknown as { isEditorMode: () => boolean }).isEditorMode === "function" ? (scene as unknown as { isEditorMode: () => boolean }).isEditorMode() : false;
 }

@@ -6,7 +6,7 @@ interface CodeEditorProps {
   initialCode?: string;
 }
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ initialCode = "" }) => {
+export function CodeEditor({ initialCode = "" }: CodeEditorProps) {
   const { code, setCode, codeRange } = useEditorStore();
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<Monaco | null>(null);
@@ -113,5 +113,5 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ initialCode = "" }) => {
       />
     </div>
   );
-};
+}
 

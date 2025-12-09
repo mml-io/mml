@@ -28,7 +28,9 @@ export class CameraGraphics {
 
   constructor(public cameraElement: MCamera<GameThreeJSAdapter>) {
     this.scene = cameraElement.getScene() as MMLScene<GameThreeJSAdapter>;
-    this.scene.getGraphicsAdapter().registerCamera(this);
+    if (!isEditorModeScene(this.scene)) {
+      this.scene.getGraphicsAdapter().registerCamera(this);
+    }
 
     const renderer = this.scene.getGraphicsAdapter().getRenderer();
     const aspect = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
@@ -54,7 +56,9 @@ export class CameraGraphics {
 
   dispose() {
     this.threeJSCamera.removeFromParent();
-    this.scene.getGraphicsAdapter().unregisterCamera(this);
+    if (!isEditorModeScene(this.scene)) {
+      this.scene.getGraphicsAdapter().unregisterCamera(this);
+    }
   }
 }
 
@@ -126,9 +130,6 @@ export class MCamera<G extends GameThreeJSAdapter> extends TransformableElement<
     return false;
   }
 
-  // protected onSelectionChanged(selected: boolean): void {
-    // this.cameraVisualizerGraphics?.setSelected(selected);
-  // }
 
   public getCameraGraphics(): CameraGraphics | null {
     return this.cameraGraphics;

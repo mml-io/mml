@@ -10,6 +10,7 @@ import {
   TransformValues,
   TransformWidgetController,
   TransformWidgetControllerCallbacks,
+  VisualizerManager,
 } from "@mml-io/mml-web";
 import { EditableNetworkedDOM, NetworkedDOM } from "@mml-io/networked-dom-document";
 import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
@@ -105,7 +106,6 @@ export class MMLWebClient {
   private async init() {
     const graphicsAdapter = await GameThreeJSAdapter.create(this.element, {
       controlsType: GameThreeJSAdapterControlsType.DragFly,
-      cameraManagerEnabled: !this.isEditorMode,
     });
 
     if (!this.interactive) {
@@ -406,10 +406,7 @@ export class MMLWebClient {
    * @param visible Whether visualizers should be visible
    */
   public setVisualizersVisible(visible: boolean): void {
-    const graphicsAdapter = this.mScene.getGraphicsAdapter();
-    if (graphicsAdapter && "setVisualizersVisible" in graphicsAdapter) {
-      (graphicsAdapter as any).setVisualizersVisible(visible);
-    }
+    VisualizerManager.get().setVisible(visible);
   }
 
   // ==================== End Editor API ====================

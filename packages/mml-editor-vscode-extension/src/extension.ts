@@ -9,6 +9,8 @@ type PreviewSession = {
   pendingUpdate: ReturnType<typeof setTimeout> | null;
   suppressChangeCount: number;
   selectionDecoration: vscode.TextEditorDecorationType;
+  lastSelectionRanges: SelectionRangeMessage[];
+  lastSelectionUri?: string;
 };
 
 const COMMAND_ID = "mml.preview";
@@ -69,6 +71,8 @@ function createOrRevealPreview(context: vscode.ExtensionContext, initialDoc: vsc
     pendingUpdate: null,
     suppressChangeCount: 0,
     selectionDecoration,
+    lastSelectionRanges: [],
+    lastSelectionUri: initialDoc.uri.toString(),
   };
   session = newSession;
 
@@ -170,6 +174,15 @@ async function applyWebviewContentUpdate(
   const success = await vscode.workspace.applyEdit(edit);
   if (!success) {
     currentSession.suppressChangeCount = Math.max(0, currentSession.suppressChangeCount - 1);
+    return;
+  }
+
+  if (currentSession.lastSelectionRanges.length > 0) {
+    applySelectionHighlight(
+      currentSession,
+      currentSession.lastSelectionRanges,
+      currentSession.lastSelectionUri,
+    );
   }
 }
 
@@ -187,6 +200,9 @@ function applySelectionHighlight(
   if (sourceUri && docUri !== sourceUri) {
     return;
   }
+
+  currentSession.lastSelectionRanges = ranges;
+  currentSession.lastSelectionUri = sourceUri ?? docUri;
 
   const text = doc.getText();
   const textLength = text.length;

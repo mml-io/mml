@@ -1,7 +1,7 @@
 import { MMLColor } from "../color";
 import { Light, LightTypes } from "../elements";
 import { ArrowHelperVisualizerGraphics } from "./ArrowHelperVisualizerGraphics";
-import { EditorGraphicsSupport, hasEditorSupport, VisualizerHandler } from "./EditorGraphicsSupport";
+import { hasEditorSupport } from "./EditorGraphicsSupport";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 import { BillboardVisualizerGraphics } from "./BillboardVisualizerGraphics";
 import { PointLightHelperVisualizerGraphics } from "./PointLightHelperVisualizerGraphics";
@@ -30,7 +30,7 @@ type LightVisualizerContainer = {
 };
 
 export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter>
-  implements ElementVisualizer<G>, VisualizerHandler
+  extends ElementVisualizer<G>
 {
   private lightBillboardIconGraphics: BillboardVisualizerGraphics;
   private lightHelperGraphics: LightHelperVisualizer;
@@ -38,9 +38,9 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
   private container: LightVisualizerContainer = { visible: true };
   private selected = false;
   private enabled = true;
-  private editorSupport: EditorGraphicsSupport<G> | null = null;
 
   constructor(private light: Light<G>) {
+    super();
     const graphicsAdapter = this.light.getScene().getGraphicsAdapter();
     const factory = graphicsAdapter.getGraphicsAdapterFactory();
 
@@ -63,11 +63,6 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
       distance: ARROW_LENGTH,
       color: light.props.color,
     });
-
-    if (hasEditorSupport(graphicsAdapter)) {
-      this.editorSupport = graphicsAdapter;
-      this.editorSupport.registerVisualizerHandler(this);
-    }
   }
 
   getContainer(): G["containerType"] {
@@ -83,11 +78,7 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
     this.container.visible = visible;
     this.updateVisibility();
   }
-
-  setVisualizerVisible(visible: boolean): void {
-    this.setVisible(visible);
-  }
-
+  
   enable(): void {
     this.setEnabled(true);
   }
@@ -150,8 +141,7 @@ export class LightVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapter
   }
 
   dispose(): void {
-    this.editorSupport?.unregisterVisualizerHandler(this);
-    this.editorSupport = null;
+    super.dispose();
     this.lightBillboardIconGraphics.dispose();
     this.lightHelperGraphics.dispose();
     this.arrowVisualizer?.dispose();

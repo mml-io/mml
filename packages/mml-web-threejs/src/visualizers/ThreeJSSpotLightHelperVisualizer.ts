@@ -1,5 +1,4 @@
 import {
-  ElementVisualizer,
   MElement,
   MMLColor,
   SpotLightHelperVisualizerGraphics,
@@ -18,7 +17,6 @@ function mmlColorToThree(color: MMLColor): THREE.Color {
  */
 export class ThreeJSSpotLightHelperVisualizer
   extends SpotLightHelperVisualizerGraphics<ThreeJSGraphicsAdapter>
-  implements ElementVisualizer<ThreeJSGraphicsAdapter>
 {
   private helper: THREE.Object3D;
   private currentAngle: number;
