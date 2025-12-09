@@ -10,6 +10,7 @@ import {
 import * as playcanvas from "playcanvas";
 
 import { createPlayCanvasDebugBoundingBox } from "../debug-bounding-box/PlayCanvasDebugBoundingBox";
+import { BasicMaterial } from "../helpers/BasicMaterialPolyfill";
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 import { createDefaultPoseClip } from "./playcanvas-model-utils/create-default-pose-anim";
 import { PlayCanvasAnimationState } from "./PlayCanvasAnimation";
@@ -60,7 +61,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
   private animLoadingInstanceManager = new LoadingInstanceManager(`${Model.tagName}.anim`);
   private latestSrcModelPromise: Promise<playcanvas.Asset> | null = null;
 
-  private debugMaterial: playcanvas.BasicMaterial | null = null;
+  private debugMaterial: InstanceType<typeof BasicMaterial> | null = null;
 
   private latestAnimPromise: Promise<playcanvas.Asset> | null = null;
   private documentTimeTickListener: null | { remove: () => void } = null;
@@ -193,7 +194,10 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         "anim",
         {},
       ) as playcanvas.AnimComponent;
-      animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
+      animComponent.assignAnimation(
+        "SingleAnimation",
+        this.animState.animAsset.resource as playcanvas.AnimTrack,
+      );
       animState.directAnimation = {
         animComponent,
       };
@@ -371,7 +375,10 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
         return;
       }
 
-      animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
+      animComponent.assignAnimation(
+        "SingleAnimation",
+        this.animState.animAsset.resource as playcanvas.AnimTrack,
+      );
       this.animState.animComponent = animComponent;
       this.animAttributeComponent = animComponent; // Set the dedicated anim attribute component
     } catch (error) {
@@ -476,7 +483,10 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
             }
 
             if (animComponent) {
-              animComponent.assignAnimation("SingleAnimation", this.animState.animAsset.resource);
+              animComponent.assignAnimation(
+                "SingleAnimation",
+                this.animState.animAsset.resource as playcanvas.AnimTrack,
+              );
               // Update the existing attachment state's directAnimation property
               attachmentState.directAnimation = {
                 animComponent,
@@ -614,7 +624,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
     if (this.directAnimationSystem && animationState.animationAsset) {
       try {
         // Get the animation track from the asset
-        const animTrack = animationState.animationAsset.resource;
+        const animTrack = animationState.animationAsset.resource as playcanvas.AnimTrack;
         if (animTrack) {
           animClip = new playcanvas.AnimClip(
             animTrack,
@@ -728,7 +738,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       attachmentDirectAnimationSystem
     ) {
       try {
-        const animTrack = animationState.animationAsset.resource;
+        const animTrack = animationState.animationAsset.resource as playcanvas.AnimTrack;
         if (animTrack) {
           const animClip = new playcanvas.AnimClip(animTrack, 0.0, 1.0, true, animationState.loop);
           animClip.name = attachmentChildAnimation.clipName;
@@ -942,7 +952,9 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
           return;
         }
         this.latestSrcModelPromise = null;
-        const renderEntity: playcanvas.Entity = asset.resource.instantiateRenderEntity();
+        const renderEntity: playcanvas.Entity = (
+          asset.resource as playcanvas.ContainerResource
+        ).instantiateRenderEntity();
 
         // Set up document time tick listener for child animations if we have any
         if (this.childAnimationActions.size > 0 && !this.documentTimeTickListener) {
@@ -1048,7 +1060,7 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
       if (!this.debugBoundingBox) {
         const graphicsAdapter = this.model.getScene().getGraphicsAdapter();
         if (!this.debugMaterial) {
-          this.debugMaterial = new playcanvas.BasicMaterial();
+          this.debugMaterial = new BasicMaterial();
           this.debugMaterial.color = new playcanvas.Color(1, 0, 0);
         }
         this.debugBoundingBox = createPlayCanvasDebugBoundingBox(
@@ -1261,13 +1273,15 @@ export class PlayCanvasModel extends ModelGraphics<PlayCanvasGraphicsAdapter> {
 
           // Handle explicit ratio override
           if (animationState.ratio !== null && animationState.animationAsset) {
-            const durationMs = animationState.animationAsset.resource.duration * 1000;
+            const durationMs =
+              (animationState.animationAsset.resource as playcanvas.AnimTrack).duration * 1000;
             animationTimeMs = animationState.ratio * durationMs;
           }
 
           // Handle loop and duration
           if (shouldBeActive && animationState.animationAsset) {
-            const durationMs = animationState.animationAsset.resource.duration * 1000;
+            const durationMs =
+              (animationState.animationAsset.resource as playcanvas.AnimTrack).duration * 1000;
             if (!animationState.loop && animationTimeMs > durationMs) {
               animationTimeMs = durationMs;
               shouldBeActive = false; // Stop the animation when it reaches the end

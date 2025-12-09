@@ -10,15 +10,15 @@
   },
   "dependencies": {
     "@mml-io/networked-dom-server": "^0.23.0",
-    "chokidar": "4.0.3",
-    "express": "5.1.0",
+    "chokidar": "5.0.0",
+    "express": "5.2.1",
     "express-ws": "5.0.2",
     "ws": "8.18.3"
   },
   "devDependencies": {
     "@types/cors": "2.8.19",
-    "@types/express": "5.0.3",
-    "@types/express-ws": "3.0.5"
+    "@types/express": "5.0.6",
+    "@types/express-ws": "3.0.6"
   },
   "version": "0.23.0"
 }

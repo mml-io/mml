@@ -17,8 +17,9 @@
     "outDir": "./build",
     "incremental": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*", "test/**/*", "build.ts"],
-  "exclude": ["**/build/*", "types-src"],
+  "exclude": ["**/build/*", "types-src"]
 }

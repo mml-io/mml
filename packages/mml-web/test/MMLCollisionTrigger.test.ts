@@ -56,7 +56,7 @@ describe("MMLCollisionTrigger", () => {
         ],
       ]),
     );
-    expect(enterEventFn).toBeCalledTimes(1);
+    expect(enterEventFn).toHaveBeenCalledTimes(1);
     const enterEvent = enterEventFn.mock.calls[0][0] as CustomEvent;
     expect(enterEvent.type).toEqual("collisionstart");
     expect(enterEvent.detail).toEqual({
@@ -76,7 +76,7 @@ describe("MMLCollisionTrigger", () => {
         ],
       ]),
     );
-    expect(moveEventFn).toBeCalledTimes(1);
+    expect(moveEventFn).toHaveBeenCalledTimes(1);
     const moveEvent = moveEventFn.mock.calls[0][0] as CustomEvent;
     expect(moveEvent.type).toEqual("collisionmove");
     expect(moveEvent.detail).toEqual({
@@ -85,7 +85,7 @@ describe("MMLCollisionTrigger", () => {
 
     mmlCollisionTrigger.setCurrentCollisions(new Map());
 
-    expect(endEventFn).toBeCalledTimes(1);
+    expect(endEventFn).toHaveBeenCalledTimes(1);
     const endEvent = endEventFn.mock.calls[0][0] as CustomEvent;
     expect(endEvent.type).toEqual("collisionend");
   });

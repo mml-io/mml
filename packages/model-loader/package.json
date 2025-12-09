@@ -19,7 +19,7 @@
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
-    "three": "^0.180.0"
+    "three": "^0.181.2"
   },
   "devDependencies": {
     "node-fetch": "3.3.2"

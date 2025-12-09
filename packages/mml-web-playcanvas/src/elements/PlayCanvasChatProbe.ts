@@ -1,11 +1,12 @@
 import { ChatProbe, ChatProbeGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
+import { BasicMaterial } from "../helpers/BasicMaterialPolyfill";
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 
 export class PlayCanvasChatProbe extends ChatProbeGraphics<PlayCanvasGraphicsAdapter> {
   private entity: playcanvas.Entity | null = null;
-  private debugMaterial: playcanvas.BasicMaterial | null = null;
+  private debugMaterial: BasicMaterial | null = null;
 
   constructor(private chatProbe: ChatProbe<PlayCanvasGraphicsAdapter>) {
     super(chatProbe);
@@ -45,14 +46,14 @@ export class PlayCanvasChatProbe extends ChatProbeGraphics<PlayCanvasGraphicsAda
           this.chatProbe.getScene().getGraphicsAdapter().getPlayCanvasApp(),
         );
         if (!this.debugMaterial) {
-          this.debugMaterial = new playcanvas.BasicMaterial();
+          this.debugMaterial = new BasicMaterial();
           this.debugMaterial.color = new playcanvas.Color(1, 1, 0);
         }
         this.entity.addComponent("model", {
           type: "sphere",
           material: this.debugMaterial,
         });
-        this.entity.model?.model.meshInstances.forEach((mi) => {
+        this.entity.model?.model?.meshInstances.forEach((mi) => {
           mi.renderStyle = playcanvas.RENDERSTYLE_WIREFRAME;
           mi.castShadow = false;
         });

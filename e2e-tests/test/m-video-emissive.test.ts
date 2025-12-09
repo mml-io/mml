@@ -1,4 +1,9 @@
-import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import {
+  navigateToTestPage,
+  renderFrame,
+  setDocumentTime,
+  takeAndCompareScreenshot,
+} from "./testing-utils";
 
 describe("m-video-emissive", () => {
   test("emissive property of videos", async () => {
@@ -7,6 +12,8 @@ describe("m-video-emissive", () => {
     await page.setViewport({ width: 1024, height: 1024 });
 
     await navigateToTestPage(page, "m-video-emissive-test.html/reset");
+
+    await renderFrame(page);
 
     // Wait for the m-video content to load
     await page.waitForFunction(

@@ -58,8 +58,8 @@ if (shardedFiles.length === 0) {
   process.exit(0);
 }
 
-// Convert to full paths for Jest
-const testPaths = shardedFiles.map((file) => path.join(testDir, file));
+// Convert to full paths for Jest, using forward slashes for cross-platform compatibility
+const testPaths = shardedFiles.map((file) => path.join(testDir, file).replace(/\\/g, "/"));
 
 // Run Jest with the sharded test files
 const jestArgs = ["--runInBand", ...testPaths];
@@ -73,6 +73,7 @@ const jestProcess = spawn("jest", jestArgs, {
     RENDERER,
     HEADLESS,
   },
+  shell: true,
 });
 
 jestProcess.on("exit", (code) => {

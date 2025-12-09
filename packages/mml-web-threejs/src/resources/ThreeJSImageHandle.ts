@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { ThreeJSImageResource } from "./ThreeJSImageResource";
 
 export interface ThreeJSImageResourceResult {
-  texture: THREE.CanvasTexture;
+  texture: THREE.Texture;
   width: number;
   height: number;
   hasTransparency: boolean;

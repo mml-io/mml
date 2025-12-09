@@ -34,9 +34,8 @@ declare global {
 (function () {
   async function getGraphicsAdapter(element: HTMLElement): Promise<StandaloneGraphicsAdapter> {
     if (window.location.search.includes("playcanvas")) {
-      const { StandalonePlayCanvasAdapter, StandalonePlayCanvasAdapterControlsType } = await import(
-        "@mml-io/mml-web-playcanvas-standalone"
-      );
+      const { StandalonePlayCanvasAdapter, StandalonePlayCanvasAdapterControlsType } =
+        await import("@mml-io/mml-web-playcanvas-standalone");
       return StandalonePlayCanvasAdapter.create(element, {
         controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
       });

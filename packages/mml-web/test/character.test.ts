@@ -69,7 +69,7 @@ describe("m-character", () => {
     });
 
     element.setAttribute("src", "some_asset_path");
-    expect(loadModelSpy).toBeCalledTimes(1);
+    expect(loadModelSpy).toHaveBeenCalledTimes(1);
 
     const modelContainer = element.getContainer() as THREE.Object3D;
     const loadedModel = modelContainer.children[0];

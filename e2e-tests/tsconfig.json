@@ -15,7 +15,8 @@
     "outDir": "./build",
     "incremental": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "skipLibCheck": true
   },
   "include": ["**/*"],
   "exclude": ["**/build/*"]

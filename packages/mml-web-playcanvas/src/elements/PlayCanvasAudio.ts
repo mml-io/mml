@@ -151,15 +151,19 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const asset = slot._assets.get(slot.asset)!;
-      const assetDuration: number | null = asset?.resource.duration || null;
+      const asset = slot._assets.get(slot.asset!);
+      const assetResource = asset?.resource as
+        | { duration?: number; buffer: AudioBuffer }
+        | undefined;
+      const assetDuration: number | null = assetResource?.duration || null;
       let targetDuration: number | null = assetDuration;
       if (this.audio.props.loopDuration !== null && this.audio.props.loop) {
         const loopDuration = this.audio.props.loopDuration / 1000;
-        if (assetDuration !== null && loopDuration > assetDuration) {
-          asset.resource.buffer = extendAudioToDuration(
-            this.getAudioContext(),
-            asset.resource.buffer,
+        if (assetDuration !== null && loopDuration > assetDuration && assetResource) {
+          const audioContext = this.getAudioContext();
+          assetResource.buffer = extendAudioToDuration(
+            audioContext,
+            assetResource.buffer,
             loopDuration,
           );
           slot.pause();
@@ -234,10 +238,10 @@ export class PlayCanvasAudio extends AudioGraphics<PlayCanvasGraphicsAdapter> {
   private getAudioContext(): AudioContext {
     const playcanvasApp = this.getPlayCanvasApp();
     const soundSystem = playcanvasApp.systems.sound;
-    if (!soundSystem) {
-      throw new Error("Playcanvas sound system not enabled");
+    if (!soundSystem || !soundSystem.context) {
+      throw new Error("Playcanvas sound system not enabled or context not available");
     }
-    return soundSystem.context;
+    return soundSystem.context as AudioContext;
   }
 
   enable(): void {

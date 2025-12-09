@@ -28,7 +28,9 @@ export class ThreeJSImageResource {
         // Image loaded successfully
         this.imageElement = image;
         this.hasTransparency = hasTransparency(image);
-        this.texture = new THREE.CanvasTexture(image);
+        this.texture = new THREE.CanvasTexture(
+          image,
+        ) as unknown as THREE.CanvasTexture<HTMLCanvasElement>;
         const result: ThreeJSImageResourceResult = {
           texture: this.texture,
           width: image.width,

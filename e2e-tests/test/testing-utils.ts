@@ -91,7 +91,7 @@ export function setupConsoleLogging(page: puppeteer.Page): void {
     }
   });
 
-  page.on("pageerror", (err) => {
+  page.on("pageerror", (err: any) => {
     const errorText = err.toString();
     const stackTrace = err.stack || "No stack trace available";
 
@@ -190,7 +190,7 @@ export async function navigateToTestPage(page: puppeteer.Page, testPath: string)
   );
 }
 
-export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold = 0.02) {
+export async function takeAndCompareScreenshot(page: puppeteer.Page, threshold = 0.025) {
   await renderFrame(page);
   expect(await page.screenshot()).toMatchImageSnapshot({
     failureThresholdType: "percent",

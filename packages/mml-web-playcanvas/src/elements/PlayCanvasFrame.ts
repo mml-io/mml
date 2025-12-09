@@ -2,6 +2,7 @@ import { Frame, FrameGraphics } from "@mml-io/mml-web";
 import * as playcanvas from "playcanvas";
 
 import { createPlayCanvasDebugBoundingBox } from "../debug-bounding-box/PlayCanvasDebugBoundingBox";
+import { BasicMaterial } from "../helpers/BasicMaterialPolyfill";
 import { PlayCanvasGraphicsAdapter } from "../PlayCanvasGraphicsAdapter";
 
 function setEntityToBoundingBox(
@@ -18,9 +19,9 @@ function setEntityToBoundingBox(
 }
 
 export class PlayCanvasFrame extends FrameGraphics<PlayCanvasGraphicsAdapter> {
-  private debugMaterial: playcanvas.BasicMaterial | null = null;
-  private loadRangeMaterial: playcanvas.BasicMaterial | null = null;
-  private unloadRangeMaterial: playcanvas.BasicMaterial | null = null;
+  private debugMaterial: BasicMaterial | null = null;
+  private loadRangeMaterial: BasicMaterial | null = null;
+  private unloadRangeMaterial: BasicMaterial | null = null;
 
   private debugMeshes: {
     debugBoxConstraintMesh: playcanvas.Entity;
@@ -103,15 +104,15 @@ export class PlayCanvasFrame extends FrameGraphics<PlayCanvasGraphicsAdapter> {
       }
       if (!this.debugMeshes) {
         if (!this.debugMaterial) {
-          this.debugMaterial = new playcanvas.BasicMaterial();
+          this.debugMaterial = new BasicMaterial();
           this.debugMaterial.color = new playcanvas.Color(1, 0, 0);
         }
         if (!this.loadRangeMaterial) {
-          this.loadRangeMaterial = new playcanvas.BasicMaterial();
+          this.loadRangeMaterial = new BasicMaterial();
           this.loadRangeMaterial.color = new playcanvas.Color(0, 1, 0);
         }
         if (!this.unloadRangeMaterial) {
-          this.unloadRangeMaterial = new playcanvas.BasicMaterial();
+          this.unloadRangeMaterial = new BasicMaterial();
           this.unloadRangeMaterial.color = new playcanvas.Color(0, 0, 1);
         }
         const graphicsAdapter = this.frame.getScene().getGraphicsAdapter();

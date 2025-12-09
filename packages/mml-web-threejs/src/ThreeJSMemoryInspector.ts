@@ -346,13 +346,18 @@ export class ThreeJSMemoryInspector {
       format = result.format;
     } else if (textureAny.isDataTexture && texture.image) {
       // DataTexture has image: { data: TypedArray, width: number, height: number }
-      width = texture.image.width || 0;
-      height = texture.image.height || 0;
+      const dataImage = texture.image as {
+        data: ArrayBufferView;
+        width: number;
+        height: number;
+      };
+      width = dataImage.width || 0;
+      height = dataImage.height || 0;
 
       // Calculate actual memory from the data array
-      if (texture.image.data && texture.image.data.byteLength) {
+      if (dataImage.data && dataImage.data.byteLength) {
         // For DataTexture, use actual byte length
-        memoryBytes = texture.image.data.byteLength;
+        memoryBytes = dataImage.data.byteLength;
         // If mipmaps are generated, add their memory (approximately 1/3 additional)
         if (texture.generateMipmaps) {
           memoryBytes *= 1.333;
@@ -369,8 +374,9 @@ export class ThreeJSMemoryInspector {
         format = ThreeJSMemoryInspector.getTextureFormatName(texture.format);
       }
     } else if (texture.image) {
-      width = texture.image.width || 0;
-      height = texture.image.height || 0;
+      const imageSource = texture.image as HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
+      width = imageSource.width || 0;
+      height = imageSource.height || 0;
 
       // Estimate memory usage: width * height * bytes per pixel * mipmap factor
       // Assuming RGBA (4 bytes per pixel) and including mipmaps (factor of 1.333)
@@ -395,8 +401,9 @@ export class ThreeJSMemoryInspector {
     } else if (texture.source && texture.source.data) {
       const sourceData = texture.source.data;
 
-      if (sourceData.src) {
-        url = sourceData.src;
+      const sourceDataWithSrc = sourceData as { src?: string };
+      if (sourceDataWithSrc.src) {
+        url = sourceDataWithSrc.src;
         if (url && url.startsWith("data:")) {
           sourceType = "Data URL";
           url = `${url.substring(0, 50)}...`; // Truncate data URLs
@@ -410,21 +417,30 @@ export class ThreeJSMemoryInspector {
         url = `Canvas(${sourceData.width}x${sourceData.height})`;
       } else if (sourceData instanceof ImageData) {
         sourceType = "ImageData";
-        url = `ImageData(${sourceData.width}x${sourceData.height})`;
+        url = `ImageData(${(sourceData as ImageData).width}x${(sourceData as ImageData).height})`;
       } else if (sourceData instanceof HTMLVideoElement) {
         sourceType = "Video";
         url = sourceData.src || "Video Element";
       } else if (sourceData.constructor.name === "ImageBitmap") {
         sourceType = "ImageBitmap";
         url = `ImageBitmap(${(sourceData as any).width}x${(sourceData as any).height})`;
-      } else if (sourceData.data && sourceData.width && sourceData.height) {
+      } else if (
+        typeof sourceData === "object" &&
+        sourceData !== null &&
+        "data" in sourceData &&
+        "width" in sourceData &&
+        "height" in sourceData
+      ) {
         // This is a DataTexture-like structure
+        const dataSource = sourceData as { data: unknown; width: number; height: number };
         sourceType = "DataTexture (Raw Data)";
-        url = `${sourceData.width}x${sourceData.height}`;
+        url = `${dataSource.width}x${dataSource.height}`;
       }
     } else if ((texture as any).image) {
-      const image = (texture as any).image;
-      if (image.src) {
+      const image = (texture as any).image as
+        | { src?: string; width?: number; height?: number; data?: unknown }
+        | undefined;
+      if (image && image.src) {
         url = image.src;
         if (url && url.startsWith("data:")) {
           sourceType = "Data URL";
@@ -437,7 +453,7 @@ export class ThreeJSMemoryInspector {
       } else if (image instanceof HTMLCanvasElement) {
         sourceType = "Canvas";
         url = `Canvas(${image.width}x${image.height})`;
-      } else if (image.data && image.width && image.height) {
+      } else if (image && image.data && image.width && image.height) {
         // This is a DataTexture-like structure in the image property
         sourceType = "DataTexture (Raw Data)";
         url = `${image.width}x${image.height}`;
@@ -1012,27 +1028,27 @@ export class ThreeJSMemoryInspector {
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #1a1a1a;
             color: #e0e0e0;
             line-height: 1.6;
         }
-        
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 40px;
         }
-        
+
         .stat-card {
             background: #2a2a2a;
             padding: 20px;
@@ -1040,19 +1056,19 @@ export class ThreeJSMemoryInspector {
             text-align: center;
             border: 1px solid #444;
         }
-        
+
         .stat-value {
             font-size: 2em;
             font-weight: bold;
             color: #4CAF50;
             margin-bottom: 5px;
         }
-        
+
         .stat-label {
             color: #aaa;
             font-size: 0.9em;
         }
-        
+
         .section {
             background: #2a2a2a;
             border-radius: 8px;
@@ -1060,11 +1076,11 @@ export class ThreeJSMemoryInspector {
             overflow: hidden;
             border: 1px solid #444;
         }
-        
+
         .section-content {
             padding: 20px;
         }
-        
+
         .controls {
             display: flex;
             justify-content: space-between;
