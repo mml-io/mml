@@ -1,4 +1,4 @@
-import { navigateToTestPage, takeAndCompareScreenshot } from "./testing-utils";
+import { navigateToTestPage, renderFrame, takeAndCompareScreenshot } from "./testing-utils";
 
 describe("m-image-emissive", () => {
   test("image emissive parameters", async () => {
@@ -7,6 +7,10 @@ describe("m-image-emissive", () => {
     await page.setViewport({ width: 1024, height: 1024 });
 
     await navigateToTestPage(page, "m-image-emissive-test.html/reset");
+
+    // adds extra time for loading
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await renderFrame(page);
 
     // Wait for the m-image content to load
     await page.waitForFunction(

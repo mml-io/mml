@@ -1,4 +1,9 @@
-import { navigateToTestPage, setDocumentTime, takeAndCompareScreenshot } from "./testing-utils";
+import {
+  navigateToTestPage,
+  renderFrame,
+  setDocumentTime,
+  takeAndCompareScreenshot,
+} from "./testing-utils";
 
 describe("m-video", () => {
   test("videos paused at correct times", async () => {
@@ -7,6 +12,10 @@ describe("m-video", () => {
     await page.setViewport({ width: 1024, height: 1024 });
 
     await navigateToTestPage(page, "m-video-test.html/reset");
+
+    // adds extra time for src set and loading
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await renderFrame(page);
 
     // Wait for the m-video content to load
     await page.waitForFunction(
@@ -20,7 +29,7 @@ describe("m-video", () => {
             return false;
           }
           const { width, height } = video.videoGraphics.getWidthAndHeight();
-          return width > 1 || height > 1;
+          return width > 2 || height > 2;
         });
       },
       { timeout: 5000, polling: 100 },
@@ -30,6 +39,8 @@ describe("m-video", () => {
 
     // Allow time for the next frame to render
     await new Promise((resolve) => setTimeout(resolve, 100));
+
+    await renderFrame(page);
 
     await takeAndCompareScreenshot(page, 0.02);
 
