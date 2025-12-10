@@ -1,0 +1,29 @@
+{
+  "scripts": [
+    {
+      "src": "mml-game-math-system"
+    },
+    {
+      "src": "mml-game-physics-system",
+      "configName": "physics",
+      "config": {
+        "gravity": 9.81,
+        "debug": false
+      }
+    },
+    {
+      "src": "mml-game-navigation-system",
+      "configName": "navigation",
+      "config": {
+        "debug": false,
+        "debugDrawMode": "navmesh",
+        "tileSize": 32,
+        "cellSize": 0.3,
+        "walkableHeight": 3,
+        "walkableRadius": 2.5,
+        "walkableClimb": 2,
+        "walkableSlopeAngle": 60
+      }
+    }
+  ]
+}

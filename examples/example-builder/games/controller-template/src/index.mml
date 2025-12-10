@@ -1,0 +1,35 @@
+<!-- a simple template for physics-based character control -->
+
+<m-light y="20" x="5" z="5" intensity="2000" type="point" cast-shadows="true"></m-light>
+
+<!-- floor: uses rigidbody kinematic for rapier physics -->
+<m-cube
+  id="main-floor"
+  y="-0.5"
+  width="50"
+  height="1"
+  depth="50"
+  color="#3a3a3a"
+  rigidbody="true"
+  kinematic="true"
+  nav-mesh="true"
+></m-cube>
+
+<!-- stairs and elevated platform will be created dynamically on index.ts -->
+<m-group id="stairs-container" ry="90"></m-group>
+
+<!-- random obstacle cubes scattered around the map -->
+<m-cube id="obstacle-1" x="-5" y="0.5" z="-8" width="1.5" height="1" depth="1.5" color="#3498db" rigidbody="true" kinematic="true" nav-mesh="true"></m-cube>
+<m-cube id="obstacle-2" x="8" y="0.5" z="-5" width="2" height="1" depth="1" color="#2ecc71" rigidbody="true" kinematic="true" nav-mesh="true"></m-cube>
+<m-cube id="obstacle-3" x="-3" y="0.5" z="10" width="1" height="1" depth="3" color="#9b59b6" rigidbody="true" kinematic="true" nav-mesh="true"></m-cube>
+<m-cube id="obstacle-4" x="12" y="0.5" z="8" width="2.5" height="1" depth="2.5" color="#f39c12" rigidbody="true" kinematic="true" nav-mesh="true"></m-cube>
+
+<!-- taller obstacles for cover -->
+<m-cube id="wall-1" x="10" y="1" z="-10" width="0.5" height="2" depth="4" color="#34495e" rigidbody="true" kinematic="true" nav-mesh="true"></m-cube>
+<m-cube id="wall-2" x="-8" y="1" z="15" width="5" height="2" depth="0.5" color="#34495e" rigidbody="true" kinematic="true" nav-mesh="true"></m-cube>
+
+<!-- ramp for testing physics -->
+<m-cube id="ramp" x="10" y="0.75" z="10" width="4" height="0.3" depth="6" rx="15" color="#c0392b" rigidbody="true" kinematic="true" nav-mesh="true"></m-cube>
+
+<!-- game container - index.ts will add player elements here -->
+<m-group id="game-container"></m-group>
