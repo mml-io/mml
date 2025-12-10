@@ -152,13 +152,13 @@ export class Player {
   }
 
   private createCharacter(): void {
-    this.physicsBody = document.createElement("m-cylinder");
+    this.physicsBody = document.createElement("m-capsule");
     this.physicsBody.setAttribute("id", `player-body-${this.connectionId}`);
     this.physicsBody.setAttribute("x", this.position.x.toString());
     this.physicsBody.setAttribute("y", this.position.y.toString());
     this.physicsBody.setAttribute("z", this.position.z.toString());
-    this.physicsBody.setAttribute("height", "1.8");
-    this.physicsBody.setAttribute("radius", "0.2");
+    this.physicsBody.setAttribute("height", "1.1");
+    this.physicsBody.setAttribute("radius", "0.6");
     this.physicsBody.setAttribute("color", "#00ff00");
     this.physicsBody.setAttribute("opacity", "0.0");
     this.physicsBody.setAttribute("collide", "true");
@@ -175,7 +175,7 @@ export class Player {
       this.physicsBody.setAttribute("mass", "1");
       this.physicsBody.setAttribute("friction", "0");
       this.physicsBody.setAttribute("restitution", "0");
-      this.physicsBody.setAttribute("gravity", "0");
+      this.physicsBody.setAttribute("gravity", "9.81");
 
       if ((window as any).physics && this.physicsBody) {
         console.log(`[Player ${this.connectionId}] Manually adding to physics system`);
@@ -184,7 +184,7 @@ export class Player {
           kinematic: false,
           friction: 0,
           restitution: 0,
-          gravity: 0,
+          gravity: 40.0,
         });
 
         this.lockPlayerRotations();
@@ -197,8 +197,15 @@ export class Player {
     this.characterModel.setAttribute("collide", "false");
     this.characterModel.setAttribute("src", CONSTANTS.CHARACTER_BODY);
     this.characterModel.setAttribute("state", "idle");
-    this.characterModel.setAttribute("y", "-0.9");
+    this.characterModel.setAttribute("y", "-1.1"); // Adjust model position within capsule
     this.physicsBody.appendChild(this.characterModel);
+
+    // TODO: Remove. just placed here for a visual test
+    // const capsule = document.createElement("m-capsule");
+    // capsule.setAttribute("radius", "0.25");
+    // capsule.setAttribute("height", "1");
+    // capsule.setAttribute("color", "#0000ff");
+    // this.physicsBody.appendChild(capsule);
 
     this.rifleModel = document.createElement("m-model");
     this.rifleModel.setAttribute("socket", "mixamorigRightHand");
@@ -413,7 +420,10 @@ export class Player {
       if (this.isDead) {
         const physics = (window as any).physics;
         if (physics && physics.elementToBody && physics.elementToBody.has(this.physicsBody)) {
-          physics.setVelocity(this.physicsBody, { x: 0, y: 0, z: 0 });
+          // Preserve Y velocity for gravity, only zero out X and Z
+          const physicsState = physics.elementToBody.get(this.physicsBody);
+          const currentVel = physicsState?.rigidbody?.linvel?.() || { x: 0, y: 0, z: 0 };
+          physics.setVelocity(this.physicsBody, { x: 0, y: currentVel.y, z: 0 });
         }
         return;
       }
@@ -428,16 +438,22 @@ export class Player {
 
         // Apply velocity based on current input
         const speed = 5; // units per second
+
+        // Get current Y velocity to preserve gravity
+        const physicsState = physics.elementToBody.get(this.physicsBody);
+        const currentVel = physicsState?.rigidbody?.linvel?.() || { x: 0, y: 0, z: 0 };
+
         if (this.currentInput) {
-          // Apply velocity based on input
+          // Apply velocity based on input, preserving Y for gravity
           const velocity = {
             x: this.currentInput.x * speed, // D = right, A = left
-            y: 0,
+            y: currentVel.y, // Preserve Y velocity for gravity
             z: -this.currentInput.y * speed, // W = forward, S = backward
           };
           physics.setVelocity(this.physicsBody, velocity);
         } else {
-          physics.setVelocity(this.physicsBody, { x: 0, y: 0, z: 0 });
+          // Zero X and Z, but preserve Y for gravity
+          physics.setVelocity(this.physicsBody, { x: 0, y: currentVel.y, z: 0 });
         }
 
         const newPos = {

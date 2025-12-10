@@ -8,6 +8,7 @@ export const ThreeJSGraphicsInterface: MMLGraphicsInterface<ThreeJSGraphicsAdapt
   MMLDebugHelperGraphicsInterface: (debugHelper) =>
     new ThreeJSElements.ThreeJSDebugHelper(debugHelper),
   MMLAudioGraphicsInterface: (element) => new ThreeJSElements.ThreeJSAudio(element),
+  MMLCapsuleGraphicsInterface: (element) => new ThreeJSElements.ThreeJSCapsule(element),
   MMLChatProbeGraphicsInterface: (element) => new ThreeJSElements.ThreeJSChatProbe(element),
   MMLCubeGraphicsInterface: (element) => new ThreeJSElements.ThreeJSCube(element),
   MMLCylinderGraphicsInterface: (element) => new ThreeJSElements.ThreeJSCylinder(element),

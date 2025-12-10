@@ -355,6 +355,7 @@
     </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:element ref="m-cube"/>
+      <xs:element ref="m-capsule"/>
       <xs:element ref="m-sphere"/>
       <xs:element ref="m-label"/>
       <xs:element ref="m-light"/>
@@ -521,6 +522,48 @@
             <xs:annotation>
               <xs:documentation>
                 The opacity of the cylinder, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="m-capsule">
+    <xs:annotation>
+      <xs:documentation>
+        The `m-capsule` element is a primitive 3D capsule (a cylinder with hemispherical caps) that can be coloured. It is often used for debugging, collision detection, or initial development purposes.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:complexContent>
+        <xs:extension base="MMLContent">
+          <xs:attributeGroup ref="debuggable"/>
+          <xs:attributeGroup ref="transformable"/>
+          <xs:attributeGroup ref="collideable"/>
+          <xs:attributeGroup ref="colorable"/>
+          <xs:attributeGroup ref="coreattrs"/>
+          <xs:attributeGroup ref="clickable"/>
+          <xs:attributeGroup ref="shadows"/>
+          <xs:attribute name="radius" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The radius of the capsule in meters. Default value is 0.5 meters.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="height" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The height of the middle section of the capsule in meters. The total height of the capsule is this value plus twice the radius (for the hemispherical caps). Default value is 1 meter.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="opacity" type="xs:float">
+            <xs:annotation>
+              <xs:documentation>
+                The opacity of the capsule, ranging from 0 (completely transparent) to 1 (completely opaque). Default value is 1.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

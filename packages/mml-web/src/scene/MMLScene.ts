@@ -2,6 +2,7 @@ import { DebugHelper } from "../debug-helper";
 import {
   Animation,
   Audio,
+  Capsule,
   ChatProbe,
   Cube,
   Cylinder,
@@ -25,6 +26,7 @@ import {
 import {
   AnimationGraphics,
   AudioGraphics,
+  CapsuleGraphics,
   ChatProbeGraphics,
   CubeGraphics,
   CylinderGraphics,
@@ -67,6 +69,7 @@ export interface MMLGraphicsInterface<C extends GraphicsAdapter> {
     updateMeshCallback: () => void,
   ) => VideoGraphics<C>;
   MMLAudioGraphicsInterface: (element: Audio<C>) => AudioGraphics<C>;
+  MMLCapsuleGraphicsInterface: (element: Capsule<C>) => CapsuleGraphics<C>;
   MMLCubeGraphicsInterface: (element: Cube<C>) => CubeGraphics<C>;
   MMLLabelGraphicsInterface: (element: Label<C>) => LabelGraphics<C>;
   MMLLinkGraphicsInterface: (element: Link<C>) => LinkGraphics<C>;

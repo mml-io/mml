@@ -765,6 +765,18 @@ class PhysicsSystem implements ElementSystem {
         break;
       }
 
+      case "m-capsule": {
+        // in rapier they use  capsule(halfHeight, radius) where halfHeight is half of the
+        // cylindrical middle section. m-capsule total height = height + radius * 2
+        // (height is middle section, caps add radius on each end)
+        // worldScale.y already includes the full height from the element
+        const capsuleRadius = Math.max(worldScale.x, worldScale.z) / 2;
+        // the middle section height in world scale (halved for rapier
+        const capsuleHalfHeight = Math.max(0, (worldScale.y - capsuleRadius * 2) / 2);
+        colliderDesc = RAPIER.ColliderDesc.capsule(capsuleHalfHeight, capsuleRadius);
+        break;
+      }
+
       case "m-plane": {
         // Use thin box per worldScale; Y is thickness
         const halfX = worldScale.x / 2;

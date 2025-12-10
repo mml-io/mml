@@ -2,6 +2,7 @@ export * from "./Animation";
 export * from "./AttributeAnimation";
 export * from "./AttributeLerp";
 export * from "./Audio";
+export * from "./Capsule";
 export * from "./Character";
 export * from "./ChatProbe";
 export * from "./Cube";

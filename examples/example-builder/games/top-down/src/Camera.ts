@@ -9,7 +9,7 @@ export class Camera {
     this.cameraElement.setAttribute("y", "6");
     this.cameraElement.setAttribute("z", "5");
     this.cameraElement.setAttribute("ry", "0");
-    this.cameraElement.setAttribute("rx", "-45");
+    this.cameraElement.setAttribute("rx", "-55");
     this.cameraElement.setAttribute("rz", "0");
 
     this.lerp = document.createElement("m-attr-lerp");

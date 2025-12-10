@@ -7,7 +7,7 @@
       "src": "mml-game-physics-system",
       "configName": "physics",
       "config": {
-        "gravity": 5,
+        "gravity": 9.81,
         "debug": false
       }
     },

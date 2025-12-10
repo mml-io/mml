@@ -1,5 +1,6 @@
 export * from "./AnimationGraphics";
 export * from "./AudioGraphics";
+export * from "./CapsuleGraphics";
 export * from "./ChatProbeGraphics";
 export * from "./CubeGraphics";
 export * from "./CylinderGraphics";

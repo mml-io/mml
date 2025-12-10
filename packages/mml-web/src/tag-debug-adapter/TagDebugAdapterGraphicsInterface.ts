@@ -8,6 +8,16 @@ import { TagDebugMElement } from "./TagDebugMElement";
 export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGraphicsAdapter> = {
   MElementGraphicsInterface: (element) => new TagDebugMElement(element),
   MMLDebugHelperGraphicsInterface: (debugHelper) => new TagDebugAdapterDebugHelper(debugHelper),
+  MMLCapsuleGraphicsInterface: TagDebugAdapterElement(
+    {
+      setRadius: "radius",
+      setHeight: "height",
+      setCastShadows: "cast-shadows",
+      setColor: "color",
+      setOpacity: "opacity",
+    },
+    {},
+  ),
   MMLCubeGraphicsInterface: TagDebugAdapterElement(
     {
       setWidth: "width",
@@ -169,6 +179,7 @@ export const TagDebugAdapterGraphicsInterface: MMLGraphicsInterface<TagDebugGrap
       setLoop: "loop",
       setVolume: "volume",
       setEmissive: "emissive",
+      setTransparent: "transparent",
       setStartTime: "start-time",
       setPauseTime: "pause-time",
     },
