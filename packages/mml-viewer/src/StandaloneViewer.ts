@@ -38,7 +38,37 @@ export class StandaloneViewer {
       event.data.params !== null;
     if (isParamUpdate) {
       this.updateUrlParams(event.data.params);
+      return;
     }
+
+    const isScreenshot = event?.data?.type === "screenshot" && event.data.imageUri === null;
+    if (isScreenshot) {
+      this.handleScreenshot(event);
+      return;
+    }
+  }
+
+  private handleScreenshot(event: MessageEvent) {
+    try {
+      const imageUri = this.captureScreenshot();
+      (event.source as Window).postMessage(
+        {
+          type: "screenshot",
+          imageUri: imageUri || null,
+        },
+        event.origin,
+      );
+    } catch (error) {
+      console.error("Error capturing screenshot:", error);
+    }
+  }
+
+  private captureScreenshot(): string | null {
+    const canvas = window.document.querySelector("canvas") as HTMLCanvasElement | null;
+    if (canvas) {
+      return canvas.toDataURL("image/png");
+    }
+    return null;
   }
 
   private updateUrlParams(params: Record<string, string>) {
@@ -114,32 +144,32 @@ export class StandaloneViewer {
     };
 
     if (!this.graphicsMode) {
-      if (renderer === "playcanvas") {
-        this.graphicsMode = new PlayCanvasMode(
-          this.windowTarget,
-          this.targetForWrappers,
-          source,
-          formIteration,
-          options,
-        );
-      } else if (renderer === "threejs") {
-        this.graphicsMode = new ThreeJSMode(
-          this.windowTarget,
-          this.targetForWrappers,
-          source,
-          formIteration,
-          options,
-        );
-      } else if (renderer === "tags") {
-        this.graphicsMode = new TagsMode(
-          this.windowTarget,
-          this.targetForWrappers,
-          source,
-          formIteration,
-          !noUI,
-        );
-      }
-    } else {
+      //   if (renderer === "playcanvas") {
+      //     this.graphicsMode = new PlayCanvasMode(
+      //       this.windowTarget,
+      //       this.targetForWrappers,
+      //       source,
+      //       formIteration,
+      //       options,
+      //     );
+      //   } else if (renderer === "threejs") {
+      this.graphicsMode = new ThreeJSMode(
+        this.windowTarget,
+        this.targetForWrappers,
+        source,
+        formIteration,
+        options,
+      );
+      //   } else if (renderer === "tags") {
+      //     this.graphicsMode = new TagsMode(
+      //       this.windowTarget,
+      //       this.targetForWrappers,
+      //       source,
+      //       formIteration,
+      //       !noUI,
+      //     );
+      //   }
+      // } else {
       this.graphicsMode.update(formIteration);
     }
   }
