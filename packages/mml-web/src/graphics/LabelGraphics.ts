@@ -12,7 +12,7 @@ export abstract class LabelGraphics<G extends GraphicsAdapter = GraphicsAdapter>
 
   abstract disable(): void;
 
-  abstract getCollisionElement(): G["collisionType"];
+  abstract getCollisionElement(): G["collisionType"] | null;
 
   abstract setContent(content: string, mLabelProps: MLabelProps): void;
 

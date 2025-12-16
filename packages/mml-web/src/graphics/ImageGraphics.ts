@@ -9,7 +9,7 @@ export abstract class ImageGraphics<G extends GraphicsAdapter = GraphicsAdapter>
 
   abstract disable(): void;
 
-  abstract getCollisionElement(): G["collisionType"];
+  abstract getCollisionElement(): G["collisionType"] | null;
 
   abstract getWidthAndHeight(): { width: number; height: number };
 

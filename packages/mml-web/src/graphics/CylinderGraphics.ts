@@ -10,7 +10,7 @@ export abstract class CylinderGraphics<G extends GraphicsAdapter = GraphicsAdapt
 
   abstract disable(): void;
 
-  abstract getCollisionElement(): G["collisionType"];
+  abstract getCollisionElement(): G["collisionType"] | null;
 
   abstract setRadius(radius: number, mCylinderProps: MCylinderProps): void;
 

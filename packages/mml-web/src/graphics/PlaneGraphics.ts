@@ -10,7 +10,7 @@ export abstract class PlaneGraphics<G extends GraphicsAdapter = GraphicsAdapter>
 
   abstract disable(): void;
 
-  abstract getCollisionElement(): G["collisionType"];
+  abstract getCollisionElement(): G["collisionType"] | null;
 
   abstract setWidth(width: number, mPlaneProps: MPlaneProps): void;
 

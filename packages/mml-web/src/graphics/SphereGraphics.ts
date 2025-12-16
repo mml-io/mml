@@ -10,7 +10,7 @@ export abstract class SphereGraphics<G extends GraphicsAdapter = GraphicsAdapter
 
   abstract disable(): void;
 
-  abstract getCollisionElement(): G["collisionType"];
+  abstract getCollisionElement(): G["collisionType"] | null;
 
   abstract setRadius(width: number, mSphereProps: MSphereProps): void;
 

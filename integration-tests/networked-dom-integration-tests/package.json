@@ -10,9 +10,9 @@
     "fuzz": "tsx ./scripts/run-networked-dom-fuzzes.ts"
   },
   "devDependencies": {
-    "@mml-io/networked-dom-document": "^0.23.0",
-    "@mml-io/networked-dom-web": "^0.23.0",
-    "@mml-io/networked-dom-web-runner": "^0.23.0"
+    "@mml-io/networked-dom-document": "^0.23.1",
+    "@mml-io/networked-dom-web": "^0.23.1",
+    "@mml-io/networked-dom-web-runner": "^0.23.1"
   },
-  "version": "0.23.0"
+  "version": "0.23.1"
 }

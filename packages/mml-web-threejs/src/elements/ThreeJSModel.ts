@@ -126,8 +126,8 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
     return null;
   }
 
-  getCollisionElement(): THREE.Object3D<THREE.Object3DEventMap> {
-    return this.loadedState?.group ?? new THREE.Object3D();
+  getCollisionElement(): THREE.Object3D<THREE.Object3DEventMap> | null {
+    return this.loadedState?.group ?? null;
   }
 
   setDebug(): void {

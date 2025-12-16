@@ -17,7 +17,7 @@ export abstract class ModelGraphics<G extends GraphicsAdapter = GraphicsAdapter>
 
   abstract transformed(): void;
 
-  abstract getCollisionElement(): G["collisionType"];
+  abstract getCollisionElement(): G["collisionType"] | null;
 
   abstract hasLoadedModel(): boolean;
 

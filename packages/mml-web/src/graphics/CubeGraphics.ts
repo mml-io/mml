@@ -10,7 +10,7 @@ export abstract class CubeGraphics<G extends GraphicsAdapter = GraphicsAdapter> 
 
   abstract disable(): void;
 
-  abstract getCollisionElement(): G["collisionType"];
+  abstract getCollisionElement(): G["collisionType"] | null;
 
   abstract setWidth(width: number, mCubeProps: MCubeProps): void;
 
