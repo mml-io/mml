@@ -207,6 +207,10 @@ export class StandalonePlayCanvasAdapter
     }
   }
 
+  public getCanvas(): HTMLCanvasElement | null {
+    return this.canvas;
+  }
+
   public setCameraFOV(fov: number) {
     const cameraComponent = this.camera.camera;
     if (!cameraComponent) {

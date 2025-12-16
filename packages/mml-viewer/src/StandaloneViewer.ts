@@ -38,7 +38,37 @@ export class StandaloneViewer {
       event.data.params !== null;
     if (isParamUpdate) {
       this.updateUrlParams(event.data.params);
+      return;
     }
+
+    const isScreenshot = event?.data?.type === "screenshot" && !event.data.imageUri;
+    if (isScreenshot) {
+      this.handleScreenshot(event);
+      return;
+    }
+  }
+
+  private handleScreenshot(event: MessageEvent) {
+    try {
+      const imageUri = this.captureScreenshot();
+      (event.source as Window).postMessage(
+        {
+          type: "screenshot",
+          imageUri: imageUri || null,
+        },
+        event.origin,
+      );
+    } catch (error) {
+      console.error("Error capturing screenshot:", error);
+    }
+  }
+
+  private captureScreenshot(): string | null {
+    const canvas = this.graphicsMode?.getRendererCanvas();
+    if (canvas) {
+      return canvas.toDataURL("image/png");
+    }
+    return null;
   }
 
   private updateUrlParams(params: Record<string, string>) {

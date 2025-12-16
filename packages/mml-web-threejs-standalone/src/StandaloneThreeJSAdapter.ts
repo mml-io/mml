@@ -167,7 +167,11 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
         render: () => void 0,
       } as unknown as THREE.WebGLRenderer;
     } else {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        preserveDrawingBuffer: true,
+      });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.shadowMap.enabled = true;
