@@ -41,7 +41,7 @@ export class StandaloneViewer {
       return;
     }
 
-    const isScreenshot = event?.data?.type === "screenshot" && event.data.imageUri === null;
+    const isScreenshot = event?.data?.type === "screenshot" && !event.data.imageUri;
     if (isScreenshot) {
       this.handleScreenshot(event);
       return;
@@ -64,7 +64,7 @@ export class StandaloneViewer {
   }
 
   private captureScreenshot(): string | null {
-    const canvas = window.document.querySelector("canvas") as HTMLCanvasElement | null;
+    const canvas = this.graphicsMode?.getRendererCanvas();
     if (canvas) {
       return canvas.toDataURL("image/png");
     }
@@ -144,32 +144,32 @@ export class StandaloneViewer {
     };
 
     if (!this.graphicsMode) {
-      //   if (renderer === "playcanvas") {
-      //     this.graphicsMode = new PlayCanvasMode(
-      //       this.windowTarget,
-      //       this.targetForWrappers,
-      //       source,
-      //       formIteration,
-      //       options,
-      //     );
-      //   } else if (renderer === "threejs") {
-      this.graphicsMode = new ThreeJSMode(
-        this.windowTarget,
-        this.targetForWrappers,
-        source,
-        formIteration,
-        options,
-      );
-      //   } else if (renderer === "tags") {
-      //     this.graphicsMode = new TagsMode(
-      //       this.windowTarget,
-      //       this.targetForWrappers,
-      //       source,
-      //       formIteration,
-      //       !noUI,
-      //     );
-      //   }
-      // } else {
+      if (renderer === "playcanvas") {
+        this.graphicsMode = new PlayCanvasMode(
+          this.windowTarget,
+          this.targetForWrappers,
+          source,
+          formIteration,
+          options,
+        );
+      } else if (renderer === "threejs") {
+        this.graphicsMode = new ThreeJSMode(
+          this.windowTarget,
+          this.targetForWrappers,
+          source,
+          formIteration,
+          options,
+        );
+      } else if (renderer === "tags") {
+        this.graphicsMode = new TagsMode(
+          this.windowTarget,
+          this.targetForWrappers,
+          source,
+          formIteration,
+          !noUI,
+        );
+      }
+    } else {
       this.graphicsMode.update(formIteration);
     }
   }

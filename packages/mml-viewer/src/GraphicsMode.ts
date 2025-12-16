@@ -6,4 +6,5 @@ export type GraphicsMode = {
   dispose: () => void;
   update: (formIteration: FormIteration) => void;
   updateSource(source: MMLSourceDefinition): void;
+  getRendererCanvas: () => HTMLCanvasElement | null;
 };

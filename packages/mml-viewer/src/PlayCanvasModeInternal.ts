@@ -362,4 +362,8 @@ export class PlayCanvasModeInternal {
       this.loadedState = null;
     }
   }
+
+  public getRendererCanvas(): HTMLCanvasElement | null {
+    return this.loadedState?.graphicsAdapter.getCanvas() ?? null;
+  }
 }

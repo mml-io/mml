@@ -57,4 +57,11 @@ export class PlayCanvasMode implements GraphicsMode {
     }
     this.internalMode.update(formIteration);
   }
+
+  getRendererCanvas(): HTMLCanvasElement | null {
+    if (!this.internalMode) {
+      return null;
+    }
+    return this.internalMode.getRendererCanvas();
+  }
 }

@@ -382,4 +382,12 @@ export class ThreeJSModeInternal {
     }
     return false;
   }
+
+  getRendererCanvas(): HTMLCanvasElement | null {
+    const renderer = this.loadedState?.graphicsAdapter.getRenderer();
+    if (renderer) {
+      return renderer.domElement;
+    }
+    return null;
+  }
 }

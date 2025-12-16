@@ -111,4 +111,9 @@ export class TagsMode implements GraphicsMode {
   update(formIteration: FormIteration) {
     formIteration.completed();
   }
+
+  getRendererCanvas(): HTMLCanvasElement | null {
+    // This is not supported for tags mode
+    return null;
+  }
 }
