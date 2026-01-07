@@ -11,7 +11,7 @@ import {
 import { watchSingleGame } from "../lib/singleGameBuilder";
 import { pathExists } from "../utils/fs";
 
-interface ServeArgs {
+interface DevArgs {
   root?: string;
   src?: string;
   assets?: string;
@@ -20,7 +20,7 @@ interface ServeArgs {
   watch?: boolean;
 }
 
-async function runServe(argv: ServeArgs): Promise<void> {
+async function runDev(argv: DevArgs): Promise<void> {
   const root = path.resolve(argv.root || process.cwd());
   const srcDir = path.resolve(root, argv.src || DEFAULT_SRC_DIR);
 
@@ -41,10 +41,10 @@ async function runServe(argv: ServeArgs): Promise<void> {
   });
 }
 
-export function registerServeCommand(yargs: Argv): Argv {
+export function registerDevCommand(yargs: Argv): Argv {
   return yargs.command(
-    "serve",
-    "Serve the current project for local or LAN devices",
+    "dev",
+    "Run the dev server for local or LAN devices",
     (command) =>
       command
         .option("root", {
@@ -77,7 +77,7 @@ export function registerServeCommand(yargs: Argv): Argv {
           describe: "Build once then serve without watch",
         }),
     async (argv) => {
-      await runServe({
+      await runDev({
         root: argv.root as string | undefined,
         src: argv.src as string | undefined,
         assets: argv.assets as string | undefined,

@@ -24,6 +24,9 @@ const buildOptions: esbuild.BuildOptions = {
   packages: "external",
   sourcemap: true,
   target: ["node18"],
+  loader: {
+    ".json": "json",
+  },
   banner: {
     js: "#!/usr/bin/env node",
   },
@@ -31,13 +34,19 @@ const buildOptions: esbuild.BuildOptions = {
 
 switch (mode) {
   case buildMode:
-    esbuild.build(buildOptions).catch(() => process.exit(1));
+    esbuild.build(buildOptions).catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
     break;
   case watchMode:
     esbuild
       .context({ ...buildOptions })
       .then((context) => context.watch())
-      .catch(() => process.exit(1));
+      .catch((err) => {
+        console.error(err);
+        process.exit(1);
+      });
     break;
   default:
     console.error(helpString);

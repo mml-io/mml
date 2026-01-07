@@ -1,12 +1,10 @@
-#!/usr/bin/env node
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
 import { registerBuildCommand } from "./commands/build";
 import { registerCreateCommand } from "./commands/create";
 import { registerDeployCommand } from "./commands/deploy";
-import { registerEditorCommand } from "./commands/editor";
-import { registerServeCommand } from "./commands/serve";
+import { registerDevCommand } from "./commands/serve";
 
 async function main(): Promise<void> {
   const parser = yargs(hideBin(process.argv))
@@ -18,8 +16,7 @@ async function main(): Promise<void> {
 
   registerCreateCommand(parser);
   registerBuildCommand(parser);
-  registerEditorCommand(parser);
-  registerServeCommand(parser);
+  registerDevCommand(parser);
   registerDeployCommand(parser);
 
   parser

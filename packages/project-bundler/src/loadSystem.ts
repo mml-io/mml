@@ -1,7 +1,12 @@
-import mathSystemSchemaJson from "mml-game-math-system/build/mml.schema.json";
-import navigationSystemSchemaJson from "mml-game-navigation-system/build/mml.schema.json";
-import physicsSystemSchemaJson from "mml-game-physics-system/build/mml.schema.json";
+import { createRequire } from "module";
 import { SystemPackage, SystemSchema } from "mml-game-systems-common";
+
+const require = createRequire(import.meta.url);
+const mathSystemSchemaJson = require("mml-game-math-system/build/mml.schema.json");
+const navigationSystemSchemaJson = require(
+  "mml-game-navigation-system/build/mml.schema.json"
+);
+const physicsSystemSchemaJson = require("mml-game-physics-system/build/mml.schema.json");
 
 const physicsSystemSchema: SystemSchema = {
   name: "physics",

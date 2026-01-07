@@ -13,7 +13,22 @@ interface CreateArgs {
 }
 
 const currentDirname = path.dirname(fileURLToPath(import.meta.url));
-const templatesDir = path.resolve(currentDirname, "..", "..", "templates");
+const templatesDirPromise = findTemplatesDir();
+
+async function findTemplatesDir(): Promise<string> {
+  const candidates = [
+    path.resolve(currentDirname, "..", "templates"),
+    path.resolve(currentDirname, "..", "..", "templates"),
+  ];
+
+  for (const candidate of candidates) {
+    if (await pathExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  return candidates[0];
+}
 
 async function writeProjectPackageJson(projectRoot: string, appName: string): Promise<void> {
   const packageJsonPath = path.join(projectRoot, "package.json");
@@ -29,6 +44,7 @@ async function writeProjectPackageJson(projectRoot: string, appName: string): Pr
 }
 
 async function copyTemplate(projectRoot: string, templateName: string, overwrite: boolean): Promise<void> {
+  const templatesDir = await templatesDirPromise;
   const source = path.join(templatesDir, templateName);
   if (!(await pathExists(source))) {
     throw new Error(`Template not found: ${templateName}`);

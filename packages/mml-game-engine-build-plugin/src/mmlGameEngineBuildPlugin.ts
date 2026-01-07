@@ -19,7 +19,17 @@ export interface ScriptInjectionPluginOptions {
   configPath?: string;
   htmlTemplate?: string;
   filename?: string;
+  assetsDir?: string;
+  manifestFilename?: string;
 }
+
+type Manifest = {
+  worlds: string[];
+  documentNameToPath: Record<string, string>;
+  assetNameToPath: Record<string, string>;
+  documentPrefix: string;
+  assetPrefix: string;
+};
 
 function resolveScriptPath(src: string, buildRoot: string, configPath?: string): string {
   // If it's already an absolute path, return as-is
@@ -164,11 +174,80 @@ function addBuiltScripts(htmlContent: string, result: esbuild.BuildResult): stri
   return htmlContent;
 }
 
+async function collectAssetFiles(assetRoot: string, relativePrefix = ""): Promise<string[]> {
+  const entries = await fs.promises.readdir(assetRoot, { withFileTypes: true });
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const entryPath = path.join(assetRoot, entry.name);
+    const relativePath = relativePrefix ? path.join(relativePrefix, entry.name) : entry.name;
+
+    if (entry.isDirectory()) {
+      const nested = await collectAssetFiles(entryPath, relativePath);
+      files.push(...nested);
+      continue;
+    }
+
+    if (entry.isFile()) {
+      files.push(relativePath);
+    }
+  }
+
+  return files;
+}
+
+async function copyAssetsToOutdir(
+  sourceDir: string,
+  outputAssetsDir: string,
+): Promise<Record<string, string>> {
+  if (!fs.existsSync(sourceDir)) {
+    return {};
+  }
+
+  const assetFiles = await collectAssetFiles(sourceDir);
+  if (assetFiles.length === 0) {
+    return {};
+  }
+
+  await fs.promises.mkdir(outputAssetsDir, { recursive: true });
+
+  const assetNameToPath: Record<string, string> = {};
+  for (const relativeFile of assetFiles) {
+    const normalizedRelative = relativeFile.split(path.sep).join("/");
+    const destination = path.join(outputAssetsDir, relativeFile);
+    await fs.promises.mkdir(path.dirname(destination), { recursive: true });
+    await fs.promises.copyFile(path.join(sourceDir, relativeFile), destination);
+    assetNameToPath[normalizedRelative] = ["assets", normalizedRelative].join("/").replace(/\/+/g, "/");
+  }
+
+  return assetNameToPath;
+}
+
+async function loadManifest(manifestPath: string): Promise<Manifest | null> {
+  if (!fs.existsSync(manifestPath)) {
+    return null;
+  }
+
+  const content = await fs.promises.readFile(manifestPath, "utf-8");
+  return JSON.parse(content) as Manifest;
+}
+
+function createDefaultManifest(): Manifest {
+  return {
+    worlds: [],
+    documentNameToPath: {},
+    assetNameToPath: {},
+    documentPrefix: "ws:///",
+    assetPrefix: "/assets/",
+  };
+}
+
 
 export function mmlGameEngineBuildPlugin(options: ScriptInjectionPluginOptions = {}): esbuild.Plugin {
   const configPath = options.configPath || "./scripts.json";
   const htmlTemplate = options.htmlTemplate;
   const filename = options.filename || "index.html";
+  const manifestFilename = options.manifestFilename || "manifest.json";
   
   return {
     name: "script-injection-html",
@@ -226,6 +305,24 @@ export function mmlGameEngineBuildPlugin(options: ScriptInjectionPluginOptions =
 
           // Write the final HTML
           fs.writeFileSync(htmlPath, htmlContent);
+
+          // Copy assets and update manifest
+          const assetsSourceDir =
+            options.assetsDir !== undefined
+              ? path.resolve(options.assetsDir)
+              : path.join(currentBuildRoot, "assets");
+          const outputAssetsDir = path.join(outdir, "assets");
+          const manifestPath = path.join(outdir, manifestFilename);
+
+          const manifest = (await loadManifest(manifestPath)) ?? createDefaultManifest();
+          manifest.assetPrefix = manifest.assetPrefix || "/assets/";
+          const copiedAssets = await copyAssetsToOutdir(assetsSourceDir, outputAssetsDir);
+          manifest.assetNameToPath = {
+            ...manifest.assetNameToPath,
+            ...copiedAssets,
+          };
+
+          await fs.promises.writeFile(manifestPath, JSON.stringify(manifest, null, 2));
         } catch (error) {
           console.error("Error in script injection HTML plugin:", error);
         }

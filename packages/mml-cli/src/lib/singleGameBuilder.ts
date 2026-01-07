@@ -6,6 +6,7 @@ import path from "path";
 import { mmlGameEngineBuildPlugin } from "@mml-io/mml-game-engine-build-plugin";
 
 import { pathExists } from "../utils/fs";
+// import { mml } from "@mml-io/esbuild-plugin-mml";
 
 export interface SingleGameBuildOptions {
   projectRoot: string;
@@ -62,6 +63,14 @@ function createBuildOptions(opts: SingleGameBuildOptions): esbuild.BuildOptions 
     throw new Error(`HTML template not found at ${htmlTemplate}`);
   }
 
+  const mmlPluginOptions = {
+    documentPrefix: "ws:///",
+    assetPrefix: "/assets/",
+    assetDir: "assets",
+    stripHtmlExtension: true,
+    globalNamePrefix: undefined,
+  };
+
   return {
     entryPoints: [entryPoint],
     entryNames: "[name]",
@@ -86,10 +95,15 @@ function createBuildOptions(opts: SingleGameBuildOptions): esbuild.BuildOptions 
       ".html": "text",
     },
     plugins: [
+      mml({
+        verbose: true,
+        ...mmlPluginOptions,
+      }),
       mmlGameEngineBuildPlugin({
         configPath: scriptsConfigPath,
         htmlTemplate,
         filename: "index.html",
+        assetsDir: opts.assetsDir || path.join(opts.projectRoot, "assets"),
       }),
     ],
   };
@@ -118,7 +132,7 @@ export async function watchSingleGame(
   });
 
   const outDir = buildOptions.outdir || path.join(options.projectRoot, "build");
-  const assetsDir = options.assetsDir || path.join(options.projectRoot, "assets");
+  const assetsDir = options.assetsDir || path.join(outDir, "assets");
   const app = express();
 
   // Disable caching
@@ -158,7 +172,7 @@ export async function watchSingleGame(
   });
 
   const port = options.port ?? 3000;
-  const host = options.host ?? "localhost";
+  const host = options.host ?? "0.0.0.0";
 
   const server = await new Promise<import("http").Server>((resolve) => {
     const srv = app.listen(port, host, () => {
