@@ -1,6 +1,7 @@
 import * as esbuild from "esbuild";
+
 import { dtsPlugin } from "../../../utils/dtsPlugin";
-import { rebuildOnDependencyChangesPlugin } from '../../../utils/rebuildOnDependencyChangesPlugin';
+import { rebuildOnDependencyChangesPlugin } from "../../../utils/rebuildOnDependencyChangesPlugin";
 
 const buildMode = "--build";
 const watchMode = "--watch";
@@ -27,12 +28,7 @@ const buildOptions: esbuild.BuildOptions = {
   packages: "external",
   sourcemap: true,
   target: "esnext",
-  plugins: [
-    ...(mode === watchMode ? [
-      rebuildOnDependencyChangesPlugin()
-    ] : []),
-    dtsPlugin(),
-  ],
+  plugins: [...(mode === watchMode ? [rebuildOnDependencyChangesPlugin()] : []), dtsPlugin()],
 };
 
 switch (mode) {
