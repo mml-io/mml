@@ -1,6 +1,15 @@
 import { CONSTANTS } from "./constants.js";
 import { distance3D, Position } from "./helpers.js";
 
+// Character controller configuration for climbing stairs
+const CHARACTER_CONTROLLER_CONFIG = {
+  offset: 0.01, // Small gap to prevent numerical issues
+  maxStepHeight: 0.35, // Maximum height of stairs to climb
+  minStepWidth: 0.2, // Minimum width on top of obstacle to step onto
+  includeDynamicBodies: false, // Don't autostep over dynamic bodies
+  snapToGround: 0.3, // Snap to ground when descending stairs
+};
+
 export class Player {
   public connectionId: number;
 
@@ -32,6 +41,9 @@ export class Player {
   private sceneGroup: HTMLElement;
   private currentInput: { x: number; y: number } | null = null;
   private updateInterval: number | null = null;
+  private useCharacterController: boolean = false;
+  private verticalVelocity: number = 0; // For gravity when using character controller
+  private lastUpdateTime: number = 0;
 
   constructor(connectionId: number, sceneGroup: HTMLElement) {
     this.connectionId = connectionId;
@@ -48,7 +60,10 @@ export class Player {
         Math.floor(Math.random() * CONSTANTS.AVAILABLE_SPAWN_POINTS.length)
       ];
 
-    this.position = { x: spawnPoint.x, y: spawnPoint.y, z: spawnPoint.z };
+    // Capsule dimensions: height=1.1, radius=0.6, total height = 2.3, half = 1.15
+    // Adjust Y so capsule bottom sits on the floor (spawnPoint.y is floor level)
+    const capsuleHalfHeight = 1.15;
+    this.position = { x: spawnPoint.x, y: spawnPoint.y + capsuleHalfHeight, z: spawnPoint.z };
     this.rotation = 0;
     this.rotationRadians = 0;
     this.physicsBody = null;
@@ -161,7 +176,7 @@ export class Player {
     this.physicsBody.setAttribute("radius", "0.6");
     this.physicsBody.setAttribute("color", "#00ff00");
     this.physicsBody.setAttribute("opacity", "0.0");
-    this.physicsBody.setAttribute("collide", "true");
+    this.physicsBody.setAttribute("collide", "false"); // Collision handled by character controller
     this.physicsBody.setAttribute("cast-shadows", "false");
     (this.physicsBody as any).dataset.connectionId = this.connectionId.toString();
     this.sceneGroup.appendChild(this.physicsBody);
@@ -169,25 +184,38 @@ export class Player {
     console.log(`[Player ${this.connectionId}] Physics body created and added to DOM`);
 
     setTimeout(() => {
-      console.log(`[Player ${this.connectionId}] Adding rigidbody attributes`);
-      this.physicsBody.setAttribute("rigidbody", "true");
-      this.physicsBody.setAttribute("kinematic", "false");
-      this.physicsBody.setAttribute("mass", "1");
-      this.physicsBody.setAttribute("friction", "0");
-      this.physicsBody.setAttribute("restitution", "0");
-      this.physicsBody.setAttribute("gravity", "9.81");
+      console.log(`[Player ${this.connectionId}] Setting up character controller`);
 
       if ((window as any).physics && this.physicsBody) {
-        console.log(`[Player ${this.connectionId}] Manually adding to physics system`);
-        (window as any).physics.addRigidbody(this.physicsBody, {
-          mass: 1,
-          kinematic: false,
-          friction: 0,
-          restitution: 0,
-          gravity: 40.0,
-        });
+        const physics = (window as any).physics;
 
-        this.lockPlayerRotations();
+        // Check if createCharacterController method exists
+        if (typeof physics.createCharacterController !== "function") {
+          console.error(
+            `[Player ${this.connectionId}] createCharacterController method not found!`,
+          );
+          this.setupFallbackRigidbody(physics);
+          return;
+        }
+
+        // Try to use character controller for better stair climbing
+        const success = physics.createCharacterController(
+          this.physicsBody,
+          CHARACTER_CONTROLLER_CONFIG,
+        );
+
+        if (success) {
+          this.useCharacterController = true;
+          console.log(`[Player ${this.connectionId}] Character controller created successfully`);
+        } else {
+          // Fallback to regular rigidbody if character controller fails
+          console.log(
+            `[Player ${this.connectionId}] Character controller creation failed, falling back to rigidbody`,
+          );
+          this.setupFallbackRigidbody(physics);
+        }
+      } else {
+        console.error(`[Player ${this.connectionId}] Physics system or physicsBody not available`);
       }
     }, 300);
 
@@ -369,6 +397,27 @@ export class Player {
     }
   }
 
+  private setupFallbackRigidbody(physics: any): void {
+    if (!this.physicsBody) return;
+
+    this.physicsBody.setAttribute("rigidbody", "true");
+    this.physicsBody.setAttribute("kinematic", "false");
+    this.physicsBody.setAttribute("mass", "1");
+    this.physicsBody.setAttribute("friction", "0");
+    this.physicsBody.setAttribute("restitution", "0");
+    this.physicsBody.setAttribute("gravity", "9.81");
+
+    physics.addRigidbody(this.physicsBody, {
+      mass: 1,
+      kinematic: false,
+      friction: 0,
+      restitution: 0,
+      gravity: 40.0,
+    });
+
+    this.lockPlayerRotations();
+  }
+
   private lockPlayerRotations(): void {
     // Access the physics system's internal state to lock rotations
     const physics = (window as any).physics;
@@ -405,6 +454,8 @@ export class Player {
   }
 
   private startUpdateLoop(): void {
+    this.lastUpdateTime = performance.now();
+
     this.updateInterval = window.setInterval(() => {
       if (!this.physicsBody) {
         console.warn(`[Player ${this.connectionId}] No physics body in update loop`);
@@ -416,11 +467,18 @@ export class Player {
         return;
       }
 
+      const physics = (window as any).physics;
+
+      // Calculate delta time
+      const now = performance.now();
+      const deltaTime = Math.min((now - this.lastUpdateTime) / 1000, 0.1); // Cap at 100ms
+      this.lastUpdateTime = now;
+
       // Don't allow movement when dead
       if (this.isDead) {
-        const physics = (window as any).physics;
-        if (physics && physics.elementToBody && physics.elementToBody.has(this.physicsBody)) {
-          // Preserve Y velocity for gravity, only zero out X and Z
+        if (this.useCharacterController) {
+          // Just don't move when dead
+        } else if (physics.elementToBody?.has(this.physicsBody)) {
           const physicsState = physics.elementToBody.get(this.physicsBody);
           const currentVel = physicsState?.rigidbody?.linvel?.() || { x: 0, y: 0, z: 0 };
           physics.setVelocity(this.physicsBody, { x: 0, y: currentVel.y, z: 0 });
@@ -429,33 +487,15 @@ export class Player {
       }
 
       try {
-        // Check if rigidbody is registered in physics system
-        const physics = (window as any).physics;
-        if (!physics || !physics.elementToBody || !physics.elementToBody.has(this.physicsBody)) {
-          // Rigidbody not ready yet, skip this update
-          return;
-        }
-
-        // Apply velocity based on current input
-        const speed = 5; // units per second
-
-        // Get current Y velocity to preserve gravity
-        const physicsState = physics.elementToBody.get(this.physicsBody);
-        const currentVel = physicsState?.rigidbody?.linvel?.() || { x: 0, y: 0, z: 0 };
-
-        if (this.currentInput) {
-          // Apply velocity based on input, preserving Y for gravity
-          const velocity = {
-            x: this.currentInput.x * speed, // D = right, A = left
-            y: currentVel.y, // Preserve Y velocity for gravity
-            z: -this.currentInput.y * speed, // W = forward, S = backward
-          };
-          physics.setVelocity(this.physicsBody, velocity);
+        if (this.useCharacterController) {
+          // Use character controller for movement
+          this.updateWithCharacterController(physics, deltaTime);
         } else {
-          // Zero X and Z, but preserve Y for gravity
-          physics.setVelocity(this.physicsBody, { x: 0, y: currentVel.y, z: 0 });
+          // Fallback to velocity-based movement
+          this.updateWithVelocity(physics);
         }
 
+        // Update position from element attributes
         const newPos = {
           x: parseFloat(this.physicsBody.getAttribute("x") || "0"),
           y: parseFloat(this.physicsBody.getAttribute("y") || "0"),
@@ -465,7 +505,91 @@ export class Player {
       } catch (error) {
         console.error(`[Player ${this.connectionId}] Physics update error:`, error);
       }
-    }, 100);
+    }, 16); // ~60fps for smoother character controller movement
+  }
+
+  private updateWithCharacterController(physics: any, deltaTime: number): void {
+    const speed = 4; // units per second
+    const gravity = 20; // gravity acceleration
+
+    // Check if grounded
+    const isGrounded = physics.isCharacterGrounded(this.physicsBody);
+
+    // Apply gravity
+    if (isGrounded) {
+      this.verticalVelocity = -0.1; // Small downward force to stay grounded
+    } else {
+      this.verticalVelocity -= gravity * deltaTime;
+    }
+
+    // Cap falling speed
+    this.verticalVelocity = Math.max(this.verticalVelocity, -20);
+
+    // Calculate desired movement
+    let desiredX = 0;
+    let desiredZ = 0;
+
+    if (this.currentInput) {
+      desiredX = this.currentInput.x * speed * deltaTime;
+      desiredZ = -this.currentInput.y * speed * deltaTime;
+    }
+
+    const desiredY = this.verticalVelocity * deltaTime;
+
+    // Compute collision-aware movement
+    const movement = physics.computeCharacterMovement(this.physicsBody, {
+      x: desiredX,
+      y: desiredY,
+      z: desiredZ,
+    });
+
+    // Determine final movement - use computed if non-zero, otherwise use desired directly
+    let finalMovement = movement;
+    if (
+      movement &&
+      Math.abs(movement.x) < 0.0001 &&
+      Math.abs(movement.z) < 0.0001 &&
+      (Math.abs(desiredX) > 0.0001 || Math.abs(desiredZ) > 0.0001)
+    ) {
+      // Character controller returned zero but we wanted to move - use desired movement directly
+      finalMovement = { x: desiredX, y: desiredY, z: desiredZ };
+    }
+
+    if (finalMovement) {
+      // Apply the movement directly to the rigidbody position
+      const applied = physics.applyCharacterMovement(this.physicsBody, finalMovement);
+
+      // Also update element attributes immediately for visual feedback
+      if (applied) {
+        const newPos = physics.getCharacterPosition(this.physicsBody);
+        if (newPos && this.physicsBody) {
+          this.physicsBody.setAttribute("x", newPos.x.toFixed(3));
+          this.physicsBody.setAttribute("y", newPos.y.toFixed(3));
+          this.physicsBody.setAttribute("z", newPos.z.toFixed(3));
+        }
+      }
+    }
+  }
+
+  private updateWithVelocity(physics: any): void {
+    if (!physics.elementToBody?.has(this.physicsBody)) {
+      return;
+    }
+
+    const speed = 5; // units per second
+    const physicsState = physics.elementToBody.get(this.physicsBody);
+    const currentVel = physicsState?.rigidbody?.linvel?.() || { x: 0, y: 0, z: 0 };
+
+    if (this.currentInput) {
+      const velocity = {
+        x: this.currentInput.x * speed,
+        y: currentVel.y,
+        z: -this.currentInput.y * speed,
+      };
+      physics.setVelocity(this.physicsBody, velocity);
+    } else {
+      physics.setVelocity(this.physicsBody, { x: 0, y: currentVel.y, z: 0 });
+    }
   }
 
   private stopUpdateLoop(): void {
@@ -478,10 +602,19 @@ export class Player {
   public respawn(x: number, y: number, z: number): void {
     console.log(`Respawning Player ID [${this.connectionId}] at (${x}, ${y}, ${z})`);
 
-    // Adjust y position so cylinder bottom sits at floor level
-    const adjustedY = y + 0.9;
+    // Capsule dimensions: height=1.1, radius=0.6, total height = 2.3, half = 1.15
+    // Adjust Y so capsule bottom sits on the floor
+    const adjustedY = y + 1.15;
 
     if (this.physicsBody) {
+      const physics = (window as any).physics;
+
+      if (this.useCharacterController && physics) {
+        // Teleport character controller to new position
+        physics.setCharacterPosition(this.physicsBody, { x, y: adjustedY, z });
+      }
+
+      // Also update element attributes for consistency
       this.physicsBody.setAttribute("x", x.toString());
       this.physicsBody.setAttribute("y", adjustedY.toString());
       this.physicsBody.setAttribute("z", z.toString());
@@ -492,6 +625,7 @@ export class Player {
     this.rotation = 0;
     this.rotationRadians = 0;
     this.currentInput = null;
+    this.verticalVelocity = 0; // Reset vertical velocity on respawn
   }
 
   public dispose(): void {
@@ -510,9 +644,14 @@ export class Player {
       this.characterModel.remove();
     }
     if (this.physicsBody && this.physicsBody.parentNode) {
-      // Remove rigidbody from physics system
-      if ((window as any).physics) {
-        (window as any).physics.removeRigidbody(this.physicsBody);
+      // Remove from physics system
+      const physics = (window as any).physics;
+      if (physics) {
+        if (this.useCharacterController) {
+          physics.removeCharacterController(this.physicsBody);
+        } else {
+          physics.removeRigidbody(this.physicsBody);
+        }
       }
       this.physicsBody.remove();
     }

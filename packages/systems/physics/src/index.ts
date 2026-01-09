@@ -44,11 +44,30 @@ type PhysicsElementState = {
   lerpElement: Element;
 };
 
+type CharacterControllerState = {
+  controller: RAPIER.KinematicCharacterController;
+  collider: RAPIER.Collider;
+  rigidbody: RAPIER.RigidBody;
+  element: Element;
+};
+
+export type CharacterControllerConfig = {
+  offset?: number;
+  maxStepHeight?: number;
+  minStepWidth?: number;
+  includeDynamicBodies?: boolean;
+  maxSlopeClimbAngle?: number;
+  minSlopeSlideAngle?: number;
+  applyImpulsesToDynamicBodies?: boolean;
+  snapToGround?: number | null;
+};
+
 class PhysicsSystem implements ElementSystem {
   private world: RAPIER.World | null = null;
   private elementToBody = new Map<Element, PhysicsElementState>();
   private bodyToElement = new Map<number, PhysicsElementState>();
   private colliderToElement = new Map<RAPIER.ColliderHandle, PhysicsElementState>();
+  private characterControllers = new Map<Element, CharacterControllerState>();
   private config: Required<PhysicsConfig> = {
     gravity: 9.81,
     enableCollisions: true,
@@ -610,6 +629,264 @@ class PhysicsSystem implements ElementSystem {
   }
 
   /**
+   * @description Creates a Rapier character controller for an element.
+   * Character controllers handle collision detection and allow features like auto-stepping over stairs.
+   * The element should be a capsule or similar shape for best results.
+   * @example
+   * const player = document.querySelector('m-capsule#player');
+   * physics.createCharacterController(player, {
+   *   offset: 0.01,
+   *   maxStepHeight: 0.5,
+   *   minStepWidth: 0.2,
+   *   includeDynamicBodies: false
+   * });
+   */
+  createCharacterController(element: Element, config: CharacterControllerConfig = {}): boolean {
+    if (!this.world) {
+      console.error("[Physics] World not initialized");
+      return false;
+    }
+
+    // Check if element already has a character controller
+    if (this.characterControllers.has(element)) {
+      console.warn("[Physics] Element already has a character controller");
+      return false;
+    }
+
+    const {
+      offset = 0.01,
+      maxStepHeight = 0.5,
+      minStepWidth = 0.2,
+      includeDynamicBodies = false,
+      maxSlopeClimbAngle,
+      minSlopeSlideAngle,
+      applyImpulsesToDynamicBodies = true,
+      snapToGround = 0.1,
+    } = config;
+
+    // Create the character controller
+    const controller = this.world.createCharacterController(offset);
+
+    // Enable autostep for climbing stairs
+    controller.enableAutostep(maxStepHeight, minStepWidth, includeDynamicBodies);
+
+    // Configure slope handling if specified
+    if (maxSlopeClimbAngle !== undefined) {
+      controller.setMaxSlopeClimbAngle((maxSlopeClimbAngle * Math.PI) / 180);
+    }
+    if (minSlopeSlideAngle !== undefined) {
+      controller.setMinSlopeSlideAngle((minSlopeSlideAngle * Math.PI) / 180);
+    }
+
+    // Configure snap to ground (helps with stairs and slopes)
+    if (snapToGround !== null) {
+      controller.enableSnapToGround(snapToGround);
+    }
+
+    // Apply impulses to dynamic bodies we collide with
+    controller.setApplyImpulsesToDynamicBodies(applyImpulsesToDynamicBodies);
+
+    // Compute world transform for the element
+    const worldTransform = this.computeWorldTransformFor(element);
+    const {
+      position: worldPosition,
+      rotation: worldRotation,
+      scale: worldScaleRaw,
+    } = worldTransform;
+    const worldScale = {
+      x: Math.abs(worldScaleRaw.x || 1),
+      y: Math.abs(worldScaleRaw.y || 1),
+      z: Math.abs(worldScaleRaw.z || 1),
+    };
+
+    // Create a kinematic rigidbody for the character
+    const rigidBodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+      .setTranslation(worldPosition.x, worldPosition.y, worldPosition.z)
+      .setRotation({
+        x: worldRotation.x,
+        y: worldRotation.y,
+        z: worldRotation.z,
+        w: worldRotation.w,
+      });
+
+    const rigidbody = this.world.createRigidBody(rigidBodyDesc);
+
+    // Create collider based on element type (prefer capsule for characters)
+    let colliderDesc: RAPIER.ColliderDesc;
+    const tagName = element.tagName.toLowerCase();
+
+    switch (tagName) {
+      case "m-capsule": {
+        const capsuleRadius = Math.max(worldScale.x, worldScale.z) / 2;
+        const capsuleHalfHeight = Math.max(0, (worldScale.y - capsuleRadius * 2) / 2);
+        colliderDesc = RAPIER.ColliderDesc.capsule(capsuleHalfHeight, capsuleRadius);
+        break;
+      }
+      case "m-sphere": {
+        const radius = Math.max(worldScale.x, worldScale.y, worldScale.z) / 2;
+        colliderDesc = RAPIER.ColliderDesc.ball(radius);
+        break;
+      }
+      case "m-cylinder": {
+        const halfHeight = worldScale.y / 2;
+        const radius = Math.max(worldScale.x, worldScale.z) / 2;
+        colliderDesc = RAPIER.ColliderDesc.cylinder(halfHeight, radius);
+        break;
+      }
+      default: {
+        // Default to capsule shape for characters
+        const defaultRadius = Math.max(worldScale.x, worldScale.z) / 2;
+        const defaultHalfHeight = Math.max(0, (worldScale.y - defaultRadius * 2) / 2);
+        colliderDesc = RAPIER.ColliderDesc.capsule(defaultHalfHeight, defaultRadius);
+      }
+    }
+
+    const collider = this.world.createCollider(colliderDesc, rigidbody);
+
+    // Store the character controller state
+    const state: CharacterControllerState = {
+      controller,
+      collider,
+      rigidbody,
+      element,
+    };
+
+    this.characterControllers.set(element, state);
+
+    console.log(
+      `[Physics] Created character controller for element with autostep: maxHeight=${maxStepHeight}, minWidth=${minStepWidth}`,
+    );
+
+    return true;
+  }
+
+  /**
+   * @description Computes collision-aware movement for a character controller.
+   * Call this each frame with the desired movement delta.
+   * @param element The element with a character controller
+   * @param desiredTranslation The desired movement vector (in world space)
+   * @returns The corrected movement after collision detection, or null if no controller exists
+   * @example
+   * const movement = physics.computeCharacterMovement(player, { x: inputX * speed * dt, y: -gravity * dt, z: inputZ * speed * dt });
+   * if (movement) {
+   *   // Apply movement to element position
+   * }
+   */
+  computeCharacterMovement(
+    element: Element,
+    desiredTranslation: { x: number; y: number; z: number },
+  ): { x: number; y: number; z: number } | null {
+    const state = this.characterControllers.get(element);
+    if (!state || !this.world) {
+      return null;
+    }
+
+    // Compute the movement - Rapier automatically excludes the passed collider
+    state.controller.computeColliderMovement(
+      state.collider,
+      new RAPIER.Vector3(desiredTranslation.x, desiredTranslation.y, desiredTranslation.z),
+    );
+
+    // Get the corrected movement
+    const movement = state.controller.computedMovement();
+
+    return { x: movement.x, y: movement.y, z: movement.z };
+  }
+
+  /**
+   * @description Gets the current world position of a character controller
+   * @param element The element with a character controller
+   * @returns The current position or null if no controller exists
+   */
+  getCharacterPosition(element: Element): { x: number; y: number; z: number } | null {
+    const state = this.characterControllers.get(element);
+    if (!state) {
+      return null;
+    }
+
+    const pos = state.rigidbody.translation();
+    return { x: pos.x, y: pos.y, z: pos.z };
+  }
+
+  /**
+   * @description Sets the world position of a character controller (teleport)
+   * @param element The element with a character controller
+   * @param position The new position in world space
+   */
+  setCharacterPosition(element: Element, position: { x: number; y: number; z: number }): boolean {
+    const state = this.characterControllers.get(element);
+    if (!state) {
+      return false;
+    }
+
+    state.rigidbody.setTranslation(new RAPIER.Vector3(position.x, position.y, position.z), true);
+    return true;
+  }
+
+  /**
+   * @description Applies a computed movement to a character controller position
+   * @param element The element with a character controller
+   * @param movement The movement vector to apply
+   */
+  applyCharacterMovement(element: Element, movement: { x: number; y: number; z: number }): boolean {
+    const state = this.characterControllers.get(element);
+    if (!state) {
+      return false;
+    }
+
+    const currentPos = state.rigidbody.translation();
+    const newPos = new RAPIER.Vector3(
+      currentPos.x + movement.x,
+      currentPos.y + movement.y,
+      currentPos.z + movement.z,
+    );
+
+    // Use setTranslation for immediate effect instead of setNextKinematicTranslation
+    // which only takes effect after world.step()
+    state.rigidbody.setTranslation(newPos, true);
+
+    return true;
+  }
+
+  /**
+   * @description Checks if a character controller is grounded (touching ground)
+   * @param element The element with a character controller
+   * @returns true if grounded, false otherwise
+   */
+  isCharacterGrounded(element: Element): boolean {
+    const state = this.characterControllers.get(element);
+    if (!state) {
+      return false;
+    }
+
+    return state.controller.computedGrounded();
+  }
+
+  /**
+   * @description Removes a character controller from an element
+   * @param element The element to remove the character controller from
+   */
+  removeCharacterController(element: Element): boolean {
+    const state = this.characterControllers.get(element);
+    if (!state || !this.world) {
+      return false;
+    }
+
+    // Remove collider and rigidbody
+    this.world.removeCollider(state.collider, true);
+    this.world.removeRigidBody(state.rigidbody);
+
+    // Free the character controller
+    state.controller.free();
+
+    // Remove from map
+    this.characterControllers.delete(element);
+
+    console.log("[Physics] Removed character controller");
+    return true;
+  }
+
+  /**
    * @description Registers a callback for collision events between physics objects
    * @example
    * const removeListener = physics.onCollision((event) => {
@@ -748,6 +1025,33 @@ class PhysicsSystem implements ElementSystem {
   private updateElementPositions() {
     if (!this.world) return;
 
+    // Update character controller element positions
+    this.characterControllers.forEach((state, element) => {
+      try {
+        const pos = state.rigidbody.translation();
+
+        // Validate translation values
+        if (!isFinite(pos.x) || !isFinite(pos.y) || !isFinite(pos.z)) {
+          console.warn("Invalid translation values for character element:", element);
+          return;
+        }
+
+        // Compute local transform relative to parent's world transform
+        const parentWorld = this.computeWorldTransformFor(element.parentElement);
+        const worldPos = new Vec3(pos.x, pos.y, pos.z);
+        const invParentRot = parentWorld.rotation.conjugate();
+        const localPosPreScale = invParentRot.rotateVector(worldPos.sub(parentWorld.position));
+        const localPos = localPosPreScale.div(parentWorld.scale);
+
+        // Update element attributes (local space)
+        element.setAttribute("x", clampFinite(localPos.x, 0).toFixed(3));
+        element.setAttribute("y", clampFinite(localPos.y, 0).toFixed(3));
+        element.setAttribute("z", clampFinite(localPos.z, 0).toFixed(3));
+      } catch (error) {
+        console.warn("Error updating character controller position:", element, error);
+      }
+    });
+
     // Create array to track invalid bodies for cleanup
     const invalidBodies: Element[] = [];
 
@@ -849,6 +1153,22 @@ class PhysicsSystem implements ElementSystem {
       }
 
       for (const el of elementsToCheck) {
+        // Check for character controller first
+        const charState = this.characterControllers.get(el);
+        if (charState) {
+          try {
+            if (this.world) {
+              this.world.removeCollider(charState.collider, true);
+              this.world.removeRigidBody(charState.rigidbody);
+            }
+            charState.controller.free();
+            this.characterControllers.delete(el);
+          } catch (e) {
+            console.warn("Failed to remove character controller for element:", el, e);
+          }
+          continue;
+        }
+
         const physicsState = this.elementToBody.get(el);
         if (!physicsState) {
           continue;
@@ -889,6 +1209,16 @@ class PhysicsSystem implements ElementSystem {
 
   private clearAllBodies() {
     try {
+      // Clear all character controllers
+      this.characterControllers.forEach((state) => {
+        try {
+          state.controller.free();
+        } catch (_e) {
+          // Ignore cleanup errors
+        }
+      });
+      this.characterControllers.clear();
+
       // Clear all mappings
       this.elementToBody.clear();
       this.bodyToElement.clear();
@@ -906,6 +1236,16 @@ class PhysicsSystem implements ElementSystem {
 
   dispose() {
     this.stop();
+
+    // Free all character controllers
+    this.characterControllers.forEach((state) => {
+      try {
+        state.controller.free();
+      } catch (_e) {
+        // Ignore cleanup errors
+      }
+    });
+    this.characterControllers.clear();
 
     if (this.world) {
       this.world.free();

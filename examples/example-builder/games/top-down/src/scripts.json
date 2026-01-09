@@ -8,7 +8,7 @@
       "configName": "physics",
       "config": {
         "gravity": 9.81,
-        "debug": false
+        "debug": true
       }
     },
     {
