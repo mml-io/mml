@@ -1,4 +1,4 @@
-import { pathsEqual, type CodeRange, type TransformValues } from "@mml-io/mml-editor-core";
+import { type CodeRange, pathsEqual, type TransformValues } from "@mml-io/mml-editor-core";
 import { EditableNetworkedDOM, IframeObservableDOMFactory } from "mml-game-engine-client";
 import { create } from "zustand";
 

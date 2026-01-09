@@ -35,13 +35,13 @@ export type UseMmlClientResult = {
   clearSelection: () => void;
 };
 
-function getElementPath(holder: HTMLElement | null, el: HTMLElement): number[] {
-  const body = bodyFromRemoteHolderElement(holder!);
+function getElementPath(holder: HTMLElement, el: HTMLElement): number[] {
+  const body = bodyFromRemoteHolderElement(holder);
   return pathToElement(body, el);
 }
 
-function getElementByPath(holder: HTMLElement | null, path: number[]): HTMLElement | null {
-  const body = bodyFromRemoteHolderElement(holder!);
+function getElementByPath(holder: HTMLElement, path: number[]): HTMLElement | null {
+  const body = bodyFromRemoteHolderElement(holder);
   return elementAtPath(body, path);
 }
 
@@ -94,11 +94,13 @@ export function useMmlClient(options: UseMmlClientOptions): UseMmlClientResult {
             return;
           }
           const holder = mmlClient.remoteDocumentHolder;
+          if (!holder) return;
           const paths = elements.map((el) => getElementPath(holder, el));
           callbacksRef.current?.onSelectionChange?.(paths);
         },
         onTransformCommit: (element, values) => {
           const holder = mmlClient.remoteDocumentHolder;
+          if (!holder) return;
           const path = getElementPath(holder, element);
           callbacksRef.current?.onTransformCommit?.(path, values as TransformValues);
         },

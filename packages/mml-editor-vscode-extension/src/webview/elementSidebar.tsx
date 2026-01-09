@@ -4,8 +4,8 @@ declare function acquireVsCodeApi<T>(): T & {
 
 import {
   DEFAULT_SNAPPING_CONFIG,
-  ElementSettingsPanel,
   type ElementPropertyData,
+  ElementSettingsPanel,
   type SelectedElementData,
   type SnappingConfig,
 } from "@mml-io/mml-editor-core";

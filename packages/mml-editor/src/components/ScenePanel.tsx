@@ -2,8 +2,8 @@ import {
   bodyFromRemoteHolderElement,
   buildSceneData,
   pathsEqual,
-  SceneOutlinePanel,
   type SceneNodeData,
+  SceneOutlinePanel,
 } from "@mml-io/mml-editor-core";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 

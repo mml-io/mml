@@ -1,6 +1,6 @@
 import {
-  buildSceneData,
   bodyFromRemoteHolderElement,
+  buildSceneData,
   ElementSettingsPanel,
   ensureHTMLDocument,
   getElementPropertyDefinitions,

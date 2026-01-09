@@ -109,7 +109,10 @@ export function ElementSettingsPanel({ className }: { className?: string }) {
     }));
   }, [sharedProperties, sharedValues]);
 
-  const serializeValue = (prop: ElementPropertyDefinition, rawValue: string | boolean): AttributeValue => {
+  const serializeValue = (
+    prop: ElementPropertyDefinition,
+    rawValue: string | boolean,
+  ): AttributeValue => {
     let serialized: AttributeValue = rawValue as AttributeValue;
     if (prop.type === "boolean") {
       serialized = rawValue ? "true" : "false";
