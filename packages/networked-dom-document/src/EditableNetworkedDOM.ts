@@ -73,8 +73,8 @@ export class EditableNetworkedDOM {
       this.loadedState.type === NetworkedDOMState.DocumentLoading
     ) {
       const oldInstance = this.loadedState.networkedDOM;
-      oldInstance.dispose();
       oldInstanceRoot = oldInstance.getSnapshot();
+      oldInstance.dispose();
     }
     let didLoad = false;
     let hasSetLoading = false;

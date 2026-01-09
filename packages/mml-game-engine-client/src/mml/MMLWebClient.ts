@@ -174,8 +174,9 @@ export class MMLWebClient {
       initialSpace: "local",
       highlightConfig: {
         color: 0xffcc00,
-        strength: 4.0,
-        thickness: 1.5,
+        // Keep the highlight readable without overpowering/obscuring in-scene text.
+        strength: 2.25,
+        thickness: 1.0,
         glow: 0.0,
       },
     });
@@ -183,8 +184,8 @@ export class MMLWebClient {
     // Create graphics implementations via generic interface
     const highlightHandle = graphicsAdapter.getHighlightManager().createHighlight({
       color: 0xffcc00,
-      strength: 4.0,
-      thickness: 1.5,
+      strength: 2.25,
+      thickness: 1.0,
       glow: 0.0,
     });
     const widgetGraphics = graphicsAdapter.createTransformWidget(this.element);

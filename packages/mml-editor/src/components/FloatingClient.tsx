@@ -1,94 +1,179 @@
-import { createMMLGameClient, MMLWebClient } from "mml-game-engine-client";
+import {
+  bodyFromRemoteHolderElement,
+  ensureHTMLDocument,
+  getElementCodeRange,
+  mmlPathToElement,
+  stripScriptTags,
+  updateElementTransformInCode,
+  useMmlClient,
+  useToolbarStore,
+} from "@mml-io/mml-editor-core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useEditorTransform } from "../hooks/useEditorTransform";
 import { useEditorStore } from "../state/editorStore";
 
 function EditorClient() {
-  const clientRef = useRef<MMLWebClient | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [clientReady, setClientReady] = useState(false);
+  const [container, setContainer] = useState<HTMLElement | null>(null);
 
-  const { staticDocument, localDocument, viewportMode, setRemoteHolderElement } = useEditorStore();
+  const code = useEditorStore((s) => s.code);
+  const setCode = useEditorStore((s) => s.setCode);
+  const setCodeRange = useEditorStore((s) => s.setCodeRange);
+  const setRemoteHolderElement = useEditorStore((s) => s.setRemoteHolderElement);
+  const pathSelection = useEditorStore((s) => s.pathSelection);
+  const setSelectedPaths = useEditorStore((s) => s.setSelectedPaths);
+  const clearSelection = useEditorStore((s) => s.clearSelection);
+  const gizmoSpace = useEditorStore((s) => s.gizmoSpace);
+  const toggleGizmoSpace = useEditorStore((s) => s.toggleGizmoSpace);
 
-  // Use the editor transform hook for gizmo and selection management
-  const { setupEditorCallbacks } = useEditorTransform(clientRef);
+  // Track if we're programmatically setting selection to avoid loops
+  const settingSelectionRef = useRef(false);
 
-  const fitContainer = useCallback(() => {
-    clientRef.current?.fitContainer();
+  // Capture container on mount
+  useEffect(() => {
+    setContainer(containerRef.current);
   }, []);
 
-  // Initialize client
-  useEffect(() => {
-    let disposed = false;
-    let runnerClient: MMLWebClient | null = null;
+  // Handle transform commits
+  const handleTransformCommit = useCallback(
+    (path: number[], values: Record<string, number | undefined>) => {
+      const currentCode = useEditorStore.getState().code;
+      const holder = useEditorStore.getState().remoteHolderElement;
+      if (!currentCode || !holder) return;
 
-    createMMLGameClient({ mode: "editor" }).then((client: MMLWebClient) => {
-      runnerClient = client;
-      if (disposed) {
-        runnerClient.dispose();
+      const body = bodyFromRemoteHolderElement(holder);
+      if (!body) return;
+
+      const el = mmlPathToElement(body, path);
+      if (!el) return;
+
+      const updated = updateElementTransformInCode(currentCode, el, values);
+      if (updated) {
+        setCode(updated);
+      }
+    },
+    [setCode],
+  );
+
+  // Handle selection changes from viewport
+  const handleSelectionChange = useCallback(
+    (paths: number[][]) => {
+      // Skip if we're in the middle of programmatically setting selection
+      if (settingSelectionRef.current) return;
+      if (paths.length > 0) {
+        setSelectedPaths(paths);
+      } else {
+        clearSelection();
+      }
+    },
+    [setSelectedPaths, clearSelection],
+  );
+
+  // Initialize MML client
+  const mmlClient = useMmlClient({
+    container,
+    callbacks: {
+      onSelectionChange: handleSelectionChange,
+      onTransformCommit: handleTransformCommit,
+    },
+  });
+
+  // Update store with remote holder element
+  useEffect(() => {
+    if (mmlClient.remoteHolderElement) {
+      setRemoteHolderElement(mmlClient.remoteHolderElement);
+    }
+  }, [mmlClient.remoteHolderElement, setRemoteHolderElement]);
+
+  // Sync gizmo space to client (gizmo mode is handled by useMmlClient via toolbar store)
+  useEffect(() => {
+    mmlClient.clientRef.current?.setGizmoSpace(gizmoSpace);
+  }, [gizmoSpace, mmlClient.clientRef]);
+
+  // Load content into client when code changes
+  useEffect(() => {
+    if (code && mmlClient.ready) {
+      const sanitized = stripScriptTags(code);
+      mmlClient.loadContent(ensureHTMLDocument(sanitized));
+    }
+  }, [code, mmlClient.ready, mmlClient.loadContent]);
+
+  // Sync selection from store to client
+  useEffect(() => {
+    if (!mmlClient.ready) return;
+    if (settingSelectionRef.current) return;
+    settingSelectionRef.current = true;
+    mmlClient.setSelectedPaths(pathSelection.selectedPaths);
+    // Use microtask to reset flag after React's batch completes
+    queueMicrotask(() => {
+      settingSelectionRef.current = false;
+    });
+  }, [pathSelection.selectedPaths, mmlClient.ready, mmlClient.setSelectedPaths]);
+
+  // Derive code highlight ranges from selected elements
+  useEffect(() => {
+    const holder = mmlClient.remoteHolderElement;
+    if (!holder || !code) {
+      setCodeRange(null);
+      return;
+    }
+
+    const root = bodyFromRemoteHolderElement(holder);
+    if (!root || pathSelection.selectedPaths.length === 0) {
+      setCodeRange(null);
+      return;
+    }
+
+    const ranges = pathSelection.selectedPaths
+      .map((p) => mmlPathToElement(root, p))
+      .filter((el): el is HTMLElement => !!el)
+      .map((el) => getElementCodeRange(code, el))
+      .filter((r): r is NonNullable<typeof r> => !!r);
+
+    setCodeRange(ranges.length > 0 ? ranges : null);
+  }, [code, pathSelection.selectedPaths, mmlClient.remoteHolderElement, setCodeRange]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (["INPUT", "TEXTAREA"].includes((event.target as HTMLElement)?.tagName)) {
         return;
       }
 
-      clientRef.current = runnerClient;
-      setClientReady(true);
+      const toolbar = useToolbarStore.getState();
 
-      // Set up editor callbacks via hook
-      console.log("[FloatingClient] Setting up editor callbacks");
-      setupEditorCallbacks(runnerClient);
-
-      // Force re-render to trigger other effects
-      fitContainer();
-    });
-
-    return () => {
-      disposed = true;
-      if (runnerClient) {
-        runnerClient.dispose();
-        clientRef.current = null;
+      switch (event.key.toLowerCase()) {
+        case "w":
+          toolbar.setGizmoMode("translate");
+          break;
+        case "e":
+          toolbar.setGizmoMode("rotate");
+          break;
+        case "r":
+          toolbar.setGizmoMode("scale");
+          break;
+        case "q":
+          toggleGizmoSpace();
+          break;
+        case "x":
+          toolbar.toggleSnapping();
+          break;
+        case "g":
+          toolbar.toggleVisualizers();
+          break;
+        case "escape":
+          clearSelection();
+          break;
       }
     };
-  }, [setupEditorCallbacks]);
 
-  // Update client to show correct document as the viewport mode changes
-  useEffect(() => {
-    if (!clientReady) return;
-    const client = clientRef.current;
-    if (!client) return;
-
-    const url = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
-    if (viewportMode === "edit") {
-      client.connectToDocument(staticDocument, url);
-    } else if (localDocument) {
-      client.connectToDocument(localDocument, url);
-    }
-
-    setRemoteHolderElement(client.remoteDocumentHolder);
-  }, [viewportMode, staticDocument, localDocument, clientReady, setRemoteHolderElement]);
-
-  // Handle resize events
-  useEffect(() => {
-    window.addEventListener("resize", fitContainer);
-    window.addEventListener("editor-layout", fitContainer);
-
-    return () => {
-      window.removeEventListener("resize", fitContainer);
-      window.removeEventListener("editor-layout", fitContainer);
-    };
-  }, [fitContainer]);
-
-  // Mount client element
-  useEffect(() => {
-    const client = clientRef.current;
-    if (containerRef.current && client) {
-      containerRef.current.appendChild(client.element);
-      fitContainer();
-    }
-  }, [clientRef.current, fitContainer]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toggleGizmoSpace, clearSelection]);
 
   return (
     <div className="h-full w-full relative mobile-safe-top mobile-safe-left">
-      <div ref={containerRef} className="h-full min-h-0 min-w-0 relative"></div>
+      <div ref={containerRef} className="h-full min-h-0 min-w-0 relative" />
     </div>
   );
 }

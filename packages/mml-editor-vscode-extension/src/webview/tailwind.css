@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* Ensure Tailwind picks up classes used by the shared UI library. */
+@source "../../../mml-editor-core/src/**/*.{ts,tsx}";
+
+/* Include this webview’s TS/TSX (template strings + components). */
+@source "./**/*.{ts,tsx}";
+
+:root {
+  /* Map VS Code theme variables to the same tokens used by mml-editor + mml-editor-core. */
+  --color-bg: var(--vscode-editor-background, #1a1a1a);
+  --color-panel: var(--vscode-sideBar-background, #242424);
+  --color-text: var(--vscode-foreground, #e0e0e0);
+  --color-text-muted: var(--vscode-descriptionForeground, #888);
+  /*
+   * Use panel/contrast border tokens rather than input borders.
+   * Many themes set input borders to "none"/near-transparent, which makes section separators
+   * (headers, splitters) in the sidebar effectively disappear.
+   */
+  --color-border: var(
+    --vscode-contrastBorder,
+    var(
+      --vscode-panel-border,
+      var(
+        --vscode-sideBar-border,
+        var(
+          --vscode-editorGroup-border,
+          var(--vscode-input-border, rgba(255, 255, 255, 0.15))
+        )
+      )
+    )
+  );
+  --color-accent: var(--vscode-focusBorder, #4a9eff);
+  --font-mono: var(--vscode-editor-font-family, var(--vscode-font-family, ui-monospace));
+}
+
+body {
+  font-family: var(--font-mono);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Scrollbar styling (matches the editor’s vibe). */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+

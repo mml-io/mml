@@ -1,60 +1,203 @@
+import {
+  DEFAULT_SNAPPING_CONFIG,
+  type ElementPropertyData,
+  type SceneNodeData,
+  type SelectedElementData,
+  type SnappingConfig,
+} from "@mml-io/mml-editor-core";
 import * as vscode from "vscode";
 
 import { getWebviewHtml } from "./webview/html";
+import { getElementSettingsHtml, getSceneOutlineHtml } from "./webview/sidebarHtml";
 
 type PreviewSession = {
   panel: vscode.WebviewPanel;
-  trackedDocument: vscode.TextDocument;
+  boundDocument: vscode.TextDocument;
   disposables: vscode.Disposable[];
   pendingUpdate: ReturnType<typeof setTimeout> | null;
   suppressChangeCount: number;
   selectionDecoration: vscode.TextEditorDecorationType;
   lastSelectionRanges: SelectionRangeMessage[];
-  lastSelectionUri?: string;
+  visualizersVisible: boolean;
+  snappingEnabled: boolean;
+  gizmoMode: "translate" | "rotate" | "scale";
+  snappingConfig: SnappingConfig;
+  sceneData: SceneNodeData[] | null;
+  selectedElements: SelectedElementData[];
+  elementProperties: ElementPropertyData[];
 };
-
-const COMMAND_ID = "mml.preview";
 
 type SelectionRangeMessage = { start: number; end: number };
 
+const sessions = new Map<string, PreviewSession>();
+let lastActiveSession: PreviewSession | null = null;
+let sceneOutlineProvider: SceneOutlineProvider | null = null;
+let elementSettingsProvider: ElementSettingsProvider | null = null;
+
 export function activate(context: vscode.ExtensionContext) {
-  const openPreview = vscode.commands.registerCommand(COMMAND_ID, () => {
+  sceneOutlineProvider = new SceneOutlineProvider(context.extensionUri);
+  elementSettingsProvider = new ElementSettingsProvider(context.extensionUri);
+
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider("mmlSceneOutline", sceneOutlineProvider),
+    vscode.window.registerWebviewViewProvider("mmlElementSettings", elementSettingsProvider),
+  );
+
+  const openPreview = vscode.commands.registerCommand("mml.openPreview", () => {
     const activeEditor = vscode.window.activeTextEditor;
     if (!activeEditor) {
       vscode.window.showWarningMessage("Open an MML document in the editor first.");
       return;
     }
-
-    createOrRevealPreview(context, activeEditor.document);
+    createBoundPreview(context, activeEditor.document, vscode.ViewColumn.Active);
   });
 
-  context.subscriptions.push(openPreview);
+  const openPreviewSideBySide = vscode.commands.registerCommand("mml.openPreviewSideBySide", () => {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (!activeEditor) {
+      vscode.window.showWarningMessage("Open an MML document in the editor first.");
+      return;
+    }
+    createBoundPreview(context, activeEditor.document, vscode.ViewColumn.Beside);
+  });
+
+  const showCodeOnly = vscode.commands.registerCommand("mml.showCodeOnly", () => {
+    const session = getActiveSession();
+    if (!session) return;
+
+    // Close the preview panel, keep the code editor
+    session.panel.dispose();
+  });
+
+  const showPreviewOnly = vscode.commands.registerCommand("mml.showPreviewOnly", async () => {
+    const session = getActiveSession();
+    if (!session) return;
+
+    // Move preview to the code editor's column, then close the code editor
+    const docUri = session.boundDocument.uri;
+
+    // Find and close all editors showing this document
+    for (const tabGroup of vscode.window.tabGroups.all) {
+      for (const tab of tabGroup.tabs) {
+        if (
+          tab.input instanceof vscode.TabInputText &&
+          tab.input.uri.toString() === docUri.toString()
+        ) {
+          await vscode.window.tabGroups.close(tab);
+        }
+      }
+    }
+
+    session.panel.reveal(vscode.ViewColumn.One);
+  });
+
+  const showSplitView = vscode.commands.registerCommand("mml.showSplitView", async () => {
+    const session = getActiveSession();
+    if (!session) return;
+
+    const docUri = session.boundDocument.uri;
+    const doc = await vscode.workspace.openTextDocument(docUri);
+    await vscode.window.showTextDocument(doc, vscode.ViewColumn.One);
+    session.panel.reveal(vscode.ViewColumn.Beside);
+  });
+
+  const toggleVisualizers = vscode.commands.registerCommand("mml.toggleVisualizers", () => {
+    const session = getActiveSession();
+    if (!session) return;
+    session.visualizersVisible = !session.visualizersVisible;
+    session.panel.webview.postMessage({
+      type: "setVisualizersVisible",
+      visible: session.visualizersVisible,
+    });
+  });
+
+  const createGizmoCommand = (mode: "translate" | "rotate" | "scale") =>
+    vscode.commands.registerCommand(
+      `mml.setGizmo${mode.charAt(0).toUpperCase() + mode.slice(1)}`,
+      () => {
+        const session = getActiveSession();
+        if (!session) return;
+        session.gizmoMode = mode;
+        session.panel.webview.postMessage({ type: "setGizmoMode", mode });
+      },
+    );
+
+  const setGizmoTranslate = createGizmoCommand("translate");
+  const setGizmoRotate = createGizmoCommand("rotate");
+  const setGizmoScale = createGizmoCommand("scale");
+
+  const toggleSnapping = vscode.commands.registerCommand("mml.toggleSnapping", () => {
+    const session = getActiveSession();
+    if (!session) return;
+    session.snappingEnabled = !session.snappingEnabled;
+    session.panel.webview.postMessage({
+      type: "setSnappingEnabled",
+      enabled: session.snappingEnabled,
+    });
+  });
+
+  const focusSceneOutline = vscode.commands.registerCommand("mml.focusSceneOutline", () => {
+    vscode.commands.executeCommand("mmlSceneOutline.focus");
+  });
+
+  const focusElementSettings = vscode.commands.registerCommand("mml.focusElementSettings", () => {
+    vscode.commands.executeCommand("mmlElementSettings.focus");
+  });
+
+  context.subscriptions.push(
+    openPreview,
+    openPreviewSideBySide,
+    showCodeOnly,
+    showPreviewOnly,
+    showSplitView,
+    toggleVisualizers,
+    setGizmoTranslate,
+    setGizmoRotate,
+    setGizmoScale,
+    toggleSnapping,
+    focusSceneOutline,
+    focusElementSettings,
+  );
 }
 
 export function deactivate() {
-  // Nothing to clean up beyond panel disposables
+  sessions.forEach((session) => {
+    session.disposables.forEach((d) => d.dispose());
+  });
+  sessions.clear();
 }
 
-let session: PreviewSession | null = null;
+function getActiveSession(): PreviewSession | null {
+  for (const session of sessions.values()) {
+    if (session.panel.active) return session;
+  }
+  return lastActiveSession;
+}
 
-function createOrRevealPreview(context: vscode.ExtensionContext, initialDoc: vscode.TextDocument) {
-  if (session?.panel) {
-    session.panel.reveal();
-    session.trackedDocument = initialDoc;
-    pushDocumentContent(session, initialDoc, true);
+function updateContexts() {
+  const hasActiveSession = sessions.size > 0;
+  vscode.commands.executeCommand("setContext", "mmlPreviewActive", hasActiveSession);
+}
+
+function createBoundPreview(
+  context: vscode.ExtensionContext,
+  document: vscode.TextDocument,
+  column: vscode.ViewColumn,
+) {
+  const docUri = document.uri.toString();
+  const existingSession = sessions.get(docUri);
+  if (existingSession) {
+    existingSession.panel.reveal(column);
     return;
   }
 
-  const panel = vscode.window.createWebviewPanel(
-    "mmlPreview",
-    "MML Preview",
-    vscode.ViewColumn.Beside,
-    {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-      localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, "dist")],
-    },
-  );
+  const fileName = document.uri.path.split("/").pop() ?? "MML Preview";
+
+  const panel = vscode.window.createWebviewPanel("mmlPreview", `Preview: ${fileName}`, column, {
+    enableScripts: true,
+    retainContextWhenHidden: true,
+    localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, "dist")],
+  });
 
   panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri);
 
@@ -64,43 +207,119 @@ function createOrRevealPreview(context: vscode.ExtensionContext, initialDoc: vsc
     border: "1px solid rgba(255, 185, 0, 0.6)",
   });
 
-  const newSession: PreviewSession = {
+  const session: PreviewSession = {
     panel,
-    trackedDocument: initialDoc,
+    boundDocument: document,
     disposables,
     pendingUpdate: null,
     suppressChangeCount: 0,
     selectionDecoration,
     lastSelectionRanges: [],
-    lastSelectionUri: initialDoc.uri.toString(),
+    visualizersVisible: true,
+    snappingEnabled: true,
+    gizmoMode: "translate",
+    snappingConfig: DEFAULT_SNAPPING_CONFIG,
+    sceneData: null,
+    selectedElements: [],
+    elementProperties: [],
   };
-  session = newSession;
+
+  sessions.set(docUri, session);
+  lastActiveSession = session;
+  updateContexts();
+
+  // Set context for keybindings
+  disposables.push(
+    panel.onDidChangeViewState(() => {
+      const isActive = panel.active;
+      vscode.commands.executeCommand("setContext", "mmlPreviewFocus", isActive);
+      if (isActive) {
+        lastActiveSession = session;
+        // Update sidebar panels when this preview becomes active
+        sceneOutlineProvider?.updateFromSession(session);
+        elementSettingsProvider?.updateFromSession(session);
+      }
+    }),
+  );
 
   disposables.push(
     panel.onDidDispose(() => {
+      vscode.commands.executeCommand("setContext", "mmlPreviewFocus", false);
       disposables.forEach((d) => d.dispose());
-      session = null;
+      sessions.delete(docUri);
+      if (lastActiveSession === session) {
+        lastActiveSession = Array.from(sessions.values()).pop() ?? null;
+      }
+      updateContexts();
+      // Clear sidebar panels if no more sessions
+      if (sessions.size === 0) {
+        sceneOutlineProvider?.clear();
+        elementSettingsProvider?.clear();
+      } else if (lastActiveSession) {
+        sceneOutlineProvider?.updateFromSession(lastActiveSession);
+        elementSettingsProvider?.updateFromSession(lastActiveSession);
+      }
     }),
   );
+
   disposables.push(selectionDecoration);
 
   disposables.push(
     panel.webview.onDidReceiveMessage(async (message) => {
       if (message?.type === "ready") {
-        pushDocumentContent(newSession, newSession.trackedDocument, true);
+        pushDocumentContent(session, session.boundDocument, true);
+        // Send initial state
+        panel.webview.postMessage({
+          type: "setVisualizersVisible",
+          visible: session.visualizersVisible,
+        });
+        panel.webview.postMessage({
+          type: "setSnappingEnabled",
+          enabled: session.snappingEnabled,
+        });
+        panel.webview.postMessage({
+          type: "setSnappingConfig",
+          config: session.snappingConfig,
+        });
+        panel.webview.postMessage({ type: "setGizmoMode", mode: session.gizmoMode });
       }
       if (message?.type === "updateContent" && typeof message.content === "string") {
-        await applyWebviewContentUpdate(newSession, message.content, message.uri);
+        await applyWebviewContentUpdate(session, message.content, message.uri);
       }
       if (message?.type === "selectionChange" && Array.isArray(message.ranges)) {
-        applySelectionHighlight(newSession, message.ranges as SelectionRangeMessage[], message.uri);
+        applySelectionHighlight(session, message.ranges as SelectionRangeMessage[], message.uri);
+      }
+      if (message?.type === "sceneDataUpdate") {
+        session.sceneData = message.sceneData;
+        if (lastActiveSession === session) {
+          sceneOutlineProvider?.updateFromSession(session);
+        }
+      }
+      if (message?.type === "selectionDataUpdate") {
+        session.selectedElements = message.selectedElements;
+        session.elementProperties = message.elementProperties;
+        if (lastActiveSession === session) {
+          elementSettingsProvider?.updateFromSession(session);
+        }
+      }
+      if (message?.type === "updateSnappingConfig") {
+        session.snappingConfig = { ...session.snappingConfig, ...message.config };
+      }
+      if (message?.type === "updateSnappingEnabled") {
+        session.snappingEnabled = message.enabled;
+      }
+      if (message?.type === "updateVisualizersVisible") {
+        session.visualizersVisible = message.visible;
+      }
+      if (message?.type === "updateGizmoMode") {
+        session.gizmoMode = message.mode;
       }
     }),
   );
 
   disposables.push(
     vscode.workspace.onDidChangeTextDocument((event) => {
-      if (!session || event.document.uri.toString() !== session.trackedDocument.uri.toString()) {
+      if (event.document.uri.toString() !== docUri) {
         return;
       }
       if (session.suppressChangeCount > 0) {
@@ -111,39 +330,49 @@ function createOrRevealPreview(context: vscode.ExtensionContext, initialDoc: vsc
     }),
   );
 
+  // Handle document close - close the preview too
   disposables.push(
-    vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (!session || !editor) return;
-      session.trackedDocument = editor.document;
-      pushDocumentContent(session, editor.document, true);
+    vscode.workspace.onDidCloseTextDocument((closedDoc) => {
+      if (closedDoc.uri.toString() === docUri) {
+        panel.dispose();
+      }
     }),
   );
 
-  // Initial content
-  pushDocumentContent(newSession, initialDoc, true);
+  // Update panel title if document is renamed
+  disposables.push(
+    vscode.workspace.onDidRenameFiles((event) => {
+      for (const file of event.files) {
+        if (file.oldUri.toString() === docUri) {
+          const newFileName = file.newUri.path.split("/").pop() ?? "MML Preview";
+          panel.title = `Preview: ${newFileName}`;
+          sessions.delete(docUri);
+          sessions.set(file.newUri.toString(), session);
+        }
+      }
+    }),
+  );
+
+  pushDocumentContent(session, document, true);
 }
 
-function schedulePush(currentSession: PreviewSession, doc: vscode.TextDocument) {
-  if (currentSession.pendingUpdate) {
-    clearTimeout(currentSession.pendingUpdate);
+function schedulePush(session: PreviewSession, doc: vscode.TextDocument) {
+  if (session.pendingUpdate) {
+    clearTimeout(session.pendingUpdate);
   }
-  currentSession.pendingUpdate = setTimeout(() => {
-    pushDocumentContent(currentSession, doc, false);
-    currentSession.pendingUpdate = null;
+  session.pendingUpdate = setTimeout(() => {
+    pushDocumentContent(session, doc, false);
+    session.pendingUpdate = null;
   }, 150);
 }
 
-function pushDocumentContent(
-  currentSession: PreviewSession,
-  doc: vscode.TextDocument,
-  force: boolean,
-) {
+function pushDocumentContent(session: PreviewSession, doc: vscode.TextDocument, force: boolean) {
   const text = doc.getText();
   const uri = doc.uri.toString();
   const fileName =
     doc.uri.scheme === "file" ? (doc.uri.path.split("/").pop() ?? doc.uri.toString()) : uri;
 
-  currentSession.panel.webview.postMessage({
+  session.panel.webview.postMessage({
     type: "setContent",
     content: text,
     uri,
@@ -153,11 +382,11 @@ function pushDocumentContent(
 }
 
 async function applyWebviewContentUpdate(
-  currentSession: PreviewSession,
+  session: PreviewSession,
   newContent: string,
   sourceUri?: string,
 ) {
-  const doc = currentSession.trackedDocument;
+  const doc = session.boundDocument;
   if (!doc || doc.isClosed) {
     return;
   }
@@ -175,28 +404,24 @@ async function applyWebviewContentUpdate(
   const edit = new vscode.WorkspaceEdit();
   const fullRange = new vscode.Range(doc.positionAt(0), doc.positionAt(existing.length));
   edit.replace(doc.uri, fullRange, newContent);
-  currentSession.suppressChangeCount += 1;
+  session.suppressChangeCount += 1;
   const success = await vscode.workspace.applyEdit(edit);
   if (!success) {
-    currentSession.suppressChangeCount = Math.max(0, currentSession.suppressChangeCount - 1);
+    session.suppressChangeCount = Math.max(0, session.suppressChangeCount - 1);
     return;
   }
 
-  if (currentSession.lastSelectionRanges.length > 0) {
-    applySelectionHighlight(
-      currentSession,
-      currentSession.lastSelectionRanges,
-      currentSession.lastSelectionUri,
-    );
+  if (session.lastSelectionRanges.length > 0) {
+    applySelectionHighlight(session, session.lastSelectionRanges, docUri);
   }
 }
 
 function applySelectionHighlight(
-  currentSession: PreviewSession,
+  session: PreviewSession,
   ranges: SelectionRangeMessage[],
   sourceUri?: string,
 ) {
-  const doc = currentSession.trackedDocument;
+  const doc = session.boundDocument;
   if (!doc || doc.isClosed) {
     return;
   }
@@ -206,8 +431,7 @@ function applySelectionHighlight(
     return;
   }
 
-  currentSession.lastSelectionRanges = ranges;
-  currentSession.lastSelectionUri = sourceUri ?? docUri;
+  session.lastSelectionRanges = ranges;
 
   const text = doc.getText();
   const textLength = text.length;
@@ -222,9 +446,124 @@ function applySelectionHighlight(
   });
 
   targetEditors.forEach((editor) => {
-    editor.setDecorations(currentSession.selectionDecoration, vscodeRanges);
+    editor.setDecorations(session.selectionDecoration, vscodeRanges);
     if (vscodeRanges[0]) {
       editor.revealRange(vscodeRanges[0], vscode.TextEditorRevealType.InCenter);
     }
   });
+}
+
+// ==================== Sidebar Webview Providers ====================
+
+class SceneOutlineProvider implements vscode.WebviewViewProvider {
+  private view?: vscode.WebviewView;
+  private extensionUri: vscode.Uri;
+
+  constructor(extensionUri: vscode.Uri) {
+    this.extensionUri = extensionUri;
+  }
+
+  resolveWebviewView(webviewView: vscode.WebviewView) {
+    this.view = webviewView;
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [this.extensionUri],
+    };
+
+    webviewView.webview.html = getSceneOutlineHtml(webviewView.webview, this.extensionUri);
+
+    webviewView.webview.onDidReceiveMessage((message) => {
+      if (message?.type === "selectElement" && lastActiveSession) {
+        // Forward selection to the main preview
+        lastActiveSession.panel.webview.postMessage({
+          type: "selectElementByPath",
+          path: message.path,
+          addToSelection: message.addToSelection,
+        });
+      }
+      if (message?.type === "clearSelection" && lastActiveSession) {
+        lastActiveSession.panel.webview.postMessage({ type: "clearSelection" });
+      }
+    });
+
+    // If there's an active session, update immediately
+    if (lastActiveSession) {
+      this.updateFromSession(lastActiveSession);
+    }
+  }
+
+  updateFromSession(session: PreviewSession) {
+    if (!this.view) return;
+    this.view.webview.postMessage({
+      type: "updateSceneTree",
+      sceneData: session.sceneData,
+      selectedPaths: session.selectedElements.map((e) => e.path),
+    });
+  }
+
+  clear() {
+    if (!this.view) return;
+    this.view.webview.postMessage({
+      type: "updateSceneTree",
+      sceneData: null,
+      selectedPaths: [],
+    });
+  }
+}
+
+class ElementSettingsProvider implements vscode.WebviewViewProvider {
+  private view?: vscode.WebviewView;
+  private extensionUri: vscode.Uri;
+
+  constructor(extensionUri: vscode.Uri) {
+    this.extensionUri = extensionUri;
+  }
+
+  resolveWebviewView(webviewView: vscode.WebviewView) {
+    this.view = webviewView;
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [this.extensionUri],
+    };
+
+    webviewView.webview.html = getElementSettingsHtml(webviewView.webview, this.extensionUri);
+
+    webviewView.webview.onDidReceiveMessage((message) => {
+      if (message?.type === "updateProperty" && lastActiveSession) {
+        // Forward property change to the main preview
+        lastActiveSession.panel.webview.postMessage({
+          type: "updatePropertyFromSidebar",
+          propName: message.propName,
+          value: message.value,
+        });
+      }
+    });
+
+    // If there's an active session, update immediately
+    if (lastActiveSession) {
+      this.updateFromSession(lastActiveSession);
+    }
+  }
+
+  updateFromSession(session: PreviewSession) {
+    if (!this.view) return;
+    this.view.webview.postMessage({
+      type: "updateElementSettings",
+      selectedElements: session.selectedElements,
+      properties: session.elementProperties,
+      snappingEnabled: session.snappingEnabled,
+      snappingConfig: session.snappingConfig,
+    });
+  }
+
+  clear() {
+    if (!this.view) return;
+    this.view.webview.postMessage({
+      type: "updateElementSettings",
+      selectedElements: [],
+      properties: [],
+      snappingEnabled: true,
+      snappingConfig: DEFAULT_SNAPPING_CONFIG,
+    });
+  }
 }

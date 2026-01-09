@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@fontsource/geist-mono": "^5.0.0",
+    "@mml-io/mml-editor-core": "^0.21.3",
     "@mml-io/mml-web": "^0.21.1",
     "@mml-io/networked-dom-document": "^0.21.1",
     "@monaco-editor/react": "^4.6.0",

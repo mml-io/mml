@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@source "../../../mml-editor-core/src/**/*.{ts,tsx}";
+
 @theme {
   --color-bg: #e8e8e8;
   --color-panel: #ffffff;

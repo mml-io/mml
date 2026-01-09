@@ -1,6 +1,8 @@
-import { TransformSnapping } from "@mml-io/mml-web";
+import { pathsEqual, type CodeRange, type TransformValues } from "@mml-io/mml-editor-core";
 import { EditableNetworkedDOM, IframeObservableDOMFactory } from "mml-game-engine-client";
 import { create } from "zustand";
+
+export type { CodeRange, TransformValues };
 
 const STORAGE_KEY = "mml-editor-code";
 
@@ -14,8 +16,6 @@ function saveCodeToStorage(code: string): void {
   localStorage.setItem(STORAGE_KEY, code);
 }
 
-export type GizmoMode = "translate" | "rotate" | "scale";
-
 export type GizmoSpace = "local" | "world";
 
 /** Path-based selection state that survives DOM mutations */
@@ -26,31 +26,10 @@ export interface PathSelectionState {
   lastSelectedPath: number[] | null;
 }
 
-/** Monaco editor range for code highlighting */
-export interface CodeRange {
-  startLine: number;
-  endLine: number;
-  startColumn: number;
-  endColumn: number;
-}
-
 export interface ContentSource {
   id: string;
   name: string;
   uri: string;
-}
-
-/** Transform values emitted when gizmo changes complete */
-export interface TransformValues {
-  x?: number;
-  y?: number;
-  z?: number;
-  rx?: number;
-  ry?: number;
-  rz?: number;
-  sx?: number;
-  sy?: number;
-  sz?: number;
 }
 
 export interface EditorState {
@@ -80,23 +59,10 @@ export interface EditorState {
   codeRange: CodeRange[] | null;
   setCodeRange: (range: CodeRange[] | null) => void;
 
-  // Gizmo state
-  gizmoMode: GizmoMode;
-  setGizmoMode: (mode: GizmoMode) => void;
+  // Gizmo space (local only - mode is in shared toolbar store)
   gizmoSpace: GizmoSpace;
   setGizmoSpace: (space: GizmoSpace) => void;
   toggleGizmoSpace: () => void;
-
-  // Snapping
-  snappingEnabled: boolean;
-  setSnappingEnabled: (enabled: boolean) => void;
-  snappingConfig: TransformSnapping;
-  setSnappingConfig: (config: TransformSnapping) => void;
-
-  // Element visualizers visibility
-  visualizersVisible: boolean;
-  setVisualizersVisible: (visible: boolean) => void;
-  toggleVisualizersVisible: () => void;
 
   contentSources: ContentSource[];
   addContentSource: (source: ContentSource) => void;
@@ -110,12 +76,6 @@ export interface EditorState {
 
   onSelectionChange: ((elements: HTMLElement[] | null) => void) | null;
   setOnSelectionChange: (callback: ((elements: HTMLElement[] | null) => void) | null) => void;
-}
-
-// Helper to check path equality
-function pathsEqual(a: number[], b: number[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((val, idx) => val === b[idx]);
 }
 
 export const useEditorStore = create<EditorState>((set, _get) => ({
@@ -145,10 +105,9 @@ export const useEditorStore = create<EditorState>((set, _get) => ({
     set((state) => {
       const newLastSelected =
         lastSelected !== undefined ? lastSelected : paths[paths.length - 1] || null;
-      // Check if selection actually changed to avoid unnecessary updates
       const currentPaths = state.pathSelection.selectedPaths;
       const currentLast = state.pathSelection.lastSelectedPath;
-      const pathsEqual =
+      const pathsEq =
         paths.length === currentPaths.length &&
         paths.every((p, i) => {
           const curr = currentPaths[i];
@@ -160,8 +119,8 @@ export const useEditorStore = create<EditorState>((set, _get) => ({
           currentLast !== null &&
           newLastSelected.length === currentLast.length &&
           newLastSelected.every((v, j) => v === currentLast[j]));
-      if (pathsEqual && lastEqual) {
-        return state; // No change needed
+      if (pathsEq && lastEqual) {
+        return state;
       }
       return {
         pathSelection: {
@@ -206,9 +165,7 @@ export const useEditorStore = create<EditorState>((set, _get) => ({
 
       if (isMultiSelect) {
         if (exists) {
-          // Remove from selection but keep at end if re-added
           const newPaths = state.pathSelection.selectedPaths.filter((p) => !pathsEqual(p, path));
-          // Re-add at end to make it "last selected"
           newPaths.push(path);
           return {
             pathSelection: {
@@ -217,7 +174,6 @@ export const useEditorStore = create<EditorState>((set, _get) => ({
             },
           };
         } else {
-          // Add to selection
           return {
             pathSelection: {
               selectedPaths: [...state.pathSelection.selectedPaths, path],
@@ -226,7 +182,6 @@ export const useEditorStore = create<EditorState>((set, _get) => ({
           };
         }
       } else {
-        // Single select - replace entire selection
         return {
           pathSelection: {
             selectedPaths: [path],
@@ -238,12 +193,11 @@ export const useEditorStore = create<EditorState>((set, _get) => ({
 
   clearSelection: () =>
     set((state) => {
-      // Only update if there's actually something to clear
       if (
         state.pathSelection.selectedPaths.length === 0 &&
         state.pathSelection.lastSelectedPath === null
       ) {
-        return state; // No change needed
+        return state;
       }
       return {
         pathSelection: {
@@ -257,35 +211,13 @@ export const useEditorStore = create<EditorState>((set, _get) => ({
   codeRange: null,
   setCodeRange: (range) => set({ codeRange: range }),
 
-  // Gizmo state
-  gizmoMode: "translate",
-  setGizmoMode: (gizmoMode) => set({ gizmoMode }),
-
+  // Gizmo space (local to this editor)
   gizmoSpace: "local",
   setGizmoSpace: (gizmoSpace) => set({ gizmoSpace }),
   toggleGizmoSpace: () =>
     set((state) => ({
       gizmoSpace: state.gizmoSpace === "local" ? "world" : "local",
     })),
-
-  // Snapping
-  snappingEnabled: true,
-  setSnappingEnabled: (snappingEnabled) => set({ snappingEnabled }),
-  snappingConfig: {
-    translation: 0.1,
-    rotation: 10,
-    scale: 0.25,
-  },
-  setSnappingConfig: (config) =>
-    set((state) => ({
-      snappingConfig: { ...state.snappingConfig, ...config },
-    })),
-
-  // Element visualizers visibility
-  visualizersVisible: true,
-  setVisualizersVisible: (visualizersVisible) => set({ visualizersVisible }),
-  toggleVisualizersVisible: () =>
-    set((state) => ({ visualizersVisible: !state.visualizersVisible })),
 
   contentSources: [],
   addContentSource: (source) =>

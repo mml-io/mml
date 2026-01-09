@@ -1,6 +1,8 @@
 import { build, context } from "esbuild";
+import postCssPlugin from "esbuild-style-plugin";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import tailwindcss from "@tailwindcss/postcss";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isWatch = process.argv.includes("--watch");
@@ -26,14 +28,27 @@ async function runBuild() {
 
   const webviewConfig = {
     ...shared,
-    entryPoints: [join(__dirname, "src", "webview", "main.ts")],
-    outfile: join(distDir, "webview.js"),
+    entryPoints: [
+      join(__dirname, "src", "webview", "main.ts"),
+      join(__dirname, "src", "webview", "tailwind.css"),
+      join(__dirname, "src", "webview", "sceneSidebar.tsx"),
+      join(__dirname, "src", "webview", "elementSidebar.tsx"),
+    ],
+    outdir: distDir,
+    entryNames: "[name]",
     platform: "browser" as const,
     format: "iife" as const,
     target: ["es2022"],
     define: {
       "process.env.NODE_ENV": JSON.stringify(isWatch ? "development" : "production"),
     },
+    plugins: [
+      postCssPlugin({
+        postcss: {
+          plugins: [tailwindcss],
+        },
+      }),
+    ],
   };
 
   if (isWatch) {

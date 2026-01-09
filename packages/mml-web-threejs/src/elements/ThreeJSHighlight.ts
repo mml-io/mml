@@ -125,8 +125,12 @@ class OutlinePassGroup {
 
   applyConfig(config: Required<HighlightConfig>): void {
     const color = normalizeColor(config.color);
-    this.pass.visibleEdgeColor.set(color);
-    this.pass.hiddenEdgeColor.set(color);
+    // Use a dimmer color for hidden edges to reduce visual noise (especially for text/labels),
+    // while keeping visible edges crisp.
+    const visible = new THREE.Color(color);
+    const hidden = visible.clone().multiplyScalar(0.35);
+    this.pass.visibleEdgeColor.copy(visible);
+    this.pass.hiddenEdgeColor.copy(hidden);
     this.pass.edgeStrength = config.strength;
     this.pass.edgeThickness = config.thickness;
     this.pass.edgeGlow = config.glow;
