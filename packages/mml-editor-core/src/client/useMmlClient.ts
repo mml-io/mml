@@ -11,6 +11,7 @@ import type { TransformValues } from "../shared/types";
 export type MmlClientCallbacks = {
   onSelectionChange?: (paths: number[][]) => void;
   onTransformCommit?: (path: number[], values: TransformValues) => void;
+  onTransformPreview?: (path: number[], values: TransformValues) => void;
 };
 
 export type UseMmlClientOptions = {
@@ -35,6 +36,8 @@ export type UseMmlClientResult = {
   clearSelection: () => void;
 };
 
+const CONTENT_LOAD_DEBOUNCE_MS = 75;
+
 function getElementPath(holder: HTMLElement, el: HTMLElement): number[] {
   const body = bodyFromRemoteHolderElement(holder);
   return pathToElement(body, el);
@@ -43,6 +46,31 @@ function getElementPath(holder: HTMLElement, el: HTMLElement): number[] {
 function getElementByPath(holder: HTMLElement, path: number[]): HTMLElement | null {
   const body = bodyFromRemoteHolderElement(holder);
   return elementAtPath(body, path);
+}
+
+/**
+ * Apply transform values to an element's DOM attributes.
+ * This enables real-time updates in the settings panel during gizmo drag.
+ */
+function applyTransformToElement(element: HTMLElement, values: TransformValues): void {
+  const attrMap: Record<keyof TransformValues, string> = {
+    x: "x",
+    y: "y",
+    z: "z",
+    rx: "rx",
+    ry: "ry",
+    rz: "rz",
+    sx: "sx",
+    sy: "sy",
+    sz: "sz",
+  };
+
+  for (const [key, attrName] of Object.entries(attrMap)) {
+    const value = values[key as keyof TransformValues];
+    if (value !== undefined) {
+      element.setAttribute(attrName, String(value));
+    }
+  }
 }
 
 export function useMmlClient(options: UseMmlClientOptions): UseMmlClientResult {
@@ -56,6 +84,9 @@ export function useMmlClient(options: UseMmlClientOptions): UseMmlClientResult {
   const [remoteHolderElement, setRemoteHolderElement] = useState<HTMLElement | null>(null);
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
+
+  const pendingHtmlRef = useRef<string | null>(null);
+  const loadTimerRef = useRef<number | null>(null);
 
   // Boot client
   useEffect(() => {
@@ -98,6 +129,16 @@ export function useMmlClient(options: UseMmlClientOptions): UseMmlClientResult {
           const paths = elements.map((el) => getElementPath(holder, el));
           callbacksRef.current?.onSelectionChange?.(paths);
         },
+        onTransformPreview: (element, values) => {
+          // Update DOM attributes during drag so the panel reflects changes in real-time
+          const transformValues = values as TransformValues;
+          applyTransformToElement(element, transformValues);
+
+          const holder = mmlClient.remoteDocumentHolder;
+          if (!holder) return;
+          const path = getElementPath(holder, element);
+          callbacksRef.current?.onTransformPreview?.(path, transformValues);
+        },
         onTransformCommit: (element, values) => {
           const holder = mmlClient.remoteDocumentHolder;
           if (!holder) return;
@@ -128,6 +169,17 @@ export function useMmlClient(options: UseMmlClientOptions): UseMmlClientResult {
       }
     };
   }, [container]);
+
+  // Cleanup pending debounced loads on unmount
+  useEffect(() => {
+    return () => {
+      if (loadTimerRef.current !== null) {
+        window.clearTimeout(loadTimerRef.current);
+        loadTimerRef.current = null;
+      }
+      pendingHtmlRef.current = null;
+    };
+  }, []);
 
   // Sync toolbar state to client
   useEffect(() => {
@@ -160,7 +212,18 @@ export function useMmlClient(options: UseMmlClientOptions): UseMmlClientResult {
   }, [ready]);
 
   const loadContent = useCallback((html: string) => {
-    staticDocumentRef.current?.load(html);
+    pendingHtmlRef.current = html;
+
+    if (loadTimerRef.current !== null) {
+      window.clearTimeout(loadTimerRef.current);
+    }
+
+    loadTimerRef.current = window.setTimeout(() => {
+      loadTimerRef.current = null;
+      const latest = pendingHtmlRef.current;
+      if (!latest) return;
+      staticDocumentRef.current?.load(latest);
+    }, CONTENT_LOAD_DEBOUNCE_MS);
   }, []);
 
   const fitContainer = useCallback(() => {

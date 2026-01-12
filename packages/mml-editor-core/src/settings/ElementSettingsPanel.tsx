@@ -100,7 +100,16 @@ function DraggableNumberInput({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [textValue, setTextValue] = useState(value);
   const dragRef = useRef<{ startX: number; startValue: number; lastValue: string } | null>(null);
+
+  // Keep the input text in sync with incoming prop changes (e.g. gizmo transforms),
+  // but don't clobber the value while the user is actively interacting with the input.
+  useEffect(() => {
+    if (dragging) return;
+    if (typeof document !== "undefined" && document.activeElement === inputRef.current) return;
+    setTextValue(value);
+  }, [value, dragging]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -118,9 +127,7 @@ function DraggableNumberInput({
       }
 
       const fixed = next.toFixed(getDecimalPlaces(step));
-      if (inputRef.current) {
-        inputRef.current.value = fixed;
-      }
+      setTextValue(fixed);
       dragRef.current.lastValue = fixed;
       onUpdate(fixed);
     };
@@ -154,11 +161,11 @@ function DraggableNumberInput({
       ref={inputRef}
       type="number"
       step={step}
-      defaultValue={value}
+      value={textValue}
       placeholder={mixed ? "Multiple values" : placeholder}
       onMouseDown={(e) => {
         if (document.activeElement === inputRef.current) return;
-        const parsed = Number(inputRef.current?.value ?? value);
+        const parsed = Number(textValue);
         const startValue = Number.isFinite(parsed) ? parsed : Number(placeholder || "0") || 0;
         const startValueStr = startValue.toFixed(getDecimalPlaces(step));
         dragRef.current = { startX: e.clientX, startValue, lastValue: startValueStr };
@@ -167,6 +174,7 @@ function DraggableNumberInput({
       }}
       onChange={(e) => {
         const v = e.target.value;
+        setTextValue(v);
         onUpdate(v === "" ? undefined : v);
         if (onCommit) {
           onCommit(v === "" ? undefined : v);

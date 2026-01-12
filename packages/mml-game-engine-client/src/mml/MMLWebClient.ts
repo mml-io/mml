@@ -198,7 +198,7 @@ export class MMLWebClient {
 
       // Check if we're dragging the gizmo - if so, don't handle selection
       if (this.transformController.isDragging()) {
-        return false;
+        return true;
       }
 
       const isMultiSelect = event.shiftKey || event.ctrlKey || event.metaKey;
@@ -228,7 +228,11 @@ export class MMLWebClient {
         this.transformController.clearSelection();
       }
 
-      return false; // Allow default click handling to continue
+      // In editor mode, prevent the click from being dispatched to the underlying document.
+      // The editor intentionally strips <script> tags from the loaded content, so allowing
+      // user-defined inline handlers (e.g. onclick="toggleAutofire()") to run can throw and
+      // break the runner. Selection should not execute game logic.
+      return true;
     };
 
     graphicsAdapter.setSceneClickCallback(sceneClickCallback);

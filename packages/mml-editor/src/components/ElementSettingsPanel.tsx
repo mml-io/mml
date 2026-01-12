@@ -7,9 +7,10 @@ import {
   getSharedElementPropertyDefinitions,
   resolveMmlPathsToElements,
   updateElementsAttributesInCode,
+  useSceneObserver,
   useToolbarStore,
 } from "@mml-io/mml-editor-core";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 
 import { useEditorStore } from "../state/editorStore";
 
@@ -49,35 +50,18 @@ export function ElementSettingsPanel({ className }: { className?: string }) {
   const { pathSelection, remoteHolderElement, code, setCode } = useEditorStore();
   const snappingEnabled = useToolbarStore((s) => s.snappingEnabled);
   const snappingConfig = useToolbarStore((s) => s.snappingConfig);
-  const [selectionAttrVersion, setSelectionAttrVersion] = useState(0);
+
+  // Watch for any DOM changes in the scene (including attribute changes from gizmo transforms)
+  const sceneRevision = useSceneObserver(remoteHolderElement);
 
   const selectedElements = useMemo(
     () => resolveMmlPathsToElements(remoteHolderElement, pathSelection.selectedPaths),
-    [remoteHolderElement, pathSelection.selectedPaths],
+    [remoteHolderElement, pathSelection.selectedPaths, sceneRevision],
   );
-
-  // Watch attribute changes on selected elements so the panel reflects live edits (e.g., color picker).
-  useEffect(() => {
-    if (selectedElements.length === 0) {
-      return;
-    }
-
-    const observers = selectedElements.map((el) => {
-      const observer = new MutationObserver(() => {
-        setSelectionAttrVersion((v) => v + 1);
-      });
-      observer.observe(el, { attributes: true });
-      return observer;
-    });
-
-    return () => {
-      observers.forEach((o) => o.disconnect());
-    };
-  }, [selectedElements]);
 
   const sharedProperties = useMemo(
     () => getSharedElementPropertyDefinitions(selectedElements),
-    [selectedElements, selectionAttrVersion],
+    [selectedElements],
   );
 
   const sharedValues = useMemo(() => {
@@ -92,7 +76,7 @@ export function ElementSettingsPanel({ className }: { className?: string }) {
       };
     });
     return values;
-  }, [selectedElements, sharedProperties]);
+  }, [selectedElements, sharedProperties, sceneRevision]);
 
   const sidebarProperties = useMemo<ElementPropertyData[]>(() => {
     return sharedProperties.map((prop) => ({

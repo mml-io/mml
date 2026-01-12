@@ -53,10 +53,19 @@ export function SceneOutlinePanel({
         <div
           className={[
             "flex items-center gap-1.5 rounded px-2 py-1 select-none cursor-pointer",
-            "hover:bg-[var(--color-border)]/20",
+            "transition-[background-color,box-shadow,color] duration-100",
             selected
-              ? "bg-[var(--color-accent)] text-[var(--color-bg)]"
-              : "text-[var(--color-text)]",
+              ? [
+                  "bg-[var(--color-accent)] text-[var(--color-bg)]",
+                  // Keep the selected bg on hover, but add a subtle affordance.
+                  "hover:shadow-[inset_0_0_0_1px_var(--color-bg)]",
+                ].join(" ")
+              : [
+                  "text-[var(--color-text)]",
+                  // Accent-tinted hover is much easier to see than a border-tinted hover in many VS Code themes.
+                  "hover:bg-[var(--color-accent)]/12",
+                  "hover:shadow-[inset_0_0_0_1px_var(--color-accent)]",
+                ].join(" "),
           ].join(" ")}
           style={{ paddingLeft: 8 + depth * 12 }}
           onClick={(e) => {
