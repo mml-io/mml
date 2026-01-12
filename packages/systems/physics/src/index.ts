@@ -83,7 +83,6 @@ class PhysicsSystem implements ElementSystem {
     | ((buffers: { vertices: Float32Array; colors: Float32Array }) => void)
     | null = null;
   private modelLoader = new ModelLoader();
-  private debugMeshElements = new Map<Element, HTMLElement>();
 
   private computeWorldTransformFor(element: Element | null) {
     return mathComputeWorldTransformFor(element, {
@@ -92,111 +91,6 @@ class PhysicsSystem implements ElementSystem {
         return state?.rigidbody || null;
       },
     });
-  }
-
-  private createDebugVisualization(
-    element: Element,
-    geometry: { vertices: Float32Array; indices: Uint32Array },
-    worldPosition: { x: number; y: number; z: number },
-  ): void {
-    try {
-      // Create a group to hold all debug lines
-      const debugGroup = document.createElement("m-group");
-      debugGroup.setAttribute("id", `physics-debug-${Date.now()}`);
-
-      // Position debug group at element's world position
-      debugGroup.setAttribute("x", worldPosition.x.toFixed(3));
-      debugGroup.setAttribute("y", worldPosition.y.toFixed(3));
-      debugGroup.setAttribute("z", worldPosition.z.toFixed(3));
-
-      // Draw edges of triangles from the trimesh
-      const triangleCount = geometry.indices.length / 3;
-      console.log(`[Physics Debug] Creating visualization for ${triangleCount} triangles`);
-
-      // Sample a subset of triangles to avoid overwhelming the scene
-      const maxTrianglesToShow = 500;
-      const stride = Math.max(1, Math.floor(triangleCount / maxTrianglesToShow));
-
-      for (let i = 0; i < triangleCount; i += stride) {
-        const idx0 = geometry.indices[i * 3] * 3;
-        const idx1 = geometry.indices[i * 3 + 1] * 3;
-        const idx2 = geometry.indices[i * 3 + 2] * 3;
-
-        // Get triangle vertices (already scaled)
-        const v0 = {
-          x: geometry.vertices[idx0],
-          y: geometry.vertices[idx0 + 1],
-          z: geometry.vertices[idx0 + 2],
-        };
-        const v1 = {
-          x: geometry.vertices[idx1],
-          y: geometry.vertices[idx1 + 1],
-          z: geometry.vertices[idx1 + 2],
-        };
-        const v2 = {
-          x: geometry.vertices[idx2],
-          y: geometry.vertices[idx2 + 1],
-          z: geometry.vertices[idx2 + 2],
-        };
-
-        // Create lines for each edge of the triangle
-        this.createDebugLine(debugGroup, v0, v1);
-        this.createDebugLine(debugGroup, v1, v2);
-        this.createDebugLine(debugGroup, v2, v0);
-      }
-
-      // Append the debug group as a sibling to the physics element
-      if (element.parentElement) {
-        element.parentElement.appendChild(debugGroup);
-        this.debugMeshElements.set(element, debugGroup);
-        console.log(
-          `[Physics Debug] Created wireframe visualization (${Math.ceil(triangleCount / stride)} triangles shown) at (${worldPosition.x.toFixed(2)}, ${worldPosition.y.toFixed(2)}, ${worldPosition.z.toFixed(2)})`,
-        );
-      }
-    } catch (error) {
-      console.error(`[Physics Debug] Failed to create visualization:`, error);
-    }
-  }
-
-  private createDebugLine(
-    parent: HTMLElement,
-    start: { x: number; y: number; z: number },
-    end: { x: number; y: number; z: number },
-  ): void {
-    // Use m-cube as thin wireframe segments since m-line might not exist
-    const midX = (start.x + end.x) / 2;
-    const midY = (start.y + end.y) / 2;
-    const midZ = (start.z + end.z) / 2;
-
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    const dz = end.z - start.z;
-    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-    if (length < 0.001) return; // Skip zero-length lines
-
-    const line = document.createElement("m-cube");
-    line.setAttribute("x", midX.toFixed(3));
-    line.setAttribute("y", midY.toFixed(3));
-    line.setAttribute("z", midZ.toFixed(3));
-    line.setAttribute("width", "0.05");
-    line.setAttribute("height", "0.05");
-    line.setAttribute("depth", length.toFixed(3));
-    line.setAttribute("color", "#00ff00"); // Green for visibility
-    line.setAttribute("opacity", "0.8");
-    line.setAttribute("collide", "false");
-
-    // Rotate to align with line direction
-    if (Math.abs(dz) > 0.001 || Math.abs(dx) > 0.001) {
-      const yaw = (Math.atan2(dx, dz) * 180) / Math.PI;
-      line.setAttribute("ry", yaw.toFixed(1));
-    }
-    if (Math.abs(dy) > 0.001) {
-      const pitch = (Math.asin(dy / length) * 180) / Math.PI;
-      line.setAttribute("rx", pitch.toFixed(1));
-    }
-
-    parent.appendChild(line);
   }
 
   async init(config: PhysicsConfig = {}) {
@@ -425,27 +319,11 @@ class PhysicsSystem implements ElementSystem {
               scaledVertices[i + 2] = geometry.vertices[i + 2] * worldScale.z;
             }
 
-            // Create scaled geometry object for debug visualization
-            const scaledGeometry = {
-              vertices: scaledVertices,
-              indices: geometry.indices,
-            };
-
             // Create trimesh collider from scaled geometry
             colliderDesc = RAPIER.ColliderDesc.trimesh(scaledVertices, geometry.indices);
             console.log(
               `[Physics] Created trimesh collider for m-model: ${src} (scaled by ${worldScale.x}, ${worldScale.y}, ${worldScale.z})`,
             );
-
-            // Create debug visualization if debug mode is enabled
-            // Check both this.config and window.systemsConfig (in case init hasn't completed yet)
-            const debugEnabled =
-              this.config.debug ||
-              (typeof window !== "undefined" &&
-                (window as any).systemsConfig?.physics?.debug === true);
-            if (debugEnabled) {
-              this.createDebugVisualization(element, scaledGeometry, worldPosition);
-            }
           } else {
             console.warn(
               `[Physics] Failed to extract geometry from ${src}, using default box collider`,
@@ -1093,14 +971,6 @@ class PhysicsSystem implements ElementSystem {
         element.setAttribute("x", clampFinite(localPos.x, 0).toFixed(3));
         element.setAttribute("y", clampFinite(localPos.y, 0).toFixed(3));
         element.setAttribute("z", clampFinite(localPos.z, 0).toFixed(3));
-
-        // Update debug visualization position to match element
-        const debugGroup = this.debugMeshElements.get(element);
-        if (debugGroup) {
-          debugGroup.setAttribute("x", clampFinite(localPos.x, 0).toFixed(3));
-          debugGroup.setAttribute("y", clampFinite(localPos.y, 0).toFixed(3));
-          debugGroup.setAttribute("z", clampFinite(localPos.z, 0).toFixed(3));
-        }
 
         // Update rotation attributes only for non-kinematic bodies to avoid stomping
         // externally-driven visual rotation (e.g., navigation facing logic)

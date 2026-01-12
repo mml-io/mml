@@ -515,15 +515,14 @@ export class Player {
     // Check if grounded
     const isGrounded = physics.isCharacterGrounded(this.physicsBody);
 
-    // Apply gravity
+    // Apply gravity only when not grounded
     if (isGrounded) {
-      this.verticalVelocity = -0.1; // Small downward force to stay grounded
+      this.verticalVelocity = 0; // No vertical movement when grounded
     } else {
       this.verticalVelocity -= gravity * deltaTime;
+      // Cap falling speed
+      this.verticalVelocity = Math.max(this.verticalVelocity, -20);
     }
-
-    // Cap falling speed
-    this.verticalVelocity = Math.max(this.verticalVelocity, -20);
 
     // Calculate desired movement
     let desiredX = 0;
@@ -543,21 +542,9 @@ export class Player {
       z: desiredZ,
     });
 
-    // Determine final movement - use computed if non-zero, otherwise use desired directly
-    let finalMovement = movement;
-    if (
-      movement &&
-      Math.abs(movement.x) < 0.0001 &&
-      Math.abs(movement.z) < 0.0001 &&
-      (Math.abs(desiredX) > 0.0001 || Math.abs(desiredZ) > 0.0001)
-    ) {
-      // Character controller returned zero but we wanted to move - use desired movement directly
-      finalMovement = { x: desiredX, y: desiredY, z: desiredZ };
-    }
-
-    if (finalMovement) {
+    if (movement) {
       // Apply the movement directly to the rigidbody position
-      const applied = physics.applyCharacterMovement(this.physicsBody, finalMovement);
+      const applied = physics.applyCharacterMovement(this.physicsBody, movement);
 
       // Also update element attributes immediately for visual feedback
       if (applied) {
