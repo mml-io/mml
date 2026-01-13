@@ -178,6 +178,9 @@ export class Player {
     this.physicsBody.setAttribute("opacity", "0.0");
     this.physicsBody.setAttribute("collide", "false"); // Collision handled by character controller
     this.physicsBody.setAttribute("cast-shadows", "false");
+
+    this.addLerp(this.physicsBody, 150, "x,y,z");
+
     (this.physicsBody as any).dataset.connectionId = this.connectionId.toString();
     this.sceneGroup.appendChild(this.physicsBody);
 
@@ -227,13 +230,6 @@ export class Player {
     this.characterModel.setAttribute("state", "idle");
     this.characterModel.setAttribute("y", "-1.1"); // Adjust model position within capsule
     this.physicsBody.appendChild(this.characterModel);
-
-    // TODO: Remove. just placed here for a visual test
-    // const capsule = document.createElement("m-capsule");
-    // capsule.setAttribute("radius", "0.25");
-    // capsule.setAttribute("height", "1");
-    // capsule.setAttribute("color", "#0000ff");
-    // this.physicsBody.appendChild(capsule);
 
     this.rifleModel = document.createElement("m-model");
     this.rifleModel.setAttribute("socket", "mixamorigRightHand");
@@ -433,26 +429,6 @@ export class Player {
     }
   }
 
-  private async waitForPhysics(): Promise<void> {
-    const maxWait = 5000; // 5 seconds max
-    const startTime = Date.now();
-
-    while (!(window as any).physics && Date.now() - startTime < maxWait) {
-      console.log(`[Player ${this.connectionId}] Waiting for physics system...`);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-
-    if (!(window as any).physics) {
-      console.error(`[Player ${this.connectionId}] Physics system never initialized!`);
-      console.log(
-        "Available on window:",
-        Object.keys(window).filter((k) => k.includes("physics") || k.includes("system")),
-      );
-    } else {
-      console.log(`[Player ${this.connectionId}] Physics system ready!`);
-    }
-  }
-
   private startUpdateLoop(): void {
     this.lastUpdateTime = performance.now();
 
@@ -505,7 +481,7 @@ export class Player {
       } catch (error) {
         console.error(`[Player ${this.connectionId}] Physics update error:`, error);
       }
-    }, 16); // ~60fps for smoother character controller movement
+    }, CONSTANTS.TICK_RATE);
   }
 
   private updateWithCharacterController(physics: any, deltaTime: number): void {
