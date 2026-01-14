@@ -4,11 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "mml editor",
-    "serve": "mml serve",
+    "dev": "mml dev",
+    "start": "mml dev --no-watch",
     "build": "mml build",
-    "bundle": "mml build --bundle",
-    "start": "npm run serve"
+    "bundle": "mml build --bundle"
   },
   "dependencies": {
     "mml-game-math-system": "0.1.0",

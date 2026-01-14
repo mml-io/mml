@@ -38,7 +38,7 @@ export class GameMMLDocumentManager {
 
         // Only reload if document was already loaded
         if (existingDoc.loaded) {
-          console.log(`Reloading MML document: ${documentKey}`);
+          console.log(`Reloading MML document 1: ${documentKey}`);
           existingDoc.document.load(contents);
         }
       } else {
@@ -88,7 +88,7 @@ export class GameMMLDocumentManager {
 
         // Only reload if document was already loaded
         if (doc.loaded) {
-          console.log(`Reloading MML document: ${gameName}`);
+          console.log(`Reloading MML document 2: ${gameName}`);
           doc.document.load(contents);
         }
       } catch (error) {

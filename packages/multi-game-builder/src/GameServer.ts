@@ -75,7 +75,7 @@ export class GameServer {
     for (const game of games) {
       this.mmlDocumentManager.addGameDocument(game);
     }
-    // Initialize MML documents for existing games
+    // Initialize MML documentsdocuments for existing games
     this.mmlDocumentManager.getAllDocumentKeys();
   }
 

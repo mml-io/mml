@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MML Dev Runner</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #fff;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      #mml-dev-root {
+        position: fixed;
+        inset: 0;
+        background: #fff;
+      }
+
+      #mml-dev-status {
+        display: none;
+        position: fixed;
+        left: 10px;
+        bottom: 10px;
+        padding: 6px 8px;
+        font-size: 12px;
+        line-height: 1.2;
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        backdrop-filter: blur(6px);
+        user-select: none;
+        pointer-events: none;
+        max-width: min(680px, calc(100vw - 20px));
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mml-dev-root"></div>
+    <div id="mml-dev-status"></div>
+    <script src="/runner.js"></script>
+  </body>
+</html>
+

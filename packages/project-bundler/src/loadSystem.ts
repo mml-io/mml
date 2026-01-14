@@ -1,12 +1,17 @@
-import { createRequire } from "module";
 import { SystemPackage, SystemSchema } from "mml-game-systems-common";
 
-const require = createRequire(import.meta.url);
-const mathSystemSchemaJson = require("mml-game-math-system/build/mml.schema.json");
-const navigationSystemSchemaJson = require(
-  "mml-game-navigation-system/build/mml.schema.json"
-);
-const physicsSystemSchemaJson = require("mml-game-physics-system/build/mml.schema.json");
+import physicsSystemSchemaJsonText from "mml-game-physics-system/build/mml.schema.json?text";
+import mathSystemSchemaJsonText from "mml-game-math-system/build/mml.schema.json?text";
+import navigationSystemSchemaJsonText from "mml-game-navigation-system/build/mml.schema.json?text";
+
+type SystemSchemaJson = {
+  schema: unknown;
+  attributes: unknown;
+};
+
+const physicsSystemSchemaJson = JSON.parse(physicsSystemSchemaJsonText) as SystemSchemaJson;
+const mathSystemSchemaJson = JSON.parse(mathSystemSchemaJsonText) as SystemSchemaJson;
+const navigationSystemSchemaJson = JSON.parse(navigationSystemSchemaJsonText) as SystemSchemaJson;
 
 const physicsSystemSchema: SystemSchema = {
   name: "physics",
@@ -14,8 +19,8 @@ const physicsSystemSchema: SystemSchema = {
   description: "Physics system using Rapier physics engine for realistic 3D physics simulation",
   script: "index.js",
   version: "0.1.0",
-  schema: physicsSystemSchemaJson.schema,
-  attributes: physicsSystemSchemaJson.attributes,
+  schema: physicsSystemSchemaJson.schema as SystemSchema["schema"],
+  attributes: physicsSystemSchemaJson.attributes as SystemSchema["attributes"],
 };
 
 const mathSystemSchema: SystemSchema = {
@@ -24,8 +29,8 @@ const mathSystemSchema: SystemSchema = {
   description: "Math utilities for vectors, quaternions, and DOM transforms",
   script: "index.js",
   version: "0.1.0",
-  schema: mathSystemSchemaJson.schema,
-  attributes: mathSystemSchemaJson.attributes,
+  schema: mathSystemSchemaJson.schema as SystemSchema["schema"],
+  attributes: mathSystemSchemaJson.attributes as SystemSchema["attributes"],
 };
 
 export type BuiltInSystemNames = "physics" | "math" | "navigation";
@@ -82,8 +87,8 @@ const builtInSystems = new Map<
         description: "Navigation system using recast-navigation for pathfinding",
         script: "index.js",
         version: "0.1.0",
-        schema: navigationSystemSchemaJson.schema,
-        attributes: navigationSystemSchemaJson.attributes,
+        schema: navigationSystemSchemaJson.schema as SystemSchema["schema"],
+        attributes: navigationSystemSchemaJson.attributes as SystemSchema["attributes"],
       },
       loadPackage: async () => {
         const navigationSystemModule = (
@@ -96,8 +101,8 @@ const builtInSystems = new Map<
             description: "Navigation system using recast-navigation for pathfinding",
             script: "index.js",
             version: "0.1.0",
-            schema: navigationSystemSchemaJson.schema,
-            attributes: navigationSystemSchemaJson.attributes,
+            schema: navigationSystemSchemaJson.schema as SystemSchema["schema"],
+            attributes: navigationSystemSchemaJson.attributes as SystemSchema["attributes"],
           },
           module: navigationSystemModule,
         };

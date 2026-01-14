@@ -1,8 +1,7 @@
 # MML starter
 
 Commands:
-- `mml editor` to watch and serve at http://localhost:3003
-- `mml serve` to watch/build and serve at http://localhost:3004
+- `mml dev` to watch/build and serve at http://0.0.0.0:3004 (LAN-friendly)
 - `mml build` for a one-shot build, or `mml build --bundle` for a single-file dist in `dist/`
 
 Project layout:

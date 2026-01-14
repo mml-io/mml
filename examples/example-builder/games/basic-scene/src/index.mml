@@ -2,7 +2,7 @@
 
 <m-cube id="clickable-cube" y="1" color="red" collide="true" z="-2"></m-cube>
 
-<m-cube id="color-cube" x="4" y="1" width="1" color="green" collide="true" z="-2" castshadow="true"></m-cube>
+<m-cube id="color-cube" x="4" y="1" width="1" color="green" collide="true" z="-3" castshadow="true"></m-cube>
 
 <script>
   const clickableCube = document.getElementById("clickable-cube");
