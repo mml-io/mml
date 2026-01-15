@@ -3,7 +3,7 @@
   "displayName": "Navigation System",
   "private": true,
   "version": "0.1.0",
-  "description": "Navigation system using recast-navigation-js for pathfinding and navmesh",
+  "description": "Navigation system using navcat for pathfinding and navmesh",
   "type": "module",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
@@ -29,9 +29,7 @@
   "dependencies": {
     "mml-game-math-system": "*",
     "mml-game-systems-common": "file:../systems-common",
-    "recast-navigation": "^0.43.0",
-    "@recast-navigation/core": "^0.43.0",
-    "@recast-navigation/generators": "^0.43.0"
+    "navcat": "^0.1.3"
   },
   "devDependencies": {
     "@types/node": "20.19.10",

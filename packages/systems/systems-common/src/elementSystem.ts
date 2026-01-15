@@ -108,10 +108,19 @@ export async function initElementSystem(
     }
   });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  // Wait for document.body to be available before observing
+  const startObserving = () => {
+    if (document.body) {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    } else {
+      // Retry after a short delay
+      setTimeout(startObserving, 10);
+    }
+  };
+  startObserving();
 
   // Start system if it has a start method
   if (system.start) {

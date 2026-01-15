@@ -12,7 +12,7 @@
             "dom"
         ],
         "module": "esnext",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "preserveConstEnums": true,
         "resolveJsonModule": true,
         "noImplicitAny": true,

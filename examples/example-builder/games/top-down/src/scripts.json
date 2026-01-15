@@ -8,21 +8,22 @@
       "configName": "physics",
       "config": {
         "gravity": 9.81,
-        "debug": true
+        "debug": false
       }
     },
     {
       "src": "mml-game-navigation-system",
       "configName": "navigation",
       "config": {
-        "debug": false,
+        "debug": true,
         "debugDrawMode": "navmesh",
         "tileSize": 32,
-        "cellSize": 0.3,
-        "walkableHeight": 3,
-        "walkableRadius": 2.5,
-        "walkableClimb": 2,
-        "walkableSlopeAngle": 60
+        "cellSize": 0.15,
+        "cellHeight": 0.1,
+        "walkableHeight": 2,
+        "walkableRadius": 0.4,
+        "walkableClimb": 0.5,
+        "walkableSlopeAngle": 45
       }
     }
   ]

@@ -329,7 +329,7 @@ export class Enemies {
     const enemy = document.createElement("m-model");
     enemy.setAttribute("collide", "false");
     enemy.setAttribute("src", modelSrc);
-    enemy.setAttribute("y", "1");
+    enemy.setAttribute("y", "0");
 
     enemyGroup.appendChild(enemy);
 
