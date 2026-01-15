@@ -6,6 +6,12 @@ export type VisualizerOptions = {
    * Defaults to true.
    */
   clickable?: boolean;
+
+  /**
+   * Optional rotation offset applied to the visualizer graphics (in radians).
+   * Useful for aligning imported visualizer models whose forward axis doesn't match MML/engine conventions.
+   */
+  rotationEulerRad?: { x: number; y: number; z: number };
 };
 
 export class VisualizerManager {

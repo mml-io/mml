@@ -193,10 +193,19 @@ function createBoundPreview(
 
   const fileName = document.uri.path.split("/").pop() ?? "MML Preview";
 
+  const docDirUri = vscode.Uri.file(dirnameFsPath(document.uri.fsPath));
+  const workspaceFolderUri = vscode.workspace.getWorkspaceFolder(document.uri)?.uri;
+
   const panel = vscode.window.createWebviewPanel("mmlPreview", `Preview: ${fileName}`, column, {
     enableScripts: true,
     retainContextWhenHidden: true,
-    localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, "dist")],
+    // Allow the preview to load local assets referenced by MML (e.g. `/assets/.../duck.glb`)
+    // by whitelisting the document folder + workspace folder for `asWebviewUri(...)`.
+    localResourceRoots: [
+      vscode.Uri.joinPath(context.extensionUri, "dist"),
+      docDirUri,
+      ...(workspaceFolderUri ? [workspaceFolderUri] : []),
+    ],
   });
 
   panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri);
@@ -372,13 +381,102 @@ function pushDocumentContent(session: PreviewSession, doc: vscode.TextDocument, 
   const fileName =
     doc.uri.scheme === "file" ? (doc.uri.path.split("/").pop() ?? doc.uri.toString()) : uri;
 
+  const contentAddressMap = buildContentAddressMap(session.panel.webview, doc, text);
+
   session.panel.webview.postMessage({
     type: "setContent",
     content: text,
     uri,
     fileName,
     force,
+    contentAddressMap,
   });
+}
+
+function buildContentAddressMap(
+  webview: vscode.Webview,
+  doc: vscode.TextDocument,
+  content: string,
+): Record<string, string> {
+  const map: Record<string, string> = {};
+
+  // Extract common URL-bearing attributes in MML/HTML.
+  // Note: keep this conservative and fast; it runs on every document update.
+  const attrRegex = /\b(?:src|anim)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/gi;
+
+  const docDirFsPath = dirnameFsPath(doc.uri.fsPath);
+  const workspaceFsPath = vscode.workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath ?? null;
+
+  const seen = new Set<string>();
+  let match: RegExpExecArray | null;
+  while ((match = attrRegex.exec(content)) !== null) {
+    const raw = ((match[1] ?? match[2] ?? match[3]) ?? "").trim();
+    if (!raw || seen.has(raw)) continue;
+    seen.add(raw);
+
+    if (!isProbablyLocalAssetUrl(raw)) continue;
+
+    const normalized = raw.replace(/\\/g, "/");
+    const fsPath = resolveAssetFsPath(normalized, docDirFsPath, workspaceFsPath);
+    if (!fsPath) continue;
+
+    map[raw] = webview.asWebviewUri(vscode.Uri.file(fsPath)).toString();
+  }
+
+  return map;
+}
+
+function isProbablyLocalAssetUrl(src: string): boolean {
+  // Absolute URLs are already resolvable.
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(src)) return false;
+  if (src.startsWith("//")) return false;
+  if (src.startsWith("#")) return false;
+  if (src.startsWith("data:")) return false;
+  if (src.startsWith("blob:")) return false;
+  return true;
+}
+
+function resolveAssetFsPath(
+  normalizedSrc: string,
+  docDirFsPath: string,
+  workspaceFsPath: string | null,
+): string | null {
+  if (normalizedSrc.startsWith("/")) {
+    const rel = normalizedSrc.replace(/^\/+/, "");
+    const root = workspaceFsPath ?? docDirFsPath;
+    return resolveFsPath(root, rel);
+  }
+  return resolveFsPath(docDirFsPath, normalizedSrc);
+}
+
+function dirnameFsPath(fsPath: string): string {
+  // Works for both POSIX and Windows-style paths.
+  return fsPath.replace(/[\\/][^\\/]*$/, "");
+}
+
+function resolveFsPath(baseFsPath: string, relativePath: string): string {
+  // Basic, cross-platform path resolver without relying on Node's `path` module
+  // (keeps the extension package's TS config happy).
+  const baseParts = baseFsPath.split(/[\\/]+/);
+  const relParts = relativePath.split(/[\\/]+/);
+
+  const stack = baseParts.slice();
+  for (const part of relParts) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      if (stack.length > 0) stack.pop();
+      continue;
+    }
+    stack.push(part);
+  }
+
+  // Preserve native-ish separator style based on the base path.
+  const sep = baseFsPath.includes("\\") ? "\\" : "/";
+  const joined = stack.join(sep);
+
+  // Preserve leading separator for POSIX paths.
+  const hasLeadingSlash = baseFsPath.startsWith("/");
+  return hasLeadingSlash && !joined.startsWith("/") ? `/${joined}` : joined;
 }
 
 async function applyWebviewContentUpdate(

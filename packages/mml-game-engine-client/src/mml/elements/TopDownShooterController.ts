@@ -7,6 +7,7 @@ import {
   MElement,
   MMLScene,
   OrientedBoundingBox,
+  isEditorModeScene,
   parseFloatAttribute,
   Quat,
   Ray,
@@ -993,6 +994,18 @@ export class MTopDownShooterController<G extends GameThreeJSAdapter> extends MEl
     super.connectedCallback();
 
     this.scene = this.getScene() as unknown as MMLScene<GameThreeJSAdapter>;
+
+    // In editor mode we don't want controllers consuming input or driving camera motion.
+    // Keep the element present for scene structure/selection, but skip all runtime behavior.
+    if (isEditorModeScene(this.scene)) {
+      for (const name of MTopDownShooterController.observedAttributes) {
+        const value = this.getAttribute(name);
+        if (value !== null) {
+          this.attributeChangedCallback(name, null, value);
+        }
+      }
+      return;
+    }
 
     this.initializePosition();
     this.createInternalControls();

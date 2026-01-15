@@ -29,6 +29,7 @@ export class CameraVisualizerGraphics<G extends GraphicsAdapter = GraphicsAdapte
       this.camera,
       CAMERA_MODEL_URL,
       CAMERA_MODEL_SCALE,
+      { rotationEulerRad: { x: 0, y: -Math.PI / 2, z: 0 } },
     );
 
     this.updateVisibility();

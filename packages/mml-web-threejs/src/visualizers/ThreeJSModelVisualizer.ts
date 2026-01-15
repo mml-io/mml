@@ -27,6 +27,7 @@ export class ThreeJSModelVisualizer extends ModelVisualizerGraphics<ThreeJSGraph
   private group: THREE.Group;
   private currentModel: THREE.Object3D | null = null;
   private disposed = false;
+  private rotationOffset: { x: number; y: number; z: number } | null = null;
 
   constructor(
     element: MElement<ThreeJSGraphicsAdapter>,
@@ -39,6 +40,14 @@ export class ThreeJSModelVisualizer extends ModelVisualizerGraphics<ThreeJSGraph
     this.group.visible = true;
     this.group.name = "ModelVisualizer";
     this.group.userData.visualizerClickable = this.isClickable();
+    this.rotationOffset = options?.rotationEulerRad ?? null;
+    if (this.rotationOffset) {
+      this.group.rotation.set(
+        this.rotationOffset.x,
+        this.rotationOffset.y,
+        this.rotationOffset.z,
+      );
+    }
     this.element.getContainer().add(this.group);
     this.loadModel(url);
     console.log("ThreeJSModelVisualizer created", this.group, this.element.getContainer());

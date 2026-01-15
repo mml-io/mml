@@ -35,6 +35,125 @@ type PersistedState = {
   scenePanelRatio?: number;
 };
 
+function toPathKey(authored: string): string {
+  const trimmed = (authored ?? "").trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("/")) return trimmed;
+  if (trimmed.startsWith("./")) return `/${trimmed.slice(2)}`;
+  return `/${trimmed}`;
+}
+
+function ensureVscodeAssetRewriteInstalled(targetWindow: Window): void {
+  const w = targetWindow as any;
+  if (w.__mml_vscode_asset_rewrite_installed) return;
+  w.__mml_vscode_asset_rewrite_installed = true;
+  w.__mml_vscode_asset_map = {} as Record<string, string>;
+
+  const rewriteUrl = (url: string): string => {
+    const map = (w.__mml_vscode_asset_map ?? {}) as Record<string, string>;
+
+    // Fast-path for authored relative/absolute-path style URLs.
+    if (url.startsWith("/") || url.startsWith("./")) {
+      const mapped = map[toPathKey(url)];
+      if (mapped) return mapped;
+      return url;
+    }
+
+    try {
+      const u = new URL(url, targetWindow.location.href);
+      if (u.hostname !== "mml-preview.local") return url;
+      return map[u.pathname] ?? url;
+    } catch {
+      return url;
+    }
+  };
+
+  // Patch fetch
+  const originalFetch: typeof fetch | undefined = targetWindow.fetch?.bind(targetWindow);
+  if (originalFetch) {
+    targetWindow.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+      try {
+        // Most loaders pass a string URL.
+        if (typeof input === "string") {
+          const rewritten = rewriteUrl(input);
+          return originalFetch(rewritten, init);
+        }
+
+        // If a Request is passed, rewrite only if it's a simple GET/HEAD request.
+        const RequestCtor = (targetWindow as any).Request;
+        if (RequestCtor && input instanceof RequestCtor) {
+          const req = input as Request;
+          const rewritten = rewriteUrl(req.url);
+          if (rewritten === req.url) return originalFetch(req, init);
+          const newReq = new RequestCtor(rewritten, {
+            method: req.method,
+            headers: req.headers,
+            mode: req.mode,
+            credentials: req.credentials,
+            cache: req.cache,
+            redirect: req.redirect,
+            referrer: req.referrer,
+            referrerPolicy: req.referrerPolicy,
+            integrity: (req as any).integrity,
+            keepalive: (req as any).keepalive,
+            signal: req.signal,
+          });
+          return originalFetch(newReq, init);
+        }
+      } catch {
+        // Fall through to original fetch.
+      }
+      return originalFetch(input as any, init);
+    }) as any;
+  }
+
+  // Patch XHR (three.js FileLoader may use XHR in some builds)
+  const XHRCtor = (targetWindow as any).XMLHttpRequest;
+  if (XHRCtor?.prototype?.open) {
+    const originalOpen = XHRCtor.prototype.open;
+    XHRCtor.prototype.open = function (
+      method: string,
+      url: string,
+      async?: boolean,
+      user?: string | null,
+      password?: string | null,
+    ) {
+      const rewritten = rewriteUrl(String(url));
+      return originalOpen.call(this, method, rewritten, async, user, password);
+    };
+  }
+}
+
+function applyVscodeAssetMap(targetWindow: Window | null, contentAddressMap: Record<string, string>) {
+  if (!targetWindow) return;
+  ensureVscodeAssetRewriteInstalled(targetWindow);
+
+  // Normalize to pathname keys so we can rewrite `https://mml-preview.local/assets/x.glb`
+  // using `URL.pathname` (`/assets/x.glb`), and also handle direct `/assets/...` URLs.
+  const normalized: Record<string, string> = {};
+  for (const [authored, resolved] of Object.entries(contentAddressMap ?? {})) {
+    const key = toPathKey(authored);
+    if (!key) continue;
+    normalized[key] = resolved;
+  }
+
+  (targetWindow as any).__mml_vscode_asset_map = normalized;
+}
+
+function applyVscodeAssetMapEverywhere(
+  remoteHolderElement: HTMLElement | null,
+  contentAddressMap: Record<string, string>,
+): void {
+  // Patch outer webview realm (where ThreeJS loader code executes).
+  applyVscodeAssetMap(window, contentAddressMap);
+
+  // Patch the engine iframe realm (where MML elements / document address are derived).
+  const engineWindow = remoteHolderElement?.ownerDocument?.defaultView ?? null;
+  if (engineWindow) {
+    applyVscodeAssetMap(engineWindow, contentAddressMap);
+  }
+}
+
 export function PreviewApp() {
   const vscode = getVscodeApi();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -43,6 +162,7 @@ export function PreviewApp() {
   const [content, setContent] = useState("");
   const [uri, setUri] = useState<string | null>(null);
   const [lastContentSource, setLastContentSource] = useState<"vscode" | "local">("vscode");
+  const [contentAddressMap, setContentAddressMap] = useState<Record<string, string>>({});
   const [selectedPaths, setSelectedPaths] = useState<number[][]>([]);
   const [layout, setLayout] = useState({
     sidebarWidth: 260,
@@ -148,6 +268,13 @@ export function PreviewApp() {
   useEffect(() => {
     if (mmlClient.ready) vscode.postMessage({ type: "ready" });
   }, [mmlClient.ready]);
+
+  // VSCode-only asset fix: rewrite fetch/XHR requests inside the engine iframe from
+  // `mml-preview.local/...` to the `asWebviewUri(...)` mapping generated by the extension.
+  useEffect(() => {
+    if (!mmlClient.ready) return;
+    applyVscodeAssetMapEverywhere(mmlClient.remoteHolderElement, contentAddressMap);
+  }, [mmlClient.ready, mmlClient.remoteHolderElement, contentAddressMap]);
 
   useEffect(() => {
     if (lastContentSource === "local") {
@@ -272,9 +399,18 @@ export function PreviewApp() {
 
       switch (msg.type) {
         case "setContent":
+          // Ensure mapping is applied before loadContent triggers loaders in the iframe.
+          if (msg.contentAddressMap) {
+            applyVscodeAssetMapEverywhere(mmlClient.remoteHolderElement, msg.contentAddressMap);
+          }
           setContent(msg.content);
           if (msg.uri) setUri(msg.uri);
+          if (msg.contentAddressMap) setContentAddressMap(msg.contentAddressMap);
           setLastContentSource("vscode");
+          break;
+        case "setContentAddressMap":
+          applyVscodeAssetMapEverywhere(mmlClient.remoteHolderElement, msg.contentAddressMap ?? {});
+          setContentAddressMap(msg.contentAddressMap ?? {});
           break;
         case "setVisualizersVisible":
           useToolbarStore.getState().setVisualizersVisible(msg.visible);
@@ -320,7 +456,7 @@ export function PreviewApp() {
     <div className="flex flex-col h-full w-full overflow-hidden">
       <PreviewToolbar title="Preview" showSidebarToggle />
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div ref={containerRef} className="flex-1 min-w-0 relative bg-black" />
+        <div ref={containerRef} className="flex-1 min-w-0 relative bg-white" />
         <SidebarLayout
           state={sidebarLayoutState}
           sceneHeader={{ title: "Scene", info: derived.sceneInfo }}
