@@ -400,6 +400,11 @@ function buildContentAddressMap(
 ): Record<string, string> {
   const map: Record<string, string> = {};
 
+  // Only file-backed documents can be safely mapped to `asWebviewUri(vscode.Uri.file(...))`.
+  if (doc.uri.scheme !== "file") {
+    return map;
+  }
+
   // Extract common URL-bearing attributes in MML/HTML.
   // Note: keep this conservative and fast; it runs on every document update.
   const attrRegex = /\b(?:src|anim)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/gi;
@@ -410,7 +415,7 @@ function buildContentAddressMap(
   const seen = new Set<string>();
   let match: RegExpExecArray | null;
   while ((match = attrRegex.exec(content)) !== null) {
-    const raw = ((match[1] ?? match[2] ?? match[3]) ?? "").trim();
+    const raw = (match[1] ?? match[2] ?? match[3] ?? "").trim();
     if (!raw || seen.has(raw)) continue;
     seen.add(raw);
 

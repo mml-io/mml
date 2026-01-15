@@ -188,7 +188,7 @@ export class GameServer {
 
     // WebSocket route for MML documents
     this.app.ws("/mml/:gameName", (ws: any, req: express.Request) => {
-      const { gameName } = req.params;
+      const gameName = req.params.gameName as string;
 
       const currentDocument = this.mmlDocumentManager.ensureDocumentLoaded(gameName);
 

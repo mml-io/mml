@@ -124,7 +124,10 @@ function ensureVscodeAssetRewriteInstalled(targetWindow: Window): void {
   }
 }
 
-function applyVscodeAssetMap(targetWindow: Window | null, contentAddressMap: Record<string, string>) {
+function applyVscodeAssetMap(
+  targetWindow: Window | null,
+  contentAddressMap: Record<string, string>,
+) {
   if (!targetWindow) return;
   ensureVscodeAssetRewriteInstalled(targetWindow);
 
