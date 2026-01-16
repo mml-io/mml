@@ -105,12 +105,12 @@
       "editor/title/run": [
         {
           "command": "mml.toggleVisualizers",
-          "when": "mmlPreviewFocus",
+          "when": "webviewFocus && activeWebviewPanelId == mmlPreview",
           "group": "mml@1"
         },
         {
           "command": "mml.toggleSnapping",
-          "when": "mmlPreviewFocus",
+          "when": "webviewFocus && activeWebviewPanelId == mmlPreview",
           "group": "mml@2"
         }
       ],
@@ -147,27 +147,27 @@
       {
         "command": "mml.setGizmoTranslate",
         "key": "w",
-        "when": "mmlPreviewFocus"
+        "when": "webviewFocus && activeWebviewPanelId == mmlPreview"
       },
       {
         "command": "mml.setGizmoRotate",
         "key": "e",
-        "when": "mmlPreviewFocus"
+        "when": "webviewFocus && activeWebviewPanelId == mmlPreview"
       },
       {
         "command": "mml.setGizmoScale",
         "key": "r",
-        "when": "mmlPreviewFocus"
+        "when": "webviewFocus && activeWebviewPanelId == mmlPreview"
       },
       {
         "command": "mml.toggleSnapping",
         "key": "x",
-        "when": "mmlPreviewFocus"
+        "when": "webviewFocus && activeWebviewPanelId == mmlPreview"
       },
       {
         "command": "mml.toggleVisualizers",
         "key": "h",
-        "when": "mmlPreviewFocus"
+        "when": "webviewFocus && activeWebviewPanelId == mmlPreview"
       }
     ],
     "views": {

@@ -1106,6 +1106,16 @@ class NavigationSystem implements ElementSystem {
     await this.rebuildNavMeshFromScene();
   }
 
+  setDebugEnabled(enabled: boolean) {
+    this.config.debug = enabled;
+    if (enabled) {
+      // Build debug buffers when enabling
+      this.buildDebugBuffers().catch((err) =>
+        console.error("[Navigation] Failed to build debug buffers:", err),
+      );
+    }
+  }
+
   setDebugDrawMode(mode: DebugDrawMode) {
     this.config.debugDrawMode = mode;
     // Fire and forget - don't block

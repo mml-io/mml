@@ -1,10 +1,9 @@
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-
 import type { Argv } from "yargs";
 
-import { ensureDir, copyDirectory, pathExists, toPackageName } from "../utils/fs";
+import { copyDirectory, ensureDir, pathExists, toPackageName } from "../utils/fs";
 
 interface CreateArgs {
   appName: string;
@@ -100,7 +99,12 @@ async function rewriteSystemDependenciesToLocalIfAvailable(projectRoot: string):
   const pkg = JSON.parse(raw);
 
   let changed = false;
-  const depSections = ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"] as const;
+  const depSections = [
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "peerDependencies",
+  ] as const;
   for (const section of depSections) {
     const deps = pkg?.[section];
     if (!deps || typeof deps !== "object") {
@@ -152,7 +156,11 @@ async function writeProjectPackageJson(projectRoot: string, appName: string): Pr
   await fs.writeFile(packageJsonPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
 }
 
-async function copyTemplate(projectRoot: string, templateName: string, overwrite: boolean): Promise<void> {
+async function copyTemplate(
+  projectRoot: string,
+  templateName: string,
+  overwrite: boolean,
+): Promise<void> {
   const templatesDir = await templatesDirPromise;
   const source = path.join(templatesDir, templateName);
   if (!(await pathExists(source))) {
@@ -181,7 +189,9 @@ async function createProject(args: CreateArgs): Promise<void> {
   );
   console.log("              # (optional) localhost only: mml dev --host localhost");
   if (usedLocalSystems) {
-    console.log("              # using local systems from your mml-game-engine checkout (file: deps)");
+    console.log(
+      "              # using local systems from your mml-game-engine checkout (file: deps)",
+    );
   }
 }
 

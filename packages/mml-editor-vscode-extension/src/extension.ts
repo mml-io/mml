@@ -241,7 +241,6 @@ function createBoundPreview(
   disposables.push(
     panel.onDidChangeViewState(() => {
       const isActive = panel.active;
-      vscode.commands.executeCommand("setContext", "mmlPreviewFocus", isActive);
       if (isActive) {
         lastActiveSession = session;
         // Update sidebar panels when this preview becomes active
@@ -253,7 +252,6 @@ function createBoundPreview(
 
   disposables.push(
     panel.onDidDispose(() => {
-      vscode.commands.executeCommand("setContext", "mmlPreviewFocus", false);
       disposables.forEach((d) => d.dispose());
       sessions.delete(docUri);
       if (lastActiveSession === session) {

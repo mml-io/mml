@@ -1,7 +1,6 @@
 import fs from "fs/promises";
-import path from "path";
-
 import { ProjectBundler } from "mml-game-project-bundler";
+import path from "path";
 
 import { pathExists } from "../utils/fs";
 

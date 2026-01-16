@@ -1,5 +1,4 @@
 import path from "path";
-
 import type { Argv } from "yargs";
 
 // import { mml, MMLPluginOptions } from "@mml-io/esbuild-plugin-mml";
@@ -34,7 +33,9 @@ async function runBuild(argv: BuildArgs): Promise<void> {
     throw new Error(`No src directory found at ${srcDir}.`);
   }
 
-  const assetsDir = argv.assets ? path.resolve(root, argv.assets) : path.join(root, DEFAULT_ASSETS_DIR);
+  const assetsDir = argv.assets
+    ? path.resolve(root, argv.assets)
+    : path.join(root, DEFAULT_ASSETS_DIR);
 
   if (argv.watch) {
     await watchSingleGameBuild({

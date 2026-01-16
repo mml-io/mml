@@ -1,8 +1,7 @@
-import { SystemPackage, SystemSchema } from "mml-game-systems-common";
-
-import physicsSystemSchemaJsonText from "mml-game-physics-system/build/mml.schema.json?text";
 import mathSystemSchemaJsonText from "mml-game-math-system/build/mml.schema.json?text";
 import navigationSystemSchemaJsonText from "mml-game-navigation-system/build/mml.schema.json?text";
+import physicsSystemSchemaJsonText from "mml-game-physics-system/build/mml.schema.json?text";
+import { SystemPackage, SystemSchema } from "mml-game-systems-common";
 
 type SystemSchemaJson = {
   schema: unknown;

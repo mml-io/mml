@@ -1,6 +1,5 @@
-import path from "path";
-
 import { MultiGameBuilder, MultiGameBuilderOptions } from "@mml-io/multi-game-builder";
+import path from "path";
 
 export interface RunMultiGameBuilderOptions {
   rootPath: string;
@@ -15,7 +14,9 @@ export interface RunMultiGameBuilderOptions {
   };
 }
 
-export async function runMultiGameBuilder(options: RunMultiGameBuilderOptions): Promise<MultiGameBuilder> {
+export async function runMultiGameBuilder(
+  options: RunMultiGameBuilderOptions,
+): Promise<MultiGameBuilder> {
   const normalizedRoot = path.resolve(options.rootPath);
 
   const builderOptions: MultiGameBuilderOptions = {

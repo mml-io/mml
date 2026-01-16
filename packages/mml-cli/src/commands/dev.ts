@@ -1,5 +1,4 @@
 import path from "path";
-
 import type { Argv } from "yargs";
 
 import {
@@ -28,7 +27,9 @@ async function runDev(argv: DevArgs): Promise<void> {
     throw new Error(`src directory not found at ${srcDir}.`);
   }
 
-  const assetsDir = argv.assets ? path.resolve(root, argv.assets) : path.join(root, DEFAULT_ASSETS_DIR);
+  const assetsDir = argv.assets
+    ? path.resolve(root, argv.assets)
+    : path.join(root, DEFAULT_ASSETS_DIR);
 
   await watchSingleGame({
     projectRoot: root,

@@ -1,18 +1,25 @@
-import express from "express";
-import * as esbuild from "esbuild";
+import { mmlGameEngineBuildPlugin } from "@mml-io/mml-game-engine-build-plugin";
+import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import * as chokidar from "chokidar";
+import * as esbuild from "esbuild";
+import express from "express";
+import enableWs from "express-ws";
 import fs from "fs";
 import http from "http";
 import { createRequire } from "module";
 import path from "path";
 import * as url from "url";
 import { fileURLToPath } from "url";
-import enableWs from "express-ws";
-
-import { mmlGameEngineBuildPlugin } from "@mml-io/mml-game-engine-build-plugin";
-import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 
 import { pathExists } from "../utils/fs";
+import {
+  addLogEntry,
+  getLogBuffer,
+  registerDebugApi,
+  registerUser,
+  unregisterUser,
+} from "./debugApi";
+import { registerMcpServer } from "./mcpServer";
 
 export interface SingleGameBuildOptions {
   projectRoot: string;
@@ -54,7 +61,10 @@ function watchLoggerPlugin(options: { label: string }): esbuild.Plugin {
       let firstBuild = true;
       build.onEnd(async (result) => {
         if (result.errors.length > 0) {
-          const messages = await esbuild.formatMessages(result.errors, { kind: "error", color: true });
+          const messages = await esbuild.formatMessages(result.errors, {
+            kind: "error",
+            color: true,
+          });
           console.error(messages.join("\n"));
           console.error(`✗ ${options.label} failed`);
           firstBuild = false;
@@ -62,7 +72,10 @@ function watchLoggerPlugin(options: { label: string }): esbuild.Plugin {
         }
 
         if (result.warnings.length > 0) {
-          const messages = await esbuild.formatMessages(result.warnings, { kind: "warning", color: true });
+          const messages = await esbuild.formatMessages(result.warnings, {
+            kind: "warning",
+            color: true,
+          });
           console.warn(messages.join("\n"));
         }
 
@@ -411,11 +424,40 @@ export async function watchSingleGame(
   //   handleProtocols: (protocols) => NetworkedDOM.handleWebsocketSubprotocol(protocols),
   // });
 
+  // Register debug API endpoints
+  registerDebugApi({
+    app,
+    gameDocument,
+    getConnectedClients: () => connectedClients,
+    host: browseHost,
+    port,
+  });
+
+  // Register MCP server at /mcp
+  registerMcpServer({
+    app,
+    getConnectedClients: () => connectedClients,
+    host: browseHost,
+    port,
+    getLogBuffer,
+    pushLogEntry: addLogEntry,
+  });
+
+  // Track connected clients
+  const connectedClients = new Map<string, { id: string; connectedAt: number }>();
+  let clientIdCounter = 0;
 
   app.ws("/mml", (ws) => {
+    const clientId = `client-${++clientIdCounter}`;
+    connectedClients.set(clientId, { id: clientId, connectedAt: Date.now() });
+    registerUser(clientId);
+
     gameDocument.addWebSocket(ws as unknown as WebSocket);
-    console.log("websocket connection established");
+    console.log(`WebSocket connection established: ${clientId}`);
+
     ws.on("close", () => {
+      connectedClients.delete(clientId);
+      unregisterUser(clientId);
       try {
         if (gameDocument.hasWebSocket(ws as unknown as WebSocket)) {
           gameDocument.removeWebSocket(ws as unknown as WebSocket);
@@ -433,6 +475,9 @@ export async function watchSingleGame(
       console.log(`🎮 Runner UI (game client) at http://${browseHost}:${port}/`);
       console.log(`📡 Game files (static) at http://${browseHost}:${port}/server/`);
       console.log(`🔌 Game document websocket at ws://${browseHost}:${port}/mml`);
+      console.log(`🔧 Debug API at http://${browseHost}:${port}/debug/status`);
+      console.log(`🤖 MCP server at http://${browseHost}:${port}/mcp/sse`);
+      console.log(`Dev server started on port ${port}`);
       resolve();
     });
     app.on("error", (err) => reject(err));

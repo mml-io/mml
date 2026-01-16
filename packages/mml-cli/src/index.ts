@@ -3,8 +3,12 @@ import { hideBin } from "yargs/helpers";
 
 import { registerBuildCommand } from "./commands/build";
 import { registerCreateCommand } from "./commands/create";
+import { registerDebugCommand } from "./commands/debug";
 import { registerDeployCommand } from "./commands/deploy";
 import { registerDevCommand } from "./commands/dev";
+import { registerDocsCommand } from "./commands/docs";
+import { registerDescribeModelCommand } from "./commands/describeModel";
+import { registerExamplesCommand } from "./commands/examples";
 
 async function main(): Promise<void> {
   const parser = yargs(hideBin(process.argv))
@@ -18,6 +22,10 @@ async function main(): Promise<void> {
   registerBuildCommand(parser);
   registerDevCommand(parser);
   registerDeployCommand(parser);
+  registerDebugCommand(parser);
+  registerDocsCommand(parser);
+  registerExamplesCommand(parser);
+  registerDescribeModelCommand(parser);
 
   parser
     .demandCommand(1, "Please specify a command")

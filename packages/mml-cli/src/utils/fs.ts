@@ -41,6 +41,9 @@ export async function copyDirectory(
 }
 
 export function toPackageName(appName: string): string {
-  const normalized = appName.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  const normalized = appName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-");
   return normalized || "mml-app";
 }
