@@ -3,7 +3,7 @@
 <m-light y="120" x="-150" z="-150" intensity="20000" type="point"></m-light>
 <m-light y="120" x="150" z="-150" intensity="20000" type="point"></m-light>
 
-<m-cube id="floor" rigidbody=true kinematic="true" width="300" depth="300" height=1 y="-0.5" opacity="1" color="blue"></m-cube>
+<m-cube id="floor" rigidbody=true kinematic="true" width="300" depth="300" height=1 y="-0.5" opacity="1"></m-cube>
 
 <!-- Obstacles (static geometry + nav-obstacle for dynamic avoidance) -->
 <m-cube kinematic="true" width="8" height="2" depth="1.5" x="-10" y="1" z="-5" color="#555"></m-cube>
