@@ -146,7 +146,7 @@ function createBuildOptions(opts: SingleGameBuildOptions): esbuild.BuildOptions 
 }
 
 export async function buildSingleGame(options: SingleGameBuildOptions): Promise<void> {
-  const buildOptions = await createBuildOptions(options);
+  const buildOptions = createBuildOptions(options);
   await esbuild.build(buildOptions);
   console.log("✅ Build complete");
 }
@@ -157,7 +157,7 @@ export async function watchSingleGame(
   const srcDir = options.srcDir || path.join(options.projectRoot, "src");
   const assetsSourceDir = options.assetsDir || path.join(options.projectRoot, "assets");
 
-  const buildOptions = await createBuildOptions(options);
+  const buildOptions = createBuildOptions(options);
   const outDir = buildOptions.outdir || path.join(options.projectRoot, "build");
 
   // Node-side persistent document that clients connect to via websocket.
@@ -480,7 +480,7 @@ export async function watchSingleGame(
       console.log(`Dev server started on port ${port}`);
       resolve();
     });
-    app.on("error", (err) => reject(err));
+    server.on("error", (err) => reject(err));
   });
 
   // Initial load into the persistent document (once build output exists).

@@ -110,20 +110,20 @@ export async function createDebugSession(options: DebugSessionOptions): Promise<
             }
           }),
         ).then((values) => {
-          options.onClientLog!({
+          options.onClientLog?.({
             level,
             message: text,
             data: values.length === 1 ? values[0] : values,
           });
         });
       } else {
-        options.onClientLog!({ level, message: text, data });
+        options.onClientLog?.({ level, message: text, data });
       }
     });
 
     // Also capture page errors
     page.on("pageerror", (error: Error) => {
-      options.onClientLog!({
+      options.onClientLog?.({
         level: "error",
         message: `Page error: ${error.message}`,
         data: error.stack,
@@ -264,7 +264,7 @@ export async function createDebugSession(options: DebugSessionOptions): Promise<
     },
 
     async clientExec(code: string): Promise<unknown> {
-      return page.evaluate((evalCode: string) => {
+      return await page.evaluate((evalCode: string) => {
         // Execute in browser context using *indirect* eval to avoid bundler issues
         // (calling via a reference prevents "direct eval" semantics)
         const indirectEval = globalThis.eval as unknown as (c: string) => unknown;
@@ -273,7 +273,7 @@ export async function createDebugSession(options: DebugSessionOptions): Promise<
     },
 
     async getCameraPosition(): Promise<{ x: number; y: number; z: number } | null> {
-      return page.evaluate(() => {
+      return await page.evaluate(() => {
         const w = window as unknown as {
           mmlClient?: {
             getCameraPosition?: () => { x: number; y: number; z: number };
@@ -287,7 +287,7 @@ export async function createDebugSession(options: DebugSessionOptions): Promise<
     },
 
     async getClientDom(): Promise<string> {
-      return page.evaluate(() => {
+      return await page.evaluate(() => {
         // Find the MML iframe (the game content is rendered in an iframe)
         const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
         if (iframe?.contentDocument) {
@@ -301,7 +301,7 @@ export async function createDebugSession(options: DebugSessionOptions): Promise<
     async getClientElements(
       type?: string,
     ): Promise<Array<{ tagName: string; id?: string; class?: string }>> {
-      return page.evaluate((selector: string) => {
+      return await page.evaluate((selector: string) => {
         // Find the MML iframe
         const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
         const doc = iframe?.contentDocument || document;

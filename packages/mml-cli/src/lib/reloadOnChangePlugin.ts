@@ -103,7 +103,8 @@ export function reloadOnChangePlugin(options: {
           });
 
           httpServer.listen(0, "0.0.0.0", () => {
-            const listeningPort = (httpServer!.address() as AddressInfo).port;
+            const addr = httpServer?.address();
+            const listeningPort = addr && typeof addr === "object" ? addr.port : 0;
             log(`WebSocket server listening on port ${listeningPort}`);
             resolve(listeningPort);
           });

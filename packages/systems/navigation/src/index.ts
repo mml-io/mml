@@ -1056,9 +1056,7 @@ class NavigationSystem implements ElementSystem {
     this.config.debug = enabled;
     if (enabled) {
       // Build debug buffers when enabling
-      this.buildDebugBuffers().catch((err) =>
-        console.error("[Navigation] Failed to build debug buffers:", err),
-      );
+      this.buildDebugBuffers();
     }
   }
 

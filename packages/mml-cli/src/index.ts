@@ -5,9 +5,9 @@ import { registerBuildCommand } from "./commands/build";
 import { registerCreateCommand } from "./commands/create";
 import { registerDebugCommand } from "./commands/debug";
 import { registerDeployCommand } from "./commands/deploy";
+import { registerDescribeModelCommand } from "./commands/describeModel";
 import { registerDevCommand } from "./commands/dev";
 import { registerDocsCommand } from "./commands/docs";
-import { registerDescribeModelCommand } from "./commands/describeModel";
 import { registerExamplesCommand } from "./commands/examples";
 
 async function main(): Promise<void> {

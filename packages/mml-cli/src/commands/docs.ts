@@ -19,7 +19,7 @@ interface DocsArgs {
   verbose?: boolean;
 }
 
-async function runDocs(argv: DocsArgs): Promise<void> {
+function runDocs(argv: DocsArgs): void {
   const { element, output, format = "markdown", verbose } = argv;
 
   let content: string;
@@ -87,8 +87,9 @@ async function runDocs(argv: DocsArgs): Promise<void> {
     } else {
       // Output to stdout
       if (verbose) {
-        content = element
-          ? generateElementMarkdown(elementSchemas[element]!)
+        const elementSchema = element ? elementSchemas[element] : undefined;
+        content = elementSchema
+          ? generateElementMarkdown(elementSchema)
           : generateAllElementsMarkdown();
       } else {
         content = generateBriefDocs(element);
@@ -141,8 +142,8 @@ export function registerDocsCommand(yargs: Argv): Argv {
         .example("$0 docs --output ./docs/", "Generate markdown files")
         .example("$0 docs --format json", "Output as JSON")
         .example("$0 docs --format xsd --output mml.xsd", "Generate XSD schema"),
-    async (argv) => {
-      await runDocs(argv);
+    (argv) => {
+      runDocs(argv as DocsArgs);
     },
   );
 }

@@ -1,4 +1,5 @@
 import * as esbuild from "esbuild";
+import { dtsPlugin } from "../../utils/dtsPlugin";
 
 const buildMode = "--build";
 const watchMode = "--watch";
@@ -24,6 +25,7 @@ const buildOptions: esbuild.BuildOptions = {
   packages: "external",
   sourcemap: true,
   target: "node14",
+  plugins: [dtsPlugin()],
 };
 
 switch (mode) {

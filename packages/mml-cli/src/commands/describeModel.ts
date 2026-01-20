@@ -244,9 +244,7 @@ export interface DescribeModelOptions {
  * Take screenshots of a GLB model from multiple angles and return bounds info.
  * Returns the image data as base64.
  */
-export async function describeModel(
-  options: DescribeModelOptions,
-): Promise<DescribeModelResult> {
+export async function describeModel(options: DescribeModelOptions): Promise<DescribeModelResult> {
   const filePath = path.resolve(options.file);
   const { width, height } = parseResolution(options.resolution || defaultResolution);
   const count = options.count !== undefined ? Number(options.count) : defaultCount;
@@ -419,10 +417,7 @@ export function registerDescribeModelCommand(yargs: Argv): Argv {
           default: defaultCount,
         })
         .example("$0 describe-model ./model.glb", "Capture a default isometric screenshot")
-        .example(
-          "$0 describe-model ./model.glb -r 512x512 -n 4",
-          "Capture four angles at 512x512",
-        ),
+        .example("$0 describe-model ./model.glb -r 512x512 -n 4", "Capture four angles at 512x512"),
     async (argv) => {
       await runDescribeModel(argv as DescribeModelArgs);
     },

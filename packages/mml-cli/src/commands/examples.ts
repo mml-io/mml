@@ -9,7 +9,7 @@ interface ExamplesArgs {
   output?: string;
 }
 
-async function runExamples(argv: ExamplesArgs): Promise<void> {
+function runExamples(argv: ExamplesArgs): void {
   const { element, category, output } = argv;
 
   const content = generateExamples(element, category);
@@ -68,8 +68,8 @@ export function registerExamplesCommand(yargs: Argv): Argv {
         .example("$0 examples", "List all examples")
         .example("$0 examples --element m-cube", "Show examples for m-cube")
         .example("$0 examples --output ./docs/examples/", "Write example files"),
-    async (argv) => {
-      await runExamples(argv);
+    (argv) => {
+      runExamples(argv);
     },
   );
 }

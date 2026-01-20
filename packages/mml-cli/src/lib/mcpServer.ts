@@ -399,9 +399,9 @@ export function registerMcpServer(options: McpServerOptions): void {
             ),
           },
           ...result.images.map((img) => ({
-          type: "image" as const,
-          data: img.base64,
-          mimeType: "image/png",
+            type: "image" as const,
+            data: img.base64,
+            mimeType: "image/png",
           })),
         ];
 

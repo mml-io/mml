@@ -1,4 +1,4 @@
-import { ModelLoader } from "@mml-io/model-loader";
+import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
 
 /**
  * Geometry extraction result containing vertices and indices for mesh creation
@@ -390,7 +390,7 @@ export async function extractGeometryFromModel(
 
     // Fallback for browser environment - use ModelLoader if provided
     if (modelLoader) {
-      const modelResult = await modelLoader.load(resolvedSrc);
+      const modelResult = (await modelLoader.load(resolvedSrc)) as ModelLoadResult | null;
 
       if (!modelResult || !modelResult.group) {
         console.error(`${logPrefix} Model result is invalid`);

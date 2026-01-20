@@ -10,7 +10,7 @@ import { inspect } from "util";
 import { type ClientLogEntry, createDebugSession, type DebugSession } from "./debugSession";
 
 export interface DebugApiOptions {
-  app: Application<any>;
+  app: Application;
   gameDocument: EditableNetworkedDOM;
   getConnectedClients: () => Map<string, ClientInfo>;
   host: string;
