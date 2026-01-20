@@ -4,12 +4,7 @@
  */
 
 import { elementSchemas, schemaRegistry } from "./elements";
-import {
-  AttributeGroupSchema,
-  AttributeSchema,
-  ElementSchema,
-  SchemaRegistry,
-} from "./elementSchema";
+import { AttributeGroupSchema, AttributeSchema, ElementSchema } from "./elementSchema";
 
 // ============================================================================
 // Markdown Generation
@@ -288,7 +283,7 @@ export function generateJSON(elementName?: string): string {
 /**
  * Generate examples documentation
  */
-export function generateExamples(elementName?: string, category?: string): string {
+export function generateExamples(elementName?: string, _category?: string): string {
   const lines: string[] = [];
 
   const elementsToShow = elementName

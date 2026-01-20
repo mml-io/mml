@@ -5,12 +5,7 @@
  * It is the source of truth for generating XSD, markdown docs, and JSON schema.
  */
 
-import {
-  AttributeGroupSchema,
-  builtinAttributeGroups,
-  ElementSchema,
-  SchemaRegistry,
-} from "./elementSchema";
+import { builtinAttributeGroups, ElementSchema, SchemaRegistry } from "./elementSchema";
 
 // ============================================================================
 // Geometry Elements
