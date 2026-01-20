@@ -328,6 +328,28 @@ export class MouseManager {
     const onMouseMove = (event: MouseEvent) => {
       this.lastMouseClientX = event.clientX;
       this.lastMouseClientY = event.clientY;
+
+      if (this.inputMapper.inputs.includes("mousemove")) {
+        // todo not an ideal fix as it hardcodes the axis indices and presumption on normalized values
+        const rect = canvas.getBoundingClientRect();
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        // Get mouse position relative to canvas
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        // Convert to normalized coordinates (-1 to 1) relative to center
+        let x = (mouseX - centerX) / centerX;
+        let y = -(mouseY - centerY) / centerY; // Invert Y for intuitive up/down
+
+        // Clamp to -1, 1 range
+        x = Math.max(-1, Math.min(1, x));
+        y = Math.max(-1, Math.min(1, y));
+
+        this.inputMapper.updateInputAxis(2, x);
+        this.inputMapper.updateInputAxis(3, y);
+      }
     };
 
     const onMouseDown = (event: MouseEvent) => {
@@ -870,7 +892,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       instance.props["raycast-distance"] = newValue || undefined;
     },
     "raycast-type": (instance, newValue) => {
-      instance.props["raycast-type"] = newValue || undefined;
+      instance.props["raycast-type"] = (newValue as "camera" | "cursor" | "none") || undefined;
     },
     "raycast-from-socket": (instance, newValue) => {
       instance.props["raycast-from-socket"] = parseBoolAttribute(newValue, false);
@@ -958,8 +980,8 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
         this.controlGraphics?.computeRay({
           mode: "cursor",
           distance: Number(this.props["raycast-distance"]),
-          clientX: this.mouseManager.lastMouseClientX,
-          clientY: this.mouseManager.lastMouseClientY,
+          clientX: this.mouseManager?.lastMouseClientX,
+          clientY: this.mouseManager?.lastMouseClientY,
         }) ?? null;
     }
 
@@ -1057,6 +1079,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     }
 
     this.timer = setInterval(() => {
+      if (!this.inputMapper) return;
       const inputState = this.inputMapper.getInputState();
       this.emitInput(inputState);
     }, this.props["interval-ms"]);
@@ -1113,6 +1136,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     this.controlGraphics = null;
     this.mouseManager?.destroy();
     this.mouseManager = null;
+    this.stopEmitting();
     super.disconnectedCallback();
   }
 }

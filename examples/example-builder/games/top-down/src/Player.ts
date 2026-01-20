@@ -300,7 +300,8 @@ export class Player {
     const control = document.createElement("m-control");
     control.setAttribute("type", "axis");
     control.setAttribute("axis", "2,3"); // Right stick / Arrow keys
-    control.setAttribute("enable-mouse", "true"); // Enable mouse aiming on desktop
+    control.setAttribute("raycast-type", "cursor");
+    control.setAttribute("input", "mousemove"); // Enable mouse aiming on desktop
     control.setAttribute("visible-to", this.connectionId.toString());
     control.addEventListener("input", (event: any) => {
       const inputData = event.detail;
