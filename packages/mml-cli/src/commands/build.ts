@@ -1,7 +1,6 @@
 import path from "path";
 import type { Argv } from "yargs";
 
-// import { mml, MMLPluginOptions } from "@mml-io/esbuild-plugin-mml";
 import { DEFAULT_ASSETS_DIR, DEFAULT_SRC_DIR } from "../config/defaults";
 import { bundleSingleProject } from "../lib/projectBundler";
 import { buildSingleGame, watchSingleGameBuild } from "../lib/singleGameBuilder";
