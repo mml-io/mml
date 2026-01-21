@@ -7,7 +7,7 @@
     "lib": ["es2020", "dom"],
     "sourceMap": true,
     "allowJs": true,
-    "types": ["node", "jest"],
+    "types": ["node", "vitest/globals"],
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
@@ -20,6 +20,6 @@
     "declarationMap": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
+  "include": ["src/**/*", "test/**/*", "./build.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

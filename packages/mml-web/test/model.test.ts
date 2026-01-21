@@ -1,7 +1,7 @@
-import { jest } from "@jest/globals";
 import { ThreeJSResourceManager } from "@mml-io/mml-web-threejs";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { Model } from "../build/index";
 import { registerCustomElementsToWindow } from "../build/index";
@@ -56,7 +56,7 @@ describe("m-model", () => {
     // mock the resource manager to return a handle that immediately loads our test node
     const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const loadModelSpy = jest.spyOn(rm, "loadModel").mockImplementation(() => {
+    const loadModelSpy = vi.spyOn(rm, "loadModel").mockImplementation(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (cb: (result: { animations: any[]; group: THREE.Group } | Error) => void) => {
@@ -86,12 +86,12 @@ describe("m-model", () => {
     const firstMesh = new THREE.Mesh(firstBoxGeometry, firstMaterial);
     const firstGroup = new THREE.Group();
     firstGroup.add(firstMesh);
-    const firstGeometryDisposeSpy = jest.spyOn(firstBoxGeometry, "dispose");
-    const firstMaterialDisposeSpy = jest.spyOn(firstMaterial, "dispose");
+    const firstGeometryDisposeSpy = vi.spyOn(firstBoxGeometry, "dispose");
+    const firstMaterialDisposeSpy = vi.spyOn(firstMaterial, "dispose");
 
     const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const loadModelSpy = jest.spyOn(rm, "loadModel");
+    const loadModelSpy = vi.spyOn(rm, "loadModel");
     loadModelSpy.mockImplementation(() => {
       const handle = {
         onProgress: () => {},

@@ -1,10 +1,10 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 
 import { LoadingProgressManager } from "../build/index";
 
 describe("LoadingProgressManager", () => {
   test("empty", () => {
-    const callback = jest.fn();
+    const callback = vi.fn();
     const manager = new LoadingProgressManager();
     manager.addProgressCallback(callback);
 
@@ -43,7 +43,7 @@ describe("LoadingProgressManager", () => {
   });
 
   test("single asset load", () => {
-    const callback = jest.fn();
+    const callback = vi.fn();
     const manager = new LoadingProgressManager();
     manager.addProgressCallback(callback);
 
@@ -122,7 +122,7 @@ describe("LoadingProgressManager", () => {
   });
 
   test("single asset error", () => {
-    const callback = jest.fn();
+    const callback = vi.fn();
     const manager = new LoadingProgressManager();
     manager.addProgressCallback(callback);
 
@@ -203,7 +203,7 @@ describe("LoadingProgressManager", () => {
   });
 
   test("multi asset load", () => {
-    const callback = jest.fn();
+    const callback = vi.fn();
     const manager = new LoadingProgressManager();
     manager.addProgressCallback(callback);
 
@@ -309,7 +309,7 @@ describe("LoadingProgressManager", () => {
   });
 
   test("inner document load", () => {
-    const callback = jest.fn();
+    const callback = vi.fn();
     const manager = new LoadingProgressManager();
     manager.addProgressCallback(callback);
 
@@ -319,7 +319,7 @@ describe("LoadingProgressManager", () => {
     expect(callback).toHaveBeenCalledTimes(1);
 
     const documentRef1 = {};
-    const documentRef1LoadingProgressCallback = jest.fn();
+    const documentRef1LoadingProgressCallback = vi.fn();
     const documentRef1LoadingProgressManager = new LoadingProgressManager();
     documentRef1LoadingProgressManager.addProgressCallback(() => {
       documentRef1LoadingProgressCallback();

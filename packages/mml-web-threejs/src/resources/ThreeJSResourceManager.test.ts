@@ -1,16 +1,16 @@
-import { jest } from "@jest/globals";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import * as modelLoaderMock from "./__mocks__/model-loader";
 
-jest.mock("@mml-io/model-loader", () => modelLoaderMock);
+vi.mock("@mml-io/model-loader", () => modelLoaderMock);
 
 import { ThreeJSImageLoader } from "./ThreeJSImageLoader";
 import { ThreeJSModelResource } from "./ThreeJSModelResource";
 import { ThreeJSResourceManager } from "./ThreeJSResourceManager";
 
 // Avoid GLTF parsing path and KTX2 detection by mocking ModelLoader.load to resolve immediately
-jest.mock("@mml-io/model-loader", () => {
+vi.mock("@mml-io/model-loader", () => {
   return {
     ModelLoader: class {
       load(): Promise<{ group: THREE.Group; animations: any[] }> {
@@ -25,7 +25,7 @@ describe("ThreeJSResourceManager", () => {
     const rm = new ThreeJSResourceManager();
     const url = "/image.png";
 
-    const loaderSpy = jest.spyOn(ThreeJSImageLoader, "load").mockImplementation((u, onLoad) => {
+    const loaderSpy = vi.spyOn(ThreeJSImageLoader, "load").mockImplementation((u, onLoad) => {
       const img = document.createElement("img") as any as HTMLImageElement;
       Object.defineProperty(img, "width", { value: 2 });
       Object.defineProperty(img, "height", { value: 2 });
@@ -77,7 +77,7 @@ describe("ThreeJSResourceManager", () => {
 
     // Force ThreeJSModelResource to use our fake loader to avoid GLTF parsing/webgl
     (ThreeJSModelResource as any).modelLoader = {
-      load: jest.fn(() => Promise.resolve({ group: new THREE.Group(), animations: [] })),
+      load: vi.fn(() => Promise.resolve({ group: new THREE.Group(), animations: [] })),
     };
     const h1 = rm.loadModel(url);
     const h2 = rm.loadModel(url);

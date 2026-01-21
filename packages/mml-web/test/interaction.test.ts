@@ -1,6 +1,6 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { Interaction } from "../build/index";
 import { registerCustomElementsToWindow } from "../build/index";
@@ -30,8 +30,8 @@ describe("m-interaction", () => {
     const { scene, remoteDocument } = await createTestScene();
     const element = document.createElement("m-interaction") as Interaction;
     expect(Array.from((scene as any).interactions)).toEqual([]);
-    const addInteractionSpy = jest.spyOn(scene, "addInteraction");
-    const removeInteractionSpy = jest.spyOn(scene, "removeInteraction");
+    const addInteractionSpy = vi.spyOn(scene, "addInteraction");
+    const removeInteractionSpy = vi.spyOn(scene, "removeInteraction");
     remoteDocument.append(element);
 
     expect(addInteractionSpy).toHaveBeenCalledTimes(1);
@@ -50,8 +50,8 @@ describe("m-interaction", () => {
     const { scene, remoteDocument } = await createTestScene();
     const element = document.createElement("m-interaction") as Interaction;
     expect(Array.from((scene as any).interactions)).toEqual([]);
-    const addInteractionSpy = jest.spyOn(scene, "addInteraction");
-    const updateInteractionSpy = jest.spyOn(scene, "updateInteraction");
+    const addInteractionSpy = vi.spyOn(scene, "addInteraction");
+    const updateInteractionSpy = vi.spyOn(scene, "updateInteraction");
     remoteDocument.append(element);
 
     expect(addInteractionSpy).toHaveBeenCalledTimes(1);
@@ -70,8 +70,8 @@ describe("m-interaction", () => {
   test("interaction - update from ancestor", async () => {
     const { element, scene } = await createSceneAttachedElement<Interaction>("m-group");
 
-    const addInteractionSpy = jest.spyOn(scene, "addInteraction");
-    const updateInteractionSpy = jest.spyOn(scene, "updateInteraction");
+    const addInteractionSpy = vi.spyOn(scene, "addInteraction");
+    const updateInteractionSpy = vi.spyOn(scene, "updateInteraction");
 
     const innerGroup = document.createElement("m-group");
     element.appendChild(innerGroup);

@@ -1,4 +1,11 @@
-const textDecoder = new TextDecoder();
+let textDecoder: TextDecoder | null = null;
+
+function getTextDecoder(): TextDecoder {
+  if (!textDecoder) {
+    textDecoder = new TextDecoder();
+  }
+  return textDecoder;
+}
 
 export class BufferReader {
   private buffer: Uint8Array;
@@ -63,7 +70,9 @@ export class BufferReader {
     }
 
     // Slow path - decode the string using TextDecoder
-    const result = textDecoder.decode(this.buffer.subarray(this.offset, this.offset + readLength));
+    const result = getTextDecoder().decode(
+      this.buffer.subarray(this.offset, this.offset + readLength),
+    );
     this.offset += readLength;
     return result;
   }
@@ -91,7 +100,9 @@ export class BufferReader {
     }
 
     // Slow path - decode the string using TextDecoder
-    const result = textDecoder.decode(this.buffer.subarray(this.offset, this.offset + readLength));
+    const result = getTextDecoder().decode(
+      this.buffer.subarray(this.offset, this.offset + readLength),
+    );
     this.offset += readLength;
     return [result, negativeLength];
   }

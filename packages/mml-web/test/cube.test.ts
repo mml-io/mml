@@ -1,6 +1,6 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { Cube, registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
@@ -147,9 +147,9 @@ describe("m-cube", () => {
   test("collide - remove and add", async () => {
     const { scene, remoteDocument } = await createTestScene();
     const element = document.createElement("m-cube") as Cube;
-    const addColliderSpy = jest.spyOn(scene, "addCollider");
-    const updateColliderSpy = jest.spyOn(scene, "updateCollider");
-    const removeColliderSpy = jest.spyOn(scene, "removeCollider");
+    const addColliderSpy = vi.spyOn(scene, "addCollider");
+    const updateColliderSpy = vi.spyOn(scene, "updateCollider");
+    const removeColliderSpy = vi.spyOn(scene, "removeCollider");
 
     expect(Array.from((scene as any).colliders)).toEqual([]);
     remoteDocument.append(element);
@@ -191,7 +191,7 @@ describe("m-cube", () => {
     expect(Array.from((scene as any).colliders)).toEqual([cubeMesh]);
     expect(Array.from((scene as any).colliders)).toEqual([cubeMesh]);
 
-    const updateColliderSpy = jest.spyOn(scene, "updateCollider");
+    const updateColliderSpy = vi.spyOn(scene, "updateCollider");
     expect(updateColliderSpy).toHaveBeenCalledTimes(0);
 
     element.setAttribute("y", "1");
@@ -208,8 +208,8 @@ describe("m-cube", () => {
   test("collide - update from ancestor", async () => {
     const { scene, element } = await createSceneAttachedElement<Cube>("m-group");
 
-    const addColliderSpy = jest.spyOn(scene, "addCollider");
-    const updateColliderSpy = jest.spyOn(scene, "updateCollider");
+    const addColliderSpy = vi.spyOn(scene, "addCollider");
+    const updateColliderSpy = vi.spyOn(scene, "updateCollider");
 
     const innerGroup = document.createElement("m-group");
     element.appendChild(innerGroup);

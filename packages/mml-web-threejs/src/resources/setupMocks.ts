@@ -1,6 +1,8 @@
-// Mocks to be used via jest.mock in test files as needed
+// Mocks to be used via vi.mock in test files as needed
+import { vi } from "vitest";
+
 import * as modelLoaderMock from "./__mocks__/model-loader";
 import * as skeletonUtilsMock from "./__mocks__/SkeletonUtils.js";
 
-jest.mock("@mml-io/model-loader", () => modelLoaderMock);
-jest.mock("three/examples/jsm/utils/SkeletonUtils.js", () => skeletonUtilsMock);
+vi.mock("@mml-io/model-loader", () => modelLoaderMock);
+vi.mock("three/examples/jsm/utils/SkeletonUtils.js", () => skeletonUtilsMock);

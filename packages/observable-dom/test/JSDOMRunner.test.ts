@@ -83,7 +83,7 @@ describe("JSDOMRunner", () => {
                                 {
                                   childNodes: [
                                     {
-                                      node: "fedropshadow",
+                                      node: "feDropShadow",
                                     },
                                   ],
                                   node: "linearGradient",

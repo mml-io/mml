@@ -1,5 +1,5 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
+import { vi } from "vitest";
 
 import { EulXYZ, PositionProbe, registerCustomElementsToWindow, Vect3 } from "../build/index";
 import { createSceneAttachedElement } from "./scene-test-utils";
@@ -29,7 +29,7 @@ describe("m-position-probe", () => {
     element.setAttribute("range", "10");
     element.setAttribute("interval", "100");
 
-    const sendPositionSpy = jest.spyOn(scene, "getUserPositionAndRotation");
+    const sendPositionSpy = vi.spyOn(scene, "getUserPositionAndRotation");
     sendPositionSpy.mockImplementation(() => ({
       position: new Vect3(1, 2, 3),
       rotation: new EulXYZ(0, 45, 0),
@@ -99,7 +99,7 @@ describe("m-position-probe", () => {
     element.setAttribute("interval", "100");
     group.append(element);
 
-    const sendPositionSpy = jest.spyOn(scene, "getUserPositionAndRotation");
+    const sendPositionSpy = vi.spyOn(scene, "getUserPositionAndRotation");
     sendPositionSpy.mockImplementation(() => ({
       position: new Vect3(11, 22, 33),
       rotation: new EulXYZ(0, 45, 0),

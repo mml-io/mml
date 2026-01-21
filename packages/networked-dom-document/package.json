@@ -16,7 +16,7 @@
     "iterate": "tsx ./build.ts --watch",
     "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "vitest run"
   },
   "dependencies": {
     "@mml-io/networked-dom-protocol": "^0.23.1",

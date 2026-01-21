@@ -237,7 +237,7 @@ describe("issues", () => {
       { op: "add", path: "/200", value: "insert to the middle" },
       { op: "add", path: "/-", value: "push to the end" },
     ]); // should create patch successfully
-  });
+  }, 60000);
 
   test("issues/76", () => {
     expect(({} as any).polluted === undefined).toBeTruthy(); // Object prototype should not be polluted

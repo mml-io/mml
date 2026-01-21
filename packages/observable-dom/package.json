@@ -16,16 +16,17 @@
     "iterate": "tsx ./build.ts --watch",
     "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "vitest run"
   },
   "dependencies": {
     "@mml-io/observable-dom-common": "^0.23.1",
-    "canvas": "3.2.0",
-    "jsdom": "26.1.0",
+    "jsdom": "27.4.0",
+    "canvas": "npm:@napi-rs/canvas@0.1.88",
     "node-fetch": "3.3.2"
   },
   "devDependencies": {
     "@types/jsdom": "^27.0.0",
-    "@types/node-fetch": "2.6.13"
+    "@types/node-fetch": "2.6.13",
+    "formdata-polyfill": "^4.0.10"
   }
 }

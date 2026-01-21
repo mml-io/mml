@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { afterEach, vi } from "vitest";
 
 import { TestCaseNetworkedDOMDocument } from "./TestCaseNetworkedDOMDocument";
 
@@ -7,8 +7,13 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
   ({ version }) => {
     const isV01 = version === 0.1;
 
+    afterEach(() => {
+      // Clean up DOM to prevent ID collisions between tests
+      document.body.innerHTML = "";
+    });
+
     test("regression test for hidden-from handling", async () => {
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const testCase = new TestCaseNetworkedDOMDocument();
       const client1 = testCase.createClient(isV01);
       await client1.onConnectionOpened();

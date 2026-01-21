@@ -124,13 +124,16 @@ export const dtsPlugin = (opts: DTSPluginOpts = {}) =>
 
       // finish compilation
       build.onEnd(() => {
+        // Filter out test files from declaration generation
+        const sourceFiles = files.filter((f) => !f.includes(".test.") && !f.includes(".spec."));
+
         const finalprogram = copts.incremental
           ? ts.createIncrementalProgram({
               options: copts,
               host,
-              rootNames: files,
+              rootNames: sourceFiles,
             })
-          : ts.createProgram(files, copts, host);
+          : ts.createProgram(sourceFiles, copts, host);
 
         const start = Date.now();
         const emit = finalprogram.emit();

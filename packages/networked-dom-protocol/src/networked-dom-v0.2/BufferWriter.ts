@@ -1,4 +1,11 @@
-const textEncoder = new TextEncoder();
+let textEncoder: TextEncoder | null = null;
+
+function getTextEncoder(): TextEncoder {
+  if (!textEncoder) {
+    textEncoder = new TextEncoder();
+  }
+  return textEncoder;
+}
 
 export class BufferWriter {
   private buffer: Uint8Array;
@@ -139,7 +146,7 @@ export class BufferWriter {
       const varintLength = offsetAfterVarint - originalOffset;
 
       const writeBuffer = new Uint8Array(this.buffer.buffer, this.offset);
-      const { read, written } = textEncoder.encodeInto(value, writeBuffer);
+      const { read, written } = getTextEncoder().encodeInto(value, writeBuffer);
       if (read !== value.length) {
         // Need more space and try again
         this.expandBuffer();

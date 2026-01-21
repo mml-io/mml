@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 import EventEmitter from "events";
 
 import { Writeable } from "./types";
@@ -8,18 +8,18 @@ export function createMockVideoElement(): Writeable<Partial<HTMLVideoElement>> &
 } {
   const mockVideoElement = {
     eventEmitter: new EventEmitter(),
-    addEventListener: jest.fn().mockImplementation((event: string, callback: any) => {
+    addEventListener: vi.fn().mockImplementation((event: string, callback: any) => {
       mockVideoElement.eventEmitter.on(event, callback);
     }),
-    removeEventListener: jest.fn().mockImplementation((event: string, callback: any) => {
+    removeEventListener: vi.fn().mockImplementation((event: string, callback: any) => {
       mockVideoElement.eventEmitter.off(event, callback);
     }),
-    play: jest.fn().mockImplementation(() => {
+    play: vi.fn().mockImplementation(() => {
       mockVideoElement.paused = false;
       return Promise.resolve();
     }) as () => Promise<void>,
-    load: jest.fn(),
-    pause: jest.fn().mockImplementation(() => {
+    load: vi.fn(),
+    pause: vi.fn().mockImplementation(() => {
       mockVideoElement.paused = true;
       return Promise.resolve();
     }) as () => Promise<void>,

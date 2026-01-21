@@ -134,7 +134,7 @@ app.get("/", (req, res) => {
 app.use("/assets", expressStatic("./src/assets"));
 
 app.ws("/:pathName", (ws, req) => {
-  const { pathName } = req.params;
+  const pathName = req.params.pathName as string;
 
   const currentDocument = ensureDocumentLoaded(pathName);
 

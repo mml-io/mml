@@ -1,5 +1,5 @@
-import { jest } from "@jest/globals";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
+import { afterEach, vi } from "vitest";
 
 import {
   buildScenario,
@@ -10,12 +10,17 @@ import {
 import { normalizeV02ClientHtml, waitFor } from "./test-util";
 import { TestCaseNetworkedDOMDocument } from "./TestCaseNetworkedDOMDocument";
 
-jest.setTimeout(20000);
+vi.setConfig({ testTimeout: 20000 });
 
 describe.each([{ version: 0.1 }, { version: 0.2 }])(
   `EditableNetworkedDOM <> NetworkedDOMWebsocket - fuzzed hierarchy updates - $version`,
   ({ version }) => {
     const isV01 = version === 0.1;
+
+    afterEach(() => {
+      // Clean up DOM to prevent ID collisions between tests
+      document.body.innerHTML = "";
+    });
 
     test("fuzz add/remove with reload and multiple clients", async () => {
       const scenarioA = buildScenario(1234, 12, 3);

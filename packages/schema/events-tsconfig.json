@@ -8,7 +8,7 @@
     "sourceMap": true,
     "allowJs": true,
     "skipLibCheck": true,
-    "types": ["node", "jest"],
+    "types": ["node"],
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
@@ -16,6 +16,6 @@
     "outDir": "./build",
     "incremental": true
   },
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["**/build/*", "types-src"]
 }

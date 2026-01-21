@@ -18,6 +18,6 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
+  "include": ["src/**/*", "test/**/*", "./build.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

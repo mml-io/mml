@@ -15,21 +15,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Get environment variables for sharding
-const SHARD_INDEX = parseInt(process.env.JEST_SHARD_INDEX || "0", 10);
-const SHARD_COUNT = parseInt(process.env.JEST_SHARD_COUNT || "1", 10);
+const SHARD_INDEX = parseInt(
+  process.env.VITEST_SHARD_INDEX || process.env.JEST_SHARD_INDEX || "0",
+  10,
+);
+const SHARD_COUNT = parseInt(
+  process.env.VITEST_SHARD_COUNT || process.env.JEST_SHARD_COUNT || "1",
+  10,
+);
 const RENDERER = process.env.RENDERER || "threejs";
 const HEADLESS = process.env.HEADLESS || "true";
 
 if (SHARD_INDEX >= SHARD_COUNT) {
   console.error(
-    `JEST_SHARD_INDEX (${SHARD_INDEX}) must be less than JEST_SHARD_COUNT (${SHARD_COUNT})`,
+    `VITEST_SHARD_INDEX (${SHARD_INDEX}) must be less than VITEST_SHARD_COUNT (${SHARD_COUNT})`,
   );
   process.exit(1);
 }
 
 if (SHARD_INDEX < 0 || SHARD_COUNT < 1) {
   console.error(
-    `Invalid sharding parameters: JEST_SHARD_INDEX=${SHARD_INDEX}, JEST_SHARD_COUNT=${SHARD_COUNT}`,
+    `Invalid sharding parameters: VITEST_SHARD_INDEX=${SHARD_INDEX}, VITEST_SHARD_COUNT=${SHARD_COUNT}`,
   );
   process.exit(1);
 }
@@ -58,15 +64,15 @@ if (shardedFiles.length === 0) {
   process.exit(0);
 }
 
-// Convert to full paths for Jest, using forward slashes for cross-platform compatibility
+// Convert to full paths for Vitest, using forward slashes for cross-platform compatibility
 const testPaths = shardedFiles.map((file) => path.join(testDir, file).replace(/\\/g, "/"));
 
-// Run Jest with the sharded test files
-const jestArgs = ["--runInBand", ...testPaths];
+// Run Vitest with the sharded test files
+const vitestArgs = ["run", ...testPaths];
 
-console.log(`Running Jest with args: ${jestArgs.join(" ")}`);
+console.log(`Running Vitest with args: ${vitestArgs.join(" ")}`);
 
-const jestProcess = spawn("jest", jestArgs, {
+const vitestProcess = spawn("vitest", vitestArgs, {
   stdio: "inherit",
   env: {
     ...process.env,
@@ -76,6 +82,6 @@ const jestProcess = spawn("jest", jestArgs, {
   shell: true,
 });
 
-jestProcess.on("exit", (code) => {
+vitestProcess.on("exit", (code) => {
   process.exit(code);
 });

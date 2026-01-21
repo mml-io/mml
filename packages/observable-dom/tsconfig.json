@@ -9,9 +9,10 @@
     "allowJs": true,
     "types": [
       "node",
-      "jest"
+      "vitest/globals"
     ],
     "strictNullChecks": true,
+    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "downlevelIteration": true,
@@ -20,6 +21,6 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*", "test/**/*", "./build.ts", "./jest.config.ts"],
+  "include": ["src/**/*", "test/**/*", "./build.ts", "./vitest.config.ts"],
   "exclude": ["**/build/*", "types-src"]
 }

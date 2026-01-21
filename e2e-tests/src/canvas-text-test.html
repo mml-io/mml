@@ -1,0 +1,55 @@
+<m-plane color="white" width="15" height="15" rx="-90"></m-plane>
+<m-plane color="black" width="15" height="15" rx="0"></m-plane>
+<m-light type="point" intensity="900" x="10" y="10" z="10"></m-light>
+<m-image id="text-image" y="4.25" emissive="1" width="5" z="3"></m-image>
+<script>
+  function generateTextImage(targetImage) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 512;
+    canvas.height = 512;
+
+    ctx.fillStyle = "#1a1a2e";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 48px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Hello MML", canvas.width / 2, 80);
+
+    ctx.font = "32px Arial, sans-serif";
+    ctx.fillStyle = "#00ff88";
+    ctx.fillText("Canvas Text", canvas.width / 2, 150);
+
+    ctx.font = "24px Arial, sans-serif";
+    ctx.fillStyle = "#ff6b6b";
+    ctx.textAlign = "left";
+    ctx.fillText("Left aligned", 20, 220);
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#4ecdc4";
+    ctx.fillText("Right aligned", canvas.width - 20, 280);
+
+    ctx.textAlign = "center";
+    ctx.font = "italic 28px Georgia, serif";
+    ctx.fillStyle = "#ffe66d";
+    ctx.fillText("Styled Text", canvas.width / 2, 350);
+
+    ctx.font = "20px monospace";
+    ctx.fillStyle = "#a29bfe";
+    ctx.fillText("const code = 'text';", canvas.width / 2, 420);
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.font = "bold 36px Arial, sans-serif";
+    ctx.strokeText("Outline", canvas.width / 2, 480);
+
+    const dataUrl = canvas.toDataURL("image/png");
+    targetImage.setAttribute("src", dataUrl);
+  }
+
+  const textImage = document.getElementById("text-image");
+  generateTextImage(textImage);
+</script>

@@ -25,7 +25,9 @@ export class CanvasText {
 
   constructor() {
     this.canvas = document.createElement("canvas");
-    this.context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
+    this.context = this.canvas.getContext("2d", {
+      willReadFrequently: true,
+    }) as CanvasRenderingContext2D;
   }
 
   public renderText(message: string, options: CanvasTextOptions): HTMLCanvasElement {

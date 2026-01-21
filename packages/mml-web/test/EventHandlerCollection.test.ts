@@ -1,20 +1,19 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 
 import { EventHandlerCollection } from "../build/index";
 
 function mouseClickEvent(): MouseEvent {
   return new MouseEvent("click", {
-    view: window,
     bubbles: true,
     cancelable: true,
   });
 }
 
-const clickFunc = jest.fn();
+const clickFunc = vi.fn();
 const mockTarget = {
-  addEventListener: jest.fn(),
-  dispatchEvent: jest.fn() as jest.MockedFunction<() => boolean>,
-  removeEventListener: jest.fn(),
+  addEventListener: vi.fn(),
+  dispatchEvent: vi.fn() as ReturnType<typeof vi.fn<() => boolean>>,
+  removeEventListener: vi.fn(),
 };
 
 describe("EventCollection", () => {

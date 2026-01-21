@@ -1,11 +1,11 @@
-import { jest } from "@jest/globals";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import * as modelLoaderMock from "./__mocks__/model-loader";
 import * as skeletonUtilsMock from "./__mocks__/SkeletonUtils.js";
 
-jest.mock("@mml-io/model-loader", () => modelLoaderMock);
-jest.mock("three/examples/jsm/utils/SkeletonUtils.js", () => skeletonUtilsMock);
+vi.mock("@mml-io/model-loader", () => modelLoaderMock);
+vi.mock("three/examples/jsm/utils/SkeletonUtils.js", () => skeletonUtilsMock);
 
 import { ThreeJSModelResource } from "./ThreeJSModelResource";
 
@@ -31,11 +31,11 @@ function getAllTextures(root: THREE.Object3D): THREE.Texture[] {
 
 describe("ThreeJSModelResource", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("propagates load to handles; resizes oversized textures", async () => {
-    const onRemove = jest.fn();
+    const onRemove = vi.fn();
 
     // Patch static loader to avoid GLTF parsing and still provide a large texture
     const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -50,7 +50,7 @@ describe("ThreeJSModelResource", () => {
     const group = new THREE.Group();
     group.add(mesh);
 
-    const fakeLoad: any = jest.fn(() =>
+    const fakeLoad: any = vi.fn(() =>
       Promise.resolve({ group, animations: [new THREE.AnimationClip("clip", 1, [])] }),
     );
     (ThreeJSModelResource as any).modelLoader = { load: fakeLoad };
@@ -81,10 +81,10 @@ describe("ThreeJSModelResource", () => {
   });
 
   test("aborts underlying load when last handle disposed before resolution", () => {
-    const onRemove = jest.fn();
+    const onRemove = vi.fn();
 
     let capturedAC: AbortController | null = null;
-    const fakeLoad = jest.fn(
+    const fakeLoad = vi.fn(
       (_url: string, _onProgress: (l: number, t: number) => void, ac: AbortController) => {
         capturedAC = ac;
         return new Promise(() => {});
@@ -96,7 +96,7 @@ describe("ThreeJSModelResource", () => {
     const h = resource.createHandle();
 
     expect(capturedAC).not.toBeNull();
-    const spy = jest.spyOn(capturedAC!, "abort");
+    const spy = vi.spyOn(capturedAC!, "abort");
 
     h.dispose();
     expect(spy).toHaveBeenCalled();

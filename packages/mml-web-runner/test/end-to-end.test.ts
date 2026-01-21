@@ -1,4 +1,3 @@
-import { jest } from "@jest/globals";
 import { MMLScene, registerCustomElementsToWindow } from "@mml-io/mml-web";
 import {
   StandaloneThreeJSAdapter,
@@ -6,23 +5,24 @@ import {
 } from "@mml-io/mml-web-threejs-standalone";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import { IframeObservableDOMFactory } from "@mml-io/networked-dom-web-runner";
+import { vi } from "vitest";
 
 import { MMLWebRunnerClient } from "../build/index";
 import { waitFor } from "./test-util";
 
-jest.unstable_mockModule("three", () => {
-  const THREE = jest.requireActual("three") as typeof import("three");
+vi.mock("three", async () => {
+  const THREE = (await vi.importActual("three")) as typeof import("three");
   return {
     ...THREE,
-    WebGLRenderer: jest.fn().mockReturnValue({
+    WebGLRenderer: vi.fn().mockReturnValue({
       domElement: document.createElement("div"), // create a fake div
-      setSize: jest.fn(),
-      setPixelRatio: jest.fn(),
-      setClearColor: jest.fn(),
-      render: jest.fn(),
+      setSize: vi.fn(),
+      setPixelRatio: vi.fn(),
+      setClearColor: vi.fn(),
+      render: vi.fn(),
       shadowMap: {
         enabled: false,
-        type: THREE.PCFSoftShadowMap,
+        type: THREE.PCFShadowMap,
       },
     }),
   };

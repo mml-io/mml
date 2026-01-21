@@ -1,3 +1,5 @@
+import { afterEach } from "vitest";
+
 import { formatHTML } from "./test-util";
 import { TestCaseNetworkedDOMDocument } from "./TestCaseNetworkedDOMDocument";
 
@@ -5,6 +7,11 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
   `EditableNetworkedDOM <> NetworkedDOMWebsocket - m-overlay + text - $version`,
   ({ version }) => {
     const isV01 = version === 0.1;
+
+    afterEach(() => {
+      // Clean up DOM to prevent ID collisions between tests
+      document.body.innerHTML = "";
+    });
 
     test("svg elements with self-closing tags", async () => {
       const testCase = new TestCaseNetworkedDOMDocument(false);

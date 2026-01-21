@@ -1,16 +1,16 @@
-import { jest } from "@jest/globals";
 import fs from "fs";
 import path from "path";
-import url from "url";
+import { vi } from "vitest";
 
 import { ModelLoader } from "../build/index";
 
 // Stub the DracoLoader to avoid errors when attempting to load Workers
-jest.spyOn(ModelLoader as any, "getDracoLoader").mockImplementation(() => {
+vi.spyOn(ModelLoader as any, "getDracoLoader").mockImplementation(() => {
   return {};
 });
 
-const dirname = url.fileURLToPath(new URL(".", import.meta.url));
+// Use process.cwd() since import.meta.url doesn't work correctly in jsdom environment
+const dirname = path.join(process.cwd(), "test");
 
 describe("model-loader", () => {
   test("load glb", async () => {
