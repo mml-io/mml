@@ -24,6 +24,7 @@ export * from "./transform-widget";
 export * from "./time";
 export * from "./utils/calculateContentSize";
 export * from "./utils/EventHandlerCollection";
+export * from "./fonts/FontRegistry";
 export * from "./video";
 export {
   NetworkedDOMWebsocket,

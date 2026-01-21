@@ -1,3 +1,5 @@
+import { getDefaultCanvasFontFamily } from "../fonts/FontRegistry";
+
 export type RGBA = {
   r: number;
   g: number;
@@ -35,7 +37,7 @@ export class CanvasText {
     const textColor = options.textColorRGB255A1;
     const backgroundColor = options.backgroundColorRGB255A1 || { r: 255, g: 255, b: 255, a: 1 };
     const padding = options.paddingPx || 0;
-    const font = options.font || "Arial";
+    const font = options.font || getDefaultCanvasFontFamily() || "Arial";
     const fontString = (options.bold ? "bold " : "") + fontsize + "px " + font;
 
     // calculate text alignment offset

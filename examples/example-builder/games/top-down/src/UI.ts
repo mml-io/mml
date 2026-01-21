@@ -1,3 +1,20 @@
+function registerFont(
+  family: string,
+  src: string,
+  options?: { filenameHint?: string; default?: boolean },
+): void {
+  // Check if font is already registered
+  const existing = document.querySelector(`m-font[family="${family}"]`);
+  if (existing) return;
+
+  const fontEl = document.createElement("m-font");
+  fontEl.setAttribute("family", family);
+  fontEl.setAttribute("src", src);
+  if (options?.filenameHint) fontEl.setAttribute("filename", options.filenameHint);
+  if (options?.default) fontEl.setAttribute("default", "true");
+  document.body.appendChild(fontEl);
+}
+
 export class PlayerHUD {
   private hudOverlay: HTMLElement;
   private healthBarFill: SVGRectElement;
@@ -18,6 +35,11 @@ export class PlayerHUD {
   }
 
   private create(): void {
+    registerFont("Escom-Bold", "/assets/fonts/Escom-Bold Regular.ttf", {
+      filenameHint: "Escom-Bold Regular.ttf",
+      default: true,
+    });
+
     this.hudOverlay.setAttribute("id", `player-hud-${this.connectionId}`);
     this.hudOverlay.setAttribute("anchor", "bottom-left");
     this.hudOverlay.setAttribute("offset-x", "20");
@@ -43,7 +65,6 @@ export class PlayerHUD {
     healthLabel.setAttribute("x", "15");
     healthLabel.setAttribute("y", "30");
     healthLabel.setAttribute("fill", "#ffffff");
-    healthLabel.setAttribute("font-family", "monospace");
     healthLabel.setAttribute("font-size", "14");
     healthLabel.setAttribute("font-weight", "bold");
     healthLabel.textContent = "HEALTH";
@@ -76,7 +97,6 @@ export class PlayerHUD {
     this.healthText.setAttribute("x", "225");
     this.healthText.setAttribute("y", "51");
     this.healthText.setAttribute("fill", "#ffffff");
-    this.healthText.setAttribute("font-family", "monospace");
     this.healthText.setAttribute("font-size", "14");
     this.healthText.setAttribute("font-weight", "bold");
     this.healthText.textContent = `${this.maxHealth}`;
@@ -87,7 +107,6 @@ export class PlayerHUD {
     scoreLabel.setAttribute("x", "15");
     scoreLabel.setAttribute("y", "80");
     scoreLabel.setAttribute("fill", "#ffffff");
-    scoreLabel.setAttribute("font-family", "monospace");
     scoreLabel.setAttribute("font-size", "14");
     scoreLabel.setAttribute("font-weight", "bold");
     scoreLabel.textContent = "KILLS:";
@@ -98,7 +117,6 @@ export class PlayerHUD {
     this.scoreText.setAttribute("x", "75");
     this.scoreText.setAttribute("y", "80");
     this.scoreText.setAttribute("fill", "#ffcc00");
-    this.scoreText.setAttribute("font-family", "monospace");
     this.scoreText.setAttribute("font-size", "18");
     this.scoreText.setAttribute("font-weight", "bold");
     this.scoreText.textContent = "0";
@@ -192,7 +210,6 @@ export class DeathScreen {
     deathTitle.setAttribute("y", "60");
     deathTitle.setAttribute("text-anchor", "middle");
     deathTitle.setAttribute("fill", "#ff0000");
-    deathTitle.setAttribute("font-family", "monospace");
     deathTitle.setAttribute("font-size", "36");
     deathTitle.setAttribute("font-weight", "bold");
     deathTitle.textContent = "YOU DIED";
@@ -204,7 +221,6 @@ export class DeathScreen {
     this.killCountText.setAttribute("y", "100");
     this.killCountText.setAttribute("text-anchor", "middle");
     this.killCountText.setAttribute("fill", "#ffffff");
-    this.killCountText.setAttribute("font-family", "monospace");
     this.killCountText.setAttribute("font-size", "18");
     this.killCountText.textContent = "Zombies killed: 0";
     svg.appendChild(this.killCountText);
@@ -215,7 +231,6 @@ export class DeathScreen {
     this.respawnTimerText.setAttribute("y", "150");
     this.respawnTimerText.setAttribute("text-anchor", "middle");
     this.respawnTimerText.setAttribute("fill", "#aaaaaa");
-    this.respawnTimerText.setAttribute("font-family", "monospace");
     this.respawnTimerText.setAttribute("font-size", "16");
     this.respawnTimerText.textContent = "Respawning in 3...";
     svg.appendChild(this.respawnTimerText);

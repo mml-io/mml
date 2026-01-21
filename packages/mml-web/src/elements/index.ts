@@ -11,6 +11,7 @@ export * from "./Frame";
 export * from "./Group";
 export * from "./Image";
 export * from "./Interaction";
+export * from "./Font";
 export * from "./Label";
 export * from "./Light";
 export * from "./Link";

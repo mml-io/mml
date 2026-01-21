@@ -11,6 +11,7 @@ import { Frame } from "./Frame";
 import { Group } from "./Group";
 import { Image } from "./Image";
 import { Interaction } from "./Interaction";
+import { Font } from "./Font";
 import { Label } from "./Label";
 import { Light } from "./Light";
 import { Link } from "./Link";
@@ -43,6 +44,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   targetWindow.customElements.define(MouseBehavior.tagName, MouseBehavior);
   targetWindow.customElements.define(Prompt.tagName, Prompt);
   targetWindow.customElements.define(Link.tagName, Link);
+  targetWindow.customElements.define(Font.tagName, Font);
   targetWindow.customElements.define(Overlay.tagName, Overlay);
   targetWindow.customElements.define(Sphere.tagName, Sphere);
   targetWindow.customElements.define(Image.tagName, Image);
