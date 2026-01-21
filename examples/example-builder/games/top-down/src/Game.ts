@@ -10,6 +10,7 @@ interface PlayerGameState {
   zombiesKilled: number;
   maxSimultaneousZombies: number;
   currentZombieCount: number;
+  currentRound: number;
 }
 
 export class Game {
@@ -134,11 +135,14 @@ export class Game {
           zombiesKilled: 0,
           maxSimultaneousZombies: CONSTANTS.INITIAL_ZOMBIE_COUNT,
           currentZombieCount: 0,
+          currentRound: 1,
         });
 
         // Create UI elements for this player
         const hud = new PlayerHUD(connectionId, CONSTANTS.PLAYER_MAX_HEALTH);
         this.playerHUDs.set(connectionId, hud);
+        hud.updateRound(1);
+        hud.showNotification("SURVIVE THE HORDE");
 
         const deathScreen = new DeathScreen(connectionId);
         this.deathScreens.set(connectionId, deathScreen);
@@ -256,6 +260,16 @@ export class Game {
     gameState.zombiesKilled++;
     gameState.maxSimultaneousZombies++;
     gameState.currentZombieCount--;
+
+    // Update Round logic: Every 10 kills is a new round
+    const calculatedRound = Math.floor(gameState.zombiesKilled / 10) + 1;
+    if (calculatedRound > gameState.currentRound) {
+      gameState.currentRound = calculatedRound;
+      const hud = this.playerHUDs.get(connectionId);
+      if (hud) {
+        hud.updateRound(calculatedRound);
+      }
+    }
 
     // Update HUD score
     const hud = this.playerHUDs.get(connectionId);
