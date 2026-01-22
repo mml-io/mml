@@ -1,5 +1,5 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
+import { vi } from "vitest";
 
 import { Link, registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement } from "./scene-test-utils";
@@ -23,10 +23,9 @@ describe("m-link", () => {
     element.setAttribute("href", "http://example.com");
     const child = document.createElement("m-cube");
     element.append(child);
-    const linkSpy = jest.spyOn(scene, "link");
+    const linkSpy = vi.spyOn(scene, "link");
     child.dispatchEvent(
       new MouseEvent("click", {
-        view: window,
         bubbles: true,
         cancelable: true,
       }),

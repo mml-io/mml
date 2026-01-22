@@ -1,6 +1,6 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { ChatProbe } from "../build/index";
 import { registerCustomElementsToWindow } from "../build/index";
@@ -31,13 +31,13 @@ describe("m-chat-probe", () => {
     element.setAttribute("range", "10");
     element.setAttribute("interval", "100");
 
-    const sendPositionSpy = jest.spyOn(scene, "getUserPositionAndRotation");
+    const sendPositionSpy = vi.spyOn(scene, "getUserPositionAndRotation");
     sendPositionSpy.mockImplementation(() => ({
       position: new THREE.Vector3(1, 2, 3),
       rotation: new THREE.Euler(0, THREE.MathUtils.degToRad(45), 0),
     }));
 
-    const chatListener = jest.fn();
+    const chatListener = vi.fn();
     element.addEventListener("chat", (event: CustomEvent) => {
       expect(event.type).toEqual("chat");
       chatListener(event.detail.message);
@@ -64,8 +64,8 @@ describe("m-chat-probe", () => {
     const { scene, remoteDocument } = await createTestScene();
     const element = document.createElement("m-chat-probe") as ChatProbe;
     expect(Array.from((scene as any).chatProbes)).toEqual([]);
-    const addChatProbeSpy = jest.spyOn(scene, "addChatProbe");
-    const updateChatProbeSpy = jest.spyOn(scene, "updateChatProbe");
+    const addChatProbeSpy = vi.spyOn(scene, "addChatProbe");
+    const updateChatProbeSpy = vi.spyOn(scene, "updateChatProbe");
     remoteDocument.append(element);
 
     expect(addChatProbeSpy).toHaveBeenCalledTimes(1);
@@ -84,8 +84,8 @@ describe("m-chat-probe", () => {
   test("chatProbe - update from ancestor", async () => {
     const { element, scene } = await createSceneAttachedElement<ChatProbe>("m-group");
 
-    const addChatProbeSpy = jest.spyOn(scene, "addChatProbe");
-    const updateChatProbeSpy = jest.spyOn(scene, "updateChatProbe");
+    const addChatProbeSpy = vi.spyOn(scene, "addChatProbe");
+    const updateChatProbeSpy = vi.spyOn(scene, "updateChatProbe");
 
     const innerGroup = document.createElement("m-group");
     element.appendChild(innerGroup);

@@ -1,6 +1,6 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { AttributeAnimation, Cube, registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
@@ -32,7 +32,7 @@ describe("m-attr-anim", () => {
     cube.setAttribute("y", "2");
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(0);
 
-    const didUpdateTransformationSpy = jest.spyOn(cube as any, "didUpdateTransformation");
+    const didUpdateTransformationSpy = vi.spyOn(cube as any, "didUpdateTransformation");
     remoteDocument.append(cube);
     expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(1);
     cube.setAttribute("x", "1");
@@ -84,7 +84,7 @@ describe("m-attr-anim", () => {
     const cube = document.createElement("m-cube") as Cube;
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(0);
 
-    const didUpdateTransformationSpy = jest.spyOn(cube as any, "didUpdateTransformation");
+    const didUpdateTransformationSpy = vi.spyOn(cube as any, "didUpdateTransformation");
     remoteDocument.append(cube);
     expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(0);
 

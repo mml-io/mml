@@ -1,10 +1,10 @@
-import { jest } from "@jest/globals";
 import {
   FakeWebsocket,
   IframeObservableDOMFactory,
   NetworkedDOMWebRunnerClient,
 } from "@mml-io/networked-dom-web-runner";
 import { LogMessage } from "@mml-io/observable-dom-common";
+import { vi } from "vitest";
 
 import {
   FromBroadcastInstanceMessage,
@@ -181,7 +181,7 @@ describe("broadcast", function () {
       },
       IframeObservableDOMFactory,
     );
-    const broadcastRunnerOneHandlerSpy = jest.spyOn(broadcastRunnerOne, "handleMessage");
+    const broadcastRunnerOneHandlerSpy = vi.spyOn(broadcastRunnerOne, "handleMessage");
 
     const broadcastRunnerTwo = new NetworkedDOMBroadcastRunner(
       (fromBroadcastInstanceMessage: FromBroadcastInstanceMessage) => {
@@ -192,7 +192,7 @@ describe("broadcast", function () {
       },
       IframeObservableDOMFactory,
     );
-    const broadcastRunnerTwoHandlerSpy = jest.spyOn(broadcastRunnerTwo, "handleMessage");
+    const broadcastRunnerTwoHandlerSpy = vi.spyOn(broadcastRunnerTwo, "handleMessage");
 
     let currentRunner = broadcastRunnerOne;
 

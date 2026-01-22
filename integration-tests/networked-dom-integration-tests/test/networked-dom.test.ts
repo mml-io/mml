@@ -1,3 +1,5 @@
+import { afterEach } from "vitest";
+
 import { formatHTML } from "./test-util";
 import { TestCaseNetworkedDOMDocument } from "./TestCaseNetworkedDOMDocument";
 
@@ -5,6 +7,11 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
   `EditableNetworkedDOM <> NetworkedDOMWebsocket - $version`,
   ({ version }) => {
     const isV01 = version === 0.1;
+
+    afterEach(() => {
+      // Clean up DOM to prevent ID collisions between tests
+      document.body.innerHTML = "";
+    });
 
     test("simple change on reload", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
@@ -470,8 +477,9 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       );
 
       // Now trigger client 2's cloning operation
+      // Use attribute selector as workaround for jsdom ID indexing issue with duplicate IDs
       client2.networkedDOMWebsocket.handleEvent(
-        client2.clientElement.querySelector("#c1")!,
+        client2.clientElement.querySelector('[id="c1"]')!,
         new CustomEvent("dblclick"),
       );
 
@@ -694,8 +702,9 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       );
 
       // Client 2 clicks the trigger to create their holder
+      // Use attribute selector as workaround for jsdom ID indexing issue with duplicate IDs
       client2.networkedDOMWebsocket.handleEvent(
-        client2.clientElement.querySelector("#trigger")!,
+        client2.clientElement.querySelector('[id="trigger"]')!,
         new CustomEvent("click"),
       );
 

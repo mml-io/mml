@@ -1,5 +1,5 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
+import { vi } from "vitest";
 
 import { Prompt, registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement } from "./scene-test-utils";
@@ -25,10 +25,9 @@ describe("m-prompt", () => {
     element.setAttribute("prefill", "some-prefill");
     const child = document.createElement("m-cube");
     element.append(child);
-    const promptSpy = jest.spyOn(scene, "prompt");
+    const promptSpy = vi.spyOn(scene, "prompt");
     child.dispatchEvent(
       new MouseEvent("click", {
-        view: window,
         bubbles: true,
         cancelable: true,
       }),

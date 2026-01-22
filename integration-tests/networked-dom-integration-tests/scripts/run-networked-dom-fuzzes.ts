@@ -111,7 +111,7 @@ function buildReproTestContents(
 ): string {
   const title = `fuzz repro - v${version} seed ${seed} ops ${operationsCount} depth ${maxDepth}`;
   const isV01Literal = version === 0.1 ? "true" : "false";
-  return `import { jest } from "@jest/globals";
+  return `import { vi } from "vitest";
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-document";
 import {
   CLIENT_CONNECTION_IDS,
@@ -122,7 +122,7 @@ import {
 import { TestCaseNetworkedDOMClient } from "../TestCaseNetworkedDOMClient";
 import { normalizeV02ClientHtml, waitFor } from "../test-util";
 
-jest.setTimeout(20000);
+vi.setConfig({ testTimeout: 20000 });
 
 test(${JSON.stringify(title)}, async () => {
   const isV01 = ${isV01Literal};

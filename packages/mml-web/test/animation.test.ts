@@ -1,7 +1,7 @@
-import { jest } from "@jest/globals";
 import { ThreeJSResourceManager } from "@mml-io/mml-web-threejs";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { Animation, Model } from "../build/index";
 import { registerCustomElementsToWindow } from "../build/index";
@@ -21,7 +21,7 @@ describe("m-animation", () => {
     const animationElement = document.createElement("m-animation") as Animation;
 
     // Set up spy before adding to DOM
-    const addSideEffectChildSpy = jest.spyOn(modelElement, "addSideEffectChild");
+    const addSideEffectChildSpy = vi.spyOn(modelElement, "addSideEffectChild");
 
     // Add the animation as a child of the model
     modelElement.appendChild(animationElement);
@@ -80,7 +80,7 @@ describe("m-animation", () => {
     const { remoteDocument: rd2 } = { remoteDocument };
     const ga = rd2.getScene().getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const mockModelLoad = jest.spyOn(rm, "loadModel").mockImplementationOnce(() => {
+    const mockModelLoad = vi.spyOn(rm, "loadModel").mockImplementationOnce(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (cb: (result: { animations: any[]; group: THREE.Group } | Error) => void) => {
@@ -100,7 +100,7 @@ describe("m-animation", () => {
     testAnimationNode.name = "MY_LOADED_ANIMATION";
 
     // The animation now loads via resource manager too
-    const mockAnimationLoad = jest.spyOn(rm, "loadModel").mockImplementationOnce(() => {
+    const mockAnimationLoad = vi.spyOn(rm, "loadModel").mockImplementationOnce(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (cb: (result: { animations: any[]; group: THREE.Group } | Error) => void) => {

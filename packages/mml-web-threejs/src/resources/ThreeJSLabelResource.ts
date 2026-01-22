@@ -62,7 +62,7 @@ export class ThreeJSLabelResource {
       const emptyPixel = new Uint8Array([0, 0, 0, 0]);
       texture = new THREE.DataTexture(emptyPixel, 1, 1, THREE.RGBAFormat);
     } else {
-      const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D;
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       texture = new THREE.DataTexture(
         imageData.data as unknown as Uint8Array,

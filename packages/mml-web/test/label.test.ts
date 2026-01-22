@@ -11,7 +11,7 @@ beforeAll(() => {
 });
 
 describe("m-label", () => {
-  test("test attachment to scene", async () => {
+  test("test attachment to scene", { timeout: 10000 }, async () => {
     const { scene, element } = await createSceneAttachedElement<Label>("m-label");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()

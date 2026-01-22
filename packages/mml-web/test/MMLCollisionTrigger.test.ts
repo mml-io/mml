@@ -1,5 +1,5 @@
-import { jest } from "@jest/globals";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { MElement, MMLCollisionTrigger } from "../build/index";
 import { Cube } from "../build/index";
@@ -13,17 +13,17 @@ beforeAll(() => {
 describe("MMLCollisionTrigger", () => {
   test("cube - send start, move, end", async () => {
     const { scene, remoteDocument } = await createTestScene();
-    const mockPerformanceNow = jest.fn();
+    const mockPerformanceNow = vi.fn();
     window.performance.now = mockPerformanceNow as () => DOMHighResTimeStamp;
     mockPerformanceNow.mockReturnValue(1000);
 
     const mmlCollisionTrigger = MMLCollisionTrigger.init();
 
-    jest.spyOn(scene, "addCollider").mockImplementation((collider: unknown, element: MElement) => {
+    vi.spyOn(scene, "addCollider").mockImplementation((collider: unknown, element: MElement) => {
       mmlCollisionTrigger.addCollider(collider, element);
     });
 
-    jest.spyOn(scene, "removeCollider").mockImplementation((collider: unknown) => {
+    vi.spyOn(scene, "removeCollider").mockImplementation((collider: unknown) => {
       mmlCollisionTrigger.removeCollider(collider);
     });
 
@@ -31,15 +31,15 @@ describe("MMLCollisionTrigger", () => {
     remoteDocument.append(element);
     element.setAttribute("collision-interval", "100");
 
-    const enterEventFn = jest.fn();
+    const enterEventFn = vi.fn();
     element.addEventListener("collisionstart", (event: CustomEvent) => {
       enterEventFn(event);
     });
-    const moveEventFn = jest.fn();
+    const moveEventFn = vi.fn();
     element.addEventListener("collisionmove", (event: CustomEvent) => {
       moveEventFn(event);
     });
-    const endEventFn = jest.fn();
+    const endEventFn = vi.fn();
     element.addEventListener("collisionend", (event: CustomEvent) => {
       endEventFn(event);
     });

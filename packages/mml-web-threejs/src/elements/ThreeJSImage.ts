@@ -250,7 +250,7 @@ function hasTransparency(image: HTMLImageElement) {
   const canvas = document.createElement("canvas");
   canvas.width = image.width;
   canvas.height = image.height;
-  const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D;
   ctx.drawImage(image, 0, 0);
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;

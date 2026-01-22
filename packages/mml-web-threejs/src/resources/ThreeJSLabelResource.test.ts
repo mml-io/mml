@@ -1,7 +1,7 @@
-import { jest } from "@jest/globals";
 import * as THREE from "three";
+import { vi } from "vitest";
 
-jest.mock("@mml-io/mml-web", () => {
+vi.mock("@mml-io/mml-web", () => {
   class CanvasText {
     renderText(): HTMLCanvasElement {
       const canvas = document.createElement("canvas");
@@ -21,7 +21,7 @@ import { ThreeJSLabelResource } from "./ThreeJSLabelResource";
 
 describe("ThreeJSLabelResource", () => {
   test("produces synchronous texture with expected flags", () => {
-    const onRemove = jest.fn();
+    const onRemove = vi.fn();
     const res = new ThreeJSLabelResource(
       {
         content: "Hello",
@@ -73,7 +73,7 @@ describe("ThreeJSLabelResource", () => {
         alignment: "center",
         bold: true,
       },
-      jest.fn(),
+      vi.fn(),
     );
     const result = res.getResult();
     expect(result && !(result instanceof Error)).toBe(true);

@@ -1,7 +1,7 @@
-import { jest } from "@jest/globals";
 import { ThreeJSResourceManager } from "@mml-io/mml-web-threejs";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { Character } from "../build/index";
 import { registerCustomElementsToWindow } from "../build/index";
@@ -56,7 +56,7 @@ describe("m-character", () => {
     // mock the resource manager to return a handle that immediately loads our test node
     const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const loadModelSpy = jest.spyOn(rm, "loadModel").mockImplementation(() => {
+    const loadModelSpy = vi.spyOn(rm, "loadModel").mockImplementation(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (cb: (result: { animations: any[]; group: THREE.Group } | Error) => void) => {

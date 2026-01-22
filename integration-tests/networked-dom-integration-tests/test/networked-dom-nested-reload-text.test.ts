@@ -1,3 +1,5 @@
+import { afterEach } from "vitest";
+
 import { TestCaseNetworkedDOMDocument } from "./TestCaseNetworkedDOMDocument";
 
 /*
@@ -8,6 +10,11 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
   `EditableNetworkedDOM <> NetworkedDOMWebsocket - nested + reload + text - $version`,
   ({ version }) => {
     const isV01 = version === 0.1;
+
+    afterEach(() => {
+      // Clean up DOM to prevent ID collisions between tests
+      document.body.innerHTML = "";
+    });
 
     test("click - reload - click", async () => {
       const testDocument = `

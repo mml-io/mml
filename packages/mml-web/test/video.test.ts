@@ -1,6 +1,6 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { createMockMediaStream } from "../../../test-utils/mocks/MockMediaStream";
 import { createMockPeerConnection } from "../../../test-utils/mocks/MockPeerConnection";
@@ -11,13 +11,13 @@ import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
 
 const originalCreateElement = document.createElement.bind(document);
-let createElementSpy: jest.SpiedFunction<any>;
+let createElementSpy: ReturnType<typeof vi.spyOn>;
 beforeAll(() => {
   registerCustomElementsToWindow(window);
-  createElementSpy = jest.spyOn(document, "createElement");
+  createElementSpy = vi.spyOn(document, "createElement");
 });
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 describe("m-video", () => {
   test("test attachment to scene", async () => {
@@ -165,14 +165,14 @@ describe("m-video", () => {
     });
 
     const mockMediaStream = createMockMediaStream();
-    window.MediaStream = jest.fn().mockImplementation(() => {
+    window.MediaStream = vi.fn().mockImplementation(function () {
       return mockMediaStream;
     }) as unknown as typeof MediaStream;
 
     const mockPeerConnection = createMockPeerConnection();
-    window.RTCPeerConnection = jest
-      .fn()
-      .mockImplementation(() => mockPeerConnection) as unknown as typeof RTCPeerConnection;
+    window.RTCPeerConnection = vi.fn().mockImplementation(function () {
+      return mockPeerConnection;
+    }) as unknown as typeof RTCPeerConnection;
 
     const { element: mVideo } = await createSceneAttachedElement<Video>("m-video");
     // The internal video element should have been created

@@ -1,5 +1,5 @@
-import { jest } from "@jest/globals";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
+import { vi } from "vitest";
 
 import { Audio, registerCustomElementsToWindow } from "../build/index";
 import { createSceneAttachedElement } from "./scene-test-utils";
@@ -23,7 +23,7 @@ describe("m-audio", () => {
     const { element } = await createSceneAttachedElement<Audio>("m-audio");
 
     const audioBuffer: AudioBuffer = {} as AudioBuffer;
-    jest.spyOn(AudioContext.prototype, "decodeAudioData").mockImplementation(() => {
+    vi.spyOn(AudioContext.prototype, "decodeAudioData").mockImplementation(() => {
       return Promise.resolve(audioBuffer);
     });
 

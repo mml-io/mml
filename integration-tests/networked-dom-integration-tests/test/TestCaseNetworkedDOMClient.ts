@@ -117,4 +117,9 @@ export class TestCaseNetworkedDOMClient {
       this.statusListeners.add(listener);
     });
   }
+
+  dispose() {
+    this.networkedDOMWebsocket.stop();
+    this.clientElement.remove();
+  }
 }

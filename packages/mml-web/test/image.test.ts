@@ -1,7 +1,7 @@
-import { jest } from "@jest/globals";
 import { ThreeJSResourceManager } from "@mml-io/mml-web-threejs";
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
+import { vi } from "vitest";
 
 import { Image } from "../build/index";
 import { registerCustomElementsToWindow } from "../build/index";
@@ -72,7 +72,7 @@ describe("m-image", () => {
     // mock the resource manager loadImage to synchronously deliver an image
     const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+    const loadImageSpy = vi.spyOn(rm, "loadImage").mockImplementation(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (
@@ -116,7 +116,7 @@ describe("m-image", () => {
 
     const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+    const loadImageSpy = vi.spyOn(rm, "loadImage").mockImplementation(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (
@@ -161,7 +161,7 @@ describe("m-image", () => {
 
     const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+    const loadImageSpy = vi.spyOn(rm, "loadImage").mockImplementation(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (
@@ -203,9 +203,9 @@ describe("m-image", () => {
     const { scene, remoteDocument } = await createTestScene();
     const image = document.createElement("m-image") as Image;
     expect(Array.from((scene as any).colliders)).toEqual([]);
-    const addColliderSpy = jest.spyOn(scene, "addCollider");
-    const updateColliderSpy = jest.spyOn(scene, "updateCollider");
-    const removeColliderSpy = jest.spyOn(scene, "removeCollider");
+    const addColliderSpy = vi.spyOn(scene, "addCollider");
+    const updateColliderSpy = vi.spyOn(scene, "updateCollider");
+    const removeColliderSpy = vi.spyOn(scene, "removeCollider");
     remoteDocument.append(image);
 
     const imageMesh = (image.getContainer() as THREE.Object3D).children[0] as THREE.Mesh;
@@ -219,7 +219,7 @@ describe("m-image", () => {
 
     const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+    const loadImageSpy = vi.spyOn(rm, "loadImage").mockImplementation(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (
@@ -274,7 +274,7 @@ describe("m-image", () => {
 
     const ga = scene.getGraphicsAdapter() as StandaloneThreeJSAdapter;
     const rm = ga.getResourceManager() as ThreeJSResourceManager;
-    const loadImageSpy = jest.spyOn(rm, "loadImage").mockImplementation(() => {
+    const loadImageSpy = vi.spyOn(rm, "loadImage").mockImplementation(() => {
       const handle = {
         onProgress: () => {},
         onLoad: (

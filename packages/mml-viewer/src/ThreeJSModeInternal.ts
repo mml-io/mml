@@ -237,7 +237,7 @@ export class ThreeJSModeInternal {
 
     const pmremGenerator = new THREE.PMREMGenerator(threeRenderer);
     const loader = new HDRJPGLoader(threeRenderer);
-    loader.loadAsync(environmentMap).then((result) => {
+    loader.load(environmentMap, (result) => {
       const hdrJpg = result.renderTarget.texture;
       hdrJpg.mapping = THREE.EquirectangularReflectionMapping;
 

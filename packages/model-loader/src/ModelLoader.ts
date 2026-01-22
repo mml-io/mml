@@ -13,7 +13,24 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
 
-const textDecoder = new TextDecoder();
+let cachedTextDecoder: TextDecoder | null = null;
+
+function getTextDecoder(): TextDecoder {
+  if (cachedTextDecoder) {
+    return cachedTextDecoder;
+  }
+  // Use global TextDecoder if available, fallback to Node's util
+  let decoder: TextDecoder;
+  if (typeof globalThis.TextDecoder === "function") {
+    decoder = new globalThis.TextDecoder();
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const util = require("node:util");
+    decoder = new util.TextDecoder();
+  }
+  cachedTextDecoder = decoder;
+  return decoder;
+}
 
 function convertArrayBufferToString(buffer: ArrayBuffer, from?: number, to?: number) {
   if (from === undefined) {
@@ -23,7 +40,7 @@ function convertArrayBufferToString(buffer: ArrayBuffer, from?: number, to?: num
     to = buffer.byteLength;
   }
 
-  return textDecoder.decode(new Uint8Array(buffer, from, to));
+  return getTextDecoder().decode(new Uint8Array(buffer, from, to));
 }
 
 const fbxBinaryHeader = "Kaydara\u0020FBX\u0020Binary\u0020\u0020\0";
@@ -220,7 +237,7 @@ export class ModelLoader {
             _onError(e);
           }
         },
-        (progressEvent) => {
+        (progressEvent: ProgressEvent) => {
           if (onProgress && progressEvent.lengthComputable) {
             onProgress(progressEvent.loaded, progressEvent.total);
           }

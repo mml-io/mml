@@ -1,12 +1,12 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 
 import { ThreeJSImageLoader } from "./ThreeJSImageLoader";
 
 describe("ThreeJSImageLoader", () => {
   test("calls onLoad when image loads and removes listeners", () => {
     const ac = new AbortController();
-    const onLoad = jest.fn();
-    const onError = jest.fn();
+    const onLoad = vi.fn();
+    const onError = vi.fn();
 
     const img = ThreeJSImageLoader.load("https://example.com/a.png", onLoad, onError, ac.signal);
     expect(img).toBeInstanceOf(HTMLImageElement);
@@ -25,8 +25,8 @@ describe("ThreeJSImageLoader", () => {
 
   test("calls onError when image errors and removes listeners", () => {
     const ac = new AbortController();
-    const onLoad = jest.fn();
-    const onError = jest.fn();
+    const onLoad = vi.fn();
+    const onError = vi.fn();
 
     const img = ThreeJSImageLoader.load("https://example.com/b.png", onLoad, onError, ac.signal);
     expect(img).toBeInstanceOf(HTMLImageElement);
@@ -45,8 +45,8 @@ describe("ThreeJSImageLoader", () => {
 
   test("aborting clears src and prevents callbacks", () => {
     const ac = new AbortController();
-    const onLoad = jest.fn();
-    const onError = jest.fn();
+    const onLoad = vi.fn();
+    const onError = vi.fn();
 
     const img = ThreeJSImageLoader.load("https://example.com/c.png", onLoad, onError, ac.signal);
     expect(img.getAttribute("src")).toBe("https://example.com/c.png");

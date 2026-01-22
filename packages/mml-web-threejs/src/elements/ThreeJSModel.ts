@@ -537,7 +537,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
         this.srcLoadingInstanceManager.error(result);
         return;
       }
-      result.group.traverse((child) => {
+      result.group.traverse((child: THREE.Object3D) => {
         if ((child as THREE.Mesh).isMesh) {
           child.castShadow = this.model.props.castShadows;
           child.receiveShadow = true;
@@ -546,7 +546,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
       const group = result.group;
       const bones = new Map<string, THREE.Bone>();
       const nodeNames = new Set<string>();
-      group.traverse((object) => {
+      group.traverse((object: THREE.Object3D) => {
         nodeNames.add(object.name);
         if (object instanceof THREE.Bone) {
           bones.set(object.name, object);

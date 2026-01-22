@@ -1,12 +1,12 @@
-import { jest } from "@jest/globals";
+import { vi } from "vitest";
 
 import { LoadingInstanceManager, LoadingProgressManager } from "../build/index";
 
 describe("LoadingInstanceManager", () => {
   test("simple load", () => {
     const mockLoadingProgressManager = {
-      addLoadingAsset: jest.fn(),
-      completedLoadingAsset: jest.fn(),
+      addLoadingAsset: vi.fn(),
+      completedLoadingAsset: vi.fn(),
     };
 
     const loadingInstanceManager = new LoadingInstanceManager("test");
@@ -42,8 +42,8 @@ describe("LoadingInstanceManager", () => {
 
   test("abort load", () => {
     const mockLoadingProgressManager = {
-      addLoadingAsset: jest.fn(),
-      disposeOfLoadingAsset: jest.fn(),
+      addLoadingAsset: vi.fn(),
+      disposeOfLoadingAsset: vi.fn(),
     };
 
     const loadingInstanceManager = new LoadingInstanceManager("test");
@@ -64,9 +64,9 @@ describe("LoadingInstanceManager", () => {
 
   test("progress", () => {
     const mockLoadingProgressManager = {
-      addLoadingAsset: jest.fn(),
-      completedLoadingAsset: jest.fn(),
-      updateAssetProgress: jest.fn(),
+      addLoadingAsset: vi.fn(),
+      completedLoadingAsset: vi.fn(),
+      updateAssetProgress: vi.fn(),
     };
 
     const loadingInstanceManager = new LoadingInstanceManager("test");
@@ -92,8 +92,8 @@ describe("LoadingInstanceManager", () => {
 
   test("error", () => {
     const mockLoadingProgressManager = {
-      addLoadingAsset: jest.fn(),
-      errorLoadingAsset: jest.fn(),
+      addLoadingAsset: vi.fn(),
+      errorLoadingAsset: vi.fn(),
     };
 
     const loadingInstanceManager = new LoadingInstanceManager("test");

@@ -16,7 +16,7 @@
     "chokidar": "5.0.0",
     "express": "5.2.1",
     "express-ws": "5.0.2",
-    "ws": "8.18.3"
+    "ws": "8.19.0"
   },
   "devDependencies": {
     "@types/cors": "2.8.19",
