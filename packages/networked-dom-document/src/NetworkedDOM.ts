@@ -1011,18 +1011,18 @@ export class NetworkedDOM {
 
     const removedSet = new Set(removedNodeIds);
 
-    for (let i = 0; i < node.childNodes.length; i++) {
+    for (let i = node.childNodes.length - 1; i >= 0; i--) {
       const child = node.childNodes[i];
-      if (removedSet.has(child.nodeId)) {
-        if (child.subjectivity != null && !IsVisibleToAll(child.subjectivity, true)) {
-          anyChildIsSubjectiveForV01 = true;
-        }
-        if (child.subjectivity != null && !IsVisibleToAll(child.subjectivity, false)) {
-          anyChildIsSubjectiveForV02 = true;
-        }
-        node.childNodes.splice(i, 1);
-        break;
+      if (!removedSet.has(child.nodeId)) {
+        continue;
       }
+      if (child.subjectivity != null && !IsVisibleToAll(child.subjectivity, true)) {
+        anyChildIsSubjectiveForV01 = true;
+      }
+      if (child.subjectivity != null && !IsVisibleToAll(child.subjectivity, false)) {
+        anyChildIsSubjectiveForV02 = true;
+      }
+      node.childNodes.splice(i, 1);
     }
 
     // v01 connections
