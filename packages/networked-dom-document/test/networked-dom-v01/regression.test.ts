@@ -267,29 +267,22 @@ describe("regression tests - v0.1", () => {
     const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
-<div>
-<button id="open-btn">OPEN</button>
-</div>
+<m-cube id="open-cube"></m-cube>
 <script>
 setTimeout(() => {
-const menuOverlay = document.createElement("m-overlay");
-menuOverlay.setAttribute("anchor", "center");
-menuOverlay.setAttribute("visible-to", "-1");
+const panel = document.createElement("m-cube");
+panel.setAttribute("visible-to", "-1");
+document.body.appendChild(panel);
 
-const row = document.createElement("div");
-menuOverlay.appendChild(row);
-document.body.appendChild(menuOverlay);
-
-const openBtn = document.getElementById("open-btn");
-openBtn.addEventListener("click", () => {
-  row.replaceChildren();
-  ["A", "B", "C", "D", "E", "F"].forEach((c) => {
-    const btn = document.createElement("button");
-    btn.textContent = c;
-    btn.addEventListener("click", () => menuOverlay.setAttribute("visible-to", "-1"));
-    row.appendChild(btn);
+const openCube = document.getElementById("open-cube");
+openCube.addEventListener("click", () => {
+  panel.replaceChildren();
+  ["A", "B", "C"].forEach(() => {
+    const cube = document.createElement("m-cube");
+    cube.addEventListener("click", () => panel.setAttribute("visible-to", "-1"));
+    panel.appendChild(cube);
   });
-  menuOverlay.removeAttribute("visible-to");
+  panel.removeAttribute("visible-to");
 });
 }, 1);
 </script>
@@ -304,15 +297,15 @@ openBtn.addEventListener("click", () => {
     // Allow the script's setTimeout to attach the click handler
     await new Promise((resolve) => setTimeout(resolve, 5));
 
-    // Click the OPEN button (nodeId: 6)
+    // Click the OPEN cube (nodeId: 5)
     clientWs.sendToServer({
       type: "event",
       name: "click",
-      nodeId: 6,
+      nodeId: 5,
       params: {},
       bubbles: true,
     });
-    // Expect the overlay to become visible with ABCDEF buttons in the row (nodeId: 8)
+    // Expect the panel to become visible with 3 cubes
     expect(await clientWs.waitForTotalMessageCount(2, 1)).toEqual([
       {
         type: "childrenChanged",
@@ -321,26 +314,13 @@ openBtn.addEventListener("click", () => {
         addedNodes: [
           {
             type: "element",
-            nodeId: 7,
-            tag: "M-OVERLAY",
-            attributes: {
-              anchor: "center",
-            },
+            nodeId: 6,
+            tag: "M-CUBE",
+            attributes: {},
             children: [
-              {
-                type: "element",
-                nodeId: 8,
-                tag: "DIV",
-                attributes: {},
-                children: [
-                  { type: "element", nodeId: 9, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 10, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 11, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 12, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 13, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 14, tag: "BUTTON", attributes: {}, children: [] },
-                ],
-              },
+              { type: "element", nodeId: 7, tag: "M-CUBE", attributes: {}, children: [] },
+              { type: "element", nodeId: 8, tag: "M-CUBE", attributes: {}, children: [] },
+              { type: "element", nodeId: 9, tag: "M-CUBE", attributes: {}, children: [] },
             ],
           },
         ],
@@ -348,36 +328,36 @@ openBtn.addEventListener("click", () => {
       },
     ]);
 
-    // Click button A (nodeId: 9) - this sets visible-to back to "-1"
+    // Click the first cube (nodeId: 7) - this sets visible-to back to "-1"
     clientWs.sendToServer({
       type: "event",
       name: "click",
-      nodeId: 9,
+      nodeId: 7,
       params: {},
       bubbles: true,
     });
 
-    // Expect the overlay to be removed from view
+    // Expect the panel to be removed from view
     expect(await clientWs.waitForTotalMessageCount(3, 2)).toEqual([
       {
         type: "childrenChanged",
         nodeId: 4,
         previousNodeId: null,
         addedNodes: [],
-        removedNodes: [7],
+        removedNodes: [6],
       },
     ]);
 
-    // Click OPEN again (nodeId: 6)
+    // Click OPEN again (nodeId: 5)
     clientWs.sendToServer({
       type: "event",
       name: "click",
-      nodeId: 6,
+      nodeId: 5,
       params: {},
       bubbles: true,
     });
 
-    // Expect the overlay to be re-added with new ABCDEF buttons
+    // Expect the panel to be re-added with new cubes
     expect(await clientWs.waitForTotalMessageCount(4, 3)).toEqual([
       {
         type: "childrenChanged",
@@ -386,26 +366,13 @@ openBtn.addEventListener("click", () => {
         addedNodes: [
           {
             type: "element",
-            nodeId: 7,
-            tag: "M-OVERLAY",
-            attributes: {
-              anchor: "center",
-            },
+            nodeId: 6,
+            tag: "M-CUBE",
+            attributes: {},
             children: [
-              {
-                type: "element",
-                nodeId: 8,
-                tag: "DIV",
-                attributes: {},
-                children: [
-                  { type: "element", nodeId: 15, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 16, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 17, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 18, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 19, tag: "BUTTON", attributes: {}, children: [] },
-                  { type: "element", nodeId: 20, tag: "BUTTON", attributes: {}, children: [] },
-                ],
-              },
+              { type: "element", nodeId: 10, tag: "M-CUBE", attributes: {}, children: [] },
+              { type: "element", nodeId: 11, tag: "M-CUBE", attributes: {}, children: [] },
+              { type: "element", nodeId: 12, tag: "M-CUBE", attributes: {}, children: [] },
             ],
           },
         ],
