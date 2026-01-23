@@ -44,6 +44,7 @@ export class Player {
   private useCharacterController: boolean = false;
   private verticalVelocity: number = 0; // For gravity when using character controller
   private lastUpdateTime: number = 0;
+  private moveSpeedMultiplier: number = 1;
 
   constructor(connectionId: number, sceneGroup: HTMLElement) {
     this.connectionId = connectionId;
@@ -99,6 +100,38 @@ export class Player {
     }
 
     return false; // Player still alive
+  }
+
+  public heal(amount: number): void {
+    if (this.isDead) return;
+    
+    const oldHealth = this.health;
+    this.health = Math.min(this.maxHealth, this.health + amount);
+    
+    if (this.health !== oldHealth) {
+      console.log(`[Player ${this.connectionId}] Healed ${(this.health - oldHealth).toFixed(1)} HP. Health: ${this.health.toFixed(1)}/${this.maxHealth}`);
+    }
+  }
+
+  public setMaxHealth(newMaxHealth: number): void {
+    const oldMaxHealth = this.maxHealth;
+    this.maxHealth = newMaxHealth;
+    
+    // If max health increased, also increase current health by the difference
+    if (newMaxHealth > oldMaxHealth) {
+      this.health += newMaxHealth - oldMaxHealth;
+    }
+    
+    // If max health decreased, cap current health
+    if (this.health > this.maxHealth) {
+      this.health = this.maxHealth;
+    }
+    
+    console.log(`[Player ${this.connectionId}] Max health changed: ${oldMaxHealth} -> ${this.maxHealth}`);
+  }
+
+  public setMoveSpeedMultiplier(multiplier: number): void {
+    this.moveSpeedMultiplier = Math.max(0.1, multiplier);
   }
 
   private die(): void {
@@ -486,7 +519,7 @@ export class Player {
   }
 
   private updateWithCharacterController(physics: any, deltaTime: number): void {
-    const speed = 4; // units per second
+    const speed = 4 * this.moveSpeedMultiplier; // units per second
     const gravity = 20; // gravity acceleration
 
     // Check if grounded
@@ -540,7 +573,7 @@ export class Player {
       return;
     }
 
-    const speed = 5; // units per second
+    const speed = 5 * this.moveSpeedMultiplier; // units per second
     const physicsState = physics.elementToBody.get(this.physicsBody);
     const currentVel = physicsState?.rigidbody?.linvel?.() || { x: 0, y: 0, z: 0 };
 

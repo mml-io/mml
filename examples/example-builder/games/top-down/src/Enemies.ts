@@ -1,5 +1,5 @@
 import { CONSTANTS } from "./constants.js";
-import { Position } from "./helpers.js";
+import { Position, spawnDamageNumber } from "./helpers.js";
 
 interface EnemyData {
   element: HTMLElement;
@@ -374,6 +374,9 @@ export class Enemies {
         console.log(
           `[Enemies] Enemy ${enemyId} took ${damage} damage. Health: ${enemyData.health}/${enemyData.maxHealth}`,
         );
+
+        // Spawn floating damage number above the enemy
+        spawnDamageNumber(enemyGroup, damage);
 
         if (enemyData.health <= 0) {
           console.log(`[Enemies] Enemy ${enemyId} defeated!`);

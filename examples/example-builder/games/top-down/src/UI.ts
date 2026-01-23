@@ -303,7 +303,7 @@ export class PlayerHUD {
 
   public updateHealth(health: number): void {
     const prevHealth = this.currentHealth;
-    this.currentHealth = Math.max(0, health);
+    this.currentHealth = Math.max(0, Math.floor(health));
 
     if (this.healthText) {
       this.healthText.textContent = `${this.currentHealth}`;
@@ -332,6 +332,12 @@ export class PlayerHUD {
     if (this.currentHealth < prevHealth) {
       this.triggerDamageEffect();
     }
+  }
+
+  public setMaxHealth(newMaxHealth: number): void {
+    this.maxHealth = newMaxHealth;
+    // Re-render the health bar with new max
+    this.updateHealth(this.currentHealth);
   }
 
   private triggerDamageEffect(): void {
@@ -579,10 +585,10 @@ export class DeathScreen {
 
     // Show Overlay
     this.deathOverlay.setAttribute("visible-to", this.connectionId.toString());
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       this.container.style.opacity = "1";
       this.container.style.transform = "scale(1)";
-    });
+    }, 0);
 
     // Animate Stats In
     setTimeout(() => {
@@ -594,6 +600,7 @@ export class DeathScreen {
       const start = 0;
       const end = killCount;
       const startTime = Date.now();
+      const frameInterval = 16; // ~60fps
 
       const animateCount = () => {
         const now = Date.now();
@@ -604,11 +611,11 @@ export class DeathScreen {
         this.killCountText.textContent = current.toString();
 
         if (progress < 1) {
-          requestAnimationFrame(animateCount);
+          setTimeout(animateCount, frameInterval);
         }
       };
       
-      requestAnimationFrame(animateCount);
+      setTimeout(animateCount, frameInterval);
 
     }, 400);
 

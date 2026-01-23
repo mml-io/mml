@@ -1,9 +1,13 @@
-import { Camera } from "./Camera";
-import { CONSTANTS } from "./constants";
-import { Enemies } from "./Enemies";
-import { Player } from "./Player";
-import { DeathScreen, PlayerHUD } from "./UI";
-import { Weapon } from "./Weapon";
+import { Camera } from "./Camera.js";
+import { CONSTANTS } from "./constants.js";
+import { Enemies } from "./Enemies.js";
+import { ExperienceSystem, PlayerStats } from "./ExperienceSystem.js";
+import { ExperienceUI } from "./ExperienceUI.js";
+import { spawnDamageNumber } from "./helpers.js";
+import { RapidFirePickup } from "./Pickup.js";
+import { Player } from "./Player.js";
+import { DeathScreen, PlayerHUD } from "./UI.js";
+import { Weapon } from "./Weapon.js";
 
 interface PlayerGameState {
   connectionId: number;
@@ -20,11 +24,17 @@ export class Game {
   private playerGameStates: Map<number, PlayerGameState> = new Map();
   private playerHUDs: Map<number, PlayerHUD> = new Map();
   private deathScreens: Map<number, DeathScreen> = new Map();
+  private experienceSystems: Map<number, ExperienceSystem> = new Map();
+  private experienceUIs: Map<number, ExperienceUI> = new Map();
+  private playerStats: Map<number, PlayerStats> = new Map();
+  private regenIntervals: Map<number, number> = new Map();
   private enemies: Enemies;
   private weapon: Weapon;
   private gameTick: number | null = null;
   private arena01: HTMLElement;
   private fireControls: Map<number, HTMLElement> = new Map();
+  private fireButtonHeld: Map<number, boolean> = new Map();
+  private pickups: RapidFirePickup[] = [];
 
   constructor() {
     this.init = this.init.bind(this);
@@ -73,10 +83,13 @@ export class Game {
       if (player && !player.isDead) {
         const playerPos = player.getPosition();
         const playerRotationDegrees = player.getCurrentRotationDegrees();
-        this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere);
+        this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere, connectionId);
       }
     });
     this.weapon = new Weapon(this.sceneGroup);
+
+    // Create rapid fire pickups at spawn positions
+    this.createPickups();
 
     // Listen for zombie deaths to handle difficulty scaling
     window.addEventListener("zombie-killed", (event: any) => {
@@ -111,7 +124,7 @@ export class Game {
         if (player && !player.isDead) {
           const playerPos = player.getPosition();
           const playerRotationDegrees = player.getCurrentRotationDegrees();
-          this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere);
+          this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere, connectionId);
         } else if (player?.isDead) {
           console.log("[Game] Cannot shoot - player is dead");
         } else {
@@ -119,6 +132,23 @@ export class Game {
         }
       });
     }
+
+    // Listen for powerup events to show notifications
+    window.addEventListener("powerup-activated", (event: any) => {
+      const { connectionId } = event.detail;
+      const hud = this.playerHUDs.get(connectionId);
+      if (hud) {
+        hud.showNotification("⚡ RAPID FIRE ACTIVE ⚡");
+      }
+    });
+
+    window.addEventListener("powerup-deactivated", (event: any) => {
+      const { connectionId } = event.detail;
+      const hud = this.playerHUDs.get(connectionId);
+      if (hud) {
+        hud.showNotification("Rapid fire ended");
+      }
+    });
 
     window.addEventListener("connected", (event: any) => {
       const connectionId = event.detail.connectionId;
@@ -147,6 +177,9 @@ export class Game {
         const deathScreen = new DeathScreen(connectionId);
         this.deathScreens.set(connectionId, deathScreen);
 
+        // Create experience system and UI for this player
+        this.setupExperienceSystem(connectionId);
+
         this.createFireControl(connectionId);
 
         setTimeout(() => {
@@ -174,6 +207,7 @@ export class Game {
         fireControl.remove();
         this.fireControls.delete(connectionId);
       }
+      this.fireButtonHeld.delete(connectionId);
 
       // Clean up player game state
       this.playerGameStates.delete(connectionId);
@@ -190,6 +224,22 @@ export class Game {
         this.deathScreens.delete(connectionId);
       }
 
+      // Clean up experience system
+      const expUI = this.experienceUIs.get(connectionId);
+      if (expUI) {
+        expUI.dispose();
+        this.experienceUIs.delete(connectionId);
+      }
+      this.experienceSystems.delete(connectionId);
+      this.playerStats.delete(connectionId);
+
+      // Clean up regen interval
+      const regenInterval = this.regenIntervals.get(connectionId);
+      if (regenInterval) {
+        window.clearInterval(regenInterval);
+        this.regenIntervals.delete(connectionId);
+      }
+
       // Clean up enemies spawned by this player
       this.enemies.clearEnemiesForConnection(connectionId);
     });
@@ -200,22 +250,157 @@ export class Game {
   private createFireControl(connectionId: number): void {
     const fireControl = document.createElement("m-control");
     fireControl.setAttribute("type", "button");
-    fireControl.setAttribute("button", "5"); // right shoulder button on Xbox controller
+    fireControl.setAttribute("input", "mouseleft gamepad-rb");
     fireControl.setAttribute("visible-to", connectionId.toString());
     fireControl.addEventListener("input", (event: any) => {
-      const pressed = event.detail.value === true;
+      const pressed = Number(event.detail.value) > 0;
+      this.fireButtonHeld.set(connectionId, pressed);
       if (pressed) {
         const player = this.players.get(connectionId);
         if (player && !player.isDead) {
           const playerPos = player.getPosition();
           const playerRotationDegrees = player.getCurrentRotationDegrees();
 
-          this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere);
+          this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere, connectionId);
         }
       }
     });
     this.sceneGroup.appendChild(fireControl);
     this.fireControls.set(connectionId, fireControl);
+  }
+
+  private setupExperienceSystem(connectionId: number): void {
+    // Create experience system
+    const expSystem = new ExperienceSystem(connectionId);
+    this.experienceSystems.set(connectionId, expSystem);
+
+    // Create experience UI
+    const expUI = new ExperienceUI(connectionId);
+    this.experienceUIs.set(connectionId, expUI);
+
+    // Wire up the UI callbacks
+    expUI.setOnUpgradeSelected((upgradeId) => {
+      expSystem.selectUpgrade(upgradeId);
+    });
+
+    expUI.setOnRequestUpgradeChoices(() => {
+      const minChoices = 2;
+      const maxChoices = 4;
+      const choiceCount = minChoices + Math.floor(Math.random() * (maxChoices - minChoices + 1));
+      return expSystem.getUpgradeChoices(choiceCount);
+    });
+
+    expUI.setOnDebugForceLevelUp((count) => {
+      expSystem.forceLevelUps(count);
+    });
+
+    // Wire up experience system callbacks
+    expSystem.setOnXPGain((current, required, percent) => {
+      expUI.updateXP(current, required, percent);
+    });
+
+    expSystem.setOnLevelUp((level, pendingCount) => {
+      expUI.updateLevel(level);
+      expUI.showLevelUpButton(pendingCount);
+      
+      // Show level up notification
+      const hud = this.playerHUDs.get(connectionId);
+      if (hud) {
+        hud.showNotification(`🎉 LEVEL ${level}! 🎉`);
+      }
+    });
+
+    expSystem.setOnStatsChanged((stats) => {
+      this.playerStats.set(connectionId, stats);
+      this.applyPlayerStats(connectionId, stats);
+    });
+
+    // Initialize the XP bar
+    const progress = expSystem.getXPProgress();
+    expUI.updateXP(progress.current, progress.required, progress.percent);
+    expUI.updateLevel(1);
+
+    // Start health regen interval
+    this.startHealthRegen(connectionId);
+  }
+
+  private applyPlayerStats(connectionId: number, stats: PlayerStats): void {
+    // Apply stats to weapon system
+    this.weapon.setPlayerStats(connectionId, stats);
+
+    // Apply max health bonus to player
+    const player = this.players.get(connectionId);
+    if (player) {
+      const newMaxHealth = CONSTANTS.PLAYER_MAX_HEALTH + stats.maxHealthBonus;
+      player.setMaxHealth(newMaxHealth);
+      player.setMoveSpeedMultiplier(stats.moveSpeedMultiplier);
+      
+      // Update HUD with new max health
+      const hud = this.playerHUDs.get(connectionId);
+      if (hud) {
+        hud.setMaxHealth(newMaxHealth);
+        hud.updateHealth(player.health);
+      }
+    }
+
+    console.log(`[Game] Applied stats for player ${connectionId}:`, stats);
+  }
+
+  private startHealthRegen(connectionId: number): void {
+    const interval = window.setInterval(() => {
+      const player = this.players.get(connectionId);
+      const stats = this.playerStats.get(connectionId);
+      
+      if (player && stats && stats.regenPerSecond > 0 && !player.isDead) {
+        const healAmount = stats.regenPerSecond;
+        if (player.health < player.maxHealth) {
+          player.heal(healAmount);
+          const hud = this.playerHUDs.get(connectionId);
+          if (hud) {
+            hud.updateHealth(player.health);
+          }
+        }
+      }
+    }, CONSTANTS.REGEN_TICK_INTERVAL);
+    
+    this.regenIntervals.set(connectionId, interval);
+  }
+
+  private createPickups(): void {
+    // Create rapid fire pickups at each pickup spawn position
+    CONSTANTS.PICKUP_SPAWN_POSITIONS.forEach((position, index) => {
+      const pickup = new RapidFirePickup(
+        this.sceneGroup,
+        {
+          id: `rapid-fire-${index}`,
+          position,
+          regenTimeMs: CONSTANTS.RAPID_FIRE_PICKUP_REGEN_TIME,
+          duration: CONSTANTS.RAPID_FIRE_DURATION,
+          fireRateMultiplier: CONSTANTS.RAPID_FIRE_MULTIPLIER,
+        },
+        () => this.getActivePlayersForPickup(),
+        (connectionId, duration, multiplier) => {
+          this.weapon.activateRapidFire(connectionId, duration, multiplier);
+        },
+      );
+      this.pickups.push(pickup);
+    });
+
+    console.log(`[Game] Created ${this.pickups.length} rapid fire pickups`);
+  }
+
+  private getActivePlayersForPickup(): Array<{ connectionId: number; getPosition: () => { x: number; y: number; z: number }; isDead: boolean; pickupRadiusMultiplier: number }> {
+    const activePlayers: Array<{ connectionId: number; getPosition: () => { x: number; y: number; z: number }; isDead: boolean; pickupRadiusMultiplier: number }> = [];
+    this.players.forEach((player, connectionId) => {
+      const stats = this.playerStats.get(connectionId);
+      activePlayers.push({
+        connectionId,
+        getPosition: () => player.getPosition(),
+        isDead: player.isDead,
+        pickupRadiusMultiplier: stats?.pickupRadiusMultiplier ?? 1,
+      });
+    });
+    return activePlayers;
   }
 
   private spawnZombiesForPlayer(connectionId: number): void {
@@ -261,6 +446,19 @@ export class Game {
     gameState.maxSimultaneousZombies++;
     gameState.currentZombieCount--;
 
+    // Award XP for the kill
+    const expSystem = this.experienceSystems.get(connectionId);
+    if (expSystem) {
+      const baseXP = CONSTANTS.XP_PER_ZOMBIE_KILL + (gameState.currentRound - 1) * CONSTANTS.XP_BONUS_PER_ROUND;
+      expSystem.addXP(baseXP);
+      
+      // Show XP gain effect
+      const expUI = this.experienceUIs.get(connectionId);
+      if (expUI) {
+        expUI.showXPGainEffect(baseXP);
+      }
+    }
+
     // Update Round logic: Every 10 kills is a new round
     const calculatedRound = Math.floor(gameState.zombiesKilled / 10) + 1;
     if (calculatedRound > gameState.currentRound) {
@@ -293,7 +491,19 @@ export class Game {
       return;
     }
 
-    player.takeDamage(damage);
+    const stats = this.playerStats.get(connectionId);
+    const reduction = Math.max(0, Math.min(1, stats?.damageReduction ?? 0));
+    const finalDamage = Math.max(0, damage * (1 - reduction));
+
+    if (finalDamage <= 0) {
+      return;
+    }
+
+    player.takeDamage(finalDamage);
+
+    if (player.physicsBody) {
+      spawnDamageNumber(player.physicsBody, finalDamage);
+    }
 
     // Update HUD health
     const hud = this.playerHUDs.get(connectionId);
@@ -315,10 +525,15 @@ export class Game {
       `[Game] Player ${connectionId} died! Respawning in ${CONSTANTS.PLAYER_RESPAWN_TIME}ms...`,
     );
 
-    // Hide HUD and show death screen
+    // Hide HUD and experience UI, show death screen
     const hud = this.playerHUDs.get(connectionId);
     if (hud) {
       hud.hide();
+    }
+
+    const expUI = this.experienceUIs.get(connectionId);
+    if (expUI) {
+      expUI.hide();
     }
 
     const deathScreen = this.deathScreens.get(connectionId);
@@ -344,13 +559,16 @@ export class Game {
     setTimeout(() => {
       player.respawnPlayer();
 
-      // Hide death screen and show HUD
+      // Hide death screen and show HUD + experience UI
       if (deathScreen) {
         deathScreen.hide();
       }
       if (hud) {
         hud.updateHealth(player.health);
         hud.show();
+      }
+      if (expUI) {
+        expUI.show();
       }
 
       console.log(`[Game] Player ${connectionId} respawned!`);
@@ -368,6 +586,14 @@ export class Game {
           }
 
           player.updateDebugSphere();
+
+          // Handle auto-fire when powerup or fire button is held
+          const isHoldingFire = this.fireButtonHeld.get(connectionId) ?? false;
+          if ((this.weapon.isAutoFiring(connectionId) || isHoldingFire) && !player.isDead) {
+            const playerPos = player.getPosition();
+            const playerRotationDegrees = player.getCurrentRotationDegrees();
+            this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere, connectionId);
+          }
         });
       }, CONSTANTS.TICK_RATE);
     }

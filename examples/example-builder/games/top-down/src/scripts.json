@@ -15,7 +15,7 @@
       "src": "mml-game-navigation-system",
       "configName": "navigation",
       "config": {
-        "debug": true,
+        "debug": false,
         "debugDrawMode": "navmesh",
         "tileSize": 32,
         "cellSize": 0.15,

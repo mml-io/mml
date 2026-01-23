@@ -73,4 +73,22 @@ export const CONSTANTS = {
   // Game difficulty
   INITIAL_ZOMBIE_COUNT: 3,
   MAXIMUM_ZOMBIE_COUNT: 10,
+  DISABLE_ZOMBIE_SPAWNING: true,
+
+  // Pickup constants
+  RAPID_FIRE_PICKUP_REGEN_TIME: 30000, // 30 seconds to respawn
+  RAPID_FIRE_DURATION: 10000, // 10 seconds of rapid fire
+  RAPID_FIRE_MULTIPLIER: 10, // 10x fire rate
+
+  // Pickup spawn positions (near spawn points for easy testing)
+  PICKUP_SPAWN_POSITIONS: [
+    { x: 2, y: 1.2, z: 0 },
+    { x: -6, y: 1.2, z: -5 },
+    { x: 5, y: 1.2, z: 8 },
+  ],
+
+  // Experience system
+  XP_PER_ZOMBIE_KILL: 5, // Base XP per zombie kill
+  XP_BONUS_PER_ROUND: 1, // Extra XP per round
+  REGEN_TICK_INTERVAL: 1000, // Health regen tick every 1 second
 };

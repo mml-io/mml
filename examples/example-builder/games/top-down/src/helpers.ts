@@ -256,3 +256,108 @@ export function lerp(current: number, target: number, deltaTime: number): number
   const lerpFactor = rate * (deltaTime / 100);
   return current + (target - current) * lerpFactor;
 }
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+export function getConnectionIdForModel(element: HTMLElement): number | null {
+  const connectionId = element.dataset?.connectionId;
+  if (connectionId !== undefined) {
+    return parseInt(connectionId, 10);
+  }
+  return null;
+}
+
+export function spawnDamageNumber(targetModel: HTMLElement, amount: number): void {
+  const isPlayer = getConnectionIdForModel(targetModel) != null;
+  // enemy numbers are yellow positive, player damage is red negative with '-'
+  const content = isPlayer
+    ? `-${Math.max(1, Math.floor(amount))}`
+    : `${Math.max(1, Math.floor(amount))}`;
+  const color = isPlayer ? "#ff3b30" : "#ffd60a";
+
+  const pos = getElementPosition(targetModel);
+  // Randomize spawn position around target to make numbers appear scattered
+  const randomAngle = Math.random() * Math.PI * 2;
+  const randomRadius = 0.4 + Math.random() * 1.0; // 0.4m - 1.4m ring
+  const offsetX = Math.cos(randomAngle) * randomRadius;
+  const offsetZ = Math.sin(randomAngle) * randomRadius;
+  const baseY = pos.y + 1.6 + Math.random() * 1.2; // 1.6m - 2.8m high
+  const endY = baseY + 1.0 + Math.random() * 0.8; // rise 1.0m - 1.8m
+  // Scale label size and duration by damage magnitude
+  const magnitude = Math.max(1, Math.floor(Math.abs(amount)));
+  const digits = String(magnitude).length;
+  const logMag = Math.log10(magnitude);
+  const sizeScale = clamp(1 + logMag * 0.3, 1, 2); // 1..2 for 1..1000+
+  const widthMeters = Math.min(3.0, 1.0 * sizeScale * (1 + (digits - 1) * 0.15));
+  const heightMeters = Math.min(2.0, 0.6 * sizeScale);
+  const fontSizePx = Math.round(42 * sizeScale);
+  const paddingPx = Math.round(8 * Math.max(1, sizeScale * 0.9));
+  const durationMs = Math.min(
+    1800,
+    700 + Math.floor(Math.random() * 300) + Math.floor(logMag * 300),
+  );
+  const label = document.createElement("m-label");
+  label.setAttribute("content", content);
+  // Ensure canvas is tall enough for the font size (CanvasText uses pixel dims = meters*200)
+  // With font-size 42 -> ~84px glyph height; height 0.6m -> 120px avoids cropping
+  label.setAttribute("width", String(widthMeters));
+  label.setAttribute("height", String(heightMeters));
+  label.setAttribute("font-size", String(fontSizePx));
+  label.setAttribute("font-family", "Upheaval Pro");
+  label.setAttribute("font-stroke-width", "4");
+  label.setAttribute("font-stroke-color", "rgba(0,0,0,1)");
+  label.setAttribute("padding", String(paddingPx));
+  label.setAttribute("color", "rgba(0,0,0,0)");
+  label.setAttribute("font-color", color);
+  label.setAttribute("emissive", "0.5");
+  label.setAttribute("billboard", "true");
+  label.setAttribute("double-sided", "true");
+  label.setAttribute("cast-shadows", "false");
+  label.setAttribute("x", String(pos.x + offsetX));
+  label.setAttribute("y", String(baseY));
+  label.setAttribute("z", String(pos.z + offsetZ));
+
+  const lerp = document.createElement("m-attr-lerp");
+  lerp.setAttribute("attr", "y,emissive");
+  lerp.setAttribute("duration", String(durationMs));
+  label.appendChild(lerp);
+
+  // Two-phase scale: grow fast to 1 for first 1/4, then shrink to 0 for last 3/4
+  const scaleLerp = document.createElement("m-attr-lerp");
+  scaleLerp.setAttribute("attr", "sx,sy,sz");
+  const growDurationMs = Math.max(80, Math.floor(durationMs * 0.25));
+  const shrinkDurationMs = Math.max(120, durationMs - growDurationMs);
+  // Start with fast ease-out growth
+  scaleLerp.setAttribute("easing", "easeOutExpo");
+  scaleLerp.setAttribute("duration", String(growDurationMs));
+  label.appendChild(scaleLerp);
+
+  document.body.appendChild(label);
+
+  // kick the animation
+  // Set initial scale to 0, then quickly grow to 1 during the first quarter
+  label.setAttribute("sx", "0");
+  label.setAttribute("sy", "0");
+  label.setAttribute("sz", "0");
+  setTimeout(() => {
+    label.setAttribute("y", String(endY));
+    label.setAttribute("sx", "1");
+    label.setAttribute("sy", "1");
+    label.setAttribute("sz", "1");
+  }, 0);
+
+  // Switch to shrink phase after grow completes: ease-in back to 0 over remaining time
+  setTimeout(() => {
+    scaleLerp.setAttribute("easing", "easeInExpo");
+    scaleLerp.setAttribute("duration", String(shrinkDurationMs));
+    label.setAttribute("sx", "0");
+    label.setAttribute("sy", "0");
+    label.setAttribute("sz", "0");
+  }, growDurationMs);
+
+  setTimeout(() => {
+    label.remove();
+  }, durationMs - 30);
+}
