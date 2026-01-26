@@ -1,5 +1,5 @@
 {
-  "name": "standalone-game-example-game",
+  "name": "top-down-game",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -8,8 +8,8 @@
   "scripts": {
     "type-check": "tsc --noEmit -p ./tsconfig.json",
     "pre:build": "npm run build",
-    "build": "tsx ./build.ts --build",
-    "iterate": "tsx ./build.ts --watch",
+    "build": "mml build",
+    "dev": "mml dev",
     "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },

@@ -104,30 +104,34 @@ export class Player {
 
   public heal(amount: number): void {
     if (this.isDead) return;
-    
+
     const oldHealth = this.health;
     this.health = Math.min(this.maxHealth, this.health + amount);
-    
+
     if (this.health !== oldHealth) {
-      console.log(`[Player ${this.connectionId}] Healed ${(this.health - oldHealth).toFixed(1)} HP. Health: ${this.health.toFixed(1)}/${this.maxHealth}`);
+      console.log(
+        `[Player ${this.connectionId}] Healed ${(this.health - oldHealth).toFixed(1)} HP. Health: ${this.health.toFixed(1)}/${this.maxHealth}`,
+      );
     }
   }
 
   public setMaxHealth(newMaxHealth: number): void {
     const oldMaxHealth = this.maxHealth;
     this.maxHealth = newMaxHealth;
-    
+
     // If max health increased, also increase current health by the difference
     if (newMaxHealth > oldMaxHealth) {
       this.health += newMaxHealth - oldMaxHealth;
     }
-    
+
     // If max health decreased, cap current health
     if (this.health > this.maxHealth) {
       this.health = this.maxHealth;
     }
-    
-    console.log(`[Player ${this.connectionId}] Max health changed: ${oldMaxHealth} -> ${this.maxHealth}`);
+
+    console.log(
+      `[Player ${this.connectionId}] Max health changed: ${oldMaxHealth} -> ${this.maxHealth}`,
+    );
   }
 
   public setMoveSpeedMultiplier(multiplier: number): void {

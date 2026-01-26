@@ -146,13 +146,13 @@ export class Pickup {
     const bobUpdateMs = 100; // Update frequently for smooth sine sampling
     const bobSpeed = this.config.bobSpeed ?? 0.7; // Full cycles per second
     const phaseIncrement = (bobUpdateMs / 1000) * bobSpeed * Math.PI * 2;
-    
+
     this.bobInterval = window.setInterval(() => {
       if (!this.isAvailable || !this.container) return;
 
       this.bobPhase += phaseIncrement;
       if (this.bobPhase > Math.PI * 2) this.bobPhase -= Math.PI * 2;
-      
+
       // Sine wave creates natural easing at peaks
       const bobOffset = Math.sin(this.bobPhase) * (this.config.bobHeight ?? 0.25);
       const targetY = this.config.position.y + bobOffset;
@@ -328,9 +328,15 @@ export class Pickup {
       const particle = document.createElement("m-sphere");
       const startAngle = (i / spiralCount) * Math.PI * 2;
       const startRadius = 3;
-      particle.setAttribute("x", (this.config.position.x + Math.cos(startAngle) * startRadius).toString());
+      particle.setAttribute(
+        "x",
+        (this.config.position.x + Math.cos(startAngle) * startRadius).toString(),
+      );
       particle.setAttribute("y", (this.config.position.y - 0.5).toString());
-      particle.setAttribute("z", (this.config.position.z + Math.sin(startAngle) * startRadius).toString());
+      particle.setAttribute(
+        "z",
+        (this.config.position.z + Math.sin(startAngle) * startRadius).toString(),
+      );
       particle.setAttribute("radius", "0.12");
       particle.setAttribute("color", this.config.glowColor ?? "#00ffff");
       particle.setAttribute("opacity", "0.9");
@@ -349,11 +355,14 @@ export class Pickup {
       }, i * 80);
 
       // Remove after animation
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.remove();
-        }
-      }, 1000 + i * 80);
+      setTimeout(
+        () => {
+          if (particle.parentNode) {
+            particle.remove();
+          }
+        },
+        1000 + i * 80,
+      );
     }
 
     // Flash effect at center
@@ -443,25 +452,31 @@ export class RapidFirePickup {
     this.fireRateMultiplier = config.fireRateMultiplier ?? 10;
     this.onActivate = onActivate;
 
-    this.pickup = new Pickup(sceneGroup, {
-      id: config.id,
-      position: config.position,
-      regenTimeMs: config.regenTimeMs ?? 30000, // 30 seconds default
-      pickupRadius: 1.5,
-      color: "#ff4400",
-      glowColor: "#ff6622",
-      scale: 0.8,
-      rotationSpeed: 35, // Slower rotation
-      bobSpeed: 1.0, // Slower bobbing
-      bobHeight: 0.3,
-      onPickup: (connectionId: number) => {
-        this.activate(connectionId);
+    this.pickup = new Pickup(
+      sceneGroup,
+      {
+        id: config.id,
+        position: config.position,
+        regenTimeMs: config.regenTimeMs ?? 30000, // 30 seconds default
+        pickupRadius: 1.5,
+        color: "#ff4400",
+        glowColor: "#ff6622",
+        scale: 0.8,
+        rotationSpeed: 35, // Slower rotation
+        bobSpeed: 1.0, // Slower bobbing
+        bobHeight: 0.3,
+        onPickup: (connectionId: number) => {
+          this.activate(connectionId);
+        },
       },
-    }, getActivePlayers);
+      getActivePlayers,
+    );
   }
 
   private activate(connectionId: number): void {
-    console.log(`[RapidFirePickup] Activating for player ${connectionId} - ${this.fireRateMultiplier}x fire rate for ${this.duration}ms`);
+    console.log(
+      `[RapidFirePickup] Activating for player ${connectionId} - ${this.fireRateMultiplier}x fire rate for ${this.duration}ms`,
+    );
     this.onActivate(connectionId, this.duration, this.fireRateMultiplier);
   }
 

@@ -41,7 +41,7 @@ runs:
 
     - name: Build
       shell: bash
-      run: npm run build
+      run: npm run build -- --ignore top-down-game
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4

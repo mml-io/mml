@@ -17,7 +17,7 @@ if (args.length !== 1) {
 const mode = args[0]
 
 const buildOptions: esbuild.BuildOptions = {
-  entryPoints: ["src/index.ts"],
+  entryPoints: ["src/main.ts"],
   entryNames: "[dir]/[name]-[hash]",
   assetNames: "[dir]/[name]-[hash]",
   bundle: true,
@@ -45,7 +45,7 @@ const buildOptions: esbuild.BuildOptions = {
     ] : []),
     mmlGameEngineBuildPlugin({
       configPath: "./src/scripts.json",
-      htmlTemplate: "./src/index.mml",
+      htmlTemplate: "./src/main.mml",
       filename: "index.html",
     }),
   ],

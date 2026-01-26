@@ -1,5 +1,5 @@
 import { CONSTANTS } from "./constants.js";
-import { PlayerStats, createDefaultStats } from "./ExperienceSystem.js";
+import { createDefaultStats, PlayerStats } from "./ExperienceSystem.js";
 import { calculateWorldPosition, Position } from "./helpers.js";
 
 // Physics system interface for raycast
@@ -125,7 +125,7 @@ export class Weapon {
     }
 
     let baseRate = CONSTANTS.WEAPON_FIRE_RATE;
-    
+
     // Apply upgrade stats
     const stats = this.playerStats.get(connectionId);
     if (stats && stats.fireRateMultiplier > 1) {
@@ -160,7 +160,7 @@ export class Weapon {
     if (existingTimeout !== undefined) {
       window.clearTimeout(existingTimeout);
     }
-    
+
     this.playerPowerups.set(connectionId, {
       active: true,
       fireRateMultiplier: multiplier,
@@ -169,12 +169,16 @@ export class Weapon {
 
     this.autoFirePlayers.set(connectionId, true);
 
-    console.log(`[Weapon] Rapid fire activated for player ${connectionId} - ${multiplier}x for ${durationMs}ms`);
+    console.log(
+      `[Weapon] Rapid fire activated for player ${connectionId} - ${multiplier}x for ${durationMs}ms`,
+    );
 
     // Dispatch powerup activated event
-    window.dispatchEvent(new CustomEvent("powerup-activated", {
-      detail: { connectionId, type: "rapid-fire", duration: durationMs, multiplier },
-    }));
+    window.dispatchEvent(
+      new CustomEvent("powerup-activated", {
+        detail: { connectionId, type: "rapid-fire", duration: durationMs, multiplier },
+      }),
+    );
 
     // Schedule deactivation
     const timeoutId = window.setTimeout(() => {
@@ -198,9 +202,11 @@ export class Weapon {
     console.log(`[Weapon] Rapid fire deactivated for player ${connectionId}`);
 
     // Dispatch powerup deactivated event
-    window.dispatchEvent(new CustomEvent("powerup-deactivated", {
-      detail: { connectionId, type: "rapid-fire" },
-    }));
+    window.dispatchEvent(
+      new CustomEvent("powerup-deactivated", {
+        detail: { connectionId, type: "rapid-fire" },
+      }),
+    );
   }
 
   public isAutoFiring(connectionId: number): boolean {
@@ -251,7 +257,12 @@ export class Weapon {
     this.createBullet(shootFrom, direction, enemyHit, physicsHit, stats, connectionId);
   }
 
-  public shootForward(playerPos: Position, playerRotation: number, debugSphere: HTMLElement, connectionId?: number): void {
+  public shootForward(
+    playerPos: Position,
+    playerRotation: number,
+    debugSphere: HTMLElement,
+    connectionId?: number,
+  ): void {
     if (!this.canShoot(connectionId) || !debugSphere) {
       return;
     }
@@ -259,7 +270,7 @@ export class Weapon {
     if (connectionId !== undefined) {
       this.lastShotTime.set(connectionId, Date.now());
     }
-    
+
     const muzzleTransform = calculateWorldPosition(debugSphere);
     const shootFrom = muzzleTransform.position;
 
@@ -351,9 +362,14 @@ export class Weapon {
       // Check if bullet has reached its enemy target
       if (bulletData.hitInfo && distance >= enemyHitDist) {
         const lastHitDistance = enemyHitDist;
-        this.applyDamageWithStats(bulletData.hitInfo.enemyId, bulletData.hitInfo.hitPosition, bulletData.stats, bulletData.isCrit);
+        this.applyDamageWithStats(
+          bulletData.hitInfo.enemyId,
+          bulletData.hitInfo.hitPosition,
+          bulletData.stats,
+          bulletData.isCrit,
+        );
         bulletData.hitCount++;
-        
+
         // Check for piercing - bullet continues if it has pierced fewer enemies than piercing allows
         if (bulletData.hitCount > bulletData.stats.piercing) {
           bulletsToRemove.push(bulletId);
@@ -365,7 +381,9 @@ export class Weapon {
             { minDistance: lastHitDistance + 0.05, includePhysics: false },
           );
           bulletData.hitInfo = nextHit.enemyHit;
-          console.log(`[Weapon] Bullet pierced! ${bulletData.hitCount}/${bulletData.stats.piercing + 1}`);
+          console.log(
+            `[Weapon] Bullet pierced! ${bulletData.hitCount}/${bulletData.stats.piercing + 1}`,
+          );
         }
         return;
       }
@@ -470,7 +488,12 @@ export class Weapon {
     this.applyDamageWithStats(enemyId, hitPosition, createDefaultStats(), false);
   }
 
-  private applyDamageWithStats(enemyId: string, hitPosition: Position, stats: PlayerStats, isCrit: boolean): void {
+  private applyDamageWithStats(
+    enemyId: string,
+    hitPosition: Position,
+    stats: PlayerStats,
+    isCrit: boolean,
+  ): void {
     const enemyElement = document.getElementById(enemyId);
     if (!enemyElement) {
       return; // Enemy might have been removed already
@@ -483,7 +506,9 @@ export class Weapon {
     }
     damage = Math.ceil(damage);
 
-    console.log(`[Weapon] Applying ${damage} damage to enemy: ${enemyId}${isCrit ? " (CRIT!)" : ""}`);
+    console.log(
+      `[Weapon] Applying ${damage} damage to enemy: ${enemyId}${isCrit ? " (CRIT!)" : ""}`,
+    );
 
     const damageEvent = new CustomEvent("enemy-damage", {
       detail: {
@@ -538,7 +563,7 @@ export class Weapon {
     critText.setAttribute("font-size", "48");
     critText.setAttribute("alignment", "center");
     critText.setAttribute("collide", "false");
-    
+
     const lerp = document.createElement("m-attr-lerp");
     lerp.setAttribute("attr", "y,opacity");
     lerp.setAttribute("duration", "800");

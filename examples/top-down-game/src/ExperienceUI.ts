@@ -38,46 +38,46 @@ function ensureExperienceStyles() {
 }
 
 const RARITY_STYLES: Record<string, { bg: string; border: string; glow: string; text: string }> = {
-  common: { 
-    bg: "rgba(20, 20, 20, 0.95)", 
-    border: "#666666", 
+  common: {
+    bg: "rgba(20, 20, 20, 0.95)",
+    border: "#666666",
     glow: "rgba(100, 100, 100, 0.2)",
-    text: "#aaaaaa"
+    text: "#aaaaaa",
   },
-  uncommon: { 
-    bg: "rgba(10, 30, 10, 0.95)", 
-    border: "#44cc44", 
+  uncommon: {
+    bg: "rgba(10, 30, 10, 0.95)",
+    border: "#44cc44",
     glow: "rgba(68, 204, 68, 0.3)",
-    text: "#88ff88"
+    text: "#88ff88",
   },
-  rare: { 
-    bg: "rgba(10, 20, 40, 0.95)", 
-    border: "#4488ff", 
+  rare: {
+    bg: "rgba(10, 20, 40, 0.95)",
+    border: "#4488ff",
     glow: "rgba(68, 136, 255, 0.4)",
-    text: "#88ccff"
+    text: "#88ccff",
   },
-  legendary: { 
-    bg: "rgba(40, 20, 5, 0.95)", 
-    border: "#ffaa00", 
+  legendary: {
+    bg: "rgba(40, 20, 5, 0.95)",
+    border: "#ffaa00",
     glow: "rgba(255, 170, 0, 0.5)",
-    text: "#ffcc00"
+    text: "#ffcc00",
   },
 };
 
 export class ExperienceUI {
   private connectionId: number;
-  
+
   // XP Bar elements
   private xpBarOverlay: HTMLElement;
   private xpBarFill: HTMLElement;
   private xpText: HTMLElement;
   private levelText: HTMLElement;
-  
+
   // Level-up button
   private levelUpButtonOverlay: HTMLElement;
   private levelUpButton: HTMLElement;
   private stackedCounter: HTMLElement;
-  
+
   // Upgrade menu
   private upgradeMenuOverlay: HTMLElement | null = null;
   private upgradeCardsContainer: HTMLElement | null = null;
@@ -85,12 +85,12 @@ export class ExperienceUI {
   // Debug controls
   private debugControlsOverlay: HTMLElement;
   private debugLevelButton: HTMLElement;
-  
+
   // State
   private currentLevel: number = 1;
   private pendingLevelUps: number = 0;
   private isMenuOpen: boolean = false;
-  
+
   // Callbacks
   private onUpgradeSelected: ((upgradeId: string) => void) | null = null;
   private onRequestUpgradeChoices: (() => Upgrade[]) | null = null;
@@ -408,7 +408,7 @@ export class ExperienceUI {
 
   private createUpgradeCard(upgrade: Upgrade, index: number): HTMLElement {
     const style = RARITY_STYLES[upgrade.rarity];
-    
+
     const card = document.createElement("button");
     Object.assign(card.style, {
       width: "240px",
@@ -575,10 +575,10 @@ export class ExperienceUI {
 
   public showLevelUpButton(pendingCount: number): void {
     this.pendingLevelUps = pendingCount;
-    
+
     if (pendingCount > 0) {
       this.levelUpButtonOverlay.setAttribute("visible-to", this.connectionId.toString());
-      
+
       if (pendingCount > 1) {
         this.stackedCounter.textContent = `${pendingCount} UPGRADES PENDING`;
         this.stackedCounter.style.opacity = "1";
@@ -608,13 +608,17 @@ export class ExperienceUI {
       this.isMenuOpen = false;
       return;
     }
-    
+
     // for (const child of this.upgradeCardsContainer.children) {
-      // child.setAttribute("visible-to", "-1");
-      // child.remove();
+    // child.setAttribute("visible-to", "-1");
+    // child.remove();
     // }
 
-    if (!this.upgradeMenuOverlay || !this.upgradeMenuOverlay.isConnected || !this.upgradeCardsContainer) {
+    if (
+      !this.upgradeMenuOverlay ||
+      !this.upgradeMenuOverlay.isConnected ||
+      !this.upgradeCardsContainer
+    ) {
       this.createUpgradeMenu();
     }
 

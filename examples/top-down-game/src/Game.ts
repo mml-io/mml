@@ -83,7 +83,12 @@ export class Game {
       if (player && !player.isDead) {
         const playerPos = player.getPosition();
         const playerRotationDegrees = player.getCurrentRotationDegrees();
-        this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere, connectionId);
+        this.weapon.shootForward(
+          playerPos,
+          playerRotationDegrees,
+          player.debugSphere,
+          connectionId,
+        );
       }
     });
     this.weapon = new Weapon(this.sceneGroup);
@@ -124,7 +129,12 @@ export class Game {
         if (player && !player.isDead) {
           const playerPos = player.getPosition();
           const playerRotationDegrees = player.getCurrentRotationDegrees();
-          this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere, connectionId);
+          this.weapon.shootForward(
+            playerPos,
+            playerRotationDegrees,
+            player.debugSphere,
+            connectionId,
+          );
         } else if (player?.isDead) {
           console.log("[Game] Cannot shoot - player is dead");
         } else {
@@ -261,7 +271,12 @@ export class Game {
           const playerPos = player.getPosition();
           const playerRotationDegrees = player.getCurrentRotationDegrees();
 
-          this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere, connectionId);
+          this.weapon.shootForward(
+            playerPos,
+            playerRotationDegrees,
+            player.debugSphere,
+            connectionId,
+          );
         }
       }
     });
@@ -302,7 +317,7 @@ export class Game {
     expSystem.setOnLevelUp((level, pendingCount) => {
       expUI.updateLevel(level);
       expUI.showLevelUpButton(pendingCount);
-      
+
       // Show level up notification
       const hud = this.playerHUDs.get(connectionId);
       if (hud) {
@@ -334,7 +349,7 @@ export class Game {
       const newMaxHealth = CONSTANTS.PLAYER_MAX_HEALTH + stats.maxHealthBonus;
       player.setMaxHealth(newMaxHealth);
       player.setMoveSpeedMultiplier(stats.moveSpeedMultiplier);
-      
+
       // Update HUD with new max health
       const hud = this.playerHUDs.get(connectionId);
       if (hud) {
@@ -350,7 +365,7 @@ export class Game {
     const interval = window.setInterval(() => {
       const player = this.players.get(connectionId);
       const stats = this.playerStats.get(connectionId);
-      
+
       if (player && stats && stats.regenPerSecond > 0 && !player.isDead) {
         const healAmount = stats.regenPerSecond;
         if (player.health < player.maxHealth) {
@@ -362,7 +377,7 @@ export class Game {
         }
       }
     }, CONSTANTS.REGEN_TICK_INTERVAL);
-    
+
     this.regenIntervals.set(connectionId, interval);
   }
 
@@ -389,8 +404,18 @@ export class Game {
     console.log(`[Game] Created ${this.pickups.length} rapid fire pickups`);
   }
 
-  private getActivePlayersForPickup(): Array<{ connectionId: number; getPosition: () => { x: number; y: number; z: number }; isDead: boolean; pickupRadiusMultiplier: number }> {
-    const activePlayers: Array<{ connectionId: number; getPosition: () => { x: number; y: number; z: number }; isDead: boolean; pickupRadiusMultiplier: number }> = [];
+  private getActivePlayersForPickup(): Array<{
+    connectionId: number;
+    getPosition: () => { x: number; y: number; z: number };
+    isDead: boolean;
+    pickupRadiusMultiplier: number;
+  }> {
+    const activePlayers: Array<{
+      connectionId: number;
+      getPosition: () => { x: number; y: number; z: number };
+      isDead: boolean;
+      pickupRadiusMultiplier: number;
+    }> = [];
     this.players.forEach((player, connectionId) => {
       const stats = this.playerStats.get(connectionId);
       activePlayers.push({
@@ -449,9 +474,10 @@ export class Game {
     // Award XP for the kill
     const expSystem = this.experienceSystems.get(connectionId);
     if (expSystem) {
-      const baseXP = CONSTANTS.XP_PER_ZOMBIE_KILL + (gameState.currentRound - 1) * CONSTANTS.XP_BONUS_PER_ROUND;
+      const baseXP =
+        CONSTANTS.XP_PER_ZOMBIE_KILL + (gameState.currentRound - 1) * CONSTANTS.XP_BONUS_PER_ROUND;
       expSystem.addXP(baseXP);
-      
+
       // Show XP gain effect
       const expUI = this.experienceUIs.get(connectionId);
       if (expUI) {
@@ -592,7 +618,12 @@ export class Game {
           if ((this.weapon.isAutoFiring(connectionId) || isHoldingFire) && !player.isDead) {
             const playerPos = player.getPosition();
             const playerRotationDegrees = player.getCurrentRotationDegrees();
-            this.weapon.shootForward(playerPos, playerRotationDegrees, player.debugSphere, connectionId);
+            this.weapon.shootForward(
+              playerPos,
+              playerRotationDegrees,
+              player.debugSphere,
+              connectionId,
+            );
           }
         });
       }, CONSTANTS.TICK_RATE);

@@ -1,6 +1,6 @@
 /**
  * ExperienceSystem - Vampire Survivors-style leveling and upgrade system
- * 
+ *
  * Features:
  * - XP from killing zombies
  * - Leveling with exponential XP requirements
@@ -28,12 +28,12 @@ export interface PlayerStats {
   critChance: number;
   critDamage: number;
   piercing: number; // Number of enemies bullet can pass through
-  
+
   // Defensive stats
   maxHealthBonus: number;
   damageReduction: number;
   regenPerSecond: number;
-  
+
   // Utility stats
   moveSpeedMultiplier: number;
   xpMultiplier: number;
@@ -81,7 +81,7 @@ const UPGRADE_DEFINITIONS: Omit<Upgrade, "currentLevel">[] = [
     rarity: "common",
     category: "offense",
     apply: (level, stats) => {
-      stats.fireRateMultiplier += 0.20 * level;
+      stats.fireRateMultiplier += 0.2 * level;
     },
   },
   {
@@ -93,7 +93,7 @@ const UPGRADE_DEFINITIONS: Omit<Upgrade, "currentLevel">[] = [
     rarity: "uncommon",
     category: "offense",
     apply: (level, stats) => {
-      stats.critChance += 0.10 * level;
+      stats.critChance += 0.1 * level;
     },
   },
   {
@@ -105,7 +105,7 @@ const UPGRADE_DEFINITIONS: Omit<Upgrade, "currentLevel">[] = [
     rarity: "rare",
     category: "offense",
     apply: (level, stats) => {
-      stats.critDamage += 0.50 * level;
+      stats.critDamage += 0.5 * level;
     },
   },
   {
@@ -155,7 +155,7 @@ const UPGRADE_DEFINITIONS: Omit<Upgrade, "currentLevel">[] = [
     rarity: "uncommon",
     category: "defense",
     apply: (level, stats) => {
-      stats.damageReduction += 0.10 * level;
+      stats.damageReduction += 0.1 * level;
     },
   },
   {
@@ -181,7 +181,7 @@ const UPGRADE_DEFINITIONS: Omit<Upgrade, "currentLevel">[] = [
     rarity: "common",
     category: "utility",
     apply: (level, stats) => {
-      stats.moveSpeedMultiplier += 0.10 * level;
+      stats.moveSpeedMultiplier += 0.1 * level;
     },
   },
   {
@@ -193,7 +193,7 @@ const UPGRADE_DEFINITIONS: Omit<Upgrade, "currentLevel">[] = [
     rarity: "uncommon",
     category: "utility",
     apply: (level, stats) => {
-      stats.xpMultiplier += 0.20 * level;
+      stats.xpMultiplier += 0.2 * level;
     },
   },
   {
@@ -205,7 +205,7 @@ const UPGRADE_DEFINITIONS: Omit<Upgrade, "currentLevel">[] = [
     rarity: "uncommon",
     category: "utility",
     apply: (level, stats) => {
-      stats.pickupRadiusMultiplier += 0.30 * level;
+      stats.pickupRadiusMultiplier += 0.3 * level;
     },
   },
 
@@ -260,10 +260,11 @@ export class ExperienceSystem {
   private pendingLevelUps: number = 0;
   private acquiredUpgrades: Map<string, Upgrade> = new Map();
   private stats: PlayerStats;
-  
+
   // Callbacks
   private onLevelUp: ((level: number, pendingCount: number) => void) | null = null;
-  private onXPGain: ((currentXP: number, requiredXP: number, percent: number) => void) | null = null;
+  private onXPGain: ((currentXP: number, requiredXP: number, percent: number) => void) | null =
+    null;
   private onStatsChanged: ((stats: PlayerStats) => void) | null = null;
 
   constructor(connectionId: number) {
@@ -299,8 +300,10 @@ export class ExperienceSystem {
   public addXP(baseXP: number): void {
     const actualXP = Math.floor(baseXP * this.stats.xpMultiplier);
     this.currentXP += actualXP;
-    
-    console.log(`[XP] Player ${this.connectionId} gained ${actualXP} XP (${baseXP} base × ${this.stats.xpMultiplier.toFixed(2)} multiplier)`);
+
+    console.log(
+      `[XP] Player ${this.connectionId} gained ${actualXP} XP (${baseXP} base × ${this.stats.xpMultiplier.toFixed(2)} multiplier)`,
+    );
 
     // Check for level ups
     let requiredXP = this.getXPForLevel(this.currentLevel + 1);
@@ -311,12 +314,14 @@ export class ExperienceSystem {
       if (this.pendingLevelUps < availableUpgrades) {
         this.pendingLevelUps++;
       }
-      console.log(`[XP] Player ${this.connectionId} LEVEL UP! Now level ${this.currentLevel}, ${this.pendingLevelUps} upgrades pending`);
-      
+      console.log(
+        `[XP] Player ${this.connectionId} LEVEL UP! Now level ${this.currentLevel}, ${this.pendingLevelUps} upgrades pending`,
+      );
+
       if (this.onLevelUp) {
         this.onLevelUp(this.currentLevel, this.pendingLevelUps);
       }
-      
+
       requiredXP = this.getXPForLevel(this.currentLevel + 1);
     }
 
@@ -364,16 +369,16 @@ export class ExperienceSystem {
   // Get random upgrade options (3 choices, weighted by rarity)
   public getUpgradeChoices(count: number = 3): Upgrade[] {
     const availableUpgrades: Upgrade[] = [];
-    
+
     // Build list of available upgrades (not maxed out)
     for (const def of UPGRADE_DEFINITIONS) {
       const current = this.acquiredUpgrades.get(def.id);
       const currentLevel = current?.currentLevel ?? 0;
-      
+
       if (currentLevel < def.maxLevel) {
         availableUpgrades.push({
           ...def,
-          currentLevel: currentLevel,
+          currentLevel,
         });
       }
     }
@@ -393,7 +398,7 @@ export class ExperienceSystem {
     for (let i = 0; i < count && pool.length > 0; i++) {
       const totalWeight = pool.reduce((sum, u) => sum + rarityWeights[u.rarity], 0);
       let roll = Math.random() * totalWeight;
-      
+
       for (let j = 0; j < pool.length; j++) {
         roll -= rarityWeights[pool[j].rarity];
         if (roll <= 0) {
@@ -414,7 +419,7 @@ export class ExperienceSystem {
       return false;
     }
 
-    const definition = UPGRADE_DEFINITIONS.find(u => u.id === upgradeId);
+    const definition = UPGRADE_DEFINITIONS.find((u) => u.id === upgradeId);
     if (!definition) {
       console.warn(`[XP] Unknown upgrade: ${upgradeId}`);
       return false;
@@ -436,7 +441,9 @@ export class ExperienceSystem {
     upgrade.currentLevel++;
     this.pendingLevelUps--;
 
-    console.log(`[XP] Player ${this.connectionId} selected upgrade: ${upgrade.name} (now level ${upgrade.currentLevel}/${upgrade.maxLevel})`);
+    console.log(
+      `[XP] Player ${this.connectionId} selected upgrade: ${upgrade.name} (now level ${upgrade.currentLevel}/${upgrade.maxLevel})`,
+    );
 
     // Recalculate all stats
     this.recalculateStats();
@@ -475,7 +482,9 @@ export class ExperienceSystem {
     this.onLevelUp = callback;
   }
 
-  public setOnXPGain(callback: (currentXP: number, requiredXP: number, percent: number) => void): void {
+  public setOnXPGain(
+    callback: (currentXP: number, requiredXP: number, percent: number) => void,
+  ): void {
     this.onXPGain = callback;
   }
 
@@ -499,7 +508,7 @@ export class ExperienceSystem {
     this.pendingLevelUps = 0;
     this.acquiredUpgrades.clear();
     this.stats = createDefaultStats();
-    
+
     if (this.onXPGain) {
       const progress = this.getXPProgress();
       this.onXPGain(progress.current, progress.required, progress.percent);

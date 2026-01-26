@@ -193,11 +193,11 @@ export class PlayerHUD {
       flexDirection: "column",
       alignItems: "flex-start",
     });
-    
+
     const roundLabel = document.createElement("div");
     roundLabel.textContent = "ROUND";
     Object.assign(roundLabel.style, {
-      fontSize: "10px", 
+      fontSize: "10px",
       color: "#ff6666", // Lighter label
       fontWeight: "bold",
     });
@@ -485,7 +485,7 @@ export class DeathScreen {
       transform: "scale(0.92)",
       transition: "opacity 0.4s ease-out, transform 0.4s ease-out",
     });
-    
+
     // "YOU DIED" Title
     this.title = document.createElement("div");
     this.title.textContent = "YOU DIED";
@@ -518,7 +518,7 @@ export class DeathScreen {
       flexDirection: "column",
       alignItems: "center",
       marginBottom: "40px",
-      opacity: "0", 
+      opacity: "0",
       transform: "translateY(20px)",
       transition: "all 0.5s ease-out",
     });
@@ -576,7 +576,7 @@ export class DeathScreen {
     // Trigger Animations
     this.title.style.animation = "none";
     this.container.style.animation = "none";
-    
+
     // Force reflow
     void this.title.offsetWidth;
 
@@ -594,7 +594,7 @@ export class DeathScreen {
     setTimeout(() => {
       this.statsRow.style.opacity = "1";
       this.statsRow.style.transform = "translateY(0)";
-      
+
       // Count up animation
       const duration = 1000;
       const start = 0;
@@ -606,7 +606,7 @@ export class DeathScreen {
         const now = Date.now();
         const progress = Math.min((now - startTime) / duration, 1);
         const easeOut = 1 - Math.pow(1 - progress, 3); // Cubic ease out
-        
+
         const current = Math.floor(start + (end - start) * easeOut);
         this.killCountText.textContent = current.toString();
 
@@ -614,14 +614,13 @@ export class DeathScreen {
           setTimeout(animateCount, frameInterval);
         }
       };
-      
-      setTimeout(animateCount, frameInterval);
 
+      setTimeout(animateCount, frameInterval);
     }, 400);
 
     // Show Respawn Timer
     setTimeout(() => {
-        this.respawnTimerText.style.opacity = "1";
+      this.respawnTimerText.style.opacity = "1";
     }, 1000);
   }
 
