@@ -9,7 +9,7 @@ import { NetworkedDOMWebsocketV02Adapter } from "./NetworkedDOMWebsocketV02Adapt
 
 const startingBackoffTimeMilliseconds = 100;
 const maximumBackoffTimeMilliseconds = 10000;
-const maximumWebsocketConnectionTimeout = 5000;
+const maximumWebsocketConnectionTimeout = 30000;
 
 export type NetworkedDOMWebsocketFactory = (url: string) => WebSocket;
 
