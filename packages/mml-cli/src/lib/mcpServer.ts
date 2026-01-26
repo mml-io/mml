@@ -427,9 +427,16 @@ export function registerMcpServer(options: McpServerOptions): void {
     const transport = new SSEServerTransport("/mcp/messages", res);
     const sessionId = transport.sessionId;
     transports.set(sessionId, transport);
+    const keepAliveIntervalMs = 30_000;
+    const keepAliveTimer = setInterval(() => {
+      if (!res.writableEnded) {
+        res.write(": keep-alive\n\n");
+      }
+    }, keepAliveIntervalMs);
 
     res.on("close", () => {
       console.log(`MCP: SSE connection closed (session: ${sessionId})`);
+      clearInterval(keepAliveTimer);
       transports.delete(sessionId);
     });
 
