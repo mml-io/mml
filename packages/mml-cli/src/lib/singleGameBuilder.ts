@@ -223,6 +223,9 @@ export async function watchSingleGame(
     return outFile.text;
   }
 
+  // Asset server URL for server-side systems (physics, navigation) to resolve relative paths
+  const assetServerUrl = `http://${browseHost}:${port}`;
+
   let pendingDocumentReloadReason: string | null = null;
   let documentReloadTimer: NodeJS.Timeout | null = null;
   let loaded = false;
@@ -242,7 +245,8 @@ export async function watchSingleGame(
           return;
         }
         console.log(`♻️  [dev-hot] reloading game document (${r})`);
-        gameDocument.load(html);
+        // Pass asset server URL so server-side systems can resolve relative asset URLs
+        gameDocument.load(html, { __ASSET_SERVER_URL__: assetServerUrl });
         if (loaded) {
           console.log("already loaded");
           return;
