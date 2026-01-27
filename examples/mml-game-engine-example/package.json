@@ -14,13 +14,13 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "mml-game-engine-client": "^0.1.0",
-    "mml-game-systems-common": "file:../systems/systems-common",
-    "mml-game-math-system": "file:../systems/math",
-    "mml-game-physics-system": "file:../systems/physics",
-    "mml-game-project-bundler": "file:../project-bundler",
-    "@mml-io/networked-dom-document": "0.21.1",
-    "@mml-io/networked-dom-web-runner": "0.21.1"
+    "mml-game-engine-client": "*",
+    "mml-game-systems-common": "*",
+    "mml-game-math-system": "*",
+    "mml-game-physics-system": "*",
+    "mml-game-project-bundler": "*",
+    "@mml-io/networked-dom-document": "*",
+    "@mml-io/networked-dom-web-runner": "*"
   },
   "devDependencies": {
     "@craftamap/esbuild-plugin-html": "^0.7.0",

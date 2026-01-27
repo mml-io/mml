@@ -49,6 +49,10 @@ type CharacterControllerState = {
   collider: RAPIER.Collider;
   rigidbody: RAPIER.RigidBody;
   element: Element;
+  // Stuck detection tracking
+  consecutiveStuckFrames: number;
+  lastDesiredMagnitude: number;
+  lastPosition: { x: number; y: number; z: number };
 };
 
 export type CharacterControllerConfig = {
@@ -60,6 +64,24 @@ export type CharacterControllerConfig = {
   minSlopeSlideAngle?: number;
   applyImpulsesToDynamicBodies?: boolean;
   snapToGround?: number | null;
+  /** Enable debug logging for stuck detection and collision diagnostics */
+  debug?: boolean;
+};
+
+/** Diagnostic info returned when stuck detection is enabled */
+export type CharacterStuckDiagnostics = {
+  isStuck: boolean;
+  consecutiveStuckFrames: number;
+  desiredMagnitude: number;
+  correctedMagnitude: number;
+  numCollisions: number;
+  collisions: Array<{
+    toi: number;
+    normal: { x: number; y: number; z: number };
+    normalType: "floor" | "ceiling" | "wall";
+  }>;
+  position: { x: number; y: number; z: number };
+  grounded: boolean;
 };
 
 class PhysicsSystem implements ElementSystem {
@@ -83,6 +105,13 @@ class PhysicsSystem implements ElementSystem {
     | ((buffers: { vertices: Float32Array; colors: Float32Array }) => void)
     | null = null;
   private modelLoader = new ModelLoader();
+
+  // Character controller debug mode - when enabled, logs detailed stuck diagnostics
+  private characterControllerDebug = false;
+  // Threshold for how many consecutive stuck frames before logging diagnostics
+  private stuckFrameThreshold = 3;
+  // Last diagnostics for external access
+  private lastStuckDiagnostics: CharacterStuckDiagnostics | null = null;
 
   private computeWorldTransformFor(element: Element | null) {
     return mathComputeWorldTransformFor(element, {
@@ -546,8 +575,13 @@ class PhysicsSystem implements ElementSystem {
       snapToGround = 0.1,
     } = config;
 
-    // Create the character controller
+    // Create the character controller with a slightly larger offset to prevent wall-sticking
+    // at shallow angles. The Rapier docs recommend increasing this if the character
+    // "gets stuck inexplicably".
     const controller = this.world.createCharacterController(offset);
+
+    // Enable sliding along surfaces
+    controller.setSlideEnabled(true);
 
     // Enable autostep for climbing stairs
     controller.enableAutostep(maxStepHeight, minStepWidth, includeDynamicBodies);
@@ -564,6 +598,13 @@ class PhysicsSystem implements ElementSystem {
     if (snapToGround !== null) {
       controller.enableSnapToGround(snapToGround);
     }
+
+    // Increase normalNudgeFactor to prevent getting stuck when sliding against surfaces.
+    // From Rapier source: "This is a small distance applied to the movement toward the
+    // contact normals of shapes hit by the character controller. This helps shape-casting
+    // not getting stuck in an always-penetrating state during the sliding calculation."
+    // Default is typically very small; increasing it helps with shallow-angle wall sliding.
+    controller.setNormalNudgeFactor(0.001);
 
     // Apply impulses to dynamic bodies we collide with
     controller.setApplyImpulsesToDynamicBodies(applyImpulsesToDynamicBodies);
@@ -625,12 +666,15 @@ class PhysicsSystem implements ElementSystem {
 
     const collider = this.world.createCollider(colliderDesc, rigidbody);
 
-    // Store the character controller state
+    // Store the character controller state with stuck detection tracking
     const state: CharacterControllerState = {
       controller,
       collider,
       rigidbody,
       element,
+      consecutiveStuckFrames: 0,
+      lastDesiredMagnitude: 0,
+      lastPosition: { x: worldPosition.x, y: worldPosition.y, z: worldPosition.z },
     };
 
     this.characterControllers.set(element, state);
@@ -643,8 +687,35 @@ class PhysicsSystem implements ElementSystem {
   }
 
   /**
+   * Enable or disable character controller debug mode.
+   * When enabled, logs detailed diagnostics when the character gets stuck.
+   */
+  setCharacterControllerDebug(enabled: boolean, stuckFrameThreshold: number = 3): void {
+    this.characterControllerDebug = enabled;
+    this.stuckFrameThreshold = stuckFrameThreshold;
+    console.log(
+      `[Physics] Character controller debug mode: ${enabled ? "ENABLED" : "DISABLED"}, threshold: ${stuckFrameThreshold} frames`,
+    );
+  }
+
+  /**
+   * Get the last stuck diagnostics (useful for external debugging UI).
+   */
+  getLastStuckDiagnostics(): CharacterStuckDiagnostics | null {
+    return this.lastStuckDiagnostics;
+  }
+
+  /**
    * @description Computes collision-aware movement for a character controller.
    * Call this each frame with the desired movement delta.
+   *
+   * This method includes a post-phase manual slide detection to fix a Rapier issue
+   * where grazing walls at shallow angles causes the character to get stuck. When Rapier's
+   * character controller detects a TOI (time of impact) of 0 (already penetrating), it
+   * enters a loop trying to resolve the penetration. After max iterations it gives up
+   * and returns correctedMovement as 0. This fix detects that "stuck" state and manually
+   * computes the slide movement along the wall.
+   *
    * @param element The element with a character controller
    * @param desiredTranslation The desired movement vector (in world space)
    * @returns The corrected movement after collision detection, or null if no controller exists
@@ -663,16 +734,222 @@ class PhysicsSystem implements ElementSystem {
       return null;
     }
 
+    // Get current position for stuck detection
+    const currentPos = state.rigidbody.translation();
+
     // Compute the movement - Rapier automatically excludes the passed collider
     state.controller.computeColliderMovement(
       state.collider,
       new RAPIER.Vector3(desiredTranslation.x, desiredTranslation.y, desiredTranslation.z),
     );
 
-    // Get the corrected movement
-    const movement = state.controller.computedMovement();
+    // Get the corrected movement from Rapier
+    const correctedMovement = state.controller.computedMovement();
+    const grounded = state.controller.computedGrounded();
+    const numCollisions = state.controller.numComputedCollisions();
 
-    return { x: movement.x, y: movement.y, z: movement.z };
+    // Calculate magnitudes to detect "stuck" state
+    // For horizontal stuck detection, only consider X and Z components
+    const desiredHorizontalMag = Math.sqrt(
+      desiredTranslation.x * desiredTranslation.x + desiredTranslation.z * desiredTranslation.z,
+    );
+    const correctedHorizontalMag = Math.sqrt(
+      correctedMovement.x * correctedMovement.x + correctedMovement.z * correctedMovement.z,
+    );
+    const desiredMagnitude = Math.sqrt(
+      desiredTranslation.x * desiredTranslation.x +
+        desiredTranslation.y * desiredTranslation.y +
+        desiredTranslation.z * desiredTranslation.z,
+    );
+    const correctedMagnitude = Math.sqrt(
+      correctedMovement.x * correctedMovement.x +
+        correctedMovement.y * correctedMovement.y +
+        correctedMovement.z * correctedMovement.z,
+    );
+
+    // Detect if character is stuck (wanted to move but couldn't)
+    const isHorizontallyStuck =
+      desiredHorizontalMag > 0.001 && correctedHorizontalMag < desiredHorizontalMag * 0.1;
+    const isFullyStuck = desiredMagnitude > 0.001 && correctedMagnitude < desiredMagnitude * 0.1;
+
+    // Track consecutive stuck frames
+    if (isHorizontallyStuck || isFullyStuck) {
+      state.consecutiveStuckFrames++;
+    } else {
+      state.consecutiveStuckFrames = 0;
+    }
+
+    // Collect collision diagnostics
+    const collisionDiagnostics: CharacterStuckDiagnostics["collisions"] = [];
+    for (let i = 0; i < numCollisions; i++) {
+      const collision = state.controller.computedCollision(i);
+      if (collision) {
+        const normal = collision.normal1;
+        let normalType: "floor" | "ceiling" | "wall";
+        if (normal.y > 0.5) {
+          normalType = "floor";
+        } else if (normal.y < -0.5) {
+          normalType = "ceiling";
+        } else {
+          normalType = "wall";
+        }
+        collisionDiagnostics.push({
+          toi: collision.toi,
+          normal: { x: normal.x, y: normal.y, z: normal.z },
+          normalType,
+        });
+      }
+    }
+
+    // Update diagnostics
+    this.lastStuckDiagnostics = {
+      isStuck: isHorizontallyStuck || isFullyStuck,
+      consecutiveStuckFrames: state.consecutiveStuckFrames,
+      desiredMagnitude,
+      correctedMagnitude,
+      numCollisions,
+      collisions: collisionDiagnostics,
+      position: { x: currentPos.x, y: currentPos.y, z: currentPos.z },
+      grounded,
+    };
+
+    // Log diagnostics when stuck for threshold frames
+    if (
+      this.characterControllerDebug &&
+      state.consecutiveStuckFrames === this.stuckFrameThreshold
+    ) {
+      console.group("[Physics] 🚨 CHARACTER STUCK DETECTED");
+      console.log("Position:", {
+        x: currentPos.x.toFixed(3),
+        y: currentPos.y.toFixed(3),
+        z: currentPos.z.toFixed(3),
+      });
+      console.log("Grounded:", grounded);
+      console.log("Desired movement:", {
+        x: desiredTranslation.x.toFixed(4),
+        y: desiredTranslation.y.toFixed(4),
+        z: desiredTranslation.z.toFixed(4),
+        magnitude: desiredMagnitude.toFixed(4),
+      });
+      console.log("Corrected movement:", {
+        x: correctedMovement.x.toFixed(4),
+        y: correctedMovement.y.toFixed(4),
+        z: correctedMovement.z.toFixed(4),
+        magnitude: correctedMagnitude.toFixed(4),
+      });
+      console.log("Stuck type:", isHorizontallyStuck ? "horizontal" : "vertical/full");
+      console.log("Number of collisions:", numCollisions);
+      if (collisionDiagnostics.length > 0) {
+        console.table(
+          collisionDiagnostics.map((c, i) => ({
+            index: i,
+            toi: c.toi.toFixed(6),
+            type: c.normalType,
+            normalX: c.normal.x.toFixed(3),
+            normalY: c.normal.y.toFixed(3),
+            normalZ: c.normal.z.toFixed(3),
+          })),
+        );
+      }
+      console.groupEnd();
+    }
+
+    let finalX = correctedMovement.x;
+    let finalY = correctedMovement.y;
+    let finalZ = correctedMovement.z;
+    let appliedFix = false;
+
+    // POST-PHASE: If stuck, apply manual fixes based on collision type
+    if (isHorizontallyStuck || isFullyStuck) {
+      // Find collisions with TOI too close to 0 (penetrating)
+      for (let i = 0; i < numCollisions; i++) {
+        const collision = state.controller.computedCollision(i);
+        if (collision && collision.toi < 0.0001) {
+          const normal = collision.normal1;
+
+          // Classify collision by normal direction
+          if (Math.abs(normal.y) < 0.5) {
+            // WALL COLLISION - compute slide manually (rapier should handle internally TBH)
+            const dotProduct =
+              desiredTranslation.x * normal.x +
+              desiredTranslation.y * normal.y +
+              desiredTranslation.z * normal.z;
+
+            // Only slide if we're trying to move into the wall
+            if (dotProduct < 0) {
+              finalX = desiredTranslation.x - dotProduct * normal.x;
+              finalY = desiredTranslation.y - dotProduct * normal.y;
+              finalZ = desiredTranslation.z - dotProduct * normal.z;
+
+              // Add a small push away from wall to escape penetration
+              const pushAmount = 0.01;
+              finalX += normal.x * pushAmount;
+              finalZ += normal.z * pushAmount;
+              appliedFix = true;
+
+              if (this.characterControllerDebug) {
+                console.log("[Physics] Applied WALL slide fix");
+              }
+            }
+            break;
+          } else if (normal.y > 0.5) {
+            // FLOOR COLLISION - character stuck on floor geometry (tiny steps, seams)
+            // Apply a small upward nudge to escape, then allow horizontal movement
+            if (isHorizontallyStuck && desiredHorizontalMag > 0.001) {
+              // Nudge upward slightly to clear the obstacle
+              const upwardNudge = 0.02;
+              finalY = upwardNudge;
+
+              // Keep horizontal movement intent
+              finalX = desiredTranslation.x;
+              finalZ = desiredTranslation.z;
+              appliedFix = true;
+
+              if (this.characterControllerDebug) {
+                console.log("[Physics] Applied FLOOR nudge fix (upward:", upwardNudge, ")");
+              }
+            }
+            break;
+          }
+        }
+      }
+
+      // If still stuck after checking all TOI=0 collisions, try position-based escape
+      if (!appliedFix && state.consecutiveStuckFrames >= this.stuckFrameThreshold * 2) {
+        // Compare with last position - if we haven't moved at all, apply emergency escape
+        const dx = currentPos.x - state.lastPosition.x;
+        const dz = currentPos.z - state.lastPosition.z;
+        const actualMovement = Math.sqrt(dx * dx + dz * dz);
+
+        if (actualMovement < 0.0001 && desiredHorizontalMag > 0.001) {
+          // Emergency: apply a small upward nudge to try to escape
+          finalY = 0.05;
+          finalX = desiredTranslation.x * 0.5;
+          finalZ = desiredTranslation.z * 0.5;
+
+          if (this.characterControllerDebug) {
+            console.log("[Physics] Applied EMERGENCY escape nudge");
+          }
+        }
+      }
+    }
+
+    /**
+     * Example of programatic access to latest diagnostics
+     *
+     * const diagnostics = (window as any).physics.getLastStuckDiagnostics();
+     * if (diagnostics?.isStuck) {
+     * console.log("Stuck for", diagnostics.consecutiveStuckFrames, "frames");
+     * console.log("Collisions:", diagnostics.collisions);
+     * }
+     *
+     */
+
+    // Update last position for next frame comparison
+    state.lastPosition = { x: currentPos.x, y: currentPos.y, z: currentPos.z };
+    state.lastDesiredMagnitude = desiredMagnitude;
+
+    return { x: finalX, y: finalY, z: finalZ };
   }
 
   /**

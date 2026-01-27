@@ -89,12 +89,12 @@ async function watchAll() {
       esbuild.context(esmBuildOptions),
       esbuild.context(umdBuildOptions)
     ]);
-    
+
     await Promise.all([
       esmContext.watch(),
       umdContext.watch()
     ]);
-    
+
     console.log("Watching both ESM and UMD builds...");
   } catch (error) {
     console.error("Watch setup failed:", error);

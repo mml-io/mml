@@ -8,20 +8,22 @@
   "scripts": {
     "type-check": "tsc --noEmit -p ./tsconfig.json",
     "pre:build": "npm run build",
-    "build": "mml build",
-    "dev": "mml dev",
+    "build": "npx mml build",
+    "dev": "npx mml dev",
+    "iterate": "npx mml dev",
     "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "mml-game-engine-client": "^0.1.0",
-    "mml-game-systems-common": "file:../systems/systems-common",
-    "mml-game-project-bundler": "file:../project-bundler",
-    "@mml-io/networked-dom-document": "0.21.1",
-    "@mml-io/networked-dom-web-runner": "0.21.1",
-    "@mml-io/mml-game-engine-build-plugin": "file:../../../packages/mml-game-engine-build-plugin"
+    "mml-game-engine-client": "*",
+    "mml-game-systems-common": "*",
+    "mml-game-project-bundler": "*",
+    "@mml-io/networked-dom-document": "*",
+    "@mml-io/networked-dom-web-runner": "*",
+    "@mml-io/mml-game-engine-build-plugin": "*"
   },
   "devDependencies": {
+    "@mml-io/mml-cli": "*",
     "@craftamap/esbuild-plugin-html": "^0.7.0",
     "@types/express": "^4.17.21",
     "@types/node": "20.19.10",

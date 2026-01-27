@@ -50,6 +50,9 @@ export async function initElementSystem(
 
   // Process elements with system attributes
   const processElements = () => {
+    if (typeof document === "undefined") {
+      return;
+    }
     const elements = document.querySelectorAll("*");
     elements.forEach((element) => {
       const attributes = [];
@@ -110,6 +113,11 @@ export async function initElementSystem(
 
   // Wait for document.body to be available before observing
   const startObserving = () => {
+    if (typeof document === "undefined") {
+      // No document available, retry later
+      setTimeout(startObserving, 10);
+      return;
+    }
     if (document.body) {
       observer.observe(document.body, {
         childList: true,
