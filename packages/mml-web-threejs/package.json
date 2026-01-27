@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-web-threejs",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "publishConfig": {
     "access": "public"
   },
@@ -20,17 +20,17 @@
     "test-iterate": "vitest"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.23.1",
-    "@mml-io/model-loader": "^0.23.1"
+    "@mml-io/mml-web": "^0.24.0",
+    "@mml-io/model-loader": "^0.24.0"
   },
   "peerDependencies": {
     "three": "*"
   },
   "devDependencies": {
     "@types/three": "0.182.0",
+    "jsdom": "27.4.0",
     "three": "0.182.0",
-    "vitest-canvas-mock": "1.1.3",
-    "jsdom": "27.4.0"
+    "vitest-canvas-mock": "1.1.3"
   },
   "babel": {
     "presets": [

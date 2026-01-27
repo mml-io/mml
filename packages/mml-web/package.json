@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-web",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "publishConfig": {
     "access": "public"
   },
@@ -20,7 +20,7 @@
     "test-iterate": "vitest"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web": "^0.23.1"
+    "@mml-io/networked-dom-web": "^0.24.0"
   },
   "devDependencies": {
     "@types/three": "0.182.0",
