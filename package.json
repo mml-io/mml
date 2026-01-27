@@ -17,21 +17,12 @@
     "check": "npm run build && npm run type-check-all && npm run lint-all",
     "link-all": "lerna exec \"npm link\" --no-private && npm run print-links",
     "print-links": "echo \"Run this command in the package you would like to link this repo's packages to:\n\"; echo \"npm link\" $(lerna ls --loglevel=error)",
-    "version": "lerna version --no-push --force-publish",
-    "ci:e2e-tests": "npm run ci:e2e-tests -w e2e-tests",
-    "ci:e2e-tests:threejs": "npm run ci:e2e-tests:threejs -w e2e-tests",
-    "ci:e2e-tests:playcanvas": "npm run ci:e2e-tests:playcanvas -w e2e-tests",
-    "ci:e2e-tests:threejs:shard": "npm run ci:e2e-tests:threejs:shard -w e2e-tests",
-    "ci:e2e-tests:playcanvas:shard": "npm run ci:e2e-tests:playcanvas:shard -w e2e-tests",
-    "e2e-tests": "npm run e2e-tests -w e2e-tests",
-    "e2e-tests:threejs": "npm run e2e-tests:threejs -w e2e-tests",
-    "e2e-tests:playcanvas": "npm run e2e-tests:playcanvas -w e2e-tests"
+    "version": "lerna version --no-push --force-publish"
   },
   "workspaces": [
     "packages/**/*",
     "!packages/mml-cli/templates/**",
-    "examples/**/*",
-    "e2e-tests"
+    "examples/**/*"
   ],
   "devDependencies": {
     "@babel/preset-typescript": "7.27.1",
