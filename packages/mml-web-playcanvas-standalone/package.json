@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-web-playcanvas-standalone",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "publishConfig": {
     "access": "public"
   },
@@ -20,8 +20,8 @@
     "test-iterate": "vitest"
   },
   "dependencies": {
-    "@mml-io/mml-web": "^0.24.0",
-    "@mml-io/mml-web-playcanvas": "^0.24.0"
+    "@mml-io/mml-web": "^0.24.1",
+    "@mml-io/mml-web-playcanvas": "^0.24.1"
   },
   "peerDependencies": {
     "playcanvas": "*"

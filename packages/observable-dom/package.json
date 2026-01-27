@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/observable-dom",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "publishConfig": {
     "access": "public"
   },
@@ -19,7 +19,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@mml-io/observable-dom-common": "^0.24.0",
+    "@mml-io/observable-dom-common": "^0.24.1",
     "canvas": "npm:@napi-rs/canvas@0.1.88",
     "jsdom": "27.4.0",
     "node-fetch": "3.3.2"
