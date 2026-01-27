@@ -250,4 +250,128 @@ describe("regression tests - v0.2", () => {
       },
     ]);
   });
+
+  test("visible-to toggle does not duplicate children", async () => {
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    currentDoc = doc;
+    doc.load(`
+<m-cube id="open-cube"></m-cube>
+<script>
+setTimeout(() => {
+const panel = document.createElement("m-cube");
+panel.setAttribute("visible-to", "-1");
+document.body.appendChild(panel);
+
+const openCube = document.getElementById("open-cube");
+openCube.addEventListener("click", () => {
+  panel.replaceChildren();
+  ["A", "B", "C"].forEach(() => {
+    const cube = document.createElement("m-cube");
+    cube.addEventListener("click", () => panel.setAttribute("visible-to", "-1"));
+    panel.appendChild(cube);
+  });
+  panel.removeAttribute("visible-to");
+});
+}, 1);
+</script>
+`);
+
+    const clientWs = new MockWebsocketV02();
+    doc.addWebSocket(clientWs as unknown as WebSocket);
+
+    // Wait for initial snapshot (just the parsed HTML, script runs after setTimeout)
+    await clientWs.waitForTotalMessageCount(1);
+
+    // Connect a user
+    clientWs.sendToServer({
+      type: "connectUsers",
+      connectionIds: [1],
+      connectionTokens: [null],
+    });
+
+    // Allow the script's setTimeout to attach the click handler
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    // Click the OPEN cube (nodeId: 5)
+    clientWs.sendToServer({
+      type: "event",
+      name: "click",
+      connectionId: 1,
+      nodeId: 5,
+      params: {},
+      bubbles: true,
+    });
+    // Expect the panel to become visible with 3 cubes
+    expect(await clientWs.waitForTotalMessageCount(2, 1)).toEqual([
+      {
+        type: "childrenAdded",
+        nodeId: 4,
+        previousNodeId: 5,
+        addedNodes: [
+          {
+            type: "element",
+            nodeId: 6,
+            tag: "M-CUBE",
+            attributes: [],
+            children: [
+              { type: "element", nodeId: 7, tag: "M-CUBE", attributes: [], children: [] },
+              { type: "element", nodeId: 8, tag: "M-CUBE", attributes: [], children: [] },
+              { type: "element", nodeId: 9, tag: "M-CUBE", attributes: [], children: [] },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    // Click the first cube (nodeId: 7) - this sets visible-to back to "-1"
+    clientWs.sendToServer({
+      type: "event",
+      name: "click",
+      connectionId: 1,
+      nodeId: 7,
+      params: {},
+      bubbles: true,
+    });
+
+    // Expect the panel to be removed from view
+    expect(await clientWs.waitForTotalMessageCount(3, 2)).toEqual([
+      {
+        type: "childrenRemoved",
+        nodeId: 4,
+        removedNodes: [6],
+      },
+    ]);
+
+    // Click OPEN again (nodeId: 5)
+    clientWs.sendToServer({
+      type: "event",
+      name: "click",
+      connectionId: 1,
+      nodeId: 5,
+      params: {},
+      bubbles: true,
+    });
+
+    // Expect the panel to be re-added with new cubes
+    expect(await clientWs.waitForTotalMessageCount(4, 3)).toEqual([
+      {
+        type: "childrenAdded",
+        nodeId: 4,
+        previousNodeId: 5,
+        addedNodes: [
+          {
+            type: "element",
+            nodeId: 6,
+            tag: "M-CUBE",
+            attributes: [],
+            children: [
+              { type: "element", nodeId: 10, tag: "M-CUBE", attributes: [], children: [] },
+              { type: "element", nodeId: 11, tag: "M-CUBE", attributes: [], children: [] },
+              { type: "element", nodeId: 12, tag: "M-CUBE", attributes: [], children: [] },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
 });
