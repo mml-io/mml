@@ -6,5 +6,5 @@ build/
 .vscode/
 .cursor/
 coverage/
-.nx/
+.turbo/
 tsconfig.tsbuildinfo

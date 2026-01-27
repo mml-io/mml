@@ -1,18 +1,19 @@
 {
   "name": "mml",
   "type": "module",
-  "packageManager": "npm@11.7.0",
+  "packageManager": "npm@10.8.2",
   "scripts": {
     "preinstall": "node ./check-node-version.js",
     "serve": "turbo run serve --output-logs=full --concurrency=5 --continue",
+    "serve-debug": "turbo run serve-debug --output-logs=full --concurrency=5 --continue",
     "build": "turbo run build --output-logs=full",
     "start": "npm run iterate",
     "iterate": "npm run build && npm run iterate-without-build",
-    "iterate-without-build": "lerna run --parallel --stream iterate",
-    "test-all": "lerna run --parallel --stream --no-bail test",
-    "lint-all": "lerna run --parallel --no-bail lint --ignore top-down-game",
-    "lint-fix-all": "lerna run --parallel --no-bail lint-fix --ignore top-down-game",
-    "type-check-all": "lerna run --parallel --no-bail type-check --ignore top-down-game",
+    "iterate-without-build": "turbo run iterate --output-logs=full --concurrency=1000 --continue",
+    "test-all": "turbo run test --output-logs=full --concurrency=5 --continue",
+    "lint-all": "turbo run lint --output-logs=full --concurrency=5 --continue --filter=!top-down-game",
+    "lint-fix-all": "turbo run lint-fix --output-logs=full --concurrency=5 --continue --filter=!top-down-game",
+    "type-check-all": "turbo run type-check --output-logs=full --concurrency=5 --continue --filter=!top-down-game",
     "check": "npm run build && npm run type-check-all && npm run lint-all",
     "link-all": "lerna exec \"npm link\" --no-private && npm run print-links",
     "print-links": "echo \"Run this command in the package you would like to link this repo's packages to:\n\"; echo \"npm link\" $(lerna ls --loglevel=error)",
@@ -24,10 +25,7 @@
     "ci:e2e-tests:playcanvas:shard": "npm run ci:e2e-tests:playcanvas:shard -w e2e-tests",
     "e2e-tests": "npm run e2e-tests -w e2e-tests",
     "e2e-tests:threejs": "npm run e2e-tests:threejs -w e2e-tests",
-    "e2e-tests:playcanvas": "npm run e2e-tests:playcanvas -w e2e-tests",
-    "e2e-tests:failed": "npm run e2e-tests:failed -w e2e-tests",
-    "e2e-tests:threejs:failed": "npm run e2e-tests:threejs:failed -w e2e-tests",
-    "e2e-tests:playcanvas:failed": "npm run e2e-tests:playcanvas:failed -w e2e-tests"
+    "e2e-tests:playcanvas": "npm run e2e-tests:playcanvas -w e2e-tests"
   },
   "workspaces": [
     "packages/**/*",
@@ -65,10 +63,8 @@
     "tmp": "0.2.5",
     "ts-node": "10.9.2",
     "tsx": "4.20.3",
+    "turbo": "2.7.5",
     "typescript": "5.5.4",
     "typescript-eslint": "8.36.0"
-  },
-  "optionalDependencies": {
-    "@nrwl/nx-linux-x64-gnu": "15.9.3"
   }
 }

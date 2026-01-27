@@ -9,6 +9,10 @@
       "cache": false,
       "persistent": true
     },
+    "serve-debug": {
+      "cache": false,
+      "persistent": true
+    },
     "iterate": {
       "cache": false,
       "persistent": true
@@ -28,4 +32,3 @@
     }
   }
 }
-
