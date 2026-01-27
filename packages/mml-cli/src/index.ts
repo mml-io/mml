@@ -9,6 +9,8 @@ import { registerDescribeModelCommand } from "./commands/describeModel";
 import { registerDevCommand } from "./commands/dev";
 import { registerDocsCommand } from "./commands/docs";
 import { registerExamplesCommand } from "./commands/examples";
+import { registerMusicCommand } from "./commands/music";
+import { registerSfxCommand } from "./commands/sfx";
 
 async function main(): Promise<void> {
   const parser = yargs(hideBin(process.argv))
@@ -26,6 +28,8 @@ async function main(): Promise<void> {
   registerDocsCommand(parser);
   registerExamplesCommand(parser);
   registerDescribeModelCommand(parser);
+  registerSfxCommand(parser);
+  registerMusicCommand(parser);
 
   parser
     .demandCommand(1, "Please specify a command")

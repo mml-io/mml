@@ -443,6 +443,7 @@ export async function watchSingleGame(
     getConnectedClients: () => connectedClients,
     host: browseHost,
     port,
+    assetsDir: assetsSourceDir,
     getLogBuffer,
     pushLogEntry: addLogEntry,
   });

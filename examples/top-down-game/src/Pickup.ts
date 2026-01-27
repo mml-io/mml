@@ -484,3 +484,59 @@ export class RapidFirePickup {
     this.pickup.dispose();
   }
 }
+
+// =============================================================================
+// Grenade Pickup - Grants grenades up to capacity
+// =============================================================================
+
+export interface GrenadePickupConfig {
+  id: string;
+  position: Position;
+  regenTimeMs?: number;
+  amount?: number;
+}
+
+export class GrenadePickup {
+  private pickup: Pickup;
+  private amount: number;
+  private onPickup: (connectionId: number, amount: number) => void;
+
+  constructor(
+    sceneGroup: HTMLElement,
+    config: GrenadePickupConfig,
+    getActivePlayers: () => ActivePlayer[],
+    onPickup: (connectionId: number, amount: number) => void,
+  ) {
+    this.amount = config.amount ?? 1;
+    this.onPickup = onPickup;
+
+    this.pickup = new Pickup(
+      sceneGroup,
+      {
+        id: config.id,
+        position: config.position,
+        regenTimeMs: config.regenTimeMs ?? 25000,
+        pickupRadius: 1.5,
+        color: "#22d3ff",
+        glowColor: "#66e6ff",
+        scale: 0.85,
+        rotationSpeed: 30,
+        bobSpeed: 0.9,
+        bobHeight: 0.28,
+        onPickup: (connectionId: number) => {
+          this.collect(connectionId);
+        },
+      },
+      getActivePlayers,
+    );
+  }
+
+  private collect(connectionId: number): void {
+    console.log(`[GrenadePickup] Granting ${this.amount} grenades to player ${connectionId}`);
+    this.onPickup(connectionId, this.amount);
+  }
+
+  public dispose(): void {
+    this.pickup.dispose();
+  }
+}

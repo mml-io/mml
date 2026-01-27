@@ -18,6 +18,8 @@ interface EnemyData {
   damageHandler: (event: any) => void;
 }
 
+type PlayerTarget = { x: number; y: number; z: number };
+
 export class Enemies {
   private enemies: Map<number, EnemyData> = new Map();
   private enemyIdCounter: number = 0;
@@ -46,7 +48,7 @@ export class Enemies {
   }
 
   private updateEnemyTargets(): void {
-    const playerPositions: Position[] = [];
+    const playerPositions: PlayerTarget[] = [];
     const players = document.querySelectorAll("[data-connection-id]");
 
     players.forEach((player) => {
@@ -65,7 +67,7 @@ export class Enemies {
       const enemyX = parseFloat(enemy.getAttribute("x") || "0");
       const enemyZ = parseFloat(enemy.getAttribute("z") || "0");
 
-      let nearestPlayer: Position | null = null;
+      let nearestPlayer: PlayerTarget | null = null;
       let minDistance = Infinity;
 
       playerPositions.forEach((playerPos) => {
@@ -79,43 +81,47 @@ export class Enemies {
         }
       });
 
-      if (nearestPlayer && !enemyData.isDying) {
-        try {
-          if (minDistance <= CONSTANTS.ENEMY_ATTACK_RANGE) {
-            if (!enemyData.isAttacking) {
-              enemyData.isAttacking = true;
-              this.setAnimationState(enemyData, "attack");
-              this.scheduleAttackDamage(enemyData, nearestPlayer);
+      const target = nearestPlayer;
+      if (!target || enemyData.isDying) {
+        return;
+      }
+      const targetPos = target as PlayerTarget;
 
-              (window as any).navigation.stop(enemy);
-            }
+      try {
+        if (minDistance <= CONSTANTS.ENEMY_ATTACK_RANGE) {
+          if (!enemyData.isAttacking) {
+            enemyData.isAttacking = true;
+            this.setAnimationState(enemyData, "attack");
+            this.scheduleAttackDamage(enemyData, targetPos);
 
-            const dx = nearestPlayer.x - enemyX;
-            const dz = nearestPlayer.z - enemyZ;
-            const angleRad = Math.atan2(dx, dz);
-            const angleDeg = (angleRad * 180) / Math.PI;
-            enemy.setAttribute("ry", angleDeg.toString());
-          } else {
-            // Switch to chase mode
-            if (enemyData.isAttacking) {
-              enemyData.isAttacking = false;
-              this.cancelAttackDamage(enemyData);
-              this.setAnimationState(enemyData, "walk");
-            }
-
-            // Navigate to player position (at ground level)
-            (window as any).navigation.goTo(enemy, {
-              x: nearestPlayer.x,
-              y: 0,
-              z: nearestPlayer.z,
-            });
-
-            // Update rotation to face movement direction
-            this.updateEnemyRotation(enemy);
+            (window as any).navigation.stop(enemy);
           }
-        } catch (error) {
-          console.error("Failed to navigate enemy:", error);
+
+          const dx = targetPos.x - enemyX;
+          const dz = targetPos.z - enemyZ;
+          const angleRad = Math.atan2(dx, dz);
+          const angleDeg = (angleRad * 180) / Math.PI;
+          enemy.setAttribute("ry", angleDeg.toString());
+        } else {
+          // Switch to chase mode
+          if (enemyData.isAttacking) {
+            enemyData.isAttacking = false;
+            this.cancelAttackDamage(enemyData);
+            this.setAnimationState(enemyData, "walk");
+          }
+
+          // Navigate to player position (at ground level)
+          (window as any).navigation.goTo(enemy, {
+            x: targetPos.x,
+            y: 0,
+            z: targetPos.z,
+          });
+
+          // Update rotation to face movement direction
+          this.updateEnemyRotation(enemy);
         }
+      } catch (error) {
+        console.error("Failed to navigate enemy:", error);
       }
     });
   }
@@ -127,14 +133,14 @@ export class Enemies {
       enemyData.deathAnim.setAttribute("weight", "0");
     } else if (state === "attack") {
       // Sync attack animation to current time so damage timing is predictable
-      const currentTime = document.timeline.currentTime;
+      const currentTime = document.timeline.currentTime ?? performance.now();
       enemyData.attackAnim.setAttribute("start-time", currentTime.toString());
       enemyData.walkAnim.setAttribute("weight", "0");
       enemyData.attackAnim.setAttribute("weight", "1");
       enemyData.deathAnim.setAttribute("weight", "0");
     } else {
       // Death state - sync animation to current time
-      const currentTime = document.timeline.currentTime;
+      const currentTime = document.timeline.currentTime ?? performance.now();
       enemyData.deathAnim.setAttribute("start-time", currentTime.toString());
       enemyData.walkAnim.setAttribute("weight", "0");
       enemyData.attackAnim.setAttribute("weight", "0");
@@ -298,6 +304,30 @@ export class Enemies {
     enemyData.healthBarGreen.setAttribute("x", (-offset).toString());
   }
 
+  private createGrenadeHitEffect(position: Position): void {
+    const now = document.timeline.currentTime ?? performance.now();
+    const hitEffect = document.createElement("m-video");
+    hitEffect.setAttribute("cast-shadows", "false");
+    hitEffect.setAttribute("x", position.x.toString());
+    hitEffect.setAttribute("y", (position.y + 1.0).toString());
+    hitEffect.setAttribute("z", position.z.toString());
+    hitEffect.setAttribute("width", "4");
+    hitEffect.setAttribute("height", "3");
+    hitEffect.setAttribute("loop", "false");
+    hitEffect.setAttribute("transparent", "true");
+    hitEffect.setAttribute("collide", "false");
+    hitEffect.setAttribute("src", CONSTANTS.BLOOD_SPRITE);
+    hitEffect.setAttribute("start-time", now.toString());
+
+    this.sceneGroup.appendChild(hitEffect);
+
+    setTimeout(() => {
+      if (hitEffect.parentNode) {
+        hitEffect.parentNode.removeChild(hitEffect);
+      }
+    }, 1000);
+  }
+
   public spawnEnemy(x: number, z: number, connectionId?: number): void {
     const enemyId = ++this.enemyIdCounter;
 
@@ -368,6 +398,8 @@ export class Enemies {
     const damageHandler = (event: any) => {
       console.log(`[Enemies] Enemy ${enemyId} received damage event:`, event.detail);
       const damage = event.detail?.damage || 0;
+      const hitPosition = event.detail?.hitPosition as Position | undefined;
+      const source = event.detail?.source as string | undefined;
       const enemyData = this.enemies.get(enemyId);
       if (enemyData) {
         enemyData.health -= damage;
@@ -377,6 +409,9 @@ export class Enemies {
 
         // Spawn floating damage number above the enemy
         spawnDamageNumber(enemyGroup, damage);
+        if (source === "grenade" && hitPosition) {
+          this.createGrenadeHitEffect(hitPosition);
+        }
 
         if (enemyData.health <= 0) {
           console.log(`[Enemies] Enemy ${enemyId} defeated!`);

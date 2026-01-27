@@ -1,3 +1,4 @@
+import { BarrelSystem } from "./Barrel.js";
 import { CONSTANTS } from "./constants.js";
 import { createDefaultStats, PlayerStats } from "./ExperienceSystem.js";
 import { calculateWorldPosition, Position } from "./helpers.js";
@@ -28,6 +29,12 @@ interface PhysicsHitInfo {
   hitPosition: Position;
 }
 
+interface BarrelHitInfo {
+  barrelElement: HTMLElement;
+  hitDistance: number;
+  hitPosition: Position;
+}
+
 interface BulletData {
   element: HTMLElement;
   startTime: number;
@@ -36,6 +43,7 @@ interface BulletData {
   bulletId: number;
   hitInfo?: EnemyHitInfo;
   physHitInfo?: PhysicsHitInfo;
+  barrelHitInfo?: BarrelHitInfo;
   stats: PlayerStats;
   connectionId?: number;
   isCrit: boolean;
@@ -72,6 +80,13 @@ export class Weapon {
 
   // Player stats from upgrade system
   private playerStats: Map<number, PlayerStats> = new Map();
+
+  // Barrel system for hit detection
+  private barrelSystem: BarrelSystem | null = null;
+
+  public setBarrelSystem(barrelSystem: BarrelSystem): void {
+    this.barrelSystem = barrelSystem;
+  }
 
   constructor(sceneGroup: HTMLElement) {
     this.sceneGroup = sceneGroup;
@@ -253,8 +268,8 @@ export class Weapon {
     };
 
     const stats = this.getPlayerStats(connectionId);
-    const { enemyHit, physicsHit } = this.checkBulletHit(shootFrom, direction, stats);
-    this.createBullet(shootFrom, direction, enemyHit, physicsHit, stats, connectionId);
+    const { enemyHit, physicsHit, barrelHit } = this.checkBulletHit(shootFrom, direction, stats);
+    this.createBullet(shootFrom, direction, enemyHit, physicsHit, barrelHit, stats, connectionId);
   }
 
   public shootForward(
@@ -282,8 +297,8 @@ export class Weapon {
     };
 
     const stats = this.getPlayerStats(connectionId);
-    const { enemyHit, physicsHit } = this.checkBulletHit(shootFrom, direction, stats);
-    this.createBullet(shootFrom, direction, enemyHit, physicsHit, stats, connectionId);
+    const { enemyHit, physicsHit, barrelHit } = this.checkBulletHit(shootFrom, direction, stats);
+    this.createBullet(shootFrom, direction, enemyHit, physicsHit, barrelHit, stats, connectionId);
   }
 
   private createBullet(
@@ -291,6 +306,7 @@ export class Weapon {
     direction: { x: number; y: number; z: number },
     hitInfo?: EnemyHitInfo,
     physHitInfo?: PhysicsHitInfo,
+    barrelHitInfo?: BarrelHitInfo,
     stats?: PlayerStats,
     connectionId?: number,
   ): void {
@@ -327,6 +343,7 @@ export class Weapon {
       bulletId,
       hitInfo,
       physHitInfo,
+      barrelHitInfo,
       stats: playerStats,
       connectionId,
       isCrit,
@@ -348,14 +365,47 @@ export class Weapon {
         return;
       }
 
-      // Determine which hit comes first (enemy or physics)
+      // Determine which hit comes first (enemy, barrel, or physics)
       const enemyHitDist = bulletData.hitInfo?.hitDistance ?? Infinity;
       const physHitDist = bulletData.physHitInfo?.hitDistance ?? Infinity;
+      const barrelHitDist = bulletData.barrelHitInfo?.hitDistance ?? Infinity;
+
+      // Find the closest hit
+      const minHitDist = Math.min(enemyHitDist, physHitDist, barrelHitDist);
 
       // Check if bullet has reached physics collision (wall) first
-      if (physHitDist < enemyHitDist && distance >= physHitDist) {
+      if (physHitDist === minHitDist && distance >= physHitDist) {
         this.createWallHitEffect(bulletData.physHitInfo!.hitPosition);
         bulletsToRemove.push(bulletId);
+        return;
+      }
+
+      // Check if bullet has reached a barrel
+      if (barrelHitDist === minHitDist && distance >= barrelHitDist) {
+        this.applyBarrelDamage(
+          bulletData.barrelHitInfo!.barrelElement,
+          bulletData.barrelHitInfo!.hitPosition,
+          bulletData.stats,
+          bulletData.isCrit,
+        );
+        bulletData.hitCount++;
+
+        // Check for piercing - bullet continues if it has pierced fewer targets than piercing allows
+        if (bulletData.hitCount > bulletData.stats.piercing) {
+          bulletsToRemove.push(bulletId);
+        } else {
+          const nextHit = this.checkBulletHit(
+            bulletData.startPos,
+            bulletData.direction,
+            bulletData.stats,
+            { minDistance: barrelHitDist + 0.05, includePhysics: false },
+          );
+          bulletData.hitInfo = nextHit.enemyHit;
+          bulletData.barrelHitInfo = nextHit.barrelHit;
+          console.log(
+            `[Weapon] Bullet pierced barrel! ${bulletData.hitCount}/${bulletData.stats.piercing + 1}`,
+          );
+        }
         return;
       }
 
@@ -381,6 +431,7 @@ export class Weapon {
             { minDistance: lastHitDistance + 0.05, includePhysics: false },
           );
           bulletData.hitInfo = nextHit.enemyHit;
+          bulletData.barrelHitInfo = nextHit.barrelHit;
           console.log(
             `[Weapon] Bullet pierced! ${bulletData.hitCount}/${bulletData.stats.piercing + 1}`,
           );
@@ -417,8 +468,12 @@ export class Weapon {
     direction: { x: number; y: number; z: number },
     _stats?: PlayerStats,
     options: BulletHitOptions = {},
-  ): { enemyHit?: EnemyHitInfo; physicsHit?: PhysicsHitInfo } {
-    const result: { enemyHit?: EnemyHitInfo; physicsHit?: PhysicsHitInfo } = {};
+  ): { enemyHit?: EnemyHitInfo; physicsHit?: PhysicsHitInfo; barrelHit?: BarrelHitInfo } {
+    const result: {
+      enemyHit?: EnemyHitInfo;
+      physicsHit?: PhysicsHitInfo;
+      barrelHit?: BarrelHitInfo;
+    } = {};
     const minDistance = options.minDistance ?? 0;
     const includePhysics = options.includePhysics ?? true;
 
@@ -465,6 +520,23 @@ export class Weapon {
         hitDistance: closestEnemyHit.distance,
         hitPosition: closestEnemyHit.hitPos,
       };
+    }
+
+    // Check for barrel hits
+    if (this.barrelSystem) {
+      const barrelHit = this.barrelSystem.checkBulletHit(
+        from,
+        direction,
+        CONSTANTS.BULLET_MAX_DISTANCE,
+        minDistance,
+      );
+      if (barrelHit) {
+        result.barrelHit = {
+          barrelElement: barrelHit.barrelElement,
+          hitDistance: barrelHit.hitDistance,
+          hitPosition: barrelHit.hitPosition,
+        };
+      }
     }
 
     // Check physics raycast for wall/obstacle collision
@@ -521,6 +593,115 @@ export class Weapon {
     enemyElement.dispatchEvent(damageEvent);
 
     this.createHitEffect(hitPosition, isCrit);
+  }
+
+  private applyBarrelDamage(
+    barrelElement: HTMLElement,
+    hitPosition: Position,
+    stats: PlayerStats,
+    isCrit: boolean,
+  ): void {
+    if (!barrelElement || !barrelElement.parentNode) {
+      return; // Barrel might have been destroyed already
+    }
+
+    // Calculate final damage with stats
+    let damage = CONSTANTS.WEAPON_DAMAGE * stats.damageMultiplier;
+    if (isCrit) {
+      damage *= stats.critDamage;
+    }
+    damage = Math.ceil(damage);
+
+    console.log(
+      `[Weapon] Applying ${damage} damage to barrel: ${barrelElement.id}${isCrit ? " (CRIT!)" : ""}`,
+    );
+
+    const damageEvent = new CustomEvent("barrel-damage", {
+      detail: {
+        damage,
+        hitPosition,
+        isCrit,
+        source: "bullet",
+      },
+      bubbles: true,
+    });
+    barrelElement.dispatchEvent(damageEvent);
+
+    this.createBarrelHitEffect(hitPosition, isCrit);
+  }
+
+  private createBarrelHitEffect(position: Position, isCrit: boolean = false): void {
+    // Create spark effect for barrel hits (no blood)
+    const sparkGroup = document.createElement("m-group");
+    sparkGroup.setAttribute("x", position.x.toString());
+    sparkGroup.setAttribute("y", position.y.toString());
+    sparkGroup.setAttribute("z", position.z.toString());
+
+    const flash = document.createElement("m-sphere");
+    flash.setAttribute("radius", isCrit ? "0.2" : "0.15");
+    flash.setAttribute("color", "#ffaa00");
+    flash.setAttribute("emissive", "1");
+    flash.setAttribute("cast-shadows", "false");
+    flash.setAttribute("collide", "false");
+    sparkGroup.appendChild(flash);
+
+    const flashLerp = document.createElement("m-attr-lerp");
+    flashLerp.setAttribute("attr", "sx,sy,sz,emissive");
+    flashLerp.setAttribute("duration", "150");
+    flashLerp.setAttribute("easing", "easeOutExpo");
+    flash.appendChild(flashLerp);
+
+    const sparkCount = 4;
+    const sparks: HTMLElement[] = [];
+    for (let i = 0; i < sparkCount; i++) {
+      const spark = document.createElement("m-sphere");
+      spark.setAttribute("radius", "0.03");
+      spark.setAttribute("color", "#ffcc00");
+      spark.setAttribute("emissive", "0.8");
+      spark.setAttribute("cast-shadows", "false");
+      spark.setAttribute("collide", "false");
+
+      const sparkLerp = document.createElement("m-attr-lerp");
+      sparkLerp.setAttribute("attr", "x,y,z,sx,sy,sz");
+      sparkLerp.setAttribute("duration", "200");
+      sparkLerp.setAttribute("easing", "easeOutQuad");
+      spark.appendChild(sparkLerp);
+
+      sparkGroup.appendChild(spark);
+      sparks.push(spark);
+    }
+
+    this.sceneGroup.appendChild(sparkGroup);
+
+    setTimeout(() => {
+      flash.setAttribute("sx", "0.1");
+      flash.setAttribute("sy", "0.1");
+      flash.setAttribute("sz", "0.1");
+      flash.setAttribute("emissive", "0");
+
+      sparks.forEach((spark, i) => {
+        const angle = (i / sparkCount) * Math.PI * 2;
+        const spreadX = Math.cos(angle) * (0.2 + Math.random() * 0.15);
+        const spreadY = 0.05 + Math.random() * 0.15;
+        const spreadZ = Math.sin(angle) * (0.2 + Math.random() * 0.15);
+        spark.setAttribute("x", spreadX.toString());
+        spark.setAttribute("y", spreadY.toString());
+        spark.setAttribute("z", spreadZ.toString());
+        spark.setAttribute("sx", "0.1");
+        spark.setAttribute("sy", "0.1");
+        spark.setAttribute("sz", "0.1");
+      });
+    }, 10);
+
+    setTimeout(() => {
+      if (sparkGroup.parentNode) {
+        sparkGroup.parentNode.removeChild(sparkGroup);
+      }
+    }, 250);
+
+    if (isCrit) {
+      this.createCritTextEffect(position);
+    }
   }
 
   private createHitEffect(position: Position, isCrit: boolean = false): void {

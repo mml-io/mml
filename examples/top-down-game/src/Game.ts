@@ -1,10 +1,12 @@
+import { BarrelSystem } from "./Barrel.js";
 import { Camera } from "./Camera.js";
 import { CONSTANTS } from "./constants.js";
 import { Enemies } from "./Enemies.js";
 import { ExperienceSystem, PlayerStats } from "./ExperienceSystem.js";
 import { ExperienceUI } from "./ExperienceUI.js";
+import { GrenadeSystem } from "./Grenade.js";
 import { spawnDamageNumber } from "./helpers.js";
-import { RapidFirePickup } from "./Pickup.js";
+import { GrenadePickup, RapidFirePickup } from "./Pickup.js";
 import { Player } from "./Player.js";
 import { DeathScreen, PlayerHUD } from "./UI.js";
 import { Weapon } from "./Weapon.js";
@@ -15,6 +17,8 @@ interface PlayerGameState {
   maxSimultaneousZombies: number;
   currentZombieCount: number;
   currentRound: number;
+  grenades: number;
+  grenadeCapacity: number;
 }
 
 export class Game {
@@ -30,11 +34,17 @@ export class Game {
   private regenIntervals: Map<number, number> = new Map();
   private enemies: Enemies;
   private weapon: Weapon;
+  private grenadeSystem: GrenadeSystem;
+  private barrelSystem: BarrelSystem;
   private gameTick: number | null = null;
   private arena01: HTMLElement;
   private fireControls: Map<number, HTMLElement> = new Map();
   private fireButtonHeld: Map<number, boolean> = new Map();
-  private pickups: RapidFirePickup[] = [];
+  private grenadeControls: Map<number, HTMLElement> = new Map();
+  private grenadeButtonHeld: Map<number, boolean> = new Map();
+  private rapidFirePickups: RapidFirePickup[] = [];
+  private grenadePickups: GrenadePickup[] = [];
+  private backgroundMusic: HTMLElement | null = null;
 
   constructor() {
     this.init = this.init.bind(this);
@@ -77,6 +87,7 @@ export class Game {
 
   private init() {
     this.sceneGroup = document.getElementById("scene-group") as HTMLElement;
+    this.createBackgroundMusic();
 
     this.enemies = new Enemies(this.sceneGroup, (clickPos, connectionId) => {
       const player = this.players.get(connectionId);
@@ -92,6 +103,17 @@ export class Game {
       }
     });
     this.weapon = new Weapon(this.sceneGroup);
+    this.grenadeSystem = new GrenadeSystem(this.sceneGroup);
+    this.barrelSystem = new BarrelSystem(this.sceneGroup);
+
+    // Spawn barrels from predefined positions
+    this.barrelSystem.spawnBarrelsFromConstants();
+
+    // Wire up grenade system to damage barrels
+    this.grenadeSystem.setBarrelSystem(this.barrelSystem);
+
+    // Wire up weapon system to detect barrel hits
+    this.weapon.setBarrelSystem(this.barrelSystem);
 
     // Create rapid fire pickups at spawn positions
     this.createPickups();
@@ -176,12 +198,18 @@ export class Game {
           maxSimultaneousZombies: CONSTANTS.INITIAL_ZOMBIE_COUNT,
           currentZombieCount: 0,
           currentRound: 1,
+          grenades: CONSTANTS.GRENADE_STARTING_COUNT,
+          grenadeCapacity: CONSTANTS.GRENADE_CAPACITY,
         });
 
         // Create UI elements for this player
         const hud = new PlayerHUD(connectionId, CONSTANTS.PLAYER_MAX_HEALTH);
         this.playerHUDs.set(connectionId, hud);
         hud.updateRound(1);
+        hud.updateGrenades(
+          CONSTANTS.GRENADE_STARTING_COUNT,
+          CONSTANTS.GRENADE_CAPACITY,
+        );
         hud.showNotification("SURVIVE THE HORDE");
 
         const deathScreen = new DeathScreen(connectionId);
@@ -191,6 +219,7 @@ export class Game {
         this.setupExperienceSystem(connectionId);
 
         this.createFireControl(connectionId);
+        this.createGrenadeControl(connectionId);
 
         setTimeout(() => {
           this.spawnZombiesForPlayer(connectionId);
@@ -218,6 +247,12 @@ export class Game {
         this.fireControls.delete(connectionId);
       }
       this.fireButtonHeld.delete(connectionId);
+      const grenadeControl = this.grenadeControls.get(connectionId);
+      if (grenadeControl && grenadeControl.parentNode) {
+        grenadeControl.remove();
+        this.grenadeControls.delete(connectionId);
+      }
+      this.grenadeButtonHeld.delete(connectionId);
 
       // Clean up player game state
       this.playerGameStates.delete(connectionId);
@@ -257,6 +292,25 @@ export class Game {
     this.tick();
   }
 
+  private createBackgroundMusic(): void {
+    if (this.backgroundMusic) {
+      return;
+    }
+
+    const music = document.createElement("m-audio");
+    music.setAttribute("id", "background-music");
+    music.setAttribute("src", CONSTANTS.MUSIC_BACKGROUND);
+    music.setAttribute("loop", "true");
+    music.setAttribute("volume", "2");
+    music.setAttribute("x", "0");
+    music.setAttribute("y", "2");
+    music.setAttribute("z", "0");
+    const now = document.timeline.currentTime as number;
+    music.setAttribute("start-time", now.toString());
+    this.sceneGroup.appendChild(music);
+    this.backgroundMusic = music;
+  }
+
   private createFireControl(connectionId: number): void {
     const fireControl = document.createElement("m-control");
     fireControl.setAttribute("type", "button");
@@ -282,6 +336,28 @@ export class Game {
     });
     this.sceneGroup.appendChild(fireControl);
     this.fireControls.set(connectionId, fireControl);
+  }
+
+  private createGrenadeControl(connectionId: number): void {
+    const grenadeControl = document.createElement("m-control");
+    grenadeControl.setAttribute("type", "button");
+    grenadeControl.setAttribute("input", "mouseright g gamepad-lb");
+    grenadeControl.setAttribute("raycast-type", "cursor");
+    grenadeControl.setAttribute(
+      "raycast-distance",
+      CONSTANTS.GRENADE_MAX_THROW_DISTANCE.toString(),
+    );
+    grenadeControl.setAttribute("visible-to", connectionId.toString());
+    grenadeControl.addEventListener("input", (event: any) => {
+      const pressed = Number(event.detail.value) > 0;
+      const wasPressed = this.grenadeButtonHeld.get(connectionId) ?? false;
+      this.grenadeButtonHeld.set(connectionId, pressed);
+      if (pressed && !wasPressed) {
+        this.tryThrowGrenade(connectionId, event.detail.ray ?? null);
+      }
+    });
+    this.sceneGroup.appendChild(grenadeControl);
+    this.grenadeControls.set(connectionId, grenadeControl);
   }
 
   private setupExperienceSystem(connectionId: number): void {
@@ -382,6 +458,11 @@ export class Game {
   }
 
   private createPickups(): void {
+    this.createRapidFirePickups();
+    this.createGrenadePickups();
+  }
+
+  private createRapidFirePickups(): void {
     // Create rapid fire pickups at each pickup spawn position
     CONSTANTS.PICKUP_SPAWN_POSITIONS.forEach((position, index) => {
       const pickup = new RapidFirePickup(
@@ -398,10 +479,95 @@ export class Game {
           this.weapon.activateRapidFire(connectionId, duration, multiplier);
         },
       );
-      this.pickups.push(pickup);
+      this.rapidFirePickups.push(pickup);
     });
 
-    console.log(`[Game] Created ${this.pickups.length} rapid fire pickups`);
+    console.log(`[Game] Created ${this.rapidFirePickups.length} rapid fire pickups`);
+  }
+
+  private createGrenadePickups(): void {
+    CONSTANTS.GRENADE_PICKUP_SPAWN_POSITIONS.forEach((position, index) => {
+      const pickup = new GrenadePickup(
+        this.sceneGroup,
+        {
+          id: `grenade-${index}`,
+          position,
+          regenTimeMs: CONSTANTS.GRENADE_PICKUP_REGEN_TIME,
+          amount: CONSTANTS.GRENADE_PICKUP_AMOUNT,
+        },
+        () => this.getActivePlayersForPickup(),
+        (connectionId, amount) => {
+          this.addGrenades(connectionId, amount);
+        },
+      );
+      this.grenadePickups.push(pickup);
+    });
+
+    console.log(`[Game] Created ${this.grenadePickups.length} grenade pickups`);
+  }
+
+  private addGrenades(connectionId: number, amount: number): void {
+    const gameState = this.playerGameStates.get(connectionId);
+    if (!gameState) {
+      return;
+    }
+
+    const previousCount = gameState.grenades;
+    const nextCount = Math.min(
+      gameState.grenadeCapacity,
+      Math.max(0, gameState.grenades + amount),
+    );
+    gameState.grenades = nextCount;
+
+    const hud = this.playerHUDs.get(connectionId);
+    if (hud) {
+      hud.updateGrenades(gameState.grenades, gameState.grenadeCapacity);
+      if (nextCount > previousCount) {
+        hud.showNotification(`GRENADE +${nextCount - previousCount}`);
+      }
+    }
+  }
+
+  private tryThrowGrenade(
+    connectionId: number,
+    ray: { origin: { x: number; y: number; z: number }; direction: { x: number; y: number; z: number }; distance: number } | null,
+  ): void {
+    const player = this.players.get(connectionId);
+    const gameState = this.playerGameStates.get(connectionId);
+    if (!player || player.isDead || !gameState) {
+      return;
+    }
+
+    if (!CONSTANTS.GRENADE_INFINITE_TESTING && gameState.grenades <= 0) {
+      const hud = this.playerHUDs.get(connectionId);
+      if (hud) {
+        hud.showNotification("NO GRENADES");
+      }
+      return;
+    }
+
+    if (!CONSTANTS.GRENADE_INFINITE_TESTING) {
+      gameState.grenades = Math.max(0, gameState.grenades - 1);
+      const hud = this.playerHUDs.get(connectionId);
+      if (hud) {
+        hud.updateGrenades(gameState.grenades, gameState.grenadeCapacity);
+      }
+    }
+
+    const playerRotationDegrees = player.getCurrentRotationDegrees();
+    const target = ray
+      ? {
+          x: ray.origin.x + ray.direction.x * ray.distance,
+          y: ray.origin.y + ray.direction.y * ray.distance,
+          z: ray.origin.z + ray.direction.z * ray.distance,
+        }
+      : null;
+    this.grenadeSystem.throwGrenade(
+      target,
+      playerRotationDegrees,
+      player.debugSphere,
+      connectionId,
+    );
   }
 
   private getActivePlayersForPickup(): Array<{

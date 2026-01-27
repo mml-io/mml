@@ -12,6 +12,8 @@ export const CONSTANTS = {
   BLOOD_SPRITE: "/assets/images/blood_splat.webm",
 
   SFX_SHOOT: "/assets/audio/sfx_shoot.mp3",
+  SFX_GRENADE: "/assets/audio/sfx_grenade_explosion.mp3",
+  MUSIC_BACKGROUND: "/assets/audio/music_chrome_and_concrete.mp3",
 
   AVAILABLE_SPAWN_POINTS: [
     { x: -0.358, y: 0.901, z: -3.151 },
@@ -45,6 +47,29 @@ export const CONSTANTS = {
   BULLET_MAX_DISTANCE: 100,
   BULLET_LIFETIME: 2,
   GUN_MUZZLE_OFFSET: { x: -0.1, y: 0.5, z: 1.5 }, // offset from player center to gun muzzle
+
+  // Grenade constants
+  GRENADE_MODEL: "https://files.dreamcache.xyz/models/01K6Q0JX2Z2YWN648XMX335M5E.glb",
+  GRENADE_MODEL_SCALE: 3,
+  GRENADE_THROW_SPEED: 12,
+  GRENADE_GRAVITY: -18,
+  GRENADE_MAX_LIFETIME: 3,
+  GRENADE_GROUND_Y: 0.1,
+  GRENADE_MAX_THROW_DISTANCE: 12,
+  GRENADE_ARC_MIN_HEIGHT: 1.2,
+  GRENADE_ARC_MAX_HEIGHT: 3.2,
+  GRENADE_ARC_HEIGHT_FACTOR: 0.12,
+  GRENADE_BLAST_RADIUS: 4.5,
+  GRENADE_DAMAGE: 10,
+  GRENADE_DAMAGE_FALLOFF: 4,
+  GRENADE_IMPULSE_FORCE: 18,
+  GRENADE_IMPULSE_UPWARD: 4,
+  GRENADE_KNOCKBACK_DISTANCE: 1.2,
+  GRENADE_CAPACITY: 4,
+  GRENADE_STARTING_COUNT: 2,
+  GRENADE_PICKUP_AMOUNT: 1,
+  GRENADE_PICKUP_REGEN_TIME: 25000,
+  GRENADE_INFINITE_TESTING: false,
 
   // Health constants
   ZOMBIE_MAX_HEALTH: 5,
@@ -87,8 +112,44 @@ export const CONSTANTS = {
     { x: 5, y: 1.2, z: 8 },
   ],
 
+  GRENADE_PICKUP_SPAWN_POSITIONS: [
+    { x: -2, y: 1.2, z: 2 },
+    { x: 7, y: 1.2, z: -4 },
+    { x: -9, y: 1.2, z: 6 },
+  ],
+
   // Experience system
   XP_PER_ZOMBIE_KILL: 5, // Base XP per zombie kill
   XP_BONUS_PER_ROUND: 1, // Extra XP per round
   REGEN_TICK_INTERVAL: 1000, // Health regen tick every 1 second
+
+  // Barrel constants
+  EXPLOSIVE_BARREL_MODEL: "/assets/models/explosive_barrel.glb",
+  FLAMMABLE_BARREL_MODEL: "/assets/models/flammable_barrel.glb",
+  BARREL_MODEL_SCALE: 1.2,
+  BARREL_MAX_HEALTH: 5,
+  BARREL_FLAME_THRESHOLD: 0.5, // Start flaming when health is below 50%
+  BARREL_HIT_RADIUS: 0.6, // Radius for bullet hit detection
+
+  // Explosive barrel
+  EXPLOSIVE_BARREL_BLAST_RADIUS: 5,
+  EXPLOSIVE_BARREL_DAMAGE: 20,
+  EXPLOSIVE_BARREL_DAMAGE_FALLOFF: 3.5,
+  EXPLOSIVE_BARREL_IMPULSE_FORCE: 20,
+  EXPLOSIVE_BARREL_IMPULSE_UPWARD: 5,
+
+  // Flammable liquid barrel
+  LIQUID_POOL_RADIUS: 2.5,
+  LIQUID_POOL_DURATION: 8000, // 8 seconds
+  LIQUID_DOT_DAMAGE: 1, // Damage per tick
+  LIQUID_DOT_TICK_RATE: 500, // ms between damage ticks
+  LIQUID_BURN_DURATION: 3000, // Burning status effect lasts 3 seconds after leaving pool
+
+  // Barrel spawn positions
+  BARREL_SPAWN_POSITIONS: [
+    { x: 4, y: 0.05, z: -2, type: "explosive" as const },
+    { x: -3, y: 0.05, z: 5, type: "flammable" as const },
+    { x: 8, y: 0.05, z: 3, type: "explosive" as const },
+    { x: -7, y: 0.05, z: -3, type: "flammable" as const },
+  ],
 };

@@ -22,6 +22,7 @@ export class PlayerHUD {
   private healthText: HTMLElement;
   private scoreText: HTMLElement;
   private roundText: HTMLElement;
+  private grenadeText: HTMLElement;
   private notificationArea: HTMLElement;
   private connectionId: number;
   private maxHealth: number;
@@ -248,6 +249,36 @@ export class PlayerHUD {
 
     container.appendChild(scoreRow);
 
+    const grenadeContainer = document.createElement("div");
+    Object.assign(grenadeContainer.style, {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-end",
+      gap: "2px",
+    });
+
+    const grenadeLabel = document.createElement("div");
+    grenadeLabel.textContent = "GRENADES";
+    Object.assign(grenadeLabel.style, {
+      fontSize: "10px",
+      color: "#66e6ff",
+      fontWeight: "bold",
+      letterSpacing: "1px",
+    });
+    grenadeContainer.appendChild(grenadeLabel);
+
+    this.grenadeText = document.createElement("div");
+    this.grenadeText.textContent = "0/0";
+    Object.assign(this.grenadeText.style, {
+      fontSize: "20px",
+      color: "#c9f5ff",
+      fontWeight: "bold",
+      lineHeight: "1",
+      textShadow: "0 0 6px rgba(102, 230, 255, 0.4)",
+    });
+    grenadeContainer.appendChild(this.grenadeText);
+    rightSection.appendChild(grenadeContainer);
+
     const selfDestructButton = document.createElement("button");
     selfDestructButton.textContent = "SELF-DESTRUCT";
     Object.assign(selfDestructButton.style, {
@@ -358,6 +389,18 @@ export class PlayerHUD {
       setTimeout(() => {
         this.scoreText.style.transform = "scale(1)";
       }, 100);
+    }
+  }
+
+  public updateGrenades(current: number, capacity: number): void {
+    const clampedCurrent = Math.max(0, Math.floor(current));
+    const clampedCapacity = Math.max(0, Math.floor(capacity));
+    if (this.grenadeText) {
+      this.grenadeText.textContent = `${clampedCurrent}/${clampedCapacity}`;
+      this.grenadeText.style.transform = "scale(1.1)";
+      setTimeout(() => {
+        this.grenadeText.style.transform = "scale(1)";
+      }, 120);
     }
   }
 
