@@ -189,11 +189,6 @@ export class Enemies {
       const distance = Math.sqrt(dx * dx + dz * dz);
 
       if (distance <= CONSTANTS.ENEMY_ATTACK_RANGE) {
-        // Player is still in range - deal damage!
-        console.log(
-          `[Enemies] Zombie attack hit player ${connectionId}! Distance: ${distance.toFixed(2)}`,
-        );
-
         // Dispatch player-damage event
         const playerDamageEvent = new CustomEvent("player-damage", {
           detail: {
@@ -203,10 +198,6 @@ export class Enemies {
           bubbles: true,
         });
         window.dispatchEvent(playerDamageEvent);
-      } else {
-        console.log(
-          `[Enemies] Zombie attack missed player ${connectionId}! Distance: ${distance.toFixed(2)} (needed <= ${CONSTANTS.ENEMY_ATTACK_RANGE})`,
-        );
       }
     });
 
@@ -371,7 +362,6 @@ export class Enemies {
       const enemyY = parseFloat(enemyGroup.getAttribute("y") || "0");
       const enemyZ = parseFloat(enemyGroup.getAttribute("z") || "0");
       const enemyWorldPos = { x: enemyX, y: enemyY, z: enemyZ };
-      console.log(`[Enemies] ${enemyId} clicked by conn ${connectionId} at`, enemyWorldPos);
       this.onEnemyClick(enemyWorldPos, connectionId);
     };
     enemyGroup.addEventListener("click", clickHandler);
@@ -396,16 +386,12 @@ export class Enemies {
 
     // Add damage event listener
     const damageHandler = (event: any) => {
-      console.log(`[Enemies] Enemy ${enemyId} received damage event:`, event.detail);
       const damage = event.detail?.damage || 0;
       const hitPosition = event.detail?.hitPosition as Position | undefined;
       const source = event.detail?.source as string | undefined;
       const enemyData = this.enemies.get(enemyId);
       if (enemyData) {
         enemyData.health -= damage;
-        console.log(
-          `[Enemies] Enemy ${enemyId} took ${damage} damage. Health: ${enemyData.health}/${enemyData.maxHealth}`,
-        );
 
         // Spawn floating damage number above the enemy
         spawnDamageNumber(enemyGroup, damage);
@@ -414,8 +400,6 @@ export class Enemies {
         }
 
         if (enemyData.health <= 0) {
-          console.log(`[Enemies] Enemy ${enemyId} defeated!`);
-
           // Dispatch zombie-killed event for game state management
           if (enemyData.connectionId !== undefined) {
             const zombieKilledEvent = new CustomEvent("zombie-killed", {
@@ -454,7 +438,6 @@ export class Enemies {
     this.enemies.set(enemyId, enemyData);
     // previous position for rotation tracking
     this.previousPositions.set(enemyGroup, { x, z });
-    console.log(`Spawned ${isMan ? "zombie man" : "zombie girl"} ${enemyId} at (${x}, ${z})`);
   }
 
   public killEnemy(enemyId: number): void {
@@ -503,7 +486,6 @@ export class Enemies {
         enemyData.element.parentNode.removeChild(enemyData.element);
       }
       this.enemies.delete(enemyId);
-      console.log(`Removed enemy ${enemyId}`);
     }
   }
 
@@ -566,7 +548,6 @@ export class Enemies {
     enemyIdsToRemove.forEach((enemyId) => {
       this.removeEnemy(enemyId);
     });
-    console.log(`Cleared ${enemyIdsToRemove.length} enemies for connection ${connectionId}`);
   }
 
   public getEnemyCount(): number {

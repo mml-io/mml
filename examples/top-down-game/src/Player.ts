@@ -8,6 +8,9 @@ const CHARACTER_CONTROLLER_CONFIG = {
   minStepWidth: 0.2, // Minimum width on top of obstacle to step onto
   includeDynamicBodies: false, // Don't autostep over dynamic bodies
   snapToGround: 0.3, // Snap to ground when descending stairs
+  // Explicit collider dimensions (formerly derived from m-capsule height=1.1, radius=0.6)
+  colliderHeight: 1.1, // Height of the cylindrical middle section
+  colliderRadius: 0.6, // Radius of the capsule
 };
 
 export class Player {
@@ -61,10 +64,10 @@ export class Player {
         Math.floor(Math.random() * CONSTANTS.AVAILABLE_SPAWN_POINTS.length)
       ];
 
-    // Capsule dimensions: height=1.1, radius=0.6, total height = 2.3, half = 1.15
-    // Adjust Y so capsule bottom sits on the floor (spawnPoint.y is floor level)
-    const capsuleHalfHeight = 1.15;
-    this.position = { x: spawnPoint.x, y: spawnPoint.y + capsuleHalfHeight, z: spawnPoint.z };
+    // Collider dimensions: height=1.1, radius=0.6, total height = 2.3, half = 1.15
+    // Adjust Y so collider bottom sits on the floor (spawnPoint.y is floor level)
+    const colliderHalfHeight = 1.15;
+    this.position = { x: spawnPoint.x, y: spawnPoint.y + colliderHalfHeight, z: spawnPoint.z };
     this.rotation = 0;
     this.rotationRadians = 0;
     this.physicsBody = null;
@@ -204,17 +207,12 @@ export class Player {
   }
 
   private createCharacter(): void {
-    this.physicsBody = document.createElement("m-capsule");
+    // Use m-group instead of m-capsule - the character controller creates its own collider
+    this.physicsBody = document.createElement("m-group");
     this.physicsBody.setAttribute("id", `player-body-${this.connectionId}`);
     this.physicsBody.setAttribute("x", this.position.x.toString());
     this.physicsBody.setAttribute("y", this.position.y.toString());
     this.physicsBody.setAttribute("z", this.position.z.toString());
-    this.physicsBody.setAttribute("height", "1.1");
-    this.physicsBody.setAttribute("radius", "0.6");
-    this.physicsBody.setAttribute("color", "#00ff00");
-    this.physicsBody.setAttribute("opacity", "0.0");
-    this.physicsBody.setAttribute("collide", "false"); // Collision handled by character controller
-    this.physicsBody.setAttribute("cast-shadows", "false");
 
     this.addLerp(this.physicsBody, 150, "x,y,z");
 
@@ -265,7 +263,7 @@ export class Player {
     this.characterModel.setAttribute("collide", "false");
     this.characterModel.setAttribute("src", CONSTANTS.CHARACTER_BODY);
     this.characterModel.setAttribute("state", "idle");
-    this.characterModel.setAttribute("y", "-1.1"); // Adjust model position within capsule
+    this.characterModel.setAttribute("y", "-1.1"); // Adjust model position within collider (center to feet offset)
     this.physicsBody.appendChild(this.characterModel);
 
     this.rifleModel = document.createElement("m-model");
@@ -603,8 +601,8 @@ export class Player {
   public respawn(x: number, y: number, z: number): void {
     console.log(`Respawning Player ID [${this.connectionId}] at (${x}, ${y}, ${z})`);
 
-    // Capsule dimensions: height=1.1, radius=0.6, total height = 2.3, half = 1.15
-    // Adjust Y so capsule bottom sits on the floor
+    // Collider dimensions: height=1.1, radius=0.6, total height = 2.3, half = 1.15
+    // Adjust Y so collider bottom sits on the floor
     const adjustedY = y + 1.15;
 
     if (this.physicsBody) {

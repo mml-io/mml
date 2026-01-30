@@ -8,9 +8,9 @@
   "scripts": {
     "type-check": "tsc --noEmit -p ./tsconfig.json",
     "pre:build": "npm run build",
-    "build": "npx mml build",
-    "dev": "npx mml dev",
-    "iterate": "npx mml dev",
+    "build": "node ../../packages/mml-cli/build/index.js build",
+    "dev": "node ../../packages/mml-cli/build/index.js dev",
+    "iterate": "node ../../packages/mml-cli/build/index.js dev",
     "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },

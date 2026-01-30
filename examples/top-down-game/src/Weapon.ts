@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { BarrelSystem } from "./Barrel.js";
 import { CONSTANTS } from "./constants.js";
 import { createDefaultStats, PlayerStats } from "./ExperienceSystem.js";
@@ -68,6 +69,7 @@ export class Weapon {
   private lastShotTime: Map<number, number> = new Map(); // Per-player shot timing
   private updateInterval: number | null = null;
 
+  private shootSFXArraySize: number = 20;
   private shootSFXArray: HTMLElement[] = [];
   private shootSFXIndex: number = 0;
 
@@ -95,7 +97,7 @@ export class Weapon {
   }
 
   private createShootSFX(): void {
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < this.shootSFXArraySize; i++) {
       const audio = document.createElement("m-audio");
       audio.setAttribute("id", `shoot-sfx-${i}`);
       audio.setAttribute("src", CONSTANTS.SFX_SHOOT);
@@ -109,7 +111,7 @@ export class Weapon {
   private playShootSFX(x: number, y: number, z: number): void {
     const now = document.timeline.currentTime as number;
     const audio = this.shootSFXArray[this.shootSFXIndex];
-    this.shootSFXIndex = (this.shootSFXIndex + 1) % this.shootSFXArray.length;
+    this.shootSFXIndex = (this.shootSFXIndex + 1) % this.shootSFXArraySize;
     audio.setAttribute("x", x.toString());
     audio.setAttribute("y", (50).toString());
     audio.setAttribute("z", z.toString());
@@ -158,7 +160,6 @@ export class Weapon {
 
   public setPlayerStats(connectionId: number, stats: PlayerStats): void {
     this.playerStats.set(connectionId, stats);
-    console.log(`[Weapon] Updated stats for player ${connectionId}:`, stats);
   }
 
   private getPlayerStats(connectionId?: number): PlayerStats {
@@ -183,10 +184,6 @@ export class Weapon {
     });
 
     this.autoFirePlayers.set(connectionId, true);
-
-    console.log(
-      `[Weapon] Rapid fire activated for player ${connectionId} - ${multiplier}x for ${durationMs}ms`,
-    );
 
     // Dispatch powerup activated event
     window.dispatchEvent(
@@ -213,8 +210,6 @@ export class Weapon {
       this.rapidFireTimeouts.delete(connectionId);
     }
     this.autoFirePlayers.set(connectionId, false);
-
-    console.log(`[Weapon] Rapid fire deactivated for player ${connectionId}`);
 
     // Dispatch powerup deactivated event
     window.dispatchEvent(
@@ -402,9 +397,6 @@ export class Weapon {
           );
           bulletData.hitInfo = nextHit.enemyHit;
           bulletData.barrelHitInfo = nextHit.barrelHit;
-          console.log(
-            `[Weapon] Bullet pierced barrel! ${bulletData.hitCount}/${bulletData.stats.piercing + 1}`,
-          );
         }
         return;
       }
@@ -432,9 +424,6 @@ export class Weapon {
           );
           bulletData.hitInfo = nextHit.enemyHit;
           bulletData.barrelHitInfo = nextHit.barrelHit;
-          console.log(
-            `[Weapon] Bullet pierced! ${bulletData.hitCount}/${bulletData.stats.piercing + 1}`,
-          );
         }
         return;
       }
@@ -513,12 +502,14 @@ export class Weapon {
       }
     });
 
-    if (closestEnemyHit) {
-      console.log("[Weapon] Bullet will hit enemy:", closestEnemyHit.element.id);
+    if (closestEnemyHit !== null) {
       result.enemyHit = {
-        enemyId: closestEnemyHit.element.id,
-        hitDistance: closestEnemyHit.distance,
-        hitPosition: closestEnemyHit.hitPos,
+        enemyId: (closestEnemyHit as { element: Element; distance: number; hitPos: Position })
+          .element.id,
+        hitDistance: (closestEnemyHit as { element: Element; distance: number; hitPos: Position })
+          .distance,
+        hitPosition: (closestEnemyHit as { element: Element; distance: number; hitPos: Position })
+          .hitPos,
       };
     }
 
@@ -530,7 +521,7 @@ export class Weapon {
         CONSTANTS.BULLET_MAX_DISTANCE,
         minDistance,
       );
-      if (barrelHit) {
+      if (barrelHit && barrelHit.barrelElement) {
         result.barrelHit = {
           barrelElement: barrelHit.barrelElement,
           hitDistance: barrelHit.hitDistance,
@@ -578,10 +569,6 @@ export class Weapon {
     }
     damage = Math.ceil(damage);
 
-    console.log(
-      `[Weapon] Applying ${damage} damage to enemy: ${enemyId}${isCrit ? " (CRIT!)" : ""}`,
-    );
-
     const damageEvent = new CustomEvent("enemy-damage", {
       detail: {
         damage,
@@ -611,10 +598,6 @@ export class Weapon {
       damage *= stats.critDamage;
     }
     damage = Math.ceil(damage);
-
-    console.log(
-      `[Weapon] Applying ${damage} damage to barrel: ${barrelElement.id}${isCrit ? " (CRIT!)" : ""}`,
-    );
 
     const damageEvent = new CustomEvent("barrel-damage", {
       detail: {

@@ -8,6 +8,7 @@ import {
   ElementSystem,
   extractGeometryFromModel,
   initElementSystem,
+  profiler,
 } from "mml-game-systems-common";
 import {
   createFindNearestPolyResult,
@@ -160,12 +161,14 @@ class NavigationSystem implements ElementSystem {
   private rebuildPromise: Promise<void> | null = null;
 
   init(config: NavigationConfig = {}): Promise<void> {
+    const timerKey = profiler.startTimer("navigation", "init");
     // navcat is pure JavaScript - no WASM initialization needed
     this.config = { ...this.config, ...config };
     // Mark navmesh as needing rebuild - it will be built when first needed
     // or when elements with nav-mesh attribute are processed
     this.navMeshNeedsRebuild = true;
-    console.log("[navigation] init:done");
+    const duration = profiler.stopTimer(timerKey);
+    console.log(`[navigation] init:done (${duration.toFixed(2)}ms)`);
     return Promise.resolve();
   }
 
@@ -183,11 +186,14 @@ class NavigationSystem implements ElementSystem {
   }
 
   private async collectStaticGeometry(): Promise<{ positions: number[]; indices: number[] }> {
+    const timerKey = profiler.startTimer("navigation", "collectStaticGeometry");
     const positions: number[] = [];
     const indices: number[] = [];
 
     const elements = document.querySelectorAll("m-cube, m-cylinder, m-sphere, m-plane, m-model");
     let vertexOffset = 0;
+    let modelCount = 0;
+    let primitiveCount = 0;
 
     for (const element of Array.from(elements)) {
       // Skip agents and explicitly dynamic nav obstacles
@@ -260,6 +266,7 @@ class NavigationSystem implements ElementSystem {
           }
 
           vertexOffset += geometry.vertices.length / 3;
+          modelCount++;
           console.log(
             `[Navigation] Added m-model geometry: ${geometry.vertices.length / 3} vertices, ${geometry.indices.length / 3} triangles`,
           );
@@ -338,13 +345,27 @@ class NavigationSystem implements ElementSystem {
         ].map((i) => i + vertexOffset);
         indices.push(...inds);
         vertexOffset += 8;
+        primitiveCount++;
       }
     }
+
+    const duration = profiler.stopTimer(timerKey, {
+      vertexCount: positions.length / 3,
+      triangleCount: indices.length / 3,
+      modelCount,
+      primitiveCount,
+      elementCount: elements.length,
+    });
+    console.log(
+      `[Navigation] Collected static geometry in ${duration.toFixed(2)}ms: ${positions.length / 3} vertices, ${indices.length / 3} triangles`,
+    );
 
     return { positions, indices };
   }
 
   private async rebuildNavMeshFromScene() {
+    const rebuildTimer = profiler.startTimer("navigation", "rebuildNavMeshFromScene");
+
     this.agentWaypoints.clear();
     this.agentCurrentTarget.clear();
     this.agentCurrentTargetRef.clear();
@@ -362,6 +383,7 @@ class NavigationSystem implements ElementSystem {
     if (positions.length === 0 || indices.length === 0) {
       this.navMesh = null;
       this.crowdState = null;
+      profiler.stopTimer(rebuildTimer, { error: "no_geometry" });
       console.warn("[navigation] rebuild: no geometry found");
       return;
     }
@@ -369,12 +391,20 @@ class NavigationSystem implements ElementSystem {
     const options = this.getGeneratorOptions();
 
     try {
+      const navMeshGenTimer = profiler.startTimer("navigation", "generateSoloNavMesh", {
+        vertexCount: positions.length / 3,
+        triangleCount: indices.length / 3,
+      });
       const result = generateSoloNavMesh({ positions, indices }, options);
+      const navMeshGenDuration = profiler.stopTimer(navMeshGenTimer);
 
       if (!result.navMesh) {
+        profiler.stopTimer(rebuildTimer, { error: "navmesh_generation_failed" });
         console.error("[navigation] rebuild: failed to generate navmesh");
         return;
       }
+
+      console.log(`[Navigation] NavMesh generated in ${navMeshGenDuration.toFixed(2)}ms`);
 
       this.navMesh = result.navMesh;
 
@@ -434,8 +464,17 @@ class NavigationSystem implements ElementSystem {
         const dims = this.deriveAgentDimensionsFromElement(element);
         this.addAgentInternal(element, pos, speed, maxAcceleration, dims);
       });
-      console.log("[navigation] rebuild:done", { agents: this.elementToAgent.size });
+
+      const totalDuration = profiler.stopTimer(rebuildTimer, {
+        polyCount: totalPolys,
+        tileCount,
+        agentCount: this.elementToAgent.size,
+      });
+      console.log(`[navigation] rebuild:done in ${totalDuration.toFixed(2)}ms`, {
+        agents: this.elementToAgent.size,
+      });
     } catch (err) {
+      profiler.stopTimer(rebuildTimer, { error: "exception" });
       console.error("[navigation] rebuild: error generating navmesh", err);
     }
   }

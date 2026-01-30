@@ -18,7 +18,7 @@
         "debug": false,
         "debugDrawMode": "navmesh",
         "tileSize": 32,
-        "cellSize": 0.15,
+        "cellSize": 0.3,
         "cellHeight": 0.1,
         "walkableHeight": 2,
         "walkableRadius": 0.4,

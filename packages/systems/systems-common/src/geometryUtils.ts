@@ -1,5 +1,7 @@
 import { ModelLoader, ModelLoadResult } from "@mml-io/model-loader";
 
+import { profiler } from "./profiler";
+
 /**
  * Geometry extraction result containing vertices and indices for mesh creation
  */
@@ -92,6 +94,11 @@ export function parseGLBGeometry(
   buffer: ArrayBuffer,
   logPrefix: string = "[GeometryUtils]",
 ): GeometryResult | null {
+  const timerKey = profiler.startTimer("geometry", "parseGLBGeometry", {
+    bufferSize: buffer.byteLength,
+    source: logPrefix,
+  });
+
   const dataView = new DataView(buffer);
 
   // Read GLB header
@@ -99,12 +106,14 @@ export function parseGLBGeometry(
   if (magic !== 0x46546c67) {
     // 'glTF' in little-endian
     console.error(`${logPrefix} Not a valid GLB file`);
+    profiler.stopTimer(timerKey, { error: "invalid_magic" });
     return null;
   }
 
   const version = dataView.getUint32(4, true);
   if (version !== 2) {
     console.error(`${logPrefix} Unsupported GLB version:`, version);
+    profiler.stopTimer(timerKey, { error: "unsupported_version", version });
     return null;
   }
 
@@ -132,6 +141,7 @@ export function parseGLBGeometry(
 
   if (!jsonChunk || !binChunk) {
     console.error(`${logPrefix} Missing JSON or BIN chunk in GLB`);
+    profiler.stopTimer(timerKey, { error: "missing_chunks" });
     return null;
   }
 
@@ -321,11 +331,16 @@ export function parseGLBGeometry(
 
   if (allVertices.length === 0 || allIndices.length === 0) {
     console.warn(`${logPrefix} No geometry found in GLB`);
+    profiler.stopTimer(timerKey, { error: "no_geometry" });
     return null;
   }
 
+  const vertexCount = allVertices.length / 3;
+  const triangleCount = allIndices.length / 3;
+  const duration = profiler.stopTimer(timerKey, { vertexCount, triangleCount });
+
   console.log(
-    `${logPrefix} Parsed GLB: ${allVertices.length / 3} vertices, ${allIndices.length / 3} triangles`,
+    `${logPrefix} Parsed GLB: ${vertexCount} vertices, ${triangleCount} triangles (${duration.toFixed(2)}ms)`,
   );
 
   return {
@@ -348,6 +363,10 @@ export async function extractGeometryFromModel(
   options: ExtractGeometryOptions = {},
 ): Promise<GeometryResult | null> {
   const { logPrefix = "[GeometryUtils]", modelLoader } = options;
+  const timerKey = profiler.startTimer("geometry", "extractGeometryFromModel", {
+    src,
+    source: logPrefix,
+  });
 
   try {
     // Resolve relative URLs to absolute URLs for server-side loading
@@ -377,13 +396,20 @@ export async function extractGeometryFromModel(
         // Use our custom GLB parser that doesn't load textures
         const geometry = parseGLBGeometry(realmArrayBuffer, logPrefix);
         if (geometry) {
+          profiler.stopTimer(timerKey, {
+            vertexCount: geometry.vertices.length / 3,
+            triangleCount: geometry.indices.length / 3,
+            method: "custom_parser",
+          });
           return geometry;
         }
 
         console.warn(`${logPrefix} Custom GLB parser failed, model may not have geometry`);
+        profiler.stopTimer(timerKey, { error: "parser_failed" });
         return null;
       } catch (fetchError) {
         console.error(`${logPrefix} Failed to fetch/parse GLB:`, fetchError);
+        profiler.stopTimer(timerKey, { error: "fetch_failed" });
         return null;
       }
     }
@@ -394,6 +420,7 @@ export async function extractGeometryFromModel(
 
       if (!modelResult || !modelResult.group) {
         console.error(`${logPrefix} Model result is invalid`);
+        profiler.stopTimer(timerKey, { error: "invalid_model_result" });
         return null;
       }
 
@@ -458,9 +485,15 @@ export async function extractGeometryFromModel(
 
       if (allVertices.length === 0) {
         console.warn(`${logPrefix} No geometry found in model`);
+        profiler.stopTimer(timerKey, { error: "no_geometry_in_model" });
         return null;
       }
 
+      profiler.stopTimer(timerKey, {
+        vertexCount: allVertices.length / 3,
+        triangleCount: allIndices.length / 3,
+        method: "model_loader",
+      });
       return {
         vertices: new Float32Array(allVertices),
         indices: new Uint32Array(allIndices),
@@ -468,9 +501,11 @@ export async function extractGeometryFromModel(
     }
 
     console.error(`${logPrefix} No fetch available and no ModelLoader provided`);
+    profiler.stopTimer(timerKey, { error: "no_fetch_or_loader" });
     return null;
   } catch (error) {
     console.error(`${logPrefix} Error extracting geometry:`, error);
+    profiler.stopTimer(timerKey, { error: "exception" });
     return null;
   }
 }

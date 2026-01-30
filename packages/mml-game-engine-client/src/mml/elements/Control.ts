@@ -1136,6 +1136,8 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
     this.controlGraphics = null;
     this.mouseManager?.destroy();
     this.mouseManager = null;
+    this.inputMapper?.destroy();
+    this.inputMapper = null;
     this.stopEmitting();
     super.disconnectedCallback();
   }

@@ -912,7 +912,7 @@ export class BarrelSystem {
     direction: { x: number; y: number; z: number },
     maxDistance: number,
     minDistance: number = 0,
-  ): { barrelElement: HTMLElement | null; hitDistance: number; hitPosition: Position } | null {
+  ): { barrelElement: HTMLElement; hitDistance: number; hitPosition: Position } | null {
     let closestHit: {
       barrelElement: HTMLElement;
       hitDistance: number;
@@ -948,7 +948,7 @@ export class BarrelSystem {
       }
     });
 
-    return closestHit;
+    return closestHit as { barrelElement: HTMLElement; hitDistance: number; hitPosition: Position } | null;
   }
 
   public spawnBarrelsFromConstants(): void {

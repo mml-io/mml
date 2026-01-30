@@ -11,6 +11,7 @@ import {
   ElementSystem,
   extractGeometryFromModel,
   initElementSystem,
+  profiler,
 } from "mml-game-systems-common";
 
 export type PhysicsConfig = {
@@ -66,6 +67,18 @@ export type CharacterControllerConfig = {
   snapToGround?: number | null;
   /** Enable debug logging for stuck detection and collision diagnostics */
   debug?: boolean;
+  /**
+   * Explicit collider height for the character (cylindrical middle section).
+   * When provided along with colliderRadius, the collider is created with these
+   * dimensions instead of deriving from the element's size/scale.
+   */
+  colliderHeight?: number;
+  /**
+   * Explicit collider radius for the character capsule.
+   * When provided along with colliderHeight, the collider is created with these
+   * dimensions instead of deriving from the element's size/scale.
+   */
+  colliderRadius?: number;
 };
 
 /** Diagnostic info returned when stuck detection is enabled */
@@ -129,8 +142,13 @@ class PhysicsSystem implements ElementSystem {
       return;
     }
 
+    const initTimer = profiler.startTimer("physics", "init");
+
     try {
+      const rapierInitTimer = profiler.startTimer("physics", "rapier_wasm_init");
       await RAPIER.init();
+      const rapierInitDuration = profiler.stopTimer(rapierInitTimer);
+      console.log(`[Physics] Rapier WASM initialized in ${rapierInitDuration.toFixed(2)}ms`);
 
       // Merge config with defaults - check window.systemsConfig first if config is empty
       if (
@@ -152,7 +170,11 @@ class PhysicsSystem implements ElementSystem {
 
       // Create event queue for collision detection
       this.eventQueue = new RAPIER.EventQueue(true);
+
+      const totalDuration = profiler.stopTimer(initTimer);
+      console.log(`[Physics] System initialized in ${totalDuration.toFixed(2)}ms`);
     } catch (error) {
+      profiler.stopTimer(initTimer, { error: true });
       console.error("Failed to initialize physics system:", error);
       throw error;
     }
@@ -237,6 +259,9 @@ class PhysicsSystem implements ElementSystem {
       return;
     }
 
+    const tagName = element.tagName.toLowerCase();
+    const timerKey = profiler.startTimer("physics", "addRigidbody", { tagName });
+
     // Compute world transform (includes parent transforms)
     const worldTransform = this.computeWorldTransformFor(element);
     const {
@@ -277,7 +302,6 @@ class PhysicsSystem implements ElementSystem {
 
     // Create collider based on element type using worldScale that already includes size for leaf (via math)
     let colliderDesc: RAPIER.ColliderDesc;
-    const tagName = element.tagName.toLowerCase();
 
     switch (tagName) {
       case "m-cube": {
@@ -408,6 +432,8 @@ class PhysicsSystem implements ElementSystem {
     this.elementToBody.set(element, state);
     this.bodyToElement.set(rigidBody.handle, state);
     this.colliderToElement.set(collider.handle, state);
+
+    profiler.stopTimer(timerKey);
   }
 
   /**
@@ -636,31 +662,44 @@ class PhysicsSystem implements ElementSystem {
 
     // Create collider based on element type (prefer capsule for characters)
     let colliderDesc: RAPIER.ColliderDesc;
-    const tagName = element.tagName.toLowerCase();
 
-    switch (tagName) {
-      case "m-capsule": {
-        const capsuleRadius = Math.max(worldScale.x, worldScale.z) / 2;
-        const capsuleHalfHeight = Math.max(0, (worldScale.y - capsuleRadius * 2) / 2);
-        colliderDesc = RAPIER.ColliderDesc.capsule(capsuleHalfHeight, capsuleRadius);
-        break;
-      }
-      case "m-sphere": {
-        const radius = Math.max(worldScale.x, worldScale.y, worldScale.z) / 2;
-        colliderDesc = RAPIER.ColliderDesc.ball(radius);
-        break;
-      }
-      case "m-cylinder": {
-        const halfHeight = worldScale.y / 2;
-        const radius = Math.max(worldScale.x, worldScale.z) / 2;
-        colliderDesc = RAPIER.ColliderDesc.cylinder(halfHeight, radius);
-        break;
-      }
-      default: {
-        // Default to capsule shape for characters
-        const defaultRadius = Math.max(worldScale.x, worldScale.z) / 2;
-        const defaultHalfHeight = Math.max(0, (worldScale.y - defaultRadius * 2) / 2);
-        colliderDesc = RAPIER.ColliderDesc.capsule(defaultHalfHeight, defaultRadius);
+    // Check if explicit collider dimensions are provided
+    if (config.colliderHeight !== undefined && config.colliderRadius !== undefined) {
+      // Use explicit dimensions - colliderHeight is the cylindrical middle section
+      // Total capsule height = colliderHeight + colliderRadius * 2
+      const halfHeight = config.colliderHeight / 2;
+      colliderDesc = RAPIER.ColliderDesc.capsule(halfHeight, config.colliderRadius);
+      console.log(
+        `[Physics] Created capsule collider with explicit dimensions: height=${config.colliderHeight}, radius=${config.colliderRadius}`,
+      );
+    } else {
+      // Derive collider from element type and scale
+      const tagName = element.tagName.toLowerCase();
+
+      switch (tagName) {
+        case "m-capsule": {
+          const capsuleRadius = Math.max(worldScale.x, worldScale.z) / 2;
+          const capsuleHalfHeight = Math.max(0, (worldScale.y - capsuleRadius * 2) / 2);
+          colliderDesc = RAPIER.ColliderDesc.capsule(capsuleHalfHeight, capsuleRadius);
+          break;
+        }
+        case "m-sphere": {
+          const radius = Math.max(worldScale.x, worldScale.y, worldScale.z) / 2;
+          colliderDesc = RAPIER.ColliderDesc.ball(radius);
+          break;
+        }
+        case "m-cylinder": {
+          const halfHeight = worldScale.y / 2;
+          const radius = Math.max(worldScale.x, worldScale.z) / 2;
+          colliderDesc = RAPIER.ColliderDesc.cylinder(halfHeight, radius);
+          break;
+        }
+        default: {
+          // Default to capsule shape for characters
+          const defaultRadius = Math.max(worldScale.x, worldScale.z) / 2;
+          const defaultHalfHeight = Math.max(0, (worldScale.y - defaultRadius * 2) / 2);
+          colliderDesc = RAPIER.ColliderDesc.capsule(defaultHalfHeight, defaultRadius);
+        }
       }
     }
 
