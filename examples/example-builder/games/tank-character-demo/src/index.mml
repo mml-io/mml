@@ -1,20 +1,30 @@
 <m-group id="scene-group">
   <!-- Environment lighting -->
   <m-light type="point" y="20" intensity="1500" cast-shadows="true"></m-light>
-  
+
   <!-- Tank positioned at origin -->
   <m-group id="tank-group" x="0" y="0" z="10" rx="0" ry="90" rz="0">
+    <!--
+      Model by SpringSociety (https://sketchfab.com/jcreadingtutor)
+      https://sketchfab.com/3d-models/tron-core-tank-8ddbc8b46535422bbcda7fd22765f4b6
+      License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+    -->
     <m-model
       id="tank-body"
-      src="https://mml.mgz.me/assets/playground/tron_tank_body.glb"
+      src="/assets/models/tank_body.glb"
       collide="false"
     >
       <m-light y="30" intensity="3000" color="#77aaff"></m-light>
     </m-model>
 
+    <!--
+      Model by SpringSociety (https://sketchfab.com/jcreadingtutor)
+      https://sketchfab.com/3d-models/tron-core-tank-8ddbc8b46535422bbcda7fd22765f4b6
+      License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+    -->
     <m-model
       id="tank-turret"
-      src="https://mml.mgz.me/assets/playground/tron_tank_turret.glb"
+      src="/assets/models/tank_turret.glb"
       x="0" y="0" z="0"
       rx="0" ry="0" rz="0"
       collide="false"
@@ -47,13 +57,17 @@
 
   <!-- Tank Entry Indicators will be created dynamically per player -->
 
-  <!-- Environment tunnel -->
+  <!--
+    Model by V (@pavel) (https://sketchfab.com/pavel)
+    https://sketchfab.com/3d-models/tron-tunnel-3b23295a50d14c86837bb8c2af331110
+    License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+  -->
   <m-model
     id="tunnel"
     sx="0.5" sy="0.5" sz="0.5"
     ry="180"
     z="50"
-    src="https://mml.mgz.me/assets/playground/tron_tunnel.glb"
+    src="/assets/models/tron_tunnel.glb"
   >
   </m-model>
 
@@ -114,7 +128,7 @@
       this.state = "character"; // "character" or "tank"
       this.lastModeSwitch = 0; // Timestamp of last mode switch
       this.position = { x: 0, y: 0, z: 0 };
-      
+
       // Create character elements
       this.character = {
         model: this.createPlayerModel(),
@@ -123,13 +137,13 @@
         runAnim: null,
         airAnim: null
       };
-      
+
       // Create tank entry indicator for this player
       this.entryIndicator = this.createEntryIndicator();
-      
+
       this.setupCharacter();
     }
-    
+
     createPlayerModel() {
       const player = document.createElement("m-character");
       player.setAttribute("src", "/assets/models/bot.glb");
@@ -140,7 +154,7 @@
       worldGroup.appendChild(player);
       return player;
     }
-    
+
     createEntryIndicator() {
       const indicator = document.createElement("m-cube");
       indicator.setAttribute("width", "1");
@@ -149,7 +163,7 @@
       indicator.setAttribute("color", "#00ff00");
       indicator.setAttribute("visible-to", this.connectionId.toString());
       indicator.setAttribute("visible", "false");
-      
+
       const animation = document.createElement("m-attr-anim");
       animation.setAttribute("start", "0");
       animation.setAttribute("end", "360");
@@ -157,49 +171,49 @@
       animation.setAttribute("loop", "true");
       animation.setAttribute("attr", "ry");
       indicator.appendChild(animation);
-      
+
       worldGroup.appendChild(indicator);
       return indicator;
     }
-    
+
     setupCharacter() {
       this.character.controller = this.assignPlayerController(this.character.model, this.connectionId);
       this.character.idleAnim = this.assignPlayerAnimation(this.character.model, "idle");
       this.character.runAnim = this.assignPlayerAnimation(this.character.model, "run");
       this.character.airAnim = this.assignPlayerAnimation(this.character.model, "air");
-      
+
       // Add character-move event listener
       this.character.model.addEventListener("character-move", (event) => {
         const { position, rotation, state } = event.detail;
-        
+
         this.setTransform(this.character.model, position.x, position.y, position.z, rotation.ry);
         this.character.model.setAttribute("state", state);
-        
+
         // Update player position for proximity check
         this.position = position;
         this.updateTankEntry();
       });
     }
-    
+
     assignAnimationLerp(element, duration, attrs) {
       const lerp = document.createElement("m-attr-lerp");
       lerp.setAttribute("attr", attrs);
       lerp.setAttribute("duration", duration);
       element.appendChild(lerp);
     }
-    
+
     setTransform(element, x, y, z, ry) {
       ["x", "y", "z"].forEach(attr => element.setAttribute(attr, attr === "x" ? x : attr === "y" ? y : z));
       element.setAttribute("ry", ry);
     }
-    
+
     assignPlayerController(player, id) {
       const controller = document.createElement("m-character-controller");
       controller.setAttribute("visible-to", id.toString());
       player.appendChild(controller);
       return controller;
     }
-    
+
     assignPlayerAnimation(player, state) {
       const animation = document.createElement("m-animation");
       animation.setAttribute("src", `/assets/models/anim_${state}.glb`);
@@ -208,21 +222,21 @@
       player.appendChild(animation);
       return animation;
     }
-    
+
     canSwitchMode() {
       const now = Date.now();
       return (now - this.lastModeSwitch) >= modeSwitchCooldown;
     }
-    
+
     updateTankEntry() {
       if (this.state === "tank") {
         this.entryIndicator.setAttribute("visible", "false");
         return;
       }
-      
+
       const tankPos = getTankPosition();
       const distance = calculateDistance(this.position, tankPos);
-      
+
       // Show indicator only if tank is available and player is close enough
       if (distance <= tankEntryDistance && !currentTankPlayer) {
         // Position indicator above the tank
@@ -234,7 +248,7 @@
         this.entryIndicator.setAttribute("visible", "false");
       }
     }
-    
+
     enterTank() {
       // Check cooldown
       if (!this.canSwitchMode()) {
@@ -247,12 +261,12 @@
         console.log("Tank is already occupied");
         return false;
       }
-      
+
       // Set player state to tank and update cooldown
       this.state = "tank";
       this.lastModeSwitch = Date.now();
       currentTankPlayer = this.connectionId;
-      
+
       // Remove character controller for this player
       if (this.character.controller) {
         this.character.model.removeChild(this.character.controller);
@@ -266,76 +280,76 @@
       turretControl.setAttribute("visible-to", this.connectionId.toString());
       fireControl.setAttribute("visible-to", this.connectionId.toString());
       aimControl.setAttribute("visible-to", this.connectionId.toString());
-      
+
       // Enable tank camera
       tankCamera.setAttribute("visible-to", this.connectionId.toString());
-      
+
       // Hide entry indicator
       this.entryIndicator.setAttribute("visible", "false");
-      
+
       console.log(`Player ${this.connectionId} entered tank mode`);
       return true;
     }
-    
+
     exitTank() {
       // Check cooldown
       if (!this.canSwitchMode()) {
         console.log(`Player ${this.connectionId} must wait before switching modes`);
         return false;
       }
-      
+
       // Get tank position for character placement
       const tankPos = getTankPosition();
-      
+
       // Set player state back to character and update cooldown
       this.state = "character";
       this.lastModeSwitch = Date.now();
       currentTankPlayer = null;
-      
+
       // Hide tank controls
       movementControl.setAttribute("visible-to", "-1");
       turretControl.setAttribute("visible-to", "-1");
       fireControl.setAttribute("visible-to", "-1");
       aimControl.setAttribute("visible-to", "-1");
-      
+
       // Hide tank camera
       tankCamera.setAttribute("visible-to", "-1");
-      
+
       // Show character model
       this.character.model.setAttribute("visible", "true");
-      
+
       // Position character next to tank (to the side based on tank rotation)
       const tankRotation = parseFloat(tankGroup.getAttribute("ry") || "0");
       const tankRad = (tankRotation * Math.PI) / 180;
       const exitDistance = 4; // Distance from tank center
-      
+
       // Position to the right side of the tank relative to its orientation
       const rightX = Math.cos(tankRad) * exitDistance;
       const rightZ = -Math.sin(tankRad) * exitDistance;
-      
+
       const exitX = tankPos.x + rightX;
       const exitZ = tankPos.z + rightZ;
       this.setTransform(this.character.model, exitX, 0, exitZ, 0);
 
       // Recreate character controller for this player
       this.character.controller = this.assignPlayerController(this.character.model, this.connectionId);
-      
+
       // Update the player's position data
       this.position = { x: exitX, y: 0, z: exitZ };
-      
+
       // Update tank entry indicator for all players
       connectedPlayers.forEach(player => player.updateTankEntry());
-      
+
       console.log(`Player ${this.connectionId} exited tank mode`);
       return true;
     }
-    
+
     destroy() {
       // If this player was in the tank, exit them first
       if (currentTankPlayer === this.connectionId) {
         this.exitTank();
       }
-      
+
       worldGroup.removeChild(this.character.model);
       worldGroup.removeChild(this.entryIndicator);
     }
@@ -349,14 +363,14 @@
 
   function spawnPlayer(connectionId) {
     if (connectedPlayers.has(connectionId)) return;
-    
+
     const player = new Player(connectionId);
     connectedPlayers.set(connectionId, player);
   }
 
   function removePlayer(connectionId) {
     if (!connectedPlayers.has(connectionId)) return;
-    
+
     const player = connectedPlayers.get(connectionId);
     player.destroy();
     connectedPlayers.delete(connectionId);
@@ -383,15 +397,15 @@
   tankEntryControl.addEventListener("input", (event) => {
     const { value, connectionId } = event.detail;
     entryMap.set(connectionId, value);
-    
+
     if (value > 0) {
       const player = connectedPlayers.get(connectionId);
       if (!player) return;
-      
+
       if (player.state === "character") {
         const tankPos = getTankPosition();
         const distance = calculateDistance(player.position, tankPos);
-        
+
         if (distance <= tankEntryDistance) {
           player.enterTank();
         }
@@ -437,7 +451,7 @@
   function createSFXArray() {
     for (let i = 0; i < 20; i++) {
       const sfx = document.createElement("m-audio");
-      sfx.setAttribute("src", "https://mml.mgz.me/assets/playground/sfx_tank_shoot.mp3");
+      sfx.setAttribute("src", "/assets/sfx/sfx_tank_shoot.mp3");
       sfx.setAttribute("loop", "false");
       sfx.setAttribute("volume", "0");
       sfx.setAttribute("start-time", -2000);

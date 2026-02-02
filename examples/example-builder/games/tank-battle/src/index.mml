@@ -2,17 +2,27 @@
 
 <m-group id="tank-group" x="0" y="0" z="0" rx="0" ry="90" rz="0">
 
+  <!--
+    Model by SpringSociety (https://sketchfab.com/jcreadingtutor)
+    https://sketchfab.com/3d-models/tron-core-tank-8ddbc8b46535422bbcda7fd22765f4b6
+    License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+  -->
   <m-model
     id="tank-body"
-    src="https://mml.mgz.me/assets/playground/tron_tank_body.glb"
+    src="/assets/models/tank_body.glb"
     collide="false"
   >
     <m-light y="30" intensity="3000" color="#77aaff"></m-light>
   </m-model>
 
+  <!--
+    Model by SpringSociety (https://sketchfab.com/jcreadingtutor)
+    https://sketchfab.com/3d-models/tron-core-tank-8ddbc8b46535422bbcda7fd22765f4b6
+    License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+  -->
   <m-model
     id="tank-turret"
-    src="https://mml.mgz.me/assets/playground/tron_tank_turret.glb"
+    src="/assets/models/tank_turret.glb"
     x="0" y="0" z="0"
     rx="0" ry="0" rz="0"
     collide="false"
@@ -47,12 +57,17 @@
 <m-control id="fire-control" type="button" button="0" hint="Fire"></m-control>
 <m-control id="aim-control" type="button" button="1" hint="Aim"></m-control>
 
+<!--
+  Model by V (@pavel) (https://sketchfab.com/pavel)
+  https://sketchfab.com/3d-models/tron-tunnel-3b23295a50d14c86837bb8c2af331110
+  License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+-->
 <m-model
   id="tunnel"
   sx="0.5" sy="0.5" sz="0.5"
   ry="180"
   z="50"
-  src="https://mml.mgz.me/assets/playground/tron_tunnel.glb"
+  src="/assets/models/tron_tunnel.glb"
 >
 </m-model>
 
