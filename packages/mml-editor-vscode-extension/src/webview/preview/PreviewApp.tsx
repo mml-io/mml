@@ -19,7 +19,7 @@ import {
 } from "@mml-io/mml-editor-core";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { getVscodeApi } from "./vscodeApi";
+import { getVscodeApi } from "../utils/vscodeApi";
 
 type PersistedState = {
   content?: string;

@@ -16,7 +16,8 @@
     "onLanguage:html",
     "onLanguage:xml",
     "onView:mmlSceneOutline",
-    "onView:mmlElementSettings"
+    "onView:mmlElementSettings",
+    "onCustomEditor:mml.glbViewer"
   ],
   "contributes": {
     "commands": [
@@ -77,6 +78,26 @@
       {
         "command": "mml.focusElementSettings",
         "title": "MML: Focus Element Settings"
+      },
+      {
+        "command": "mml.glb.toggleBounds",
+        "title": "GLB Viewer: Toggle Bounding Box",
+        "icon": "$(symbol-ruler)"
+      },
+      {
+        "command": "mml.glb.toggleWireframe",
+        "title": "GLB Viewer: Toggle Wireframe",
+        "icon": "$(symbol-structure)"
+      },
+      {
+        "command": "mml.glb.toggleCollider",
+        "title": "GLB Viewer: Toggle Rapier Collider",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "mml.glb.resetCamera",
+        "title": "GLB Viewer: Reset Camera",
+        "icon": "$(home)"
       }
     ],
     "menus": {
@@ -100,6 +121,26 @@
           "command": "mml.showPreviewOnly",
           "when": "mmlPreviewActive",
           "group": "navigation@3"
+        },
+        {
+          "command": "mml.glb.toggleBounds",
+          "when": "activeCustomEditorId == mml.glbViewer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "mml.glb.toggleWireframe",
+          "when": "activeCustomEditorId == mml.glbViewer",
+          "group": "navigation@2"
+        },
+        {
+          "command": "mml.glb.toggleCollider",
+          "when": "activeCustomEditorId == mml.glbViewer",
+          "group": "navigation@3"
+        },
+        {
+          "command": "mml.glb.resetCamera",
+          "when": "activeCustomEditorId == mml.glbViewer",
+          "group": "navigation@4"
         }
       ],
       "editor/title/run": [
@@ -134,6 +175,22 @@
         {
           "command": "mml.showSplitView",
           "when": "mmlPreviewActive"
+        },
+        {
+          "command": "mml.glb.toggleBounds",
+          "when": "activeCustomEditorId == mml.glbViewer"
+        },
+        {
+          "command": "mml.glb.toggleWireframe",
+          "when": "activeCustomEditorId == mml.glbViewer"
+        },
+        {
+          "command": "mml.glb.toggleCollider",
+          "when": "activeCustomEditorId == mml.glbViewer"
+        },
+        {
+          "command": "mml.glb.resetCamera",
+          "when": "activeCustomEditorId == mml.glbViewer"
         }
       ]
     },
@@ -205,6 +262,18 @@
         "aliases": ["MML", "mml"],
         "configuration": "./language-configuration.json"
       }
+    ],
+    "customEditors": [
+      {
+        "viewType": "mml.glbViewer",
+        "displayName": "MML GLB Viewer",
+        "selector": [
+          {
+            "filenamePattern": "*.glb"
+          }
+        ],
+        "priority": "option"
+      }
     ]
   },
   "scripts": {
@@ -218,6 +287,7 @@
   "dependencies": {
     "@mml-io/mml-editor-core": "^0.21.3",
     "mml-game-engine-client": "^0.1.0",
+    "mml-game-systems-common": "^0.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zustand": "^4.5.2"

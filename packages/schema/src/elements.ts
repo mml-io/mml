@@ -399,6 +399,19 @@ export const frameSchema: ElementSchema = {
   ],
 };
 
+/**
+ * m-remote-document - A remote document host element.
+ * @element m-remote-document
+ */
+export const remoteDocumentSchema: ElementSchema = {
+  tagName: "m-remote-document",
+  description:
+    "Hosts a remote MML document within the scene. Typically created by the runtime when loading remote content.",
+  attributeGroups: ["coreattrs", "transformable"],
+  attributes: {},
+  examples: [],
+};
+
 // ============================================================================
 // Media Elements
 // ============================================================================
@@ -872,9 +885,93 @@ export const linkSchema: ElementSchema = {
   ],
 };
 
+/**
+ * m-mouse-behavior - Control mouse pointer behavior.
+ * @element m-mouse-behavior
+ */
+export const mouseBehaviorSchema: ElementSchema = {
+  tagName: "m-mouse-behavior",
+  description:
+    "Controls pointer lock behavior for the scene, enabling locked or unlocked mouse modes.",
+  attributeGroups: ["coreattrs"],
+  attributes: {
+    mode: {
+      type: "enum",
+      default: "unlocked",
+      enumValues: ["unlocked", "locked"],
+      description: "Pointer mode: unlocked for normal cursor, locked for pointer lock.",
+    },
+  },
+  examples: [
+    {
+      title: "Enable pointer lock",
+      code: '<m-mouse-behavior mode="locked"/>',
+    },
+  ],
+};
+
 // ============================================================================
 // Animation Elements
 // ============================================================================
+
+/**
+ * m-animation - A weighted animation clip for models/characters.
+ * @element m-animation
+ */
+export const animationSchema: ElementSchema = {
+  tagName: "m-animation",
+  description:
+    "A weighted animation clip for m-model or m-character elements. Multiple animations can be mixed together using weight or state.",
+  attributeGroups: ["coreattrs"],
+  attributes: {
+    src: {
+      type: "uri",
+      description: "The source URI of the animation file to load.",
+    },
+    state: {
+      type: "string",
+      description:
+        "Optional state name to match against the parent model/character state for automatic weighting.",
+    },
+    weight: {
+      type: "number",
+      description:
+        "Blend weight for this animation. If omitted, the effective weight is derived from the state/parent state.",
+    },
+    loop: {
+      type: "boolean",
+      default: "true",
+      description: "Whether the animation should loop.",
+    },
+    "start-time": {
+      type: "number",
+      default: "0",
+      description: "The document time (ms) at which the animation should start.",
+    },
+    "pause-time": {
+      type: "number",
+      description: "The document time (ms) at which to pause the animation.",
+    },
+    speed: {
+      type: "number",
+      default: "1",
+      description: "Playback speed multiplier.",
+    },
+    ratio: {
+      type: "number",
+      description: "Optional playback ratio (0-1) to scrub the animation.",
+    },
+  },
+  examples: [
+    {
+      title: "State-based animation mixing",
+      code: `<m-model src="./assets/character.glb" state="idle">
+  <m-animation src="./assets/anim_idle.glb" state="idle"/>
+  <m-animation src="./assets/anim_run.glb" state="run"/>
+</m-model>`,
+    },
+  ],
+};
 
 /**
  * m-attr-anim - Animates an attribute over time.
@@ -983,6 +1080,47 @@ export const attrLerpSchema: ElementSchema = {
 // ============================================================================
 // UI Elements
 // ============================================================================
+
+/**
+ * m-font - Register a font for labels and overlays.
+ * @element m-font
+ */
+export const fontSchema: ElementSchema = {
+  tagName: "m-font",
+  description:
+    "Registers a font for use in labels and overlays. Can optionally set the default overlay font.",
+  attributeGroups: ["coreattrs"],
+  attributes: {
+    family: {
+      type: "string",
+      description: "Font-family name to register.",
+    },
+    src: {
+      type: "uri",
+      description: "URL or data URI of the font file.",
+    },
+    format: {
+      type: "enum",
+      enumValues: ["opentype", "truetype", "woff", "woff2"],
+      description: "Font format override. If omitted, inferred from filename when possible.",
+    },
+    filename: {
+      type: "string",
+      description: "Optional filename hint used to infer font format.",
+    },
+    default: {
+      type: "boolean",
+      default: "false",
+      description: "Whether to set this font as the default for overlays/labels.",
+    },
+  },
+  examples: [
+    {
+      title: "Register a font",
+      code: '<m-font family="Inter" src="./assets/fonts/Inter.woff2" format="woff2" default="true"/>',
+    },
+  ],
+};
 
 /**
  * m-overlay - A 2D UI overlay.
@@ -1305,6 +1443,7 @@ export const elementSchemas: Record<string, ElementSchema> = {
   "m-model": modelSchema,
   "m-character": characterSchema,
   "m-frame": frameSchema,
+  "m-remote-document": remoteDocumentSchema,
   // Media
   "m-audio": audioSchema,
   "m-image": imageSchema,
@@ -1322,10 +1461,13 @@ export const elementSchemas: Record<string, ElementSchema> = {
   "m-chat-probe": chatProbeSchema,
   "m-prompt": promptSchema,
   "m-link": linkSchema,
+  "m-mouse-behavior": mouseBehaviorSchema,
   // Animation
+  "m-animation": animationSchema,
   "m-attr-anim": attrAnimSchema,
   "m-attr-lerp": attrLerpSchema,
   // UI
+  "m-font": fontSchema,
   "m-overlay": overlaySchema,
   // Controllers
   "m-camera": cameraSchema,

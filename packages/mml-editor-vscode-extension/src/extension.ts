@@ -7,6 +7,7 @@ import {
 } from "@mml-io/mml-editor-core";
 import * as vscode from "vscode";
 
+import { getGlbViewerHtml } from "./webview/glbViewerHtml";
 import { getWebviewHtml } from "./webview/html";
 import { getElementSettingsHtml, getSceneOutlineHtml } from "./webview/sidebarHtml";
 
@@ -42,6 +43,9 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerWebviewViewProvider("mmlSceneOutline", sceneOutlineProvider),
     vscode.window.registerWebviewViewProvider("mmlElementSettings", elementSettingsProvider),
   );
+
+  // Register GLB viewer custom editor
+  registerGlbEditor(context);
 
   const openPreview = vscode.commands.registerCommand("mml.openPreview", () => {
     const activeEditor = vscode.window.activeTextEditor;
@@ -165,6 +169,180 @@ export function deactivate() {
     session.disposables.forEach((d) => d.dispose());
   });
   sessions.clear();
+}
+
+// ==================== GLB Viewer Custom Editor ====================
+
+class GlbDocument implements vscode.CustomDocument {
+  public readonly uri: vscode.Uri;
+  private readonly data: Uint8Array;
+
+  constructor(uri: vscode.Uri, data: Uint8Array) {
+    this.uri = uri;
+    this.data = data;
+  }
+
+  getData(): Uint8Array {
+    return this.data;
+  }
+
+  dispose(): void {
+    // Nothing to dispose
+  }
+}
+
+class GlbEditorProvider implements vscode.CustomReadonlyEditorProvider<GlbDocument> {
+  public static readonly viewType = "mml.glbViewer";
+
+  private readonly extensionUri: vscode.Uri;
+  private activeWebview: vscode.WebviewPanel | null = null;
+
+  constructor(extensionUri: vscode.Uri) {
+    this.extensionUri = extensionUri;
+  }
+
+  private async scanForAnimationFiles(
+    documentUri: vscode.Uri,
+  ): Promise<Array<{ uri: string; relativePath: string; fileName: string }>> {
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(documentUri);
+    if (!workspaceFolder) return [];
+
+    const glbFiles = await vscode.workspace.findFiles(
+      new vscode.RelativePattern(workspaceFolder, "**/*.glb"),
+      "**/node_modules/**",
+      100, // limit
+    );
+
+    // Sort to prioritize likely animation files
+    const sorted = glbFiles.sort((a, b) => {
+      const aIsAnim = a.path.toLowerCase().includes("anim");
+      const bIsAnim = b.path.toLowerCase().includes("anim");
+      if (aIsAnim && !bIsAnim) return -1;
+      if (!aIsAnim && bIsAnim) return 1;
+      return a.path.localeCompare(b.path);
+    });
+
+    return sorted.map((uri) => ({
+      uri: uri.toString(),
+      relativePath: vscode.workspace.asRelativePath(uri),
+      fileName: uri.path.split("/").pop() || "unknown.glb",
+    }));
+  }
+
+  async openCustomDocument(uri: vscode.Uri): Promise<GlbDocument> {
+    const data = await vscode.workspace.fs.readFile(uri);
+    return new GlbDocument(uri, data);
+  }
+
+  resolveCustomEditor(document: GlbDocument, webviewPanel: vscode.WebviewPanel): void {
+    this.activeWebview = webviewPanel;
+
+    webviewPanel.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
+    };
+
+    webviewPanel.webview.html = getGlbViewerHtml(webviewPanel.webview, this.extensionUri);
+
+    // Handle messages from webview
+    webviewPanel.webview.onDidReceiveMessage(async (message) => {
+      if (message.type === "ready") {
+        // Send the GLB data as base64
+        const data = document.getData();
+        // Convert Uint8Array to base64 using btoa
+        let binary = "";
+        for (let i = 0; i < data.length; i++) {
+          binary += String.fromCharCode(data[i]);
+        }
+        const base64 = btoa(binary);
+        const fileName = document.uri.path.split("/").pop() || "model.glb";
+
+        webviewPanel.webview.postMessage({
+          type: "loadModel",
+          data: base64,
+          fileName,
+        });
+      }
+
+      if (message.type === "requestAnimationFiles") {
+        const files = await this.scanForAnimationFiles(document.uri);
+        webviewPanel.webview.postMessage({
+          type: "animationFilesResponse",
+          files,
+        });
+      }
+
+      if (message.type === "loadExternalAnimation") {
+        try {
+          const uri = vscode.Uri.parse(message.uri);
+          const data = await vscode.workspace.fs.readFile(uri);
+
+          let binary = "";
+          for (let i = 0; i < data.length; i++) {
+            binary += String.fromCharCode(data[i]);
+          }
+          const base64 = btoa(binary);
+          const fileName = uri.path.split("/").pop() || "animation.glb";
+
+          webviewPanel.webview.postMessage({
+            type: "externalAnimationLoaded",
+            data: base64,
+            fileName,
+            uri: message.uri,
+          });
+        } catch (err) {
+          webviewPanel.webview.postMessage({
+            type: "externalAnimationError",
+            error: err instanceof Error ? err.message : "Failed to load animation file",
+            uri: message.uri,
+          });
+        }
+      }
+    });
+
+    webviewPanel.onDidDispose(() => {
+      if (this.activeWebview === webviewPanel) {
+        this.activeWebview = null;
+      }
+    });
+  }
+
+  public sendCommand(command: string): void {
+    if (this.activeWebview) {
+      this.activeWebview.webview.postMessage({ type: command });
+    }
+  }
+}
+
+let glbEditorProvider: GlbEditorProvider | null = null;
+
+function registerGlbEditor(context: vscode.ExtensionContext): void {
+  glbEditorProvider = new GlbEditorProvider(context.extensionUri);
+
+  context.subscriptions.push(
+    vscode.window.registerCustomEditorProvider(GlbEditorProvider.viewType, glbEditorProvider, {
+      supportsMultipleEditorsPerDocument: false,
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    }),
+  );
+
+  // Register GLB viewer commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand("mml.glb.toggleBounds", () => {
+      glbEditorProvider?.sendCommand("toggleBounds");
+    }),
+    vscode.commands.registerCommand("mml.glb.toggleWireframe", () => {
+      glbEditorProvider?.sendCommand("toggleWireframe");
+    }),
+    vscode.commands.registerCommand("mml.glb.toggleCollider", () => {
+      glbEditorProvider?.sendCommand("toggleCollider");
+    }),
+    vscode.commands.registerCommand("mml.glb.resetCamera", () => {
+      glbEditorProvider?.sendCommand("resetCamera");
+    }),
+  );
 }
 
 function getActiveSession(): PreviewSession | null {

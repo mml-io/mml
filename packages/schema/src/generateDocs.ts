@@ -112,17 +112,36 @@ export function generateAllElementsMarkdown(): string {
   // Table of contents
   lines.push("## Elements");
   lines.push("");
-  const categories: Record<string, string[]> = {
-    Geometry: ["m-cube", "m-sphere", "m-cylinder", "m-capsule", "m-plane"],
-    Composite: ["m-group", "m-model", "m-character", "m-frame"],
-    Media: ["m-audio", "m-image", "m-video", "m-label"],
-    Lighting: ["m-light"],
-    Interaction: ["m-interaction", "m-position-probe", "m-chat-probe", "m-prompt", "m-link"],
-    Animation: ["m-attr-anim", "m-attr-lerp"],
-    UI: ["m-overlay"],
-  };
+  const categories: Array<[string, string[]]> = [
+    ["Geometry", ["m-cube", "m-sphere", "m-cylinder", "m-capsule", "m-plane"]],
+    ["Composite", ["m-group", "m-model", "m-character", "m-frame", "m-remote-document"]],
+    ["Media", ["m-audio", "m-image", "m-video", "m-label"]],
+    ["Lighting", ["m-light", "m-sun", "m-environment-light", "m-fog", "m-environment-map"]],
+    [
+      "Interaction",
+      [
+        "m-interaction",
+        "m-position-probe",
+        "m-chat-probe",
+        "m-prompt",
+        "m-link",
+        "m-mouse-behavior",
+      ],
+    ],
+    ["Animation", ["m-animation", "m-attr-anim", "m-attr-lerp"]],
+    ["UI", ["m-overlay", "m-font"]],
+    ["Controllers", ["m-camera", "m-character-controller", "m-top-down-shooter-controller"]],
+  ];
 
-  for (const [category, elements] of Object.entries(categories)) {
+  const listedElements = new Set(categories.flatMap(([, elements]) => elements));
+  const remainingElements = Object.keys(elementSchemas)
+    .filter((tagName) => !listedElements.has(tagName))
+    .sort();
+  if (remainingElements.length > 0) {
+    categories.push(["Other", remainingElements]);
+  }
+
+  for (const [category, elements] of categories) {
     lines.push(`### ${category}`);
     lines.push("");
     for (const tagName of elements) {
@@ -150,7 +169,7 @@ export function generateAllElementsMarkdown(): string {
 /**
  * Generate attribute groups reference section
  */
-function generateAttributeGroupsReference(): string[] {
+function generateAttributeGroupsReference(groupNames?: string[]): string[] {
   const lines: string[] = [];
 
   lines.push("# Attribute Groups");
@@ -159,7 +178,11 @@ function generateAttributeGroupsReference(): string[] {
   lines.push("it supports all attributes in that group.");
   lines.push("");
 
-  for (const group of Object.values(schemaRegistry.attributeGroups)) {
+  const groupsToShow = groupNames?.length
+    ? groupNames.map((name) => schemaRegistry.attributeGroups[name]).filter(Boolean)
+    : Object.values(schemaRegistry.attributeGroups);
+
+  for (const group of groupsToShow) {
     lines.push(`## ${group.name}`);
     lines.push(group.description);
     lines.push("");
@@ -224,7 +247,7 @@ export function generateBriefDocs(elementName?: string): string {
     // Show inherited attribute groups reference
     lines.push("---");
     lines.push("");
-    lines.push(...generateAttributeGroupsReference());
+    lines.push(...generateAttributeGroupsReference(schema.attributeGroups));
   } else {
     // Show attribute groups reference first
     lines.push(...generateAttributeGroupsReference());

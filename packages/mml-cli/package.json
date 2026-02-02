@@ -21,7 +21,7 @@
     "@mml-io/mml-game-engine-build-plugin": "file:../mml-game-engine-build-plugin",
     "@mml-io/mml-schema": "file:../schema",
     "@mml-io/networked-dom-server": "file:../networked-dom-server",
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.25.3",
     "chokidar": "^3.6.0",
     "express": "5.1.0",
     "mml-game-engine-client": "file:../mml-game-engine-client",

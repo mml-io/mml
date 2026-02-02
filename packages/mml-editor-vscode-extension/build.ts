@@ -33,6 +33,7 @@ async function runBuild() {
       join(__dirname, "src", "webview", "tailwind.css"),
       join(__dirname, "src", "webview", "sceneSidebar.tsx"),
       join(__dirname, "src", "webview", "elementSidebar.tsx"),
+      join(__dirname, "src", "webview", "glbViewerEntry.tsx"),
     ],
     outdir: distDir,
     entryNames: "[name]",
