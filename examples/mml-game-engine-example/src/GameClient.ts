@@ -86,7 +86,12 @@ export class GameClient {
     mmlClient.element.style.overflow = "hidden";
 
     // Connect the client to the shared document
-    mmlClient.connectToDocument(this.sharedGameDocument, `${location.protocol}//${location.host}`);
+    // Cast to any to work around monorepo type resolution where EditableNetworkedDOM
+    // comes from different node_modules paths but is structurally identical
+    mmlClient.connectToDocument(
+      this.sharedGameDocument as any,
+      `${location.protocol}//${location.host}`,
+    );
 
     // Create client instance
     const clientInstance: ClientInstance = {

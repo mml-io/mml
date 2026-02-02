@@ -2,7 +2,7 @@ import { mmlGameEngineBuildPlugin } from "@mml-io/mml-game-engine-build-plugin";
 import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import * as chokidar from "chokidar";
 import * as esbuild from "esbuild";
-import express from "express";
+import express, { type Application } from "express";
 import enableWs from "express-ws";
 import fs from "fs";
 import http from "http";
@@ -10,6 +10,7 @@ import { createRequire } from "module";
 import path from "path";
 import * as url from "url";
 import { fileURLToPath } from "url";
+import type { WebSocket as WsWebSocket } from "ws";
 
 import { pathExists } from "../utils/fs";
 import {
@@ -328,7 +329,10 @@ export async function watchSingleGame(
   });
 
   const assetsDir = options.assetsDir || path.join(outDir, "assets");
-  const { app } = enableWs(express());
+  // express-ws types are incompatible with Express 5 types, use any to bypass
+
+  const wsInstance = enableWs(express() as any);
+  const app = wsInstance.app as unknown as Application & { ws: typeof wsInstance.app.ws };
   app.enable("trust proxy");
 
   // Parse JSON bodies
@@ -452,7 +456,7 @@ export async function watchSingleGame(
   const connectedClients = new Map<string, { id: string; connectedAt: number }>();
   let clientIdCounter = 0;
 
-  app.ws("/mml", (ws) => {
+  app.ws("/mml", (ws: WsWebSocket) => {
     const clientId = `client-${++clientIdCounter}`;
     connectedClients.set(clientId, { id: clientId, connectedAt: Date.now() });
     registerUser(clientId);
