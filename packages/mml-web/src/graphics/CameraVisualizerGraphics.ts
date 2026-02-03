@@ -1,9 +1,10 @@
+import cameraModelBase64 from "base64:../../assets/camera.glb";
 import { TransformableElement } from "../elements";
 import { GraphicsAdapter } from "./GraphicsAdapter";
 import { ModelVisualizerGraphics } from "./ModelVisualizerGraphics";
 import { ElementVisualizer } from "./Visualizer";
 
-const CAMERA_MODEL_URL = "https://storage.googleapis.com/ai-game-creator/camera.glb";
+const CAMERA_MODEL_URL = `data:model/gltf-binary;base64,${cameraModelBase64}`;
 const CAMERA_MODEL_SCALE = 1;
 
 type CameraVisualizerContainer = {

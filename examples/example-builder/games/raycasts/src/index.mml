@@ -102,7 +102,7 @@
           if (!model) {
             model = document.createElement('m-model');
             model.setAttribute('id', CHARACTER_ID);
-            model.setAttribute('src', 'https://files.dreamcache.xyz/models/01K6GPT4NSJPYYJZNSQF1GQ4CJ.glb');
+            model.setAttribute('src', '/assets/bot.glb');
             model.setAttribute('x', '0');
             model.setAttribute('y', '0');
             model.setAttribute('z', '-3');

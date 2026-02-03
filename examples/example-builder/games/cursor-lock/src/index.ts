@@ -33,7 +33,7 @@
     const player = document.createElement("m-character");
     player.setAttribute(
       "src",
-      "https://files.dreamcache.xyz/models/01K6GPT4NSJPYYJZNSQF1GQ4CJ.glb",
+      "/assets/bot.glb",
     );
     player.setAttribute("state", "idle");
     assignAnimationLerp(player, 100, "x,y,z,ry");
@@ -48,7 +48,7 @@
   ): Element => {
     // Remote-hosted animations like in tools
     const animation = document.createElement("m-animation");
-    animation.setAttribute("src", `https://dreamcache.xyz/anim_${state}.glb`);
+    animation.setAttribute("src", `/assets/anim_${state}.glb`);
     animation.setAttribute("state", state);
     animation.setAttribute("weight", state === "idle" ? "1.0" : "0.0");
     assignAnimationLerp(animation, 150, "weight");

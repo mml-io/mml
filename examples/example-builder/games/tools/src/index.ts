@@ -211,7 +211,7 @@ function assignAnimationLerp(element: Element, duration: number, attrs: string) 
 
 function createPlayer() {
   const player = document.createElement("m-model");
-  player.setAttribute("src", "https://files.dreamcache.xyz/models/01K6GPT4NSJPYYJZNSQF1GQ4CJ.glb");
+  player.setAttribute("src", "/assets/bot.glb");
   assignAnimationLerp(player, 100, "x,y,z,ry");
   setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
   sceneGroup && sceneGroup.appendChild(player);
@@ -220,7 +220,7 @@ function createPlayer() {
 
 function assignPlayerAnimation(player: Element, state: string) {
   const animation = document.createElement("m-animation");
-  animation.setAttribute("src", `https://dreamcache.xyz/anim_${state}.glb`);
+  animation.setAttribute("src", `/assets/anim_${state}.glb`);
   animation.setAttribute("state", state);
   animation.setAttribute("weight", state === "idle" ? "1.0" : "0.0");
   assignAnimationLerp(animation, 150, "weight");
@@ -269,7 +269,7 @@ function addToolsToPlayer(player: any, connectionId: number) {
   light.setAttribute("enabled", "false");
   flashlight.appendChild(light);
   const flashlightModel = document.createElement("m-model");
-  flashlightModel.setAttribute("src", "https://files.dreamcache.xyz/models/01K6BN28S3X87VHQGR928EKHQ4.glb");
+  flashlightModel.setAttribute("src", "/assets/flashlight.glb");
   flashlightModel.setAttribute("collide", "false");
   flashlight.appendChild(flashlightModel);
   manager.addTool(flashlight);
@@ -458,7 +458,7 @@ function addToolsToPlayer(player: any, connectionId: number) {
     gun.appendChild(gunOverlay);
 
     const gunModel = document.createElement("m-model");
-    gunModel.setAttribute("src", "https://files.dreamcache.xyz/models/01K6FTMJR4BRQGD64NBY2952T4.glb");
+    gunModel.setAttribute("src", "/assets/handgun.glb");
     gunModel.setAttribute("collide", "false");
     gunModel.setAttribute("rz", "180");
     gunModel.setAttribute("rx", "180");

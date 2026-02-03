@@ -14,7 +14,7 @@ function setTransform(element: Element, x: number, y: number, z: number, ry: num
 
 function createPlayer() {
 	const player = document.createElement('m-character');
-	player.setAttribute('src', 'https://files.dreamcache.xyz/models/01K6GPT4NSJPYYJZNSQF1GQ4CJ.glb');
+	player.setAttribute('src', '/assets/bot.glb');
 	player.setAttribute('state', 'idle');
 	assignAnimationLerp(player, 100, 'x,y,z,ry');
 	setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
@@ -24,7 +24,7 @@ function createPlayer() {
 
 function assignPlayerAnimation(player: Element, state: 'idle' | 'run' | 'air') {
 	const animation = document.createElement('m-animation');
-	animation.setAttribute('src', `/assets/models/anim_${state}.glb`);
+	animation.setAttribute('src', `/assets/anim_${state}.glb`);
 	animation.setAttribute('state', state);
 	animation.setAttribute('weight', state === 'idle' ? '1.0' : '0.0');
 	assignAnimationLerp(animation, 150, 'weight');

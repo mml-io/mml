@@ -49,7 +49,7 @@ export const CONSTANTS = {
   GUN_MUZZLE_OFFSET: { x: -0.1, y: 0.5, z: 1.5 }, // offset from player center to gun muzzle
 
   // Grenade constants
-  GRENADE_MODEL: "https://files.dreamcache.xyz/models/01K6Q0JX2Z2YWN648XMX335M5E.glb",
+  GRENADE_MODEL: "/assets/impact_grenade.glb",
   GRENADE_MODEL_SCALE: 3,
   GRENADE_THROW_SPEED: 12,
   GRENADE_GRAVITY: -18,

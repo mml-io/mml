@@ -19,11 +19,8 @@ export const App = () => {
 <m-light y="50" x="-50" z="-50" intensity="10000" type="point"></m-light>
 <m-light y="50" x="50" z="-50" intensity="10000" type="point"></m-light>
 
-<m-model x="-2" collide="true" src="https://storage.googleapis.com/ai-game-creator/DamagedHelmet.glb" z="-2" y="1.2" sx="0.5" sy="0.5" sz="0.5"></m-model>
-
 <m-cube id="clickable-cube" y="1" color="red" collide="true" z="-2"></m-cube>
 
-<m-model x="2" z="-2" id="duck" src="https://storage.googleapis.com/ai-game-creator/Stylized-Medical-Professional.glb" y="0.37872010769124587" collide="true">
   <m-attr-anim attr="ry" start="0" end="360" duration="3000"></m-attr-anim>
 </m-model>
 

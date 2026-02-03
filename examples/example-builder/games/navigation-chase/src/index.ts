@@ -10,20 +10,15 @@ function randomInRange(min, max) {
 }
 function getRandomChaserModelSrc() {
   const options = [
-    'http://files.dreamcache.xyz/models/01K6DEJHJVGMPCYXJ52AM4W2TV.glb',
-    'http://files.dreamcache.xyz/models/01K5YWERGDPJVH3MPKKBXYGBPF.glb',
-    'http://files.dreamcache.xyz/models/01K6GP4WF007CARPZR579DX663.glb',
-    'http://files.dreamcache.xyz/models/01K6J5FSEWJJZ1GBVP0JHR28BV.glb',
-    'http://files.dreamcache.xyz/models/01K6GNSYEF1NSN85MJCJMPFR8V.glb',
-    'http://files.dreamcache.xyz/models/01K6GP4RHAJ17R6YAJZPCKHW7F.glb',
-    'http://files.dreamcache.xyz/models/01K6GP4EHTS1XPEY22QZJHJ8A7.glb',
+    '/assets/zombie1.glb',
+    '/assets/zombie2.glb',
   ];
   return options[Math.floor(Math.random() * options.length)];
 }
 
 function assignChaserAnimation(modelEl, state) {
   const animation = document.createElement('m-animation');
-  animation.setAttribute('src', `/assets/models/anim_${state}.glb`);
+  animation.setAttribute('src', `/assets/anim_${state}.glb`);
   animation.setAttribute('state', state);
   animation.setAttribute('weight', state === 'run' ? '1.0' : '0.0');
   assignAnimationLerp(animation, 150, 'weight');
@@ -145,7 +140,7 @@ function assignAnimationLerp(element, duration, attrs) {
 function createPlayer() {
   const player = document.createElement('m-character');
   // Lightweight bot model and animations hosted remotely (same sources used by tools)
-  player.setAttribute('src', 'https://files.dreamcache.xyz/models/01K6GPT4NSJPYYJZNSQF1GQ4CJ.glb');
+  player.setAttribute('src', '/assets/bot.glb');
   player.setAttribute('state', 'idle');
   assignAnimationLerp(player, 100, 'x,y,z,ry');
   setTransform(player, Math.random() * 4 - 2, 0, Math.random() * 4 - 2, 0);
@@ -155,7 +150,7 @@ function createPlayer() {
 
 function assignPlayerAnimation(player, state) {
   const animation = document.createElement('m-animation');
-  animation.setAttribute('src', `/assets/models/anim_${state}.glb`);
+  animation.setAttribute('src', `/assets/anim_${state}.glb`);
   animation.setAttribute('state', state);
   animation.setAttribute('weight', state === 'idle' ? '1.0' : '0.0');
   assignAnimationLerp(animation, 150, 'weight');

@@ -1,3 +1,4 @@
-import { handleLibraryBuild } from "../../utils/build-library"
+import { base64Plugin } from "../../utils/base64plugin";
+import { handleLibraryBuild } from "../../utils/build-library";
 
-handleLibraryBuild()
+handleLibraryBuild([base64Plugin()]);
