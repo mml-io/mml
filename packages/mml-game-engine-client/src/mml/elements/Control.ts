@@ -319,12 +319,15 @@ export class MouseManager {
   public lastMouseClientY = 0;
   private inputMapper: UniversalInputMapper;
 
-  constructor(inputMapper: UniversalInputMapper) {
+  constructor(inputMapper: UniversalInputMapper, canvas: HTMLCanvasElement) {
     this.inputMapper = inputMapper;
-    this.setupMouseHandlers();
+    this.setupMouseHandlers(canvas);
   }
 
-  private setupMouseHandlers(): void {
+  private setupMouseHandlers(canvas: HTMLCanvasElement): void {
+    // Enable pointer events on canvas for mouse input
+    canvas.style.pointerEvents = "auto";
+
     const onMouseMove = (event: MouseEvent) => {
       this.lastMouseClientX = event.clientX;
       this.lastMouseClientY = event.clientY;
@@ -353,7 +356,6 @@ export class MouseManager {
     };
 
     const onMouseDown = (event: MouseEvent) => {
-      // Update universal mapper so controls using polling can pick up held state
       if (event.button === 0) {
         this.inputMapper.updateInputKey("mouseleft", 1.0);
       } else if (event.button === 1) {
@@ -385,12 +387,12 @@ export class MouseManager {
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("mouseup", onMouseUp);
-    document.addEventListener("wheel", onWheel, { passive: true } as AddEventListenerOptions);
+    document.addEventListener("wheel", onWheel, { passive: true });
 
     this.mouseEventListeners.set("mousemove", onMouseMove);
     this.mouseEventListeners.set("mousedown", onMouseDown);
     this.mouseEventListeners.set("mouseup", onMouseUp);
-    this.mouseEventListeners.set("wheel", onWheel as any);
+    this.mouseEventListeners.set("wheel", onWheel);
   }
 
   public destroy(): void {
@@ -540,7 +542,8 @@ export class UniversalInputMapper {
 
   public getInputState(): UniversalInputState {
     // if inputs are provided
-    if (this.inputs && this.inputs.length > 0) {
+    const inputsWithoutMouseMove = this.inputs.filter((input) => input !== "mousemove");
+    if (inputsWithoutMouseMove && inputsWithoutMouseMove.length > 0) {
       let buttonValue = 0;
 
       // process keyboard inputs
@@ -928,7 +931,6 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       GamepadManager.getInstance();
     }
     this.inputMapper = new UniversalInputMapper(this);
-    this.mouseManager = new MouseManager(this.inputMapper);
   }
 
   public getContentBounds(): null {
@@ -1122,13 +1124,7 @@ export class MControl<G extends GameThreeJSAdapter> extends MElement<G> {
       }
     }
 
-    // Setup mouse input if enabled (now that scene is available)
-    this.updateMouseInput();
-
-    // Start input polling AFTER attributes are initialized
-    if (this.props.type === "axis" || this.props.type === "button") {
-      this.startInputPolling();
-    }
+    this.mouseManager = new MouseManager(this.inputMapper, graphicsAdapter.getCanvasElement());
   }
 
   public disconnectedCallback(): void {

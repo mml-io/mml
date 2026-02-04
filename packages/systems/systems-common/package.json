@@ -19,7 +19,7 @@
     "lint-fix": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/model-loader": "^0.21.3"
+    "@mml-io/model-loader": "^0.24.1"
   },
   "devDependencies": {
     "@types/node": "20.19.10",

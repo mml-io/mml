@@ -18,22 +18,20 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
-    "@mml-io/mml-schema": "0.21.1",
-    "@mml-io/mml-web": "0.21.1",
-    "@mml-io/mml-web-runner": "0.21.1",
-    "@mml-io/mml-web-threejs": "0.21.1",
-    "@mml-io/mml-web-threejs-standalone": "0.21.1",
-    "@mml-io/model-loader": "0.21.1",
-    "@mml-io/networked-dom-document": "0.21.1",
-    "@mml-io/networked-dom-web": "0.21.1",
-    "@mml-io/networked-dom-web-runner": "0.21.1",
-    "@mml-io/networked-dom-web-runner-broadcast": "0.21.1",
-    "@mml-io/observable-dom-common": "0.21.1",
-    "three": "0.178.0",
+    "@mml-io/mml-schema": "^0.24.1",
+    "@mml-io/mml-web": "^0.24.1",
+    "@mml-io/mml-web-runner": "^0.24.1",
+    "@mml-io/mml-web-threejs": "^0.24.1",
+    "@mml-io/model-loader": "^0.24.1",
+    "@mml-io/networked-dom-document": "^0.24.1",
+    "@mml-io/networked-dom-web": "^0.24.1",
+    "@mml-io/networked-dom-web-runner": "^0.24.1",
+    "@mml-io/observable-dom-common": "^0.24.1",
+    "three": "0.182.0",
     "three-mesh-bvh": "0.9.0"
   },
   "devDependencies": {
-    "@types/node": "20.19.10",
-    "@types/three": "0.178.1"
+    "@types/node": "25.0.9",
+    "@types/three": "0.182.0"
   }
 }

@@ -15,6 +15,7 @@ import {
   ThreeJSGraphicsInterface,
   ThreeJSHighlightManager,
   ThreeJSInteractionAdapter,
+  ThreeJSResourceManager,
   ThreeJSTransformWidget,
 } from "@mml-io/mml-web-threejs";
 import * as THREE from "three";
@@ -78,6 +79,8 @@ export class GameThreeJSAdapter
 
   private cameraManager = new CameraManager();
   private environmentManager: EnvironmentManager;
+  private collisionsManager: CollisionsManager;
+  private resourceManager: ThreeJSResourceManager = new ThreeJSResourceManager();
 
   private mmlControls: MControl<GameThreeJSAdapter>[] = [];
   private mmlCharacterControllers: MCharacterController<GameThreeJSAdapter>[] = [];
@@ -527,6 +530,10 @@ export class GameThreeJSAdapter
 
   getCollisionsManager() {
     return this.collisionsManager;
+  }
+
+  getResourceManager(): ThreeJSResourceManager {
+    return this.resourceManager;
   }
 
   public getBoundingBoxForElement(element: HTMLElement): {

@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-web",
-  "version": "0.21.1",
+  "version": "0.24.1",
   "publishConfig": {
     "access": "public"
   },
@@ -15,13 +15,13 @@
     "pre:build": "npm run build",
     "build": "tsx ./build.ts --build",
     "iterate": "tsx ./build.ts --watch",
-    "lint": "echo 'Linting disabled'",
-    "lint-fix": "echo 'Linting disabled'",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
-    "test-iterate": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
+    "test": "vitest run",
+    "test-iterate": "vitest"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web": "0.21.1"
+    "@mml-io/networked-dom-web": "^0.24.1"
   },
   "devDependencies": {
     "@types/three": "0.182.0",

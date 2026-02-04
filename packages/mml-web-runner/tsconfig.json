@@ -19,6 +19,6 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*", "test/**/*", "./build.ts", "./vitest.config.ts"],
-  "exclude": ["**/build/*", "types-src"]
+  "include": ["src/**/*", "./build.ts", "./vitest.config.ts"],
+  "exclude": ["**/build/*", "types-src", "test/**/*"]
 }

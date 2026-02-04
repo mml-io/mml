@@ -285,7 +285,7 @@
     "lint-fix": "eslint \"src/**/*.{ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@mml-io/mml-editor-core": "^0.21.3",
+    "@mml-io/mml-editor-core": "^0.24.1",
     "mml-game-engine-client": "^0.1.0",
     "mml-game-systems-common": "^0.1.0",
     "react": "^19.0.0",

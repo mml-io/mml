@@ -29,6 +29,7 @@ import {
   AudioGraphics,
   ArrowHelperVisualizerGraphics,
   BillboardVisualizerGraphics,
+  CapsuleGraphics,
   ChatProbeGraphics,
   CubeGraphics,
   CylinderGraphics,
