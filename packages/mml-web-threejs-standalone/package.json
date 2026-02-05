@@ -1,0 +1,41 @@
+{
+  "name": "@mml-io/mml-web-threejs-standalone",
+  "version": "0.24.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "type": "module",
+  "files": [
+    "/build"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
+    "test": "vitest run",
+    "test-iterate": "vitest"
+  },
+  "dependencies": {
+    "@mml-io/mml-web": "^0.24.1",
+    "@mml-io/mml-web-threejs": "^0.24.1"
+  },
+  "peerDependencies": {
+    "three": "*"
+  },
+  "devDependencies": {
+    "@types/three": "0.182.0",
+    "jsdom": "27.4.0",
+    "resize-observer-polyfill": "1.5.1",
+    "three": "0.182.0",
+    "vitest-canvas-mock": "1.1.3"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-typescript"
+    ]
+  }
+}

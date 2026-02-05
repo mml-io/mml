@@ -1,0 +1,27 @@
+{
+  "name": "mml-web-client-example",
+  "private": true,
+  "main": "./src/index.js",
+  "type": "module",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "start-server": "node --enable-source-maps ./build/index.js",
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "@mml-io/networked-dom-server": "^0.24.1",
+    "chokidar": "5.0.0",
+    "express": "5.2.1",
+    "express-ws": "5.0.2",
+    "ws": "8.19.0"
+  },
+  "devDependencies": {
+    "@types/cors": "2.8.19",
+    "@types/express": "5.0.6",
+    "@types/express-ws": "3.0.6"
+  },
+  "version": "0.24.1"
+}

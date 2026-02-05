@@ -1,0 +1,87 @@
+.viewer-ui {
+  z-index: 1000;
+}
+
+.menu-button {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  padding: 10px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  border: 0;
+  user-select: none;
+  border-bottom-left-radius: 4px;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+.empty-state .menu-button {
+  display: none;
+}
+
+.header {
+  padding: 8px 8px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 30px;
+  margin-right: 5px;
+}
+
+.github-link {
+  font-size: 11px;
+  color: white;
+  flex-direction: column;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.github-logo {
+  height: 30px;
+  width: 30px;
+}
+
+.contents {
+  position: fixed;
+  z-index: 1000;
+  font-family: Arial, sans-serif;
+  right: 0;
+  top: 0;
+  transform: translate(0, 0);
+  width: 300px;
+  max-height: 100%;
+  overflow: scroll;
+
+  color: white;
+  background-color: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  border-bottom-left-radius: 4px;
+}
+
+.empty-state .contents {
+  right: 50%;
+  top: 50%;
+  max-width: 100%;
+  transform: translate(50%, -50%);
+  border-radius: 4px;
+}

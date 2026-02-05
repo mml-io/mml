@@ -1,0 +1,29 @@
+<m-plane color="blue" width="15" height="15" rx="-90"></m-plane>
+<m-light type="point" intensity="900" ry="45" rx="65" rz="-45" x="10" y="10" z="10"></m-light>
+
+<m-image src="/assets/test-image.png" y="4" x="-3" width="5"></m-image>
+
+<m-cube color="red" y="4.5" x="3" z="-1.5" height="6" rz="-45"></m-cube>
+<m-image src="/assets/transparency-test-image.png" x="3.5" y="3.5" width="5"></m-image>
+<m-image src="/assets/transparency-test-image-black.png" x="-1.7" y="2" z="0.6" width="3"></m-image>
+<m-image
+  id="toggle-image"
+  src="/assets/transparency-test-image-black.png"
+  x="2"
+  y="1.6"
+  z="2"
+  width="3"
+  emissive="2"
+></m-image>
+<m-cylinder id="button" x="3" y="3" z="5" color="red" rx="90" height="0.2" radius="0.25"></m-cylinder>
+<script>
+  const toggleButton = document.getElementById("button");
+  const toggleImage = document.getElementById("toggle-image");
+  toggleButton.addEventListener("click", () => {
+    if (!toggleImage.getAttribute("opacity")) {
+      toggleImage.setAttribute("opacity", 0.5);
+    } else {
+      toggleImage.removeAttribute("opacity");
+    }
+  });
+</script>

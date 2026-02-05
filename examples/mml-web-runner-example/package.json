@@ -1,0 +1,18 @@
+{
+  "name": "mml-web-runner-example",
+  "version": "0.24.1",
+  "private": true,
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsx ./build.ts --build",
+    "iterate": "cross-env PORT=6003 tsx ./build.ts --serve",
+    "serve": "node --enable-source-maps ./build/index.js",
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "@mml-io/mml-web": "^0.24.1",
+    "@mml-io/mml-web-runner": "^0.24.1",
+    "@mml-io/mml-web-threejs-standalone": "^0.24.1"
+  }
+}

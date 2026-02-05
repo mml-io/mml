@@ -1,0 +1,45 @@
+<m-plane color="white" width="15" height="15" rx="-90"></m-plane>
+<m-plane color="black" width="15" height="15" rx="0"></m-plane>
+<m-light type="point" intensity="900" x="10" y="10" z="10"></m-light>
+<m-image id="text-image" y="4.25" emissive="5" width="5" z="3"></m-image>
+<script>
+  function generateRectanglesImage(targetImage, rectCount = 32) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 512;
+    canvas.height = 512;
+
+    const drawRectangles = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const radius = 200; 
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const width = 25;
+      const height = 25;
+      for (let i = 0; i < rectCount; i++) {
+        const angle = (i * 360) / rectCount;
+        const theta = angle * Math.PI / 180;
+        const x = centerX + radius * Math.cos(theta) - width / 2;
+        const y = centerY + radius * Math.sin(theta) - height / 2;
+        const hue = (i * 360) / rectCount;
+        const color = `hsl(${hue}, 100%, 5%)`;
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, width, height);
+      }
+      const dataUrl = canvas.toDataURL("image/png");
+      targetImage.setAttribute("src", dataUrl);
+    };
+    drawRectangles();
+
+    return {
+      updateRectangles: (newRectCount) => {
+        rectCount = newRectCount;
+        drawRectangles();
+      },
+    };
+  }
+
+  const textImage = document.getElementById("text-image");
+  const rectPainter = generateRectanglesImage(textImage, 32);
+</script>

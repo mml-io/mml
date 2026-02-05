@@ -1,0 +1,11 @@
+{
+  "name": "github-pages-publisher",
+  "private": true,
+  "scripts": {
+    "build": "bash ./publish.sh"
+  },
+  "devDependencies": {
+    "@mml-io/mml-viewer": "file:../packages/mml-viewer"
+  },
+  "version": "0.24.1"
+}

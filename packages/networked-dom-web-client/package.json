@@ -1,0 +1,22 @@
+{
+  "name": "@mml-io/networked-dom-web-client",
+  "version": "0.24.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "/build"
+  ],
+  "type": "module",
+  "main": "build/index.js",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsx ./build.ts --build",
+    "iterate": "cross-env PORT=28892 tsx ./build.ts --serve",
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix"
+  },
+  "dependencies": {
+    "@mml-io/networked-dom-web": "^0.24.1"
+  }
+}

@@ -1,0 +1,327 @@
+<m-plane color="lightblue" width="10" height="10" rx="-90"></m-plane>
+<m-light type="spotlight" intensity="800" ry="30" rx="60" rz="-30" x="8" y="8" z="8"></m-light>
+<m-cube y="1" color="orange" id="reference-cube"></m-cube>
+
+<!-- Interactive Test Overlay for hierarchy manipulation -->
+<m-overlay anchor="center" offset-x="0" offset-y="0" id="hierarchy-overlay">
+  <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="400" height="300" fill="rgba(0,0,0,0.8)" rx="8"/>
+
+    <!-- Title -->
+    <text x="200" y="20" fill="white" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">Hierarchy Test</text>
+
+    <!-- Level 1 container background -->
+    <rect x="10" y="30" width="380" height="120" fill="none" stroke="#444" rx="4" id="level-1-bg"/>
+    <text x="20" y="50" fill="white" font-family="Arial" font-size="12">Level 1 Container</text>
+
+    <!-- Level 1 dynamic content area -->
+    <g id="level-1" transform="translate(20, 60)">
+      <!-- Level 2 elements will be added here -->
+    </g>
+
+    <!-- Control buttons -->
+    <rect x="20" y="160" width="80" height="25" fill="#333" rx="3" id="add-level-2" style="cursor: pointer;"/>
+    <text x="60" y="177" fill="white" font-family="Arial" font-size="11" text-anchor="middle" style="pointer-events: none;">Add Level 2</text>
+
+    <rect x="110" y="160" width="80" height="25" fill="#333" rx="3" id="add-sibling" style="cursor: pointer;"/>
+    <text x="150" y="177" fill="white" font-family="Arial" font-size="11" text-anchor="middle" style="pointer-events: none;">Add Sibling</text>
+
+    <rect x="200" y="160" width="80" height="25" fill="#644" rx="3" id="remove-all" style="cursor: pointer;"/>
+    <text x="240" y="177" fill="white" font-family="Arial" font-size="11" text-anchor="middle" style="pointer-events: none;">Remove All</text>
+
+    <!-- Sibling container area -->
+    <g id="sibling-container" transform="translate(10, 200)">
+      <!-- Sibling elements will be added here -->
+    </g>
+
+    <!-- Status display -->
+    <text x="20" y="280" fill="#ccc" font-family="Arial" font-size="10" id="status">Ready</text>
+  </svg>
+</m-overlay>
+
+<script>
+  let level2Count = 0;
+  let level3Count = 0;
+  let siblingCount = 0;
+
+  const level1Container = document.getElementById("level-1");
+  const addLevel2Button = document.getElementById("add-level-2");
+  const addSiblingButton = document.getElementById("add-sibling");
+  const removeAllButton = document.getElementById("remove-all");
+  const statusText = document.getElementById("status");
+  const siblingContainer = document.getElementById("sibling-container");
+  const svg = document.querySelector("#hierarchy-overlay svg");
+
+
+  function updateStatus(message) {
+    if (statusText) {
+      statusText.textContent = message;
+    }
+  }
+
+  // Add Level 2 container inside Level 1
+  if (addLevel2Button && level1Container) {
+    addLevel2Button.addEventListener("click", () => {
+      level2Count++;
+      const level2Id = "level-2-" + level2Count;
+
+      // Create Level 2 group
+      const level2Group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      level2Group.id = level2Id;
+      level2Group.setAttribute("transform", "translate(0, " + (level2Count - 1) * 40 + ")");
+
+      // Level 2 background
+      const level2Bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      level2Bg.setAttribute("x", "0");
+      level2Bg.setAttribute("y", "0");
+      level2Bg.setAttribute("width", "340");
+      level2Bg.setAttribute("height", "35");
+      level2Bg.setAttribute("fill", "rgba(255,255,255,0.1)");
+      level2Bg.setAttribute("stroke", "#666");
+      level2Bg.setAttribute("rx", "3");
+
+      // Level 2 text
+      const level2Text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      level2Text.setAttribute("x", "10");
+      level2Text.setAttribute("y", "20");
+      level2Text.setAttribute("fill", "white");
+      level2Text.setAttribute("font-family", "Arial");
+      level2Text.setAttribute("font-size", "11");
+      level2Text.textContent = "Level 2 Container " + level2Count;
+
+      // Add Level 3 button
+      const addLevel3Button = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      addLevel3Button.setAttribute("x", "180");
+      addLevel3Button.setAttribute("y", "8");
+      addLevel3Button.setAttribute("width", "60");
+      addLevel3Button.setAttribute("height", "18");
+      addLevel3Button.setAttribute("fill", "#444");
+      addLevel3Button.setAttribute("rx", "2");
+      addLevel3Button.setAttribute("style", "cursor: pointer;");
+      addLevel3Button.classList.add("add-level-3");
+      addLevel3Button.setAttribute("data-parent", level2Id);
+
+      const addLevel3Text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      addLevel3Text.setAttribute("x", "210");
+      addLevel3Text.setAttribute("y", "19");
+      addLevel3Text.setAttribute("fill", "white");
+      addLevel3Text.setAttribute("font-family", "Arial");
+      addLevel3Text.setAttribute("font-size", "9");
+      addLevel3Text.setAttribute("text-anchor", "middle");
+      addLevel3Text.setAttribute("style", "pointer-events: none;");
+      addLevel3Text.textContent = "Add Level 3";
+
+      // Remove Level 2 button
+      const removeLevel2Button = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      removeLevel2Button.setAttribute("x", "250");
+      removeLevel2Button.setAttribute("y", "8");
+      removeLevel2Button.setAttribute("width", "60");
+      removeLevel2Button.setAttribute("height", "18");
+      removeLevel2Button.setAttribute("fill", "#644");
+      removeLevel2Button.setAttribute("rx", "2");
+      removeLevel2Button.setAttribute("style", "cursor: pointer;");
+      removeLevel2Button.classList.add("remove-level-2");
+      removeLevel2Button.setAttribute("data-target", level2Id);
+
+      const removeLevel2Text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      removeLevel2Text.setAttribute("x", "280");
+      removeLevel2Text.setAttribute("y", "19");
+      removeLevel2Text.setAttribute("fill", "white");
+      removeLevel2Text.setAttribute("font-family", "Arial");
+      removeLevel2Text.setAttribute("font-size", "9");
+      removeLevel2Text.setAttribute("text-anchor", "middle");
+      removeLevel2Text.setAttribute("style", "pointer-events: none;");
+      removeLevel2Text.textContent = "Remove";
+
+      // Level 3 container
+      const level3Container = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      level3Container.setAttribute("transform", "translate(20, 30)");
+
+      // Assemble Level 2
+      level2Group.appendChild(level2Bg);
+      level2Group.appendChild(level2Text);
+      level2Group.appendChild(addLevel3Button);
+      level2Group.appendChild(addLevel3Text);
+      level2Group.appendChild(removeLevel2Button);
+      level2Group.appendChild(removeLevel2Text);
+      level2Group.appendChild(level3Container);
+
+      level1Container.appendChild(level2Group);
+
+      // Add event listeners for Level 3
+      addLevel3Button.addEventListener("click", () => {
+        level3Count++;
+        const level3Id = "level-3-" + level3Count;
+
+        // Create Level 3 group
+        const level3Group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        level3Group.id = level3Id;
+        level3Group.setAttribute("transform", "translate(0, " + level3Container.children.length * 25 + ")");
+
+        // Level 3 background
+        const level3Bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        level3Bg.setAttribute("x", "0");
+        level3Bg.setAttribute("y", "0");
+        level3Bg.setAttribute("width", "280");
+        level3Bg.setAttribute("height", "20");
+        level3Bg.setAttribute("fill", "rgba(255,255,255,0.2)");
+        level3Bg.setAttribute("stroke", "#888");
+        level3Bg.setAttribute("rx", "2");
+
+        // Level 3 text
+        const level3Text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        level3Text.setAttribute("x", "10");
+        level3Text.setAttribute("y", "14");
+        level3Text.setAttribute("fill", "white");
+        level3Text.setAttribute("font-family", "Arial");
+        level3Text.setAttribute("font-size", "9");
+        level3Text.textContent = "Level 3 Item " + level3Count;
+
+        // Remove Level 3 button
+        const removeLevel3Button = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        removeLevel3Button.setAttribute("x", "220");
+        removeLevel3Button.setAttribute("y", "3");
+        removeLevel3Button.setAttribute("width", "50");
+        removeLevel3Button.setAttribute("height", "14");
+        removeLevel3Button.setAttribute("fill", "#844");
+        removeLevel3Button.setAttribute("rx", "2");
+        removeLevel3Button.setAttribute("style", "cursor: pointer;");
+        removeLevel3Button.setAttribute("data-target", level3Id);
+
+        const removeLevel3Text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        removeLevel3Text.setAttribute("x", "245");
+        removeLevel3Text.setAttribute("y", "12");
+        removeLevel3Text.setAttribute("fill", "white");
+        removeLevel3Text.setAttribute("font-family", "Arial");
+        removeLevel3Text.setAttribute("font-size", "8");
+        removeLevel3Text.setAttribute("text-anchor", "middle");
+        removeLevel3Text.setAttribute("style", "pointer-events: none;");
+        removeLevel3Text.textContent = "Remove";
+
+        // Assemble Level 3
+        level3Group.appendChild(level3Bg);
+        level3Group.appendChild(level3Text);
+        level3Group.appendChild(removeLevel3Button);
+        level3Group.appendChild(removeLevel3Text);
+
+        level3Container.appendChild(level3Group);
+
+        // Add remove functionality for Level 3
+        removeLevel3Button.addEventListener("click", () => {
+          level3Group.remove();
+          updateStatus("Removed " + level3Id);
+        });
+
+        updateStatus("Added Level 3 item " + level3Count);
+      });
+
+      // Add remove functionality for Level 2
+      removeLevel2Button.addEventListener("click", () => {
+        level2Group.remove();
+        updateStatus("Removed " + level2Id);
+      });
+
+      updateStatus("Added Level 2 container " + level2Count);
+    });
+  }
+
+  // Add sibling containers
+  if (addSiblingButton && siblingContainer) {
+    addSiblingButton.addEventListener("click", () => {
+      siblingCount++;
+      const siblingId = "sibling-" + siblingCount;
+
+      // Create sibling group
+      const siblingGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      siblingGroup.id = siblingId;
+      siblingGroup.setAttribute("transform", "translate(0, " + (siblingCount - 1) * 35 + ")");
+
+      // Extend SVG height to accommodate siblings if needed
+      const currentHeight = parseInt(svg.getAttribute("height"));
+      const neededHeight = 200 + (siblingCount * 35) + 50;
+      if (neededHeight > currentHeight) {
+        svg.setAttribute("height", neededHeight);
+      }
+
+      // Sibling background
+      const siblingBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      siblingBg.setAttribute("x", "0");
+      siblingBg.setAttribute("y", "0");
+      siblingBg.setAttribute("width", "380");
+      siblingBg.setAttribute("height", "30");
+      siblingBg.setAttribute("fill", "rgba(0,100,0,0.2)");
+      siblingBg.setAttribute("stroke", "#484");
+      siblingBg.setAttribute("rx", "4");
+
+      // Sibling text
+      const siblingText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      siblingText.setAttribute("x", "10");
+      siblingText.setAttribute("y", "20");
+      siblingText.setAttribute("fill", "white");
+      siblingText.setAttribute("font-family", "Arial");
+      siblingText.setAttribute("font-size", "11");
+      siblingText.textContent = "Sibling Container " + siblingCount;
+
+      // Remove sibling button
+      const removeSiblingButton = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      removeSiblingButton.setAttribute("x", "280");
+      removeSiblingButton.setAttribute("y", "6");
+      removeSiblingButton.setAttribute("width", "80");
+      removeSiblingButton.setAttribute("height", "18");
+      removeSiblingButton.setAttribute("fill", "#644");
+      removeSiblingButton.setAttribute("rx", "2");
+      removeSiblingButton.setAttribute("style", "cursor: pointer;");
+      removeSiblingButton.setAttribute("data-target", siblingId);
+
+      const removeSiblingText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      removeSiblingText.setAttribute("x", "320");
+      removeSiblingText.setAttribute("y", "17");
+      removeSiblingText.setAttribute("fill", "white");
+      removeSiblingText.setAttribute("font-family", "Arial");
+      removeSiblingText.setAttribute("font-size", "9");
+      removeSiblingText.setAttribute("text-anchor", "middle");
+      removeSiblingText.setAttribute("style", "pointer-events: none;");
+      removeSiblingText.textContent = "Remove";
+
+
+      // Assemble sibling
+      siblingGroup.appendChild(siblingBg);
+      siblingGroup.appendChild(siblingText);
+      siblingGroup.appendChild(removeSiblingButton);
+      siblingGroup.appendChild(removeSiblingText);
+
+      siblingContainer.appendChild(siblingGroup);
+
+      // Add remove functionality
+      removeSiblingButton.addEventListener("click", () => {
+        siblingGroup.remove();
+        updateStatus("Removed " + siblingId);
+      });
+
+      updateStatus("Added sibling container " + siblingCount);
+    });
+  }
+
+  // Remove all dynamic elements
+  if (removeAllButton) {
+    removeAllButton.addEventListener("click", () => {
+      // Remove all level 2 containers (which will also remove their level 3 children)
+      const level2Elements = document.querySelectorAll('[id^="level-2-"]');
+      level2Elements.forEach(el => el.remove());
+
+      // Remove all sibling containers
+      const siblingElements = document.querySelectorAll('[id^="sibling-"]');
+      siblingElements.forEach(el => el.remove());
+
+      // Reset SVG height
+      svg.setAttribute("height", "300");
+
+      // Reset counters
+      level2Count = 0;
+      level3Count = 0;
+      siblingCount = 0;
+
+      updateStatus("Removed all dynamic elements");
+    });
+  }
+</script>

@@ -1,0 +1,14 @@
+.hide-ui-section {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.hide-ui-section-contents {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.hidden {
+  display: none;
+}
