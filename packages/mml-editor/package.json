@@ -20,7 +20,7 @@
     "@mml-io/networked-dom-document": "^0.21.1",
     "@monaco-editor/react": "^4.6.0",
     "@tailwindcss/cli": "^4.1.17",
-    "express": "^4.19.2",
+    "express": "5.2.1",
     "mml-game-engine-client": "^0.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -30,7 +30,7 @@
   "devDependencies": {
     "@craftamap/esbuild-plugin-html": "^0.7.0",
     "@tailwindcss/postcss": "^4.1.17",
-    "@types/express": "^4.17.21",
+    "@types/express": "5.0.6",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

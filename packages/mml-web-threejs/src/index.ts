@@ -4,4 +4,5 @@ export * from "./ThreeJSClickTrigger";
 export * from "./ThreeJSGraphicsAdapter";
 export * from "./ThreeJSGraphicsInterface";
 export * from "./ThreeJSInteractionAdapter";
+export * from "./ThreeJSMemoryInspector";
 export * from "./visualizers";
