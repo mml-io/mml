@@ -1,14 +1,13 @@
 {
   "name": "e2e-tests",
   "private": true,
-  "main": "./src/index.js",
   "type": "module",
   "scripts": {
     "type-check": "tsc --noEmit",
     "iterate": "npm run serve",
     "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
-    "serve": "tsx ./src/index.ts",
+    "serve": "mml serve-dir ./src --assets ./src/assets --idle-timeout=0 --reset --define-globals --delay",
     "ci:e2e-tests": "npm run ci:e2e-tests:threejs && npm run ci:e2e-tests:playcanvas",
     "ci:e2e-tests:threejs": "concurrently --success first --kill-others \"npm run serve\" \"npm run wait-for-ports && cross-env RENDERER=threejs HEADLESS=true vitest run\"",
     "ci:e2e-tests:playcanvas": "concurrently --success first --kill-others \"npm run serve\" \"npm run wait-for-ports && cross-env RENDERER=playcanvas HEADLESS=true vitest run\"",
@@ -28,21 +27,14 @@
     "wait-for-ports": "npx wait-on http://localhost:7079/mml-logo.html -t 90000 --httpTimeout 5000 --interval 500"
   },
   "dependencies": {
-    "@mml-io/networked-dom-server": "^0.24.1",
+    "@mml-io/mml-cli": "^0.24.1",
     "@napi-rs/canvas": "0.1.88",
-    "chokidar": "5.0.0",
-    "express": "5.2.1",
-    "express-ws": "5.0.2",
     "pixelmatch": "7.1.0",
     "pngjs": "7.0.0",
     "puppeteer": "24.35.0",
-    "wait-on": "9.0.3",
-    "ws": "8.19.0"
+    "wait-on": "9.0.3"
   },
   "devDependencies": {
-    "@types/cors": "2.8.19",
-    "@types/express": "5.0.6",
-    "@types/express-ws": "3.0.6",
     "@types/pngjs": "6.0.5",
     "@types/puppeteer": "7.0.4"
   },

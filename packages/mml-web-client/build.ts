@@ -10,6 +10,7 @@ const buildOptions: esbuild.BuildOptions = {
   bundle: true,
   write: true,
   sourcemap: true,
+  minify: true,
   outdir: "build",
   platform: "browser",
   external: ["node:worker_threads"],

@@ -186,7 +186,7 @@ export async function navigateToTestPage(page: puppeteer.Page, testPath: string)
     () => {
       return window["mml-web-client"] !== undefined;
     },
-    { timeout: 5000 },
+    { timeout: 15000 },
   );
 }
 

@@ -1,0 +1,38 @@
+{
+  "name": "@mml-io/mml-cli",
+  "version": "0.24.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "mml": "./build/index.js"
+  },
+  "type": "module",
+  "files": [
+    "/build"
+  ],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsx ./build.ts --build",
+    "iterate": "tsx ./build.ts --watch",
+    "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint-fix": "eslint \"./**/*.{js,jsx,ts,tsx}\" --fix",
+    "test": "vitest run",
+    "test-iterate": "vitest"
+  },
+  "dependencies": {
+    "@mml-io/mml-schema-validator": "^0.24.1",
+    "@mml-io/mml-web-client": "^0.24.1",
+    "@mml-io/networked-dom-document": "^0.24.1",
+    "@mml-io/networked-dom-server": "^0.24.1"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/express-ws": "3.0.6",
+    "chokidar": "5.0.0",
+    "commander": "13.1.0",
+    "express": "5.2.1",
+    "express-ws": "5.0.2",
+    "ws": "8.19.0"
+  }
+}

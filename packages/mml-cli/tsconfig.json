@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "target": "ES6",
+    "lib": ["es2020"],
+    "sourceMap": true,
+    "allowJs": true,
+    "types": ["node", "vitest/globals"],
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "downlevelIteration": true,
+    "outDir": "./build",
+    "incremental": true
+  },
+  "include": ["src/**/*", "./build.ts", "./vitest.config.ts"],
+  "exclude": ["**/build/*"]
+}
