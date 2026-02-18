@@ -1,6 +1,11 @@
 {
   "name": "@mml-io/mml-web-threejs-standalone",
   "version": "0.24.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mml-io/mml.git",
+    "directory": "packages/mml-web-threejs-standalone"
+  },
   "publishConfig": {
     "access": "public"
   },

@@ -1,6 +1,11 @@
 {
   "name": "@mml-io/mml-viewer",
   "version": "0.24.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mml-io/mml.git",
+    "directory": "packages/mml-viewer"
+  },
   "private": true,
   "publishConfig": {
     "access": "public"

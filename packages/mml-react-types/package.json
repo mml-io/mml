@@ -1,6 +1,11 @@
 {
   "name": "@mml-io/mml-react-types",
   "version": "0.24.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mml-io/mml.git",
+    "directory": "packages/mml-react-types"
+  },
   "publishConfig": {
     "access": "public"
   },

@@ -1,6 +1,11 @@
 {
   "name": "@mml-io/mml-web-runner",
   "version": "0.24.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mml-io/mml.git",
+    "directory": "packages/mml-web-runner"
+  },
   "publishConfig": {
     "access": "public"
   },

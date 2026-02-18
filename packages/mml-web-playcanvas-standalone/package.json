@@ -1,6 +1,11 @@
 {
   "name": "@mml-io/mml-web-playcanvas-standalone",
   "version": "0.24.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mml-io/mml.git",
+    "directory": "packages/mml-web-playcanvas-standalone"
+  },
   "publishConfig": {
     "access": "public"
   },

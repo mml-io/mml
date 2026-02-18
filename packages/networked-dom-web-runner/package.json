@@ -1,6 +1,11 @@
 {
   "name": "@mml-io/networked-dom-web-runner",
   "version": "0.24.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mml-io/mml.git",
+    "directory": "packages/networked-dom-web-runner"
+  },
   "publishConfig": {
     "access": "public"
   },

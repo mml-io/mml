@@ -1,6 +1,11 @@
 {
   "name": "@mml-io/observable-dom-common",
   "version": "0.24.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mml-io/mml.git",
+    "directory": "packages/observable-dom-common"
+  },
   "publishConfig": {
     "access": "public"
   },
