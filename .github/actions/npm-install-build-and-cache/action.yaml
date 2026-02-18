@@ -1,11 +1,6 @@
 ---
 name: NPM Install, Build, and Cache
-description: NPM Install Dependencies, NPM Run Build, and Cache Dependencies & Artifacts
-
-outputs:
-  npm-deps-cache-hit:
-    description: "Whether or not the npm dependencies are cached"
-    value: ${{ steps.cache-npm-deps.outputs.cache-hit }}
+description: NPM Install Dependencies, NPM Run Build, and Cache Build Artifacts
 
 runs:
   using: "composite"
@@ -16,17 +11,7 @@ runs:
         node-version-file: ".nvmrc"
         cache: npm
 
-    - name: Cache NPM dependencies
-      uses: actions/cache@v4
-      id: cache-npm-deps
-      with:
-        path: |
-          **/node_modules
-          ~/.cache
-        key: ${{ runner.os }}-npm-v3-${{ hashFiles('package-lock.json') }}
-
     - name: Install dependencies
-      if: steps.cache-npm-deps.outputs.cache-hit != 'true'
       shell: bash
       run: npm ci
 
