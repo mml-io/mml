@@ -4,7 +4,6 @@ on:
   workflow_call:
 
 permissions:
-  id-token: write
   contents: write
   pull-requests: write
   checks: write
