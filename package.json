@@ -68,5 +68,11 @@
   },
   "optionalDependencies": {
     "@nrwl/nx-linux-x64-gnu": "15.9.3"
+  },
+  "overrides": {
+    "canvas": "$canvas"
+  },
+  "dependencies": {
+    "canvas": "npm:@napi-rs/canvas@0.1.88"
   }
 }
