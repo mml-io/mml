@@ -89,10 +89,9 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: true
 
-  # Manual trigger: requires approval before publishing release packages
+  # Requires approval before publishing release packages
   release-approval:
     name: Approve Release
-    if: github.event_name == 'workflow_dispatch'
     needs: summary
     runs-on: ubuntu-latest
     environment: release-approval
@@ -101,7 +100,6 @@ jobs:
 
   publish-release-packages:
     name: Publish Release Packages
-    if: github.event_name == 'workflow_dispatch'
     environment: npm-publish
     needs: [summary, release-approval]
     runs-on: ubuntu-latest
@@ -140,7 +138,6 @@ jobs:
   # Deploys versioned viewer to GitHub Pages after a release publish
   publish-versioned-viewer-gh-pages:
     name: Publish Versioned Viewer to GitHub Pages
-    if: github.event_name == 'workflow_dispatch'
     needs: [publish-release-packages]
     runs-on: ubuntu-latest
     steps:
