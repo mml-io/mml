@@ -1,7 +1,7 @@
 {
   "name": "mml",
   "type": "module",
-  "packageManager": "npm@11.7.0",
+  "packageManager": "npm@11.8.0",
   "scripts": {
     "preinstall": "node ./check-node-version.js",
     "serve": "turbo run serve --output-logs=full --concurrency=5 --continue",
@@ -68,5 +68,11 @@
   },
   "optionalDependencies": {
     "@nrwl/nx-linux-x64-gnu": "15.9.3"
+  },
+  "overrides": {
+    "canvas": "$canvas"
+  },
+  "dependencies": {
+    "canvas": "npm:@napi-rs/canvas@0.1.88"
   }
 }
