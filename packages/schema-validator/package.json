@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-schema-validator",
-  "version": "0.24.1",
+  "version": "0.25.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mml-io/mml.git",
@@ -22,7 +22,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@mml-io/mml-schema": "^0.24.1",
+    "@mml-io/mml-schema": "^0.25.0",
     "libxml2-wasm": "0.6.0"
   },
   "devDependencies": {

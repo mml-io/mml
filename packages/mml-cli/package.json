@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-cli",
-  "version": "0.24.1",
+  "version": "0.25.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mml-io/mml.git",
@@ -26,10 +26,10 @@
     "test-iterate": "vitest"
   },
   "dependencies": {
-    "@mml-io/mml-schema-validator": "^0.24.1",
-    "@mml-io/mml-web-client": "^0.24.1",
-    "@mml-io/networked-dom-document": "^0.24.1",
-    "@mml-io/networked-dom-server": "^0.24.1"
+    "@mml-io/mml-schema-validator": "^0.25.0",
+    "@mml-io/mml-web-client": "^0.25.0",
+    "@mml-io/networked-dom-document": "^0.25.0",
+    "@mml-io/networked-dom-server": "^0.25.0"
   },
   "devDependencies": {
     "@types/express": "5.0.6",

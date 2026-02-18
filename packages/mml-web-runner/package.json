@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/mml-web-runner",
-  "version": "0.24.1",
+  "version": "0.25.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mml-io/mml.git",
@@ -25,7 +25,7 @@
     "test-iterate": "vitest"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web-runner": "^0.24.1"
+    "@mml-io/networked-dom-web-runner": "^0.25.0"
   },
   "devDependencies": {
     "@types/three": "0.182.0",

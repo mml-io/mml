@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/networked-dom-document",
-  "version": "0.24.1",
+  "version": "0.25.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mml-io/mml.git",
@@ -24,7 +24,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@mml-io/networked-dom-protocol": "^0.24.1",
-    "@mml-io/observable-dom-common": "^0.24.1"
+    "@mml-io/networked-dom-protocol": "^0.25.0",
+    "@mml-io/observable-dom-common": "^0.25.0"
   }
 }
