@@ -112,6 +112,16 @@ export class JSDOMRunner implements DOMRunnerInterface {
         this.domWindow.Request = nodeFetch.Request as unknown as typeof Request;
         this.domWindow.Response = nodeFetch.Response as unknown as typeof Response;
 
+        // Expose Node's Web Crypto API (crypto.subtle) for JWT signature verification etc.
+        // jsdom defines window.crypto as a getter, so we must use defineProperty to override it.
+        if (globalThis.crypto?.subtle) {
+          Object.defineProperty(window, "crypto", {
+            value: globalThis.crypto,
+            configurable: true,
+            writable: true,
+          });
+        }
+
         // This is a polyfill for https://developer.mozilla.org/en-US/docs/Web/API/Document/timeline
         const timeline = {};
         Object.defineProperty(timeline, "currentTime", {
