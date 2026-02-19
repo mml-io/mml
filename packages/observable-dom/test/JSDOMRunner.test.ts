@@ -284,4 +284,87 @@ describe("JSDOMRunner", () => {
     expect(firstMessageMutation4.addedNodes[0].nodeName).toEqual("M-CUBE");
     expect((firstMessageMutation4.addedNodes[0] as any).attributes.id.value).toEqual("c2");
   }, 10000);
+
+  test("crypto.subtle is available and functional", async () => {
+    const allMessages: Array<DOMRunnerMessage> = [];
+
+    JSDOMRunnerFactory(
+      "http://example.com/index.html",
+      `
+<m-cube id="result"></m-cube>
+<script>
+  setTimeout(async () => {
+    const el = document.getElementById("result");
+    try {
+      // Test crypto.getRandomValues
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      const hasRandomValues = array.some(v => v !== 0);
+      el.setAttribute("data-random", hasRandomValues ? "ok" : "fail");
+
+      // Test crypto.subtle.digest (SHA-256)
+      const data = new TextEncoder().encode("hello");
+      const hash = await crypto.subtle.digest("SHA-256", data);
+      const hashHex = Array.from(new Uint8Array(hash))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+      el.setAttribute("data-sha256", hashHex);
+
+      // Test crypto.subtle.generateKey + sign + verify (HMAC, as used in JWT)
+      const key = await crypto.subtle.generateKey(
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign", "verify"],
+      );
+      const signature = await crypto.subtle.sign("HMAC", key, data);
+      const valid = await crypto.subtle.verify("HMAC", key, signature, data);
+      el.setAttribute("data-hmac", valid ? "ok" : "fail");
+    } catch(err) {
+      el.setAttribute("data-error", err.message);
+    }
+  }, 1);
+</script>`,
+      {},
+      (domRunnerMessage: DOMRunnerMessage) => {
+        allMessages.push(domRunnerMessage);
+      },
+    );
+
+    // Wait for at least 1 attribute mutation (could be data-error or data-hmac as final)
+    await waitUntil(() => {
+      const mutations = allMessages.flatMap((m) => m.mutationList ?? []);
+      const attrMutations = mutations.filter((m) => m.type === "attributes");
+      // Either we get 3 success attributes, or a data-error attribute
+      const hasError = attrMutations.some((m) => m.attributeName === "data-error");
+      const hasHmac = attrMutations.some((m) => m.attributeName === "data-hmac");
+      return hasError || hasHmac;
+    }, "Waiting for crypto attribute mutations");
+
+    const attributeMutations = allMessages
+      .flatMap((m) => m.mutationList ?? [])
+      .filter((m) => m.type === "attributes");
+
+    const findAttr = (name: string) => attributeMutations.find((m) => m.attributeName === name);
+
+    // No errors should have occurred
+    if (findAttr("data-error")) {
+      throw new Error(
+        `Crypto test errored inside JSDOM: ${(findAttr("data-error")!.target as any).getAttribute("data-error")}`,
+      );
+    }
+
+    // crypto.getRandomValues produced non-zero bytes
+    expect(findAttr("data-random")).toBeDefined();
+    expect((findAttr("data-random")!.target as any).getAttribute("data-random")).toEqual("ok");
+
+    // crypto.subtle.digest produced the correct SHA-256 hash
+    expect(findAttr("data-sha256")).toBeDefined();
+    expect((findAttr("data-sha256")!.target as any).getAttribute("data-sha256")).toEqual(
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+    );
+
+    // crypto.subtle HMAC sign + verify round-tripped successfully
+    expect(findAttr("data-hmac")).toBeDefined();
+    expect((findAttr("data-hmac")!.target as any).getAttribute("data-hmac")).toEqual("ok");
+  }, 10000);
 });
