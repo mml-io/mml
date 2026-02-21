@@ -63,6 +63,29 @@ export function createServer(options: CreateServerOptions) {
   return app;
 }
 
+export type FileFormat = "html" | "js";
+
+/**
+ * Detects the file format from the file extension. Returns null for
+ * unrecognised extensions.
+ */
+export function detectFormat(filePath: string): FileFormat | null {
+  if (filePath.endsWith(".js")) return "js";
+  if (filePath.endsWith(".html") || filePath.endsWith(".htm")) return "html";
+  return null;
+}
+
+/**
+ * Wraps raw JS file contents in an HTML body/script tag pair. Returns HTML
+ * contents unchanged.
+ */
+export function fileContentsToHtml(raw: string, format: FileFormat): string {
+  if (format !== "js") return raw;
+  // Escape </script so the HTML parser doesn't close the tag early
+  const escaped = raw.replace(/<\/(script)/gi, "<\\/$1");
+  return `<body><script>\n${escaped}\n</script></body>`;
+}
+
 /**
  * Returns an HTML page that loads the MML web client, connecting to a WebSocket
  * URL derived client-side from window.location to avoid header injection.

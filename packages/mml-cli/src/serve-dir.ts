@@ -6,13 +6,21 @@ import * as url from "node:url";
 
 import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import * as chokidar from "chokidar";
+import picomatch from "picomatch";
 
-import { clientPage, createServer, normalizeUrlPath } from "./server.js";
+import {
+  clientPage,
+  createServer,
+  detectFormat,
+  fileContentsToHtml,
+  normalizeUrlPath,
+} from "./server.js";
 
 export interface ServeDirOptions {
   port: number;
   host: string;
   client: boolean;
+  pattern?: string;
   assets?: string;
   assetsUrlPath: string;
   idleTimeout: number;
@@ -85,10 +93,18 @@ export function serveDir(dir: string, options: ServeDirOptions): void {
   }
 
   const documents: Record<string, DocumentEntry> = {};
+  const isPatternMatch = options.pattern ? picomatch(options.pattern) : null;
 
   const watcher = chokidar.watch(dirPath, {
-    ignored: (filePath: string, stats?: Stats) =>
-      (stats?.isFile() || false) && !filePath.endsWith(".html"),
+    ignored: (filePath: string, stats?: Stats) => {
+      if (!stats?.isFile()) return false;
+      if (!filePath.endsWith(".html") && !filePath.endsWith(".htm") && !filePath.endsWith(".js"))
+        return true;
+      if (isPatternMatch) {
+        return !isPatternMatch(path.basename(filePath));
+      }
+      return false;
+    },
     depth: 0,
     persistent: true,
   });
@@ -96,8 +112,10 @@ export function serveDir(dir: string, options: ServeDirOptions): void {
   watcher
     .on("add", (filePath) => {
       const filename = path.basename(filePath);
+      const format = detectFormat(filePath);
+      if (!format) return;
       console.log(`Document added: ${filename}`);
-      const contents = fs.readFileSync(filePath, "utf8");
+      const contents = fileContentsToHtml(fs.readFileSync(filePath, "utf8"), format);
       documents[filename] = {
         documentPath: filename,
         documentUrl: url.pathToFileURL(filePath).toString(),
@@ -110,8 +128,10 @@ export function serveDir(dir: string, options: ServeDirOptions): void {
     })
     .on("change", (filePath) => {
       const filename = path.basename(filePath);
+      const format = detectFormat(filePath);
+      if (!format) return;
       console.log(`Document changed: ${filename}`);
-      const contents = fs.readFileSync(filePath, "utf8");
+      const contents = fileContentsToHtml(fs.readFileSync(filePath, "utf8"), format);
       const docData = documents[filename];
       if (docData) {
         docData.contents = contents;
