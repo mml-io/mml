@@ -216,3 +216,46 @@ export async function readThreeSceneCounts(page: puppeteer.Page): Promise<{
     return adapter.analyzeScene(scene).stats;
   });
 }
+
+export async function readThreeSceneRenderInfo(page: puppeteer.Page): Promise<{
+  drawCalls: number;
+  instancedMeshCount: number;
+  totalInstanceCount: number;
+  regularMeshCount: number;
+} | null> {
+  await renderFrame(page);
+  return page.evaluate(() => {
+    const adapter: any = (window as any)["mml-web-client"].mmlScene.getGraphicsAdapter();
+    if (
+      !adapter ||
+      typeof adapter.getThreeScene !== "function" ||
+      typeof adapter.getRenderer !== "function"
+    ) {
+      console.error("No adapter or adapter with getThreeScene/getRenderer function found");
+      return null;
+    }
+
+    const scene = adapter.getThreeScene();
+    const renderer = adapter.getRenderer();
+
+    let instancedMeshCount = 0;
+    let totalInstanceCount = 0;
+    let regularMeshCount = 0;
+
+    scene.traverse((object: any) => {
+      if (object.isInstancedMesh) {
+        instancedMeshCount++;
+        totalInstanceCount += object.count;
+      } else if (object.isMesh) {
+        regularMeshCount++;
+      }
+    });
+
+    return {
+      drawCalls: renderer.info.render.calls,
+      instancedMeshCount,
+      totalInstanceCount,
+      regularMeshCount,
+    };
+  });
+}
