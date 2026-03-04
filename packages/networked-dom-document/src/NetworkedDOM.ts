@@ -672,9 +672,7 @@ export class NetworkedDOM {
       throw new Error("This NetworkedDOM has been disposed");
     }
 
-    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(
-      remoteEvent.nodeId,
-    );
+    const node = this.nodeManager.getNode(remoteEvent.nodeId);
     if (
       !node ||
       !IsVisibleToAnyOneOfConnectionIds(
@@ -757,9 +755,9 @@ export class NetworkedDOM {
     previousSiblingId: number | null,
     addedNodes: Array<StaticVirtualDOMElement>,
   ) {
-    const target = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(targetId);
+    const target = this.nodeManager.getNode(targetId);
     if (!target) {
-      console.error("Target node not found for mutation", targetId);
+      // Node already removed by a prior mutation in this batch
       return;
     }
 
@@ -777,11 +775,9 @@ export class NetworkedDOM {
     let previousNode: NodeWithSubjectivity | null = null;
     let previousNodeIndex = -1;
     if (previousSiblingId != null) {
-      previousNode =
-        this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(previousSiblingId) ||
-        null;
+      previousNode = this.nodeManager.getNode(previousSiblingId) || null;
       if (!previousNode) {
-        throw new Error("previous node not found: " + previousSiblingId);
+        // Previous sibling already removed by a prior mutation in this batch
       } else {
         previousNodeIdIsSubjectiveForV01 =
           previousNode.subjectivity != null && !IsVisibleToAll(previousNode.subjectivity, true);
@@ -996,9 +992,9 @@ export class NetworkedDOM {
   }
 
   private handleRemovedNodes(targetId: number, removedNodeIds: Array<number>) {
-    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(targetId);
+    const node = this.nodeManager.getNode(targetId);
     if (!node) {
-      console.error("Target node not found for mutation", targetId);
+      // Node already removed by a prior mutation in this batch
       return;
     }
 
@@ -1031,10 +1027,9 @@ export class NetworkedDOM {
       for (const client of this.networkedDOMV01Connections) {
         const removableChildren = [];
         for (const removedNodeId of removedNodeIds) {
-          const child =
-            this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(removedNodeId);
+          const child = this.nodeManager.getNode(removedNodeId);
           if (!child) {
-            throw new Error("Child not found for removed node id: " + removedNodeId);
+            continue;
           }
           if (
             child.subjectivity == null ||
@@ -1079,10 +1074,9 @@ export class NetworkedDOM {
       for (const client of this.networkedDOMV02Connections) {
         const removableChildren = [];
         for (const removedNodeId of removedNodeIds) {
-          const child =
-            this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(removedNodeId);
+          const child = this.nodeManager.getNode(removedNodeId);
           if (!child) {
-            throw new Error("Child not found for removed node id: " + removedNodeId);
+            continue;
           }
           if (
             child.subjectivity == null ||
@@ -1128,9 +1122,9 @@ export class NetworkedDOM {
       [p: string]: string | null;
     },
   ) {
-    const target = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(targetId);
+    const target = this.nodeManager.getNode(targetId);
     if (!target) {
-      console.error("Target node not found for mutation", targetId);
+      // Node already removed by a prior mutation in this batch
       return;
     }
 
@@ -1177,9 +1171,9 @@ export class NetworkedDOM {
   }
 
   private handleAttributeChange(targetId: number, attributes: { [key: string]: string | null }) {
-    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(targetId);
+    const node = this.nodeManager.getNode(targetId);
     if (!node) {
-      console.error("Target node not found for mutation", targetId);
+      // Node already removed by a prior mutation in this batch
       return;
     }
 
@@ -1257,9 +1251,9 @@ export class NetworkedDOM {
   }
 
   private handleVisibleToChange(targetId: number, added: Set<number>, removed: Set<number>) {
-    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(targetId);
+    const node = this.nodeManager.getNode(targetId);
     if (!node) {
-      console.error("Target node not found for mutation", targetId);
+      // Node already removed by a prior mutation in this batch
       return;
     }
 
@@ -1318,9 +1312,9 @@ export class NetworkedDOM {
   }
 
   private handleHiddenFromChange(targetId: number, added: Set<number>, removed: Set<number>) {
-    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(targetId);
+    const node = this.nodeManager.getNode(targetId);
     if (!node) {
-      console.error("Target node not found for mutation", targetId);
+      // Node already removed by a prior mutation in this batch
       return;
     }
 
@@ -1375,9 +1369,9 @@ export class NetworkedDOM {
   }
 
   private handleCharacterData(targetId: number, textContent: string) {
-    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(targetId);
+    const node = this.nodeManager.getNode(targetId);
     if (!node) {
-      console.error("Target node not found for mutation", targetId);
+      // Node already removed by a prior mutation in this batch
       return;
     }
 
@@ -1783,7 +1777,11 @@ export class NetworkedDOM {
   }
 
   private removeNodeAndChildren(nodeId: number) {
-    const node = this.nodeManager.getStaticVirtualDOMElementByInternalNodeIdOrThrow(nodeId);
+    const node = this.nodeManager.getNode(nodeId);
+    if (!node) {
+      // Node already removed by a prior mutation in this batch
+      return;
+    }
 
     if (node.subjectivity != null) {
       for (const connectionId of node.subjectivity.visibleTo) {
