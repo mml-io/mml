@@ -3,7 +3,12 @@ import * as THREE from "three";
 /**
  * post-processes a loaded GLTF scene graph to detect duplicate meshes
  * (same geometry + material) and replace them with InstancedMesh,
- * reducing draw calls from N to 1 per unique geometry + material pair
+ * reducing draw calls from N to 1 per unique geometry + material pair.
+ *
+ * NOTE: instanced meshes are reparented as direct children of `root` with
+ * baked world transforms. This means they will not follow if an intermediate
+ * parent's transform is later modified (e.g. by animation). This is intended
+ * for static scene geometry only.
  */
 export function autoInstanceScene(root: THREE.Object3D, debug?: boolean): void {
   // 1) collect eligible meshes
@@ -27,8 +32,17 @@ export function autoInstanceScene(root: THREE.Object3D, debug?: boolean): void {
   // key: "materialId|geometryFingerprint" -> meshes
   const buckets = new Map<string, THREE.Mesh[]>();
 
+  // assign stable IDs to materials by reference so meshes sharing the
+  // same material instance get the same bucket key
+  const materialIds = new Map<THREE.Material, number>();
+  let nextMaterialId = 0;
+
   for (const mesh of eligibleMeshes) {
-    const materialId = (mesh.material as THREE.Material).uuid;
+    const mat = mesh.material as THREE.Material;
+    if (!materialIds.has(mat)) {
+      materialIds.set(mat, nextMaterialId++);
+    }
+    const materialId = materialIds.get(mat)!;
     const geomFingerprint = computeGeometryFingerprint(mesh.geometry);
     const key = `${materialId}|${geomFingerprint}`;
 
@@ -73,10 +87,13 @@ export function autoInstanceScene(root: THREE.Object3D, debug?: boolean): void {
     // two meshes are considered true duplicates only when all 16 matrix
     // elements match within an epsilon — this covers position, rotation,
     // and scale so rotated/scaled copies at the same origin are kept.
+    const seenMatrixKeys = new Set<string>();
     const uniqueMatrices: THREE.Matrix4[] = [];
     for (const mesh of group) {
       tempMatrix.multiplyMatrices(rootInverse, mesh.matrixWorld);
-      if (!uniqueMatrices.some((existing) => matricesEqual(existing, tempMatrix))) {
+      const key = matrixKey(tempMatrix);
+      if (!seenMatrixKeys.has(key)) {
+        seenMatrixKeys.add(key);
         uniqueMatrices.push(tempMatrix.clone());
       }
     }
@@ -92,6 +109,10 @@ export function autoInstanceScene(root: THREE.Object3D, debug?: boolean): void {
         if (group[i].geometry !== group[0].geometry) {
           group[i].geometry.dispose();
         }
+        const mat = group[i].material as THREE.Material;
+        if (mat !== (group[0].material as THREE.Material)) {
+          mat.dispose();
+        }
       }
       continue;
     }
@@ -106,12 +127,17 @@ export function autoInstanceScene(root: THREE.Object3D, debug?: boolean): void {
 
     const referenceMesh = group[0];
 
-    // remove all original meshes and dispose non-shared geometries
+    // remove all original meshes and dispose non-shared resources
     const keptGeometry = referenceMesh.geometry;
+    const keptMaterial = referenceMesh.material as THREE.Material;
     for (const mesh of group) {
       mesh.removeFromParent();
       if (mesh.geometry !== keptGeometry) {
         mesh.geometry.dispose();
+      }
+      const mat = mesh.material as THREE.Material;
+      if (mat !== keptMaterial) {
+        mat.dispose();
       }
     }
 
@@ -205,6 +231,10 @@ function computeGeometryFingerprint(geometry: THREE.BufferGeometry): string {
   return `${vertexCount}:${indexCount}:${posHash}:${idxHash}:${normalHash}:${uvHash}`;
 }
 
+// reusable buffer for reading IEEE 754 bit patterns from floats
+const _hashFloat32 = new Float32Array(1);
+const _hashDataView = new DataView(_hashFloat32.buffer);
+
 function hashTypedArray(arr: ArrayLike<number>): number {
   // sample-based FNV-1a-like hash for performance on large buffers
   let hash = 2166136261;
@@ -212,9 +242,9 @@ function hashTypedArray(arr: ArrayLike<number>): number {
   // sample up to 256 evenly-spaced elements for large arrays
   const step = len > 256 ? Math.floor(len / 256) : 1;
   for (let i = 0; i < len; i += step) {
-    // convert float to integer bits for consistent hashing
-    const val = arr[i];
-    const intBits = (val * 1000000) | 0;
+    // read IEEE 754 bit pattern for lossless float hashing
+    _hashFloat32[0] = arr[i];
+    const intBits = _hashDataView.getInt32(0, true);
     hash ^= intBits;
     hash = Math.imul(hash, 16777619);
   }
@@ -281,13 +311,13 @@ function typedArraysEqual(a: ArrayLike<number>, b: ArrayLike<number>): boolean {
   return true;
 }
 
-const MATRIX_EPSILON = 1e-5;
+const MATRIX_QUANTIZE = 1e5; // reciprocal of epsilon — quantize to 1e-5 grid
 
-function matricesEqual(a: THREE.Matrix4, b: THREE.Matrix4): boolean {
-  const ae = a.elements;
-  const be = b.elements;
-  for (let i = 0; i < 16; i++) {
-    if (Math.abs(ae[i] - be[i]) > MATRIX_EPSILON) return false;
+function matrixKey(m: THREE.Matrix4): string {
+  const e = m.elements;
+  let s = "" + Math.round(e[0] * MATRIX_QUANTIZE);
+  for (let i = 1; i < 16; i++) {
+    s += "," + Math.round(e[i] * MATRIX_QUANTIZE);
   }
-  return true;
+  return s;
 }
