@@ -6,6 +6,7 @@ import { ModelLoadResult } from "@mml-io/model-loader";
 import * as THREE from "three";
 
 import { ThreeJSModelHandle } from "../resources/ThreeJSModelHandle";
+import { autoInstanceScene } from "../ThreeJSAutoInstanceScene";
 import { ThreeJSGraphicsAdapter } from "../ThreeJSGraphicsAdapter";
 import { ThreeJSAnimationState } from "./ThreeJSAnimation";
 
@@ -543,6 +544,7 @@ export class ThreeJSModel extends ModelGraphics<ThreeJSGraphicsAdapter> {
           child.receiveShadow = true;
         }
       });
+      autoInstanceScene(result.group);
       const group = result.group;
       const bones = new Map<string, THREE.Bone>();
       const nodeNames = new Set<string>();
