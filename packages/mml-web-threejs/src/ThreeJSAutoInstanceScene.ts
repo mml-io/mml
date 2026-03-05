@@ -42,7 +42,7 @@ export function autoInstanceScene(root: THREE.Object3D, debug?: boolean): void {
     if (!materialIds.has(mat)) {
       materialIds.set(mat, nextMaterialId++);
     }
-    const materialId = materialIds.get(mat)!;
+    const materialId = materialIds.get(mat);
     const geomFingerprint = computeGeometryFingerprint(mesh.geometry);
     const key = `${materialId}|${geomFingerprint}`;
 
