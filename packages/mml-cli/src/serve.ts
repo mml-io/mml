@@ -5,13 +5,23 @@ import * as url from "node:url";
 import { EditableNetworkedDOM, LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
 import * as chokidar from "chokidar";
 
-import { clientPage, createServer, normalizeUrlPath } from "./server.js";
+import {
+  clientPage,
+  createServer,
+  detectFormat,
+  fileContentsToHtml,
+  type FileFormat,
+  normalizeUrlPath,
+} from "./server.js";
+
+export type FormatOption = "detect" | FileFormat;
 
 export interface ServeOptions {
   port: number;
   host: string;
   watch: boolean;
   client: boolean;
+  format: FormatOption;
   assets?: string;
   assetsUrlPath: string;
 }
@@ -24,19 +34,34 @@ export function serve(file: string, options: ServeOptions): void {
     process.exit(1);
   }
 
-  const getHTMLFileContents = () => fs.readFileSync(filePath, "utf8");
+  let format: FileFormat;
+  if (options.format === "detect") {
+    const detected = detectFormat(filePath);
+    if (!detected) {
+      console.error(`Cannot detect format for ${filePath}. Use --format html or --format js.`);
+      process.exit(1);
+    }
+    format = detected;
+  } else {
+    format = options.format;
+  }
+
+  const getDocumentContents = () => {
+    const raw = fs.readFileSync(filePath, "utf8");
+    return fileContentsToHtml(raw, format);
+  };
 
   const document = new EditableNetworkedDOM(
     url.pathToFileURL(filePath).toString(),
     LocalObservableDOMFactory,
     false,
   );
-  document.load(getHTMLFileContents());
+  document.load(getDocumentContents());
 
   if (options.watch) {
     chokidar.watch(filePath).on("change", () => {
       console.log("File changed, reloading...");
-      document.load(getHTMLFileContents());
+      document.load(getDocumentContents());
     });
   }
 

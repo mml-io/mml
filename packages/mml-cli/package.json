@@ -31,13 +31,16 @@
     "@mml-io/networked-dom-document": "^0.25.0",
     "@mml-io/networked-dom-server": "^0.25.0"
   },
+  "//": "Third-party packages are in devDependencies because they are bundled by esbuild at build time (see build.ts). Only @mml-io/* workspace packages are kept as runtime dependencies (marked external in the bundle).",
   "devDependencies": {
     "@types/express": "5.0.6",
     "@types/express-ws": "3.0.6",
+    "@types/picomatch": "^4.0.2",
     "chokidar": "5.0.0",
     "commander": "13.1.0",
     "express": "5.2.1",
     "express-ws": "5.0.2",
+    "picomatch": "^4.0.3",
     "ws": "8.19.0"
   }
 }

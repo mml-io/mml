@@ -63,6 +63,14 @@ vi.mock("./server.js", () => ({
   createServer: vi.fn(() => mockApp),
   clientPage: vi.fn((wsPath: string) => `<html>client:${wsPath}</html>`),
   normalizeUrlPath: vi.fn((p: string) => (p.startsWith("/") ? p : `/${p}`)),
+  detectFormat: vi.fn((filePath: string) => {
+    if (filePath.endsWith(".js")) return "js";
+    if (filePath.endsWith(".html") || filePath.endsWith(".htm")) return "html";
+    return null;
+  }),
+  fileContentsToHtml: vi.fn((raw: string, format: string) =>
+    format === "js" ? `<body><script>\n${raw}\n</script></body>` : raw,
+  ),
 }));
 
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-server";
@@ -164,7 +172,7 @@ describe("serveDir", () => {
       );
     });
 
-    test("filters to only .html files via ignored option", () => {
+    test("filters to only .html, .htm, and .js files via ignored option", () => {
       serveDir("mydir", defaultOptions);
 
       const watchOptions = vi.mocked(chokidar.watch).mock.calls[0][1] as any;
@@ -172,6 +180,12 @@ describe("serveDir", () => {
 
       // A .html file should NOT be ignored
       expect(ignored("test.html", { isFile: () => true })).toBe(false);
+
+      // A .htm file should NOT be ignored
+      expect(ignored("test.htm", { isFile: () => true })).toBe(false);
+
+      // A .js file should NOT be ignored
+      expect(ignored("test.js", { isFile: () => true })).toBe(false);
 
       // A .txt file should be ignored
       expect(ignored("test.txt", { isFile: () => true })).toBe(true);
@@ -181,6 +195,51 @@ describe("serveDir", () => {
 
       // Paths without stats should not be ignored
       expect(ignored("something")).toBe(false);
+    });
+  });
+
+  describe("pattern filtering", () => {
+    test("ignores files not matching the pattern", () => {
+      serveDir("mydir", { ...defaultOptions, pattern: "app-*" });
+
+      const watchOptions = vi.mocked(chokidar.watch).mock.calls[0][1] as any;
+      const ignored = watchOptions.ignored;
+
+      // app-main.js matches the pattern
+      expect(ignored("/abs/path/mydir/app-main.js", { isFile: () => true })).toBe(false);
+
+      // config.js does not match the pattern
+      expect(ignored("/abs/path/mydir/config.js", { isFile: () => true })).toBe(true);
+    });
+
+    test("pattern with extension restricts to matching files", () => {
+      serveDir("mydir", { ...defaultOptions, pattern: "*.html" });
+
+      const watchOptions = vi.mocked(chokidar.watch).mock.calls[0][1] as any;
+      const ignored = watchOptions.ignored;
+
+      expect(ignored("/abs/path/mydir/doc.html", { isFile: () => true })).toBe(false);
+      expect(ignored("/abs/path/mydir/app.js", { isFile: () => true })).toBe(true);
+    });
+
+    test("still ignores non-html/js files even with broad pattern", () => {
+      serveDir("mydir", { ...defaultOptions, pattern: "*" });
+
+      const watchOptions = vi.mocked(chokidar.watch).mock.calls[0][1] as any;
+      const ignored = watchOptions.ignored;
+
+      expect(ignored("/abs/path/mydir/app.js", { isFile: () => true })).toBe(false);
+      expect(ignored("/abs/path/mydir/config.txt", { isFile: () => true })).toBe(true);
+    });
+
+    test("serves all html and js files when no pattern is set", () => {
+      serveDir("mydir", defaultOptions);
+
+      const watchOptions = vi.mocked(chokidar.watch).mock.calls[0][1] as any;
+      const ignored = watchOptions.ignored;
+
+      expect(ignored("/abs/path/mydir/anything.html", { isFile: () => true })).toBe(false);
+      expect(ignored("/abs/path/mydir/anything.js", { isFile: () => true })).toBe(false);
     });
   });
 
@@ -200,6 +259,22 @@ describe("serveDir", () => {
       mockWatcher.emit("add", "/abs/path/mydir/test.html");
 
       expect(EditableNetworkedDOM).not.toHaveBeenCalled();
+    });
+
+    test("wraps JS file contents in a script tag on add", () => {
+      vi.mocked(fs.readFileSync).mockReturnValue("const x = 1;");
+
+      serveDir("mydir", defaultOptions);
+      mockWatcher.emit("add", "/abs/path/mydir/test.js");
+
+      // Load via WebSocket connection
+      const wsHandler = getWsHandler();
+      const mockWs = { on: vi.fn(), close: vi.fn() };
+      wsHandler(mockWs, { params: { documentPath: "test.js" } });
+
+      expect(mockDocumentInstances[0].load).toHaveBeenCalledWith(
+        "<body><script>\nconst x = 1;\n</script></body>",
+      );
     });
   });
 
@@ -230,6 +305,26 @@ describe("serveDir", () => {
       // The loaded document should have load called with new contents
       const doc = mockDocumentInstances[0];
       expect(doc.load).toHaveBeenLastCalledWith("<m-cube color='red' />");
+    });
+
+    test("wraps JS file contents in a script tag on change", () => {
+      vi.mocked(fs.readFileSync).mockReturnValue("const x = 1;");
+
+      serveDir("mydir", defaultOptions);
+      mockWatcher.emit("add", "/abs/path/mydir/test.js");
+
+      // Load via WebSocket connection
+      const wsHandler = getWsHandler();
+      const mockWs = { on: vi.fn(), close: vi.fn() };
+      wsHandler(mockWs, { params: { documentPath: "test.js" } });
+
+      // Change the file
+      vi.mocked(fs.readFileSync).mockReturnValue("const x = 2;");
+      mockWatcher.emit("change", "/abs/path/mydir/test.js");
+
+      expect(mockDocumentInstances[0].load).toHaveBeenLastCalledWith(
+        "<body><script>\nconst x = 2;\n</script></body>",
+      );
     });
 
     test("does not call load if document is not loaded", () => {

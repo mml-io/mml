@@ -40,6 +40,14 @@ vi.mock("./server.js", () => ({
   createServer: vi.fn(() => mockApp),
   clientPage: vi.fn((wsPath: string) => `<html>client:${wsPath}</html>`),
   normalizeUrlPath: vi.fn((p: string) => (p.startsWith("/") ? p : `/${p}`)),
+  detectFormat: vi.fn((filePath: string) => {
+    if (filePath.endsWith(".js")) return "js";
+    if (filePath.endsWith(".html") || filePath.endsWith(".htm")) return "html";
+    return null;
+  }),
+  fileContentsToHtml: vi.fn((raw: string, format: string) =>
+    format === "js" ? `<body><script>\n${raw}\n</script></body>` : raw,
+  ),
 }));
 
 import { EditableNetworkedDOM } from "@mml-io/networked-dom-server";
@@ -47,7 +55,7 @@ import * as chokidar from "chokidar";
 import * as fs from "fs";
 
 import { serve } from "./serve.js";
-import { clientPage, createServer } from "./server.js";
+import { clientPage, createServer, detectFormat } from "./server.js";
 
 function getCloseHandler(ws: { on: ReturnType<typeof vi.fn> }): () => void {
   const call = ws.on.mock.calls.find((c: any[]) => c[0] === "close");
@@ -71,6 +79,7 @@ describe("serve", () => {
     host: "127.0.0.1",
     watch: true,
     client: true,
+    format: "detect" as const,
     assetsUrlPath: "/assets/",
   };
 
@@ -114,6 +123,35 @@ describe("serve", () => {
     });
   });
 
+  describe("format detection", () => {
+    test("exits with error when format is detect and extension is unsupported", () => {
+      vi.mocked(detectFormat).mockReturnValueOnce(null);
+
+      serve("test.txt", defaultOptions);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Cannot detect format"));
+      expect(mockProcessExit).toHaveBeenCalledWith(1);
+    });
+
+    test("uses explicit html format regardless of extension", () => {
+      vi.mocked(fs.readFileSync).mockReturnValue("plain text");
+
+      serve("test.txt", { ...defaultOptions, format: "html" });
+
+      expect(mockDocument.load).toHaveBeenCalledWith("plain text");
+    });
+
+    test("uses explicit js format regardless of extension", () => {
+      vi.mocked(fs.readFileSync).mockReturnValue("const x = 1;");
+
+      serve("test.txt", { ...defaultOptions, format: "js" });
+
+      expect(mockDocument.load).toHaveBeenCalledWith(
+        "<body><script>\nconst x = 1;\n</script></body>",
+      );
+    });
+  });
+
   describe("document creation", () => {
     test("creates EditableNetworkedDOM with file URL", () => {
       serve("test.html", defaultOptions);
@@ -137,6 +175,24 @@ describe("serve", () => {
       serve("test.html", defaultOptions);
 
       expect(fs.readFileSync).toHaveBeenCalledWith(expect.any(String), "utf8");
+    });
+
+    test("wraps JS file contents in a script tag", () => {
+      vi.mocked(fs.readFileSync).mockReturnValue('document.createElement("m-cube");');
+
+      serve("test.js", defaultOptions);
+
+      expect(mockDocument.load).toHaveBeenCalledWith(
+        '<body><script>\ndocument.createElement("m-cube");\n</script></body>',
+      );
+    });
+
+    test("does not wrap HTML file contents in a script tag", () => {
+      vi.mocked(fs.readFileSync).mockReturnValue("<m-cube></m-cube>");
+
+      serve("test.html", defaultOptions);
+
+      expect(mockDocument.load).toHaveBeenCalledWith("<m-cube></m-cube>");
     });
   });
 
@@ -164,6 +220,20 @@ describe("serve", () => {
       mockWatcher.emit("change");
 
       expect(consoleLogSpy).toHaveBeenCalledWith("File changed, reloading...");
+    });
+
+    test("wraps JS file contents in a script tag on reload", () => {
+      vi.mocked(fs.readFileSync).mockReturnValue("const x = 1;");
+
+      serve("test.js", defaultOptions);
+
+      // Simulate file change
+      vi.mocked(fs.readFileSync).mockReturnValue("const x = 2;");
+      mockWatcher.emit("change");
+
+      expect(mockDocument.load).toHaveBeenLastCalledWith(
+        "<body><script>\nconst x = 2;\n</script></body>",
+      );
     });
 
     test("does not set up watcher when watch is false", () => {
@@ -315,6 +385,7 @@ describe("serve", () => {
       serve("test.html", {
         port: 9000,
         host: "0.0.0.0",
+        format: "detect" as const,
         watch: true,
         client: true,
         assets: "./public",
