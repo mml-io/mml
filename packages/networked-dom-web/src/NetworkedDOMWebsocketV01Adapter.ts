@@ -9,35 +9,36 @@ import {
   NetworkedDOMV01TextChangedDiff,
 } from "@mml-io/networked-dom-protocol";
 
+import { IDocumentFactory, IElementLike, INodeLike } from "./DocumentInterface";
 import {
   createElementWithSVGSupport,
   getChildrenTarget,
   getRemovalTarget,
   setElementAttribute,
 } from "./ElementUtils";
+import { isHTMLElement, isText, NetworkedDOMWebsocketOptions } from "./NetworkedDOMWebsocket";
+import { NetworkedDOMWebsocketAdapterBase } from "./NetworkedDOMWebsocketAdapterBase";
 import {
-  isHTMLElement,
-  isText,
-  NetworkedDOMWebsocketAdapter,
-  NetworkedDOMWebsocketOptions,
-} from "./NetworkedDOMWebsocket";
+  bufferPortalChild,
+  flushPendingPortalChildren,
+  recordFactoryOverride,
+  resolveChildFactory,
+  resolvePortalChildFactory,
+} from "./PortalUtils";
 
-export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAdapter {
-  private idToElement = new Map<number, Node>();
-  private elementToId = new Map<Node, number>();
-  private currentRoot: HTMLElement | null = null;
-
+export class NetworkedDOMWebsocketV01Adapter extends NetworkedDOMWebsocketAdapterBase {
   constructor(
-    private websocket: WebSocket,
-    private parentElement: HTMLElement,
-    private connectedCallback: () => void,
-    private timeCallback?: (time: number) => void,
-    private options: NetworkedDOMWebsocketOptions = {},
+    websocket: WebSocket,
+    parentElement: IElementLike,
+    connectedCallback: () => void,
+    timeCallback?: (time: number) => void,
+    options: NetworkedDOMWebsocketOptions = {},
+    doc?: IDocumentFactory,
   ) {
-    this.websocket.binaryType = "arraybuffer";
+    super(websocket, parentElement, connectedCallback, timeCallback, options, doc);
   }
 
-  public handleEvent(element: HTMLElement, event: CustomEvent<{ element: HTMLElement }>) {
+  public handleEvent(element: IElementLike, event: CustomEvent) {
     const nodeId = this.elementToId.get(element);
     if (nodeId === undefined || nodeId === null) {
       throw new Error("Element not found");
@@ -61,17 +62,6 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
 
   private send(fromClientMessage: NetworkedDOMV01ClientMessage) {
     this.websocket.send(JSON.stringify(fromClientMessage));
-  }
-
-  public clearContents(): boolean {
-    this.idToElement.clear();
-    this.elementToId.clear();
-    if (this.currentRoot) {
-      this.currentRoot.remove();
-      this.currentRoot = null;
-      return true;
-    }
-    return false;
   }
 
   receiveMessage(event: MessageEvent) {
@@ -149,15 +139,16 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
       console.warn("No nodeId in childrenChanged message");
       return;
     }
-    const parent = this.idToElement.get(nodeId);
-    if (!parent) {
+    const parentNode = this.idToElement.get(nodeId);
+    if (!parentNode) {
       throw new Error("No parent found for childrenChanged message");
     }
-    if (!isHTMLElement(parent, this.parentElement)) {
+    if (!isHTMLElement(parentNode, this.parentElement)) {
       throw new Error("Parent is not an HTMLElement (that supports children)");
     }
 
-    const targetForChildren = getChildrenTarget(parent);
+    const childFactory = resolveChildFactory(parentNode, this.elementFactoryOverride);
+    const targetForChildren = getChildrenTarget(parentNode);
 
     let nextElement = null;
     let previousElement = null;
@@ -171,27 +162,22 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
 
     const elementsToAdd = [];
     for (const addedNode of addedNodes) {
-      const childElement = this.handleNewElement(addedNode);
+      const childElement = this.handleNewElement(addedNode, childFactory);
       if (childElement) {
         elementsToAdd.push(childElement);
       }
     }
-    if (elementsToAdd.length) {
-      if (previousElement) {
-        if (nextElement) {
-          // There is a previous and next element - insertBefore the next element
-          const docFrag = new DocumentFragment();
-          docFrag.append(...elementsToAdd);
-          targetForChildren.insertBefore(docFrag, nextElement);
-        } else {
-          // No next element - must be the last children
-          targetForChildren.append(...elementsToAdd);
-        }
-      } else {
-        // No previous element - must be the first children
-        targetForChildren.prepend(...elementsToAdd);
-      }
+    this.insertElements(
+      targetForChildren,
+      elementsToAdd,
+      previousElement,
+      nextElement,
+      childFactory ?? this.docFactory,
+    );
+    if (this.pendingPortalChildren.size > 0) {
+      flushPendingPortalChildren(this.pendingPortalChildren);
     }
+
     for (const removedNode of removedNodes) {
       const childElement = this.idToElement.get(removedNode);
       if (!childElement) {
@@ -199,7 +185,7 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
       }
       this.elementToId.delete(childElement);
       this.idToElement.delete(removedNode);
-      const targetForRemoval = getRemovalTarget(parent);
+      const targetForRemoval = getRemovalTarget(parentNode);
       targetForRemoval.removeChild(childElement);
       if (isHTMLElement(childElement, this.parentElement)) {
         // If child is capable of supporting children then remove any that exist
@@ -208,46 +194,12 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
     }
   }
 
-  private removeChildElementIds(parent: HTMLElement) {
-    // If portal element, remove from portal element
-    const portal = getChildrenTarget(parent);
-    if (portal !== parent) {
-      this.removeChildElementIds(portal as HTMLElement);
-    }
-    for (let i = 0; i < parent.childNodes.length; i++) {
-      const child = parent.childNodes[i];
-      const childId = this.elementToId.get(child as HTMLElement);
-      if (!childId) {
-        console.error("Inner child of removed element had no id", child);
-      } else {
-        this.elementToId.delete(child);
-        this.idToElement.delete(childId);
-      }
-      this.removeChildElementIds(child as HTMLElement);
-    }
-  }
-
   private handleSnapshot(message: NetworkedDOMV01SnapshotMessage) {
-    // This websocket is successfully connected. Reset the backoff time.
-    if (this.currentRoot) {
-      this.currentRoot.remove();
-      this.currentRoot = null;
-      this.elementToId.clear();
-      this.idToElement.clear();
-    }
-
-    // create a tree of DOM elements
-    // NOTE: the MElement constructors are not executed during this stage
     const element = this.handleNewElement(message.snapshot);
     if (!element) {
       throw new Error("Snapshot element not created");
     }
-    if (!isHTMLElement(element, this.parentElement)) {
-      throw new Error("Snapshot element is not an HTMLElement");
-    }
-    this.currentRoot = element;
-    // appending to the tree causes MElements to be constructed
-    this.parentElement.append(element);
+    this.resetAndApplySnapshot(element);
   }
 
   private handleAttributeChange(message: NetworkedDOMV01AttributeChangedDiff) {
@@ -256,30 +208,30 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
       console.warn("No nodeId in attributeChange message");
       return;
     }
-    const element = this.idToElement.get(nodeId);
-    if (element) {
-      if (isHTMLElement(element, this.parentElement)) {
+    const node = this.idToElement.get(nodeId);
+    if (node) {
+      if (isHTMLElement(node, this.parentElement)) {
         if (newValue === null) {
-          element.removeAttribute(attribute);
+          node.removeAttribute(attribute);
         } else {
-          setElementAttribute(element, attribute, newValue);
+          setElementAttribute(node, attribute, newValue);
         }
       } else {
-        console.error("Element is not an HTMLElement and cannot support attributes", element);
+        console.error("Element is not an HTMLElement and cannot support attributes", node);
       }
     } else {
       console.error("No element found for attributeChange message");
     }
   }
 
-  private handleNewElement(message: NetworkedDOMV01NodeDescription): Node | null {
+  private handleNewElement(
+    message: NetworkedDOMV01NodeDescription,
+    factoryOverride?: IDocumentFactory,
+  ): INodeLike | null {
+    const factory = factoryOverride ?? this.docFactory;
+
     if (message.type === "text") {
-      const { nodeId, text } = message;
-      const textNode = document.createTextNode("");
-      textNode.textContent = text;
-      this.idToElement.set(nodeId, textNode);
-      this.elementToId.set(textNode, nodeId);
-      return textNode;
+      return this.createTextNode(message.nodeId, message.text, factory);
     }
     const { tag, nodeId, attributes, children, text } = message;
     if (nodeId === undefined || nodeId === null) {
@@ -294,19 +246,15 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
       );
     }
     if (tag === "#text") {
-      const textNode = document.createTextNode("");
-      textNode.textContent = text || null;
-      this.idToElement.set(nodeId, textNode);
-      this.elementToId.set(textNode, nodeId);
-      return textNode;
+      return this.createTextNode(nodeId, text || "", factory);
     }
 
     let element;
     try {
-      element = createElementWithSVGSupport(tag, this.options);
+      element = createElementWithSVGSupport(tag, this.options, factory);
     } catch (e) {
       console.error(`Error creating element: (${tag})`, e);
-      element = document.createElement("x-div");
+      element = factory.createElement("x-div");
     }
     this.idToElement.set(nodeId, element);
     this.elementToId.set(element, nodeId);
@@ -314,11 +262,20 @@ export class NetworkedDOMWebsocketV01Adapter implements NetworkedDOMWebsocketAda
       const value = attributes[key];
       setElementAttribute(element, key, value);
     }
+
+    recordFactoryOverride(element, factory, this.docFactory, this.elementFactoryOverride);
+
+    const { childFactory, usingPortalFactory } = resolvePortalChildFactory(element, factory);
+
     if (children) {
       for (const child of children) {
-        const childElement = this.handleNewElement(child);
+        const childElement = this.handleNewElement(child, childFactory);
         if (childElement) {
-          element.append(childElement);
+          if (usingPortalFactory) {
+            bufferPortalChild(this.pendingPortalChildren, element, childElement);
+          } else {
+            element.append(childElement);
+          }
         }
       }
     }

@@ -4,17 +4,20 @@ import * as THREE from "three";
 import { vi } from "vitest";
 
 import { Model } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-model [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-model", () => {
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Model>(
+    const { scene, element } = await ctx.createSceneAttachedElement<Model>(
       "m-model",
       "ws://localhost:8080",
     );
@@ -78,8 +81,8 @@ describe("m-model", () => {
   });
 
   test("geometries are disposed of when elements are removed", async () => {
-    const { scene, remoteDocument } = await createTestScene();
-    const element = document.createElement("m-model") as Model;
+    const { scene, remoteDocument } = await ctx.createTestScene();
+    const element = ctx.createElement("m-model") as Model;
 
     const firstBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
     const firstMaterial = new THREE.MeshStandardMaterial();

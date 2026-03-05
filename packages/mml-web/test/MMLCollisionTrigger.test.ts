@@ -3,16 +3,19 @@ import { vi } from "vitest";
 
 import { MElement, MMLCollisionTrigger } from "../build/index";
 import { Cube } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createTestScene } from "./scene-test-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("MMLCollisionTrigger [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("MMLCollisionTrigger", () => {
   test("cube - send start, move, end", async () => {
-    const { scene, remoteDocument } = await createTestScene();
+    const { scene, remoteDocument } = await ctx.createTestScene();
     const mockPerformanceNow = vi.fn();
     window.performance.now = mockPerformanceNow as () => DOMHighResTimeStamp;
     mockPerformanceNow.mockReturnValue(1000);
@@ -27,7 +30,7 @@ describe("MMLCollisionTrigger", () => {
       mmlCollisionTrigger.removeCollider(collider);
     });
 
-    const element = document.createElement("m-cube") as Cube;
+    const element = ctx.createElement("m-cube") as Cube;
     remoteDocument.append(element);
     element.setAttribute("collision-interval", "100");
 

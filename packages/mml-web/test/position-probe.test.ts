@@ -1,22 +1,27 @@
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import { vi } from "vitest";
 
-import { EulXYZ, PositionProbe, registerCustomElementsToWindow, Vect3 } from "../build/index";
-import { createSceneAttachedElement } from "./scene-test-utils";
+import { EulXYZ, Group, PositionProbe, Vect3 } from "../build/index";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-position-probe [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-position-probe", () => {
   test("observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-position-probe", PositionProbe);
     expect(schema.name).toEqual(PositionProbe.tagName);
   });
 
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<PositionProbe>("m-position-probe");
+    const { scene, element } =
+      await ctx.createSceneAttachedElement<PositionProbe>("m-position-probe");
     expect(
       (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
         .children[0 /* root container */].children[0 /* attachment container */]
@@ -25,7 +30,8 @@ describe("m-position-probe", () => {
   });
 
   test("position-probe - send position", async () => {
-    const { element, scene } = await createSceneAttachedElement<PositionProbe>("m-position-probe");
+    const { element, scene } =
+      await ctx.createSceneAttachedElement<PositionProbe>("m-position-probe");
     element.setAttribute("range", "10");
     element.setAttribute("interval", "100");
 
@@ -88,13 +94,13 @@ describe("m-position-probe", () => {
   });
 
   test("position-probe - send position - relative", async () => {
-    const { element: group, scene } = await createSceneAttachedElement("m-group");
+    const { element: group, scene } = await ctx.createSceneAttachedElement<Group>("m-group");
 
     group.setAttribute("x", "10");
     group.setAttribute("y", "20");
     group.setAttribute("z", "30");
 
-    const element: PositionProbe = document.createElement("m-position-probe") as PositionProbe;
+    const element: PositionProbe = ctx.createElement("m-position-probe") as PositionProbe;
     element.setAttribute("range", "10");
     element.setAttribute("interval", "100");
     group.append(element);

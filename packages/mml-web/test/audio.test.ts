@@ -1,17 +1,21 @@
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import { vi } from "vitest";
 
-import { Audio, registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement } from "./scene-test-utils";
+import { Audio } from "../build/index";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-audio [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-audio", () => {
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Audio>("m-audio");
+    const { scene, element } = await ctx.createSceneAttachedElement<Audio>("m-audio");
 
     expect(
       (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene().children[0]
@@ -20,7 +24,7 @@ describe("m-audio", () => {
   });
 
   test("loading and playing audio", async () => {
-    const { element } = await createSceneAttachedElement<Audio>("m-audio");
+    const { element } = await ctx.createSceneAttachedElement<Audio>("m-audio");
 
     const audioBuffer: AudioBuffer = {} as AudioBuffer;
     vi.spyOn(AudioContext.prototype, "decodeAudioData").mockImplementation(() => {

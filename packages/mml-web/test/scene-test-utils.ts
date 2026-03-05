@@ -13,7 +13,7 @@ import { FullScreenMMLScene, RemoteDocument } from "../build/index";
 
 const useThree = true;
 
-export async function createSceneAttachedElement<T extends HTMLElement>(
+export async function createSceneAttachedElement<T>(
   elementTag: string,
   documentAddress?: string,
 ): Promise<{
@@ -23,8 +23,10 @@ export async function createSceneAttachedElement<T extends HTMLElement>(
 }> {
   const { scene, remoteDocument } = await createTestScene(documentAddress);
 
-  const element = document.createElement(elementTag) as T;
-  remoteDocument.append(element);
+  // After registerCustomElementsToWindow, MML elements extend HTMLElement at runtime
+  // even though they statically extend VirtualHTMLElement
+  const element = document.createElement(elementTag) as unknown as T;
+  (remoteDocument as unknown as HTMLElement).append(element as unknown as Node);
   return { scene, remoteDocument, element };
 }
 
@@ -44,11 +46,12 @@ export async function createTestScene(documentAddress?: string): Promise<{
       controlsType: StandalonePlayCanvasAdapterControlsType.DragFly,
     });
   }
-  const remoteDocument = document.createElement("m-remote-document") as RemoteDocument<
+  // After registerCustomElementsToWindow, RemoteDocument extends HTMLElement at runtime
+  const remoteDocument = document.createElement("m-remote-document") as unknown as RemoteDocument<
     ThreeJSGraphicsAdapter | PlayCanvasGraphicsAdapter
   >;
   scene.init(graphicsAdapter);
   remoteDocument.init(scene, documentAddress || "ws://localhost:8080");
-  document.body.append(remoteDocument);
+  document.body.append(remoteDocument as unknown as Node);
   return { scene, remoteDocument };
 }

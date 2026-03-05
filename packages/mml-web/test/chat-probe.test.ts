@@ -3,22 +3,25 @@ import * as THREE from "three";
 import { vi } from "vitest";
 
 import { ChatProbe } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-chat-probe [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-chat-probe", () => {
   test("observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-chat-probe", ChatProbe);
     expect(schema.name).toEqual(ChatProbe.tagName);
   });
 
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<ChatProbe>("m-chat-probe");
+    const { scene, element } = await ctx.createSceneAttachedElement<ChatProbe>("m-chat-probe");
     expect(
       (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
         .children[0 /* root container */].children[0 /* attachment container */]
@@ -27,7 +30,7 @@ describe("m-chat-probe", () => {
   });
 
   test("chat-probe - send message", async () => {
-    const { element, scene } = await createSceneAttachedElement<ChatProbe>("m-chat-probe");
+    const { element, scene } = await ctx.createSceneAttachedElement<ChatProbe>("m-chat-probe");
     element.setAttribute("range", "10");
     element.setAttribute("interval", "100");
 
@@ -61,8 +64,8 @@ describe("m-chat-probe", () => {
   });
 
   test("chatProbe - update", async () => {
-    const { scene, remoteDocument } = await createTestScene();
-    const element = document.createElement("m-chat-probe") as ChatProbe;
+    const { scene, remoteDocument } = await ctx.createTestScene();
+    const element = ctx.createElement("m-chat-probe") as ChatProbe;
     expect(Array.from((scene as any).chatProbes)).toEqual([]);
     const addChatProbeSpy = vi.spyOn(scene, "addChatProbe");
     const updateChatProbeSpy = vi.spyOn(scene, "updateChatProbe");
@@ -82,15 +85,15 @@ describe("m-chat-probe", () => {
   });
 
   test("chatProbe - update from ancestor", async () => {
-    const { element, scene } = await createSceneAttachedElement<ChatProbe>("m-group");
+    const { element, scene } = await ctx.createSceneAttachedElement<ChatProbe>("m-group");
 
     const addChatProbeSpy = vi.spyOn(scene, "addChatProbe");
     const updateChatProbeSpy = vi.spyOn(scene, "updateChatProbe");
 
-    const innerGroup = document.createElement("m-group");
+    const innerGroup = ctx.createElement("m-group");
     element.appendChild(innerGroup);
 
-    const mChatProbe = document.createElement("m-chat-probe") as ChatProbe;
+    const mChatProbe = ctx.createElement("m-chat-probe") as ChatProbe;
     mChatProbe.setAttribute("x", "1");
     mChatProbe.setAttribute("y", "2");
     mChatProbe.setAttribute("z", "3");

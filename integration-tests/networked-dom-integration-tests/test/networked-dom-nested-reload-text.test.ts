@@ -6,10 +6,17 @@ import { TestCaseNetworkedDOMDocument } from "./TestCaseNetworkedDOMDocument";
  This test uncovered a bug where remapped nodes could cause conflicts on reload
  and is kept for regression testing
 */
-describe.each([{ version: 0.1 }, { version: 0.2 }])(
-  `EditableNetworkedDOM <> NetworkedDOMWebsocket - nested + reload + text - $version`,
-  ({ version }) => {
+describe.each([
+  { version: 0.1, virtual: false },
+  { version: 0.2, virtual: false },
+  { version: 0.1, virtual: true },
+  { version: 0.2, virtual: true },
+])(
+  `EditableNetworkedDOM <> NetworkedDOMWebsocket - nested + reload + text - v$version virtual=$virtual`,
+  ({ version, virtual }) => {
     const isV01 = version === 0.1;
+    const createClient = (testCase: TestCaseNetworkedDOMDocument) =>
+      virtual ? testCase.createVirtualClient(isV01) : testCase.createClient(isV01);
 
     afterEach(() => {
       // Clean up DOM to prevent ID collisions between tests
@@ -49,7 +56,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 </script>`;
 
       const testCase = new TestCaseNetworkedDOMDocument(false);
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(testDocument);
@@ -57,7 +64,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       await client1.waitForAllClientMessages(isV01 ? 1 : 1);
 
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#add-sibling")!,
+        client1.querySelector("#add-sibling")!,
         new CustomEvent("click"),
       );
 
@@ -69,7 +76,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       await client1.waitForAllClientMessages(isV01 ? 7 : 9);
 
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#add-level-2")!,
+        client1.querySelector("#add-level-2")!,
         new CustomEvent("click"),
       );
 

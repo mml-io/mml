@@ -1,13 +1,13 @@
 import { createSchemaDefinition, schemaJSON } from "@mml-io/mml-schema";
 
-import { MElement } from "../build/index";
-import { GraphicsAdapter } from "../build/index";
-
+// MElementClass needs tagName and observedAttributes for schema validation.
+// Uses an intersection with a constructor signature to prevent accidentally
+// passing non-element objects while supporting both DOM and virtual modes.
 type MElementClass = {
-  new (): MElement<GraphicsAdapter>;
+  new (...args: any[]): any;
   tagName: string;
   observedAttributes: string[];
-} & typeof HTMLElement;
+};
 
 export function testElementSchemaMatchesObservedAttributes(
   elementTag: string,

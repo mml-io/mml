@@ -249,7 +249,7 @@ export class StandaloneThreeJSAdapter implements ThreeJSGraphicsAdapter, Standal
     return this.camera;
   }
 
-  public getBoundingBoxForElement(element: HTMLElement): {
+  public getBoundingBoxForElement(element: HTMLElement | object): {
     x: number;
     y: number;
     width: number;

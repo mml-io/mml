@@ -2,22 +2,27 @@ import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 import { vi } from "vitest";
 
-import { AttributeAnimation, Cube, registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
+import { AttributeAnimation, Cube } from "../build/index";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-attr-anim [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-attr-anim", () => {
   test("observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-attr-anim", AttributeAnimation);
     expect(schema.name).toEqual(AttributeAnimation.tagName);
   });
 
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<AttributeAnimation>("m-attr-anim");
+    const { scene, element } =
+      await ctx.createSceneAttachedElement<AttributeAnimation>("m-attr-anim");
     expect(
       (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
         .children[0 /* root container */].children[0 /* attachment container */]
@@ -26,8 +31,8 @@ describe("m-attr-anim", () => {
   });
 
   test("animates parent element attribute - add and remove", async () => {
-    const { remoteDocument } = await createTestScene();
-    const cube = document.createElement("m-cube") as Cube;
+    const { remoteDocument } = await ctx.createTestScene();
+    const cube = ctx.createElement("m-cube") as Cube;
     cube.setAttribute("x", "0");
     cube.setAttribute("y", "2");
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(0);
@@ -42,7 +47,7 @@ describe("m-attr-anim", () => {
     expect(container.position.x).toEqual(1);
     expect(container.position.y).toEqual(2);
 
-    const attrAnim = document.createElement("m-attr-anim") as AttributeAnimation;
+    const attrAnim = ctx.createElement("m-attr-anim") as AttributeAnimation;
     attrAnim.setAttribute("attr", "x");
     attrAnim.setAttribute("start", "10");
     attrAnim.setAttribute("end", "20");
@@ -80,15 +85,15 @@ describe("m-attr-anim", () => {
   });
 
   test("animates element attribute back to default on removal and no element value", async () => {
-    const { remoteDocument } = await createTestScene();
-    const cube = document.createElement("m-cube") as Cube;
+    const { remoteDocument } = await ctx.createTestScene();
+    const cube = ctx.createElement("m-cube") as Cube;
     remoteDocument.getDocumentTimeManager().overrideDocumentTime(0);
 
     const didUpdateTransformationSpy = vi.spyOn(cube as any, "didUpdateTransformation");
     remoteDocument.append(cube);
     expect(didUpdateTransformationSpy).toHaveBeenCalledTimes(0);
 
-    const attrAnim = document.createElement("m-attr-anim") as AttributeAnimation;
+    const attrAnim = ctx.createElement("m-attr-anim") as AttributeAnimation;
     attrAnim.setAttribute("attr", "sx");
     attrAnim.setAttribute("start", "10");
     attrAnim.setAttribute("end", "20");

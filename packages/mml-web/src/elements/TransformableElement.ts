@@ -4,6 +4,7 @@ import { OrientedBoundingBox } from "../bounding-box";
 import { DebugHelper } from "../debug-helper";
 import { GraphicsAdapter, TransformableGraphics } from "../graphics";
 import { degToRad, IVect3, Matr4, Quat, Vect3 } from "../math";
+import { VirtualNode } from "../virtual-dom";
 import { AnimationType } from "./AttributeAnimation";
 import { MElement } from "./MElement";
 
@@ -458,10 +459,10 @@ export abstract class TransformableElement<
 }
 
 function traverseImmediateTransformableElementChildren<G extends GraphicsAdapter = GraphicsAdapter>(
-  element: ChildNode,
+  element: VirtualNode,
   callback: (element: TransformableElement<G>) => void,
 ) {
-  element.childNodes.forEach((child) => {
+  element.childNodes.forEach((child: VirtualNode) => {
     if (TransformableElement.isTransformableElement(child)) {
       callback(child as TransformableElement<G>);
     } else {

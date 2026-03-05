@@ -25,7 +25,8 @@
     "test-iterate": "vitest"
   },
   "dependencies": {
-    "@mml-io/networked-dom-web": "^0.25.0"
+    "@mml-io/networked-dom-web": "^0.25.0",
+    "parse5": "^8.0.0"
   },
   "devDependencies": {
     "@types/three": "0.182.0",

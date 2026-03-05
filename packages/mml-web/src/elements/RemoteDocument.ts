@@ -1,9 +1,11 @@
 import { OrientedBoundingBox } from "../bounding-box";
 import { GraphicsAdapter } from "../graphics";
 import { RemoteDocumentGraphics } from "../graphics";
+import { getGlobalWindow } from "../runtime-env";
 import { IMMLScene } from "../scene";
 import { MMLDocumentTimeManager } from "../time";
-import { consumeEventEventName } from "./MElement";
+import { VirtualCustomEvent } from "../virtual-dom";
+import { consumeEventEventName, MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 
 export class RemoteDocument<
@@ -21,9 +23,12 @@ export class RemoteDocument<
     super();
     this.documentTimeManager = new MMLDocumentTimeManager();
 
-    this.addEventListener(consumeEventEventName, (wrappedEvent: CustomEvent) => {
-      wrappedEvent.stopPropagation();
-    });
+    this.addEventListener(
+      consumeEventEventName,
+      (wrappedEvent: CustomEvent | VirtualCustomEvent) => {
+        wrappedEvent.stopPropagation();
+      },
+    );
   }
 
   public showError(showError: boolean) {
@@ -70,14 +75,23 @@ export class RemoteDocument<
     this.remoteDocumentGraphics = graphicsAdapter
       .getGraphicsAdapterFactory()
       .RemoteDocumentGraphicsInterface(this);
-    this.animationFrameCallback = window.requestAnimationFrame(() => {
+    const win = getGlobalWindow();
+    if (win) {
+      this.animationFrameCallback = win.requestAnimationFrame(() => {
+        this.tick();
+      });
+    } else {
+      // In virtual mode (no window/requestAnimationFrame), fire tick once to initialize the
+      // document time manager. Callers that need ongoing time progression in virtual mode
+      // must drive tick() externally.
       this.tick();
-    });
+    }
   }
 
   public disconnectedCallback() {
-    if (this.animationFrameCallback) {
-      window.cancelAnimationFrame(this.animationFrameCallback);
+    const win = getGlobalWindow();
+    if (this.animationFrameCallback !== null && win) {
+      win.cancelAnimationFrame(this.animationFrameCallback);
       this.animationFrameCallback = null;
     }
     this.remoteDocumentGraphics?.dispose();
@@ -85,8 +99,8 @@ export class RemoteDocument<
     super.disconnectedCallback();
   }
 
-  public dispatchEvent(event: CustomEvent): boolean {
-    return HTMLElement.prototype.dispatchEvent.call(this, event);
+  public dispatchEvent(event: VirtualCustomEvent | Event): boolean {
+    return MElement.getBaseDispatchEvent().call(this, event);
   }
 
   public init(mmlScene: IMMLScene<G>, documentAddress: string) {
@@ -109,10 +123,20 @@ export class RemoteDocument<
     return this.scene;
   }
 
+  /**
+   * Advances the document time manager and schedules the next tick via requestAnimationFrame.
+   *
+   * In virtual mode (no window), tick() is called once during connectedCallback to initialize
+   * the document time manager, but does not reschedule itself. Callers that need ongoing time
+   * progression in virtual mode must drive tick() externally.
+   */
   public tick() {
     this.documentTimeManager.tick();
-    this.animationFrameCallback = window.requestAnimationFrame(() => {
-      this.tick();
-    });
+    const win = getGlobalWindow();
+    if (win) {
+      this.animationFrameCallback = win.requestAnimationFrame(() => {
+        this.tick();
+      });
+    }
   }
 }

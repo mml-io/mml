@@ -2,17 +2,40 @@ import { getGlobalDocumentTimeManager, getGlobalMMLScene } from "../global";
 import { GraphicsAdapter } from "../graphics";
 import { MElementGraphics } from "../graphics";
 import { LoadingProgressManager } from "../loading";
+import { getGlobalDocument, getGlobalWindow } from "../runtime-env";
 import { IMMLScene, PositionAndRotation } from "../scene";
 import { MMLDocumentTimeManager } from "../time";
+import { VirtualCustomEvent, VirtualHTMLElement, VirtualNode } from "../virtual-dom";
 import type { RemoteDocument } from "./RemoteDocument";
 
 export const MELEMENT_PROPERTY_NAME = "m-element-property";
 export const consumeEventEventName = "consume-event";
 
-export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> extends HTMLElement {
+export abstract class MElement<
+  G extends GraphicsAdapter = GraphicsAdapter,
+> extends VirtualHTMLElement {
   // This allows switching which document this HTMLElement subclass extends so that it can be placed into iframes
-  static overwriteSuperclass(newSuperclass: typeof HTMLElement) {
-    (MElement as any).__proto__ = newSuperclass;
+  static overwriteSuperclass(newSuperclass: { new (): any; prototype: any }) {
+    Object.setPrototypeOf(MElement, newSuperclass);
+    Object.setPrototypeOf(MElement.prototype, newSuperclass.prototype);
+    // Invalidate cached base dispatchEvent since the prototype chain has changed
+    MElement.cachedBaseDispatchEvent = null;
+  }
+
+  /**
+   * Cached reference to the base class (VirtualHTMLElement or HTMLElement) dispatchEvent method.
+   * Invalidated by overwriteSuperclass when the prototype chain changes.
+   * @internal
+   */
+  private static cachedBaseDispatchEvent: ((event: Event | VirtualCustomEvent) => boolean) | null =
+    null;
+
+  static getBaseDispatchEvent(): (event: Event | VirtualCustomEvent) => boolean {
+    if (!MElement.cachedBaseDispatchEvent) {
+      MElement.cachedBaseDispatchEvent = Object.getPrototypeOf(MElement.prototype).dispatchEvent;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return MElement.cachedBaseDispatchEvent!;
   }
 
   static get observedAttributes(): Array<string> {
@@ -68,8 +91,8 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
   }
 
   public getInitiatedRemoteDocument(): RemoteDocument<G> | null {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    for (let parentNode: ParentNode | null = this; parentNode; parentNode = parentNode.parentNode) {
+    let parentNode: VirtualNode | null = this as VirtualNode;
+    while (parentNode) {
       if (
         parentNode.nodeName === "M-REMOTE-DOCUMENT" &&
         (parentNode as RemoteDocument<G>).getMMLScene()
@@ -77,6 +100,7 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
         // Return the first remote document that has an explicit scene set
         return parentNode as RemoteDocument<G>;
       }
+      parentNode = parentNode.parentNode;
     }
     return null;
   }
@@ -122,7 +146,11 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
         return url;
       }
     }
-    return window.location;
+    const win = getGlobalWindow();
+    if (win) {
+      return win.location;
+    }
+    throw new Error("No document host found and window is not available");
   }
 
   public getDocumentTime(): number {
@@ -130,8 +158,14 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
     if (documentTimeContextProvider) {
       return documentTimeContextProvider.getDocumentTime();
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return Number(document.timeline.currentTime!);
+    const doc = getGlobalDocument();
+    if (doc?.timeline) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return Number(doc.timeline.currentTime!);
+    }
+    // Fallback for virtual mode: use performance.now() which matches the semantics of
+    // document.timeline.currentTime (DOMHighResTimeStamp relative to time origin)
+    return performance.now();
   }
 
   public getWindowTime(): number {
@@ -139,8 +173,14 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
     if (documentTimeContextProvider) {
       return documentTimeContextProvider.getWindowTime();
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return Number(document.timeline.currentTime!);
+    const doc = getGlobalDocument();
+    if (doc?.timeline) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return Number(doc.timeline.currentTime!);
+    }
+    // Fallback for virtual mode: use performance.now() which matches the semantics of
+    // document.timeline.currentTime (DOMHighResTimeStamp relative to time origin)
+    return performance.now();
   }
 
   public getLoadingProgressManager(): LoadingProgressManager | null {
@@ -221,21 +261,43 @@ export abstract class MElement<G extends GraphicsAdapter = GraphicsAdapter> exte
     return remoteDocument.getUserPositionAndRotation();
   }
 
-  dispatchEvent(event: Event): boolean {
+  static createConsumeEvent(
+    element: MElement | VirtualHTMLElement,
+    originalEvent: Event | VirtualCustomEvent,
+  ): CustomEvent | VirtualCustomEvent {
+    // Use instanceof Element to reliably detect DOM mode. Element covers both
+    // HTMLElement and SVGElement (overlay portals may contain SVG content).
+    if (typeof Element !== "undefined" && element instanceof Element) {
+      return new CustomEvent(consumeEventEventName, {
+        bubbles: false,
+        detail: { element, originalEvent },
+      });
+    }
+    return new VirtualCustomEvent(consumeEventEventName, {
+      bubbles: false,
+      detail: { element, originalEvent },
+    });
+  }
+
+  dispatchEvent(event: Event | VirtualCustomEvent): boolean {
     const remoteDocument = this.getInitiatedRemoteDocument();
     if (remoteDocument) {
-      remoteDocument.dispatchEvent(
-        new CustomEvent(consumeEventEventName, {
-          bubbles: false,
-          detail: { element: this, originalEvent: event },
-        }),
-      );
+      // Only send the consume-event for the element on which dispatchEvent was originally called.
+      // In virtual mode, event bubbling explicitly calls parent.dispatchEvent(event) on each
+      // ancestor, which would create duplicate consume-events. In real DOM mode, the browser
+      // handles bubbling internally without calling dispatchEvent on parents. This flag ensures
+      // parity: only one consume-event per original dispatch, letting the server handle bubbling.
+      if (!(event as any).__mml_consumed) {
+        (event as any).__mml_consumed = true;
+        remoteDocument.dispatchEvent(MElement.createConsumeEvent(this, event));
+      }
       return super.dispatchEvent(event);
     } else {
-      if (event.type !== "click") {
+      const win = getGlobalWindow();
+      if (event.type !== "click" && win) {
         const script = this.getAttribute("on" + event.type.toLowerCase());
         if (script) {
-          const handler = window["eval"](`(function(event){ ${script} })`);
+          const handler = win["eval"](`(function(event){ ${script} })`);
           handler.apply(this, [event]);
         }
       }

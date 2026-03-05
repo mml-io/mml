@@ -1,12 +1,15 @@
 import { Cube } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement } from "./scene-test-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-element url [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-element url", () => {
   const cases = [
     ["ws://example.com:8080", "http://example.com:8080/foo/bar", "http://example.com:8080/foo/bar"],
     ["ws://example.com:8080", "/foo/bar", "http://example.com:8080/foo/bar"],
@@ -75,7 +78,7 @@ describe("m-element url", () => {
   test.each(cases)(
     "document location %p with content %p should return %p",
     async (firstArg, secondArg, expectedResult) => {
-      const { element } = await createSceneAttachedElement<Cube>("m-cube", firstArg);
+      const { element } = await ctx.createSceneAttachedElement<Cube>("m-cube", firstArg);
       expect(element.contentSrcToContentAddress(secondArg)).toBe(expectedResult);
     },
   );

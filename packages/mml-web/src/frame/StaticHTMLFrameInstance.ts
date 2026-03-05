@@ -1,7 +1,10 @@
+import { IDocumentFactory, VIRTUAL_DOCUMENT_BRAND } from "@mml-io/networked-dom-web";
+
 import { MElement } from "../elements";
 import { GraphicsAdapter } from "../graphics";
 import { LoadingProgressManager } from "../loading";
-import { fetchRemoteStaticMML, RemoteDocumentWrapper } from "../remote-document";
+import { DocumentSource, fetchRemoteStaticMML, RemoteDocumentWrapper } from "../remote-document";
+import { getGlobalWindow } from "../runtime-env";
 import { IMMLScene } from "../scene";
 import { createWrappedScene } from "./CreateWrappedScene";
 
@@ -17,8 +20,11 @@ export class StaticHTMLFrameInstance<G extends GraphicsAdapter = GraphicsAdapter
     this.src = src;
     this.scene = scene;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const windowTarget = targetElement.ownerDocument.defaultView!;
+    const isVirtual = (targetElement.ownerDocument as any)?.[VIRTUAL_DOCUMENT_BRAND] === true;
+
+    const windowTarget = isVirtual
+      ? targetElement.ownerDocument
+      : (targetElement.ownerDocument?.defaultView ?? getGlobalWindow() ?? null);
 
     this.loadingProgressManager = new LoadingProgressManager();
     this.loadingProgressManager.addProgressCallback(() => {
@@ -35,17 +41,22 @@ export class StaticHTMLFrameInstance<G extends GraphicsAdapter = GraphicsAdapter
 
     this.remoteDocumentWrapper = new RemoteDocumentWrapper(
       address,
-      windowTarget,
+      windowTarget as DocumentSource,
       wrappedScene,
       () => {
         // Events targeting static MML frames should not be sent
       },
     );
     this.targetForWrapper.append(this.remoteDocumentWrapper.remoteDocument);
+
+    const documentFactory = isVirtual
+      ? (targetElement.ownerDocument as IDocumentFactory | undefined)
+      : undefined;
+
     // Promise is intentionally ignored here
-    fetchRemoteStaticMML(address)
+    fetchRemoteStaticMML(address, documentFactory)
       .then((remoteDocumentBody) => {
-        this.remoteDocumentWrapper.remoteDocument.append(remoteDocumentBody);
+        this.remoteDocumentWrapper.remoteDocument.append(remoteDocumentBody as any);
         this.loadingProgressManager.setInitialLoad(true);
       })
       .catch((err) => {

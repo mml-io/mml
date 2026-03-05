@@ -1,7 +1,15 @@
+import {
+  IDocumentFactory,
+  IElementLike,
+  IPortalElement,
+  VIRTUAL_DOCUMENT_BRAND,
+} from "@mml-io/networked-dom-web";
+
 import { AttributeHandler, parseEnumAttribute, parseFloatAttribute } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
 import { GraphicsAdapter, OverlayGraphics } from "../graphics";
-import { consumeEventEventName } from "./MElement";
+import { getGlobalDocument } from "../runtime-env";
+import { MElement } from "./MElement";
 import { TransformableElement } from "./TransformableElement";
 
 export enum OverlayAnchor {
@@ -33,10 +41,13 @@ enum OverlayMode {
   DIRECT = "direct",
 }
 
-export class Overlay<G extends GraphicsAdapter = GraphicsAdapter> extends TransformableElement<G> {
+export class Overlay<G extends GraphicsAdapter = GraphicsAdapter>
+  extends TransformableElement<G>
+  implements IPortalElement
+{
   static tagName = "m-overlay";
   private overlayGraphics: OverlayGraphics<G> | null = null;
-  private overlayElement: HTMLElement | null = null;
+  private overlayElement: IElementLike | null = null;
 
   private mode: OverlayMode = OverlayMode.PENDING;
 
@@ -170,7 +181,18 @@ export class Overlay<G extends GraphicsAdapter = GraphicsAdapter> extends Transf
     }
   }
 
-  public getPortalElement(): HTMLElement {
+  private isVirtualMode(): boolean {
+    return !!(this.ownerDocument && (this.ownerDocument as any)[VIRTUAL_DOCUMENT_BRAND] === true);
+  }
+
+  public getPortalDocumentFactory(): IDocumentFactory | null {
+    if (this.isVirtualMode()) {
+      return getGlobalDocument() ?? null;
+    }
+    return null;
+  }
+
+  public getPortalElement(): IElementLike {
     if (this.mode === OverlayMode.DIRECT) {
       return this;
     } else if (this.mode === OverlayMode.PORTAL) {
@@ -218,23 +240,29 @@ export class Overlay<G extends GraphicsAdapter = GraphicsAdapter> extends Transf
     }
 
     const remoteDocument = this.getInitiatedRemoteDocument();
-    if (remoteDocument) {
-      // This document is running remotely so the elements can be moved without affecting script logic
-      // Move the existing children of this element to the overlay element
+    const isVirtual = this.isVirtualMode();
+    const realDoc = getGlobalDocument();
+
+    // Determine whether we can create a real DOM portal for visual presentation.
+    // A portal requires a remote document AND a real DOM to host the overlay div.
+    const canCreatePortal = remoteDocument && (!isVirtual || !!realDoc);
+
+    if (canCreatePortal) {
       this.mode = OverlayMode.PORTAL;
 
-      this.overlayElement = document.createElement("div");
-      this.overlayElement.addEventListener("click", (event) => {
+      // Within canCreatePortal: if isVirtual then realDoc is guaranteed truthy;
+      // otherwise ownerDocument is always available on an attached element.
+      const docForPortal = (isVirtual ? realDoc : this.ownerDocument) as Document;
+      const createdOverlay = docForPortal.createElement("div") as IElementLike;
+      this.overlayElement = createdOverlay;
+      createdOverlay.addEventListener("click", (event: Event) => {
         event.stopImmediatePropagation();
         event.preventDefault();
 
         const remoteDocument = this.getInitiatedRemoteDocument();
-        if (remoteDocument) {
+        if (remoteDocument && event.target) {
           remoteDocument.dispatchEvent(
-            new CustomEvent(consumeEventEventName, {
-              bubbles: false,
-              detail: { element: event.target, originalEvent: event },
-            }),
+            MElement.createConsumeEvent(event.target as MElement, event),
           );
         }
       });
@@ -247,11 +275,18 @@ export class Overlay<G extends GraphicsAdapter = GraphicsAdapter> extends Transf
           "An m-overlay element was found but getOverlayElement was not provided by the scene",
         );
       }
-      for (const child of Array.from(this.childNodes)) {
-        this.overlayElement.appendChild(child);
+
+      if (!isVirtual) {
+        // Non-virtual: move existing children to the portal element
+        for (const child of Array.from(this.childNodes)) {
+          this.overlayElement.appendChild(child);
+        }
       }
+      // Virtual mode: children are buffered by the adapter and will be flushed
+      // to the portal element after this connectedCallback returns
     } else {
-      // This document is running locally so the elements can't be moved, but the overlay element can be used as the presentational element
+      // No portal: either a local document or headless virtual mode.
+      // Children stay on this element directly.
       this.mode = OverlayMode.DIRECT;
       this.overlayElement = this;
     }

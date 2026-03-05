@@ -4,6 +4,13 @@ import {
   networkedDOMProtocolSubProtocol_v0_2_SubVersionsList,
 } from "@mml-io/networked-dom-protocol";
 
+import {
+  IDocumentFactory,
+  IElementLike,
+  INodeLike,
+  VIRTUAL_ELEMENT_BRAND,
+  VIRTUAL_TEXT_BRAND,
+} from "./DocumentInterface";
 import { NetworkedDOMWebsocketV01Adapter } from "./NetworkedDOMWebsocketV01Adapter";
 import { NetworkedDOMWebsocketV02Adapter } from "./NetworkedDOMWebsocketV02Adapter";
 
@@ -47,7 +54,7 @@ export type NetworkedDOMWebsocketOptions = {
 
 export type NetworkedDOMWebsocketAdapter = {
   receiveMessage: (message: MessageEvent) => void;
-  handleEvent: (element: HTMLElement, event: CustomEvent<{ element: HTMLElement }>) => void;
+  handleEvent: (element: IElementLike, event: CustomEvent) => void;
   clearContents: () => boolean;
 };
 
@@ -75,10 +82,11 @@ export class NetworkedDOMWebsocket {
   constructor(
     private url: string,
     private websocketFactory: NetworkedDOMWebsocketFactory,
-    private parentElement: HTMLElement,
+    private parentElement: IElementLike,
     private timeCallback?: (time: number) => void,
     private statusUpdateCallback?: (status: NetworkedDOMWebsocketStatus) => void,
     private options: NetworkedDOMWebsocketOptions = {},
+    private doc?: IDocumentFactory,
   ) {
     this.setStatus(NetworkedDOMWebsocketStatus.Connecting);
     this.startWebSocketConnectionAttempt();
@@ -117,6 +125,7 @@ export class NetworkedDOMWebsocket {
             },
             this.timeCallback,
             this.options,
+            this.doc,
           );
         } else {
           websocketAdapter = new NetworkedDOMWebsocketV01Adapter(
@@ -128,6 +137,7 @@ export class NetworkedDOMWebsocket {
             },
             this.timeCallback,
             this.options,
+            this.doc,
           );
         }
         this.websocketAdapter = websocketAdapter;
@@ -224,29 +234,48 @@ export class NetworkedDOMWebsocket {
     }
   }
 
-  public handleEvent(element: HTMLElement, event: CustomEvent<{ element: HTMLElement }>) {
+  public handleEvent(element: IElementLike, event: CustomEvent) {
     if (this.websocketAdapter) {
       this.websocketAdapter.handleEvent(element, event);
     }
   }
 }
 
-export function isHTMLElement(node: unknown, rootNode: HTMLElement): node is HTMLElement {
-  if (node instanceof HTMLElement || node instanceof Element) {
-    return true;
+export function isHTMLElement(node: unknown, rootNode?: unknown): node is IElementLike {
+  if (!node || typeof node !== "object") return false;
+  // Check for virtual DOM element brand (fast, unambiguous)
+  const nodeLike = node as INodeLike;
+  if (nodeLike[VIRTUAL_ELEMENT_BRAND] === true) return true;
+  // instanceof checks for real DOM
+  if (typeof HTMLElement !== "undefined" && node instanceof HTMLElement) return true;
+  if (typeof Element !== "undefined" && node instanceof Element) return true;
+  // Cross-frame instanceof check via ownerDocument.defaultView
+  const rootNodeRecord = rootNode as Record<string, unknown> | undefined;
+  if (rootNodeRecord?.ownerDocument) {
+    const ownerDoc = rootNodeRecord.ownerDocument as Record<string, unknown>;
+    const defaultView = ownerDoc.defaultView as { HTMLElement?: typeof HTMLElement } | null;
+    if (defaultView?.HTMLElement) {
+      return node instanceof defaultView.HTMLElement;
+    }
   }
-  if (!rootNode.ownerDocument.defaultView) {
-    return false;
-  }
-  return node instanceof rootNode.ownerDocument.defaultView.HTMLElement;
+  return false;
 }
 
-export function isText(node: unknown, rootNode: HTMLElement): node is Text {
-  if (node instanceof Text) {
-    return true;
+export function isText(node: unknown, rootNode?: unknown): node is INodeLike {
+  if (!node || typeof node !== "object") return false;
+  // Check for virtual DOM text node brand (fast, unambiguous)
+  const nodeLike = node as INodeLike;
+  if (nodeLike[VIRTUAL_TEXT_BRAND] === true) return true;
+  // instanceof check for real DOM
+  if (typeof Text !== "undefined" && node instanceof Text) return true;
+  // Cross-frame instanceof check via ownerDocument.defaultView
+  const rootNodeRecord = rootNode as Record<string, unknown> | undefined;
+  if (rootNodeRecord?.ownerDocument) {
+    const ownerDoc = rootNodeRecord.ownerDocument as Record<string, unknown>;
+    const defaultView = ownerDoc.defaultView as { Text?: typeof Text } | null;
+    if (defaultView?.Text) {
+      return node instanceof defaultView.Text;
+    }
   }
-  if (!rootNode.ownerDocument.defaultView) {
-    return false;
-  }
-  return node instanceof rootNode.ownerDocument.defaultView.Text;
+  return false;
 }

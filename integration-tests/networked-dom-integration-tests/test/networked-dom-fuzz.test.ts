@@ -12,10 +12,18 @@ import { TestCaseNetworkedDOMDocument } from "./TestCaseNetworkedDOMDocument";
 
 vi.setConfig({ testTimeout: 20000 });
 
-describe.each([{ version: 0.1 }, { version: 0.2 }])(
-  `EditableNetworkedDOM <> NetworkedDOMWebsocket - fuzzed hierarchy updates - $version`,
-  ({ version }) => {
+describe.each([
+  { version: 0.1, virtual: false },
+  { version: 0.2, virtual: false },
+  { version: 0.1, virtual: true },
+  { version: 0.2, virtual: true },
+])(
+  `EditableNetworkedDOM <> NetworkedDOMWebsocket - fuzzed hierarchy updates - v$version virtual=$virtual`,
+  ({ version, virtual }) => {
     const isV01 = version === 0.1;
+
+    const createClient = (testCase: TestCaseNetworkedDOMDocument) =>
+      virtual ? testCase.createVirtualClient(isV01) : testCase.createClient(isV01);
 
     afterEach(() => {
       // Clean up DOM to prevent ID collisions between tests
@@ -50,8 +58,8 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       // Replace the doc with our custom one
       (testCase as any).doc = doc;
 
-      const client1 = testCase.createClient(isV01);
-      const client2 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
+      const client2 = createClient(testCase);
       await Promise.all([client1.onConnectionOpened(), client2.onConnectionOpened()]);
 
       // Run scenario A sequences

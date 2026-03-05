@@ -2,22 +2,26 @@ import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 import { vi } from "vitest";
 
-import { Cube, registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
+import { Cube } from "../build/index";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-cube [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-cube", () => {
   test("observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-cube", Cube);
     expect(schema.name).toEqual(Cube.tagName);
   });
 
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Cube>("m-cube");
+    const { scene, element } = await ctx.createSceneAttachedElement<Cube>("m-cube");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -28,7 +32,7 @@ describe("m-cube", () => {
   });
 
   test("sx, sy, sz", async () => {
-    const { scene, element } = await createSceneAttachedElement<Cube>("m-cube");
+    const { scene, element } = await ctx.createSceneAttachedElement<Cube>("m-cube");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -60,7 +64,7 @@ describe("m-cube", () => {
   });
 
   test("width, height, depth", async () => {
-    const { scene, element } = await createSceneAttachedElement<Cube>("m-cube");
+    const { scene, element } = await ctx.createSceneAttachedElement<Cube>("m-cube");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -91,7 +95,7 @@ describe("m-cube", () => {
   });
 
   test("width and scale", async () => {
-    const { scene, element } = await createSceneAttachedElement<Cube>("m-cube");
+    const { scene, element } = await ctx.createSceneAttachedElement<Cube>("m-cube");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -114,7 +118,7 @@ describe("m-cube", () => {
   });
 
   test("color", async () => {
-    const { scene, element } = await createSceneAttachedElement<Cube>("m-cube");
+    const { scene, element } = await ctx.createSceneAttachedElement<Cube>("m-cube");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -145,8 +149,8 @@ describe("m-cube", () => {
   });
 
   test("collide - remove and add", async () => {
-    const { scene, remoteDocument } = await createTestScene();
-    const element = document.createElement("m-cube") as Cube;
+    const { scene, remoteDocument } = await ctx.createTestScene();
+    const element = ctx.createElement("m-cube") as Cube;
     const addColliderSpy = vi.spyOn(scene, "addCollider");
     const updateColliderSpy = vi.spyOn(scene, "updateCollider");
     const removeColliderSpy = vi.spyOn(scene, "removeCollider");
@@ -181,7 +185,7 @@ describe("m-cube", () => {
   });
 
   test("collide - update", async () => {
-    const { scene, element } = await createSceneAttachedElement<Cube>("m-cube");
+    const { scene, element } = await ctx.createSceneAttachedElement<Cube>("m-cube");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -206,15 +210,15 @@ describe("m-cube", () => {
   });
 
   test("collide - update from ancestor", async () => {
-    const { scene, element } = await createSceneAttachedElement<Cube>("m-group");
+    const { scene, element } = await ctx.createSceneAttachedElement<Cube>("m-group");
 
     const addColliderSpy = vi.spyOn(scene, "addCollider");
     const updateColliderSpy = vi.spyOn(scene, "updateCollider");
 
-    const innerGroup = document.createElement("m-group");
+    const innerGroup = ctx.createElement("m-group");
     element.appendChild(innerGroup);
 
-    const mCube = document.createElement("m-cube") as Cube;
+    const mCube = ctx.createElement("m-cube") as Cube;
     mCube.setAttribute("x", "1");
     mCube.setAttribute("y", "2");
     mCube.setAttribute("z", "3");

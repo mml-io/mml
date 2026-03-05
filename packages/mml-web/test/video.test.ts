@@ -5,23 +5,29 @@ import { vi } from "vitest";
 import { createMockMediaStream } from "../../../test-utils/mocks/MockMediaStream";
 import { createMockPeerConnection } from "../../../test-utils/mocks/MockPeerConnection";
 import { createMockVideoElement } from "../../../test-utils/mocks/MockVideoElement";
-import { registerCustomElementsToWindow } from "../build/index";
 import { Video } from "../build/index";
-import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
 const originalCreateElement = document.createElement.bind(document);
 let createElementSpy: ReturnType<typeof vi.spyOn>;
 beforeAll(() => {
-  registerCustomElementsToWindow(window);
   createElementSpy = vi.spyOn(document, "createElement");
 });
 
 vi.useFakeTimers();
 
-describe("m-video", () => {
+describe.each(["virtual", "dom"] as const)("m-video [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
+
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Video>("m-video");
+    const { scene, element } = await ctx.createSceneAttachedElement<Video>("m-video");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -80,7 +86,8 @@ describe("m-video", () => {
       return originalCreateElement(tagName);
     });
 
-    const { element: mVideo, remoteDocument } = await createSceneAttachedElement<Video>("m-video");
+    const { element: mVideo, remoteDocument } =
+      await ctx.createSceneAttachedElement<Video>("m-video");
     // The internal video element should have been created
     expect(createElementSpy).toHaveBeenCalled();
 
@@ -174,7 +181,7 @@ describe("m-video", () => {
       return mockPeerConnection;
     }) as unknown as typeof RTCPeerConnection;
 
-    const { element: mVideo } = await createSceneAttachedElement<Video>("m-video");
+    const { element: mVideo } = await ctx.createSceneAttachedElement<Video>("m-video");
     // The internal video element should have been created
     expect(createElementSpy).toHaveBeenCalled();
 

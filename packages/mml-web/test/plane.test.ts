@@ -2,17 +2,20 @@ import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
 import { Plane } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-plane [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-plane", () => {
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Plane>("m-plane");
+    const { scene, element } = await ctx.createSceneAttachedElement<Plane>("m-plane");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]

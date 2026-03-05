@@ -45,7 +45,7 @@ export class MMLWebRunnerClient {
       this.mmlScene,
       eventHandler,
     );
-    this.remoteHolderElement.append(remoteDocumentWrapper.remoteDocument);
+    this.remoteHolderElement.append(remoteDocumentWrapper.remoteDocument as unknown as Node);
     overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
       if (!networkedDOMWebRunnerClient.connectedState) {
         throw new Error("connectedState not set");
@@ -55,7 +55,7 @@ export class MMLWebRunnerClient {
 
     const networkedDOMWebRunnerClient = new NetworkedDOMWebRunnerClient(
       false,
-      remoteDocumentWrapper.remoteDocument,
+      remoteDocumentWrapper.remoteDocument as unknown as HTMLElement,
     );
     networkedDOMWebRunnerClient.connect(document, (time: number) => {
       remoteDocumentWrapper.setDocumentTime(time);
