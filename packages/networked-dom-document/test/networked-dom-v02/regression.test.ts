@@ -1,7 +1,12 @@
 import { NetworkedDOMV02RemoteEvent } from "@mml-io/networked-dom-protocol";
 import { LocalObservableDOMFactory } from "@mml-io/networked-dom-server";
+import {
+  ObservableDOMInterface,
+  ObservableDOMMessage,
+  ObservableDOMParameters,
+} from "@mml-io/observable-dom-common";
 
-import { EditableNetworkedDOM } from "../../src";
+import { EditableNetworkedDOM, ObservableDOMFactory } from "../../src";
 import { MockWebsocketV02 } from "./mock.websocket-v02";
 
 let currentDoc: EditableNetworkedDOM | null = null;
@@ -371,6 +376,270 @@ openCube.addEventListener("click", () => {
             ],
           },
         ],
+      },
+    ]);
+  });
+
+  test("nested removal via click handler: remove child then remove parent", async () => {
+    /*
+     * Exercises the real ObservableDOM → NetworkedDOM pipeline with click events
+     * that cause nested removals (child.remove() followed by parent.remove() in
+     * the same synchronous handler). This is the pattern from the original
+     * m-overlay-hierarchy-test.html crash.
+     */
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    currentDoc = doc;
+    doc.load(`
+<m-cube id="grandparent">
+  <m-cube id="parent">
+    <m-cube id="child"></m-cube>
+  </m-cube>
+</m-cube>
+<script>
+  const grandparent = document.getElementById("grandparent");
+  const parent = document.getElementById("parent");
+  const child = document.getElementById("child");
+
+  grandparent.addEventListener("click", () => {
+    // Remove child from parent, then remove parent from grandparent
+    // This produces two mutations: [{target:parent, removed:[child]}, {target:grandparent, removed:[parent]}]
+    child.remove();
+    parent.remove();
+  });
+</script>
+`);
+
+    const clientWs = new MockWebsocketV02();
+    doc.addWebSocket(clientWs as unknown as WebSocket);
+    clientWs.sendToServer({
+      type: "connectUsers",
+      connectionIds: [1],
+      connectionTokens: [null],
+    });
+
+    await clientWs.waitForTotalMessageCount(1);
+
+    // Click grandparent to trigger nested removals
+    clientWs.sendToServer({
+      type: "event",
+      name: "click",
+      connectionId: 1,
+      nodeId: 5, // grandparent
+      params: {},
+      bubbles: true,
+    });
+
+    // Should complete without crashing. Two removals produce a batch:
+    // batchStart, childrenRemoved (child from parent), childrenRemoved (parent from grandparent), batchEnd
+    const messages = await clientWs.waitForTotalMessageCount(5, 1);
+    expect(messages).toEqual([
+      { type: "batchStart" },
+      { type: "childrenRemoved", nodeId: 6, removedNodes: [7] }, // child from parent
+      { type: "childrenRemoved", nodeId: 5, removedNodes: [6] }, // parent from grandparent
+      { type: "batchEnd" },
+    ]);
+  });
+
+  test("bulk removal with querySelectorAll pattern from e2e test", async () => {
+    /*
+     * Reproduces the DOM manipulation pattern from m-overlay-hierarchy-test.html
+     * where querySelectorAll finds nested elements and removes them in a loop.
+     * When a parent is removed before its children are individually removed,
+     * mutations for the children reference already-deleted parents.
+     */
+    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    currentDoc = doc;
+    doc.load(`
+<m-cube id="container">
+  <m-cube id="group-1">
+    <m-cube id="item-1a"></m-cube>
+    <m-cube id="item-1b"></m-cube>
+  </m-cube>
+  <m-cube id="group-2">
+    <m-cube id="item-2a"></m-cube>
+  </m-cube>
+</m-cube>
+<m-cube id="trigger"></m-cube>
+<script>
+  const trigger = document.getElementById("trigger");
+  const container = document.getElementById("container");
+
+  trigger.addEventListener("click", () => {
+    // Remove all groups and their children — similar to the e2e test's "Remove All" handler
+    const groups = document.querySelectorAll('[id^="group-"]');
+    groups.forEach(el => el.remove());
+
+    // Also add new elements to the now-emptied container
+    const newGroup = document.createElement("m-cube");
+    newGroup.setAttribute("id", "group-new");
+    const newItem = document.createElement("m-cube");
+    newItem.setAttribute("id", "item-new");
+    newGroup.appendChild(newItem);
+    container.appendChild(newGroup);
+  });
+</script>
+`);
+
+    const clientWs = new MockWebsocketV02();
+    doc.addWebSocket(clientWs as unknown as WebSocket);
+    clientWs.sendToServer({
+      type: "connectUsers",
+      connectionIds: [1],
+      connectionTokens: [null],
+    });
+
+    await clientWs.waitForTotalMessageCount(1);
+
+    // Click trigger to perform bulk removal + addition
+    clientWs.sendToServer({
+      type: "event",
+      name: "click",
+      connectionId: 1,
+      nodeId: 12, // trigger
+      params: {},
+      bubbles: true,
+    });
+
+    // Should complete without crashing
+    const messages = await clientWs.waitForTotalMessageCount(2, 1);
+    expect(messages.length).toBeGreaterThan(0);
+  });
+
+  test("handleRemovedNodes crashes when mutation batch contains removal targeting already-deleted parent", async () => {
+    /*
+     * Demonstrates that NetworkedDOM.removeNodeAndChildren crashes when it receives
+     * a mutation batch containing two childList mutations where:
+     *   1. Mutation A removes a parent node — removeNodeAndChildren recursively
+     *      deletes the parent AND all descendants from NodeManager
+     *   2. Mutation B targets that same (now-deleted) parent node
+     *
+     * ObservableDOM normally filters out mutation B (because it removes virtual
+     * elements from its tracking maps during processing), so a mock factory is
+     * used to deliver the problematic batch directly and verify that NetworkedDOM
+     * handles it gracefully.
+     */
+    const mockFactory: ObservableDOMFactory = (
+      _params: ObservableDOMParameters,
+      callback: (message: ObservableDOMMessage, observableDOM: ObservableDOMInterface) => void,
+    ) => {
+      const observableDOM: ObservableDOMInterface = {
+        addConnectedUserId: () => {},
+        removeConnectedUserId: () => {},
+        dispatchRemoteEventFromConnectionId: () => {
+          callback(
+            {
+              mutations: [
+                {
+                  type: "childList",
+                  targetId: 5, // grandparent
+                  removedNodeIds: [6], // parent
+                  addedNodes: [],
+                  previousSiblingId: null,
+                },
+                {
+                  type: "childList",
+                  targetId: 6, // parent — already deleted by mutation above
+                  removedNodeIds: [7], // child
+                  addedNodes: [],
+                  previousSiblingId: null,
+                },
+              ],
+              documentTime: 2,
+            },
+            observableDOM,
+          );
+        },
+        dispose: () => {},
+      };
+
+      // root(1) > HTML(2) > [HEAD(3), BODY(4) > [grandparent(5) > [parent(6) > [child(7)]]]]
+      callback(
+        {
+          snapshot: {
+            nodeId: 1,
+            tag: "DIV",
+            attributes: {},
+            childNodes: [
+              {
+                nodeId: 2,
+                tag: "HTML",
+                attributes: {},
+                childNodes: [
+                  {
+                    nodeId: 3,
+                    tag: "HEAD",
+                    attributes: {},
+                    childNodes: [],
+                  },
+                  {
+                    nodeId: 4,
+                    tag: "BODY",
+                    attributes: {},
+                    childNodes: [
+                      {
+                        nodeId: 5,
+                        tag: "M-CUBE",
+                        attributes: { id: "grandparent" },
+                        childNodes: [
+                          {
+                            nodeId: 6,
+                            tag: "M-CUBE",
+                            attributes: { id: "parent" },
+                            childNodes: [
+                              {
+                                nodeId: 7,
+                                tag: "M-CUBE",
+                                attributes: { id: "child" },
+                                childNodes: [],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          documentTime: 1,
+        },
+        observableDOM,
+      );
+
+      return observableDOM;
+    };
+
+    const doc = new EditableNetworkedDOM("file://test.html", mockFactory);
+    currentDoc = doc;
+    doc.load("<!-- mock -->");
+
+    const clientWs = new MockWebsocketV02();
+    doc.addWebSocket(clientWs as unknown as WebSocket);
+
+    clientWs.sendToServer({
+      type: "connectUsers",
+      connectionIds: [1],
+      connectionTokens: [null],
+    });
+
+    await clientWs.waitForTotalMessageCount(1);
+
+    // Before the fix this throws "Node not found with nodeId:6"
+    clientWs.sendToServer({
+      type: "event",
+      name: "click",
+      connectionId: 1,
+      nodeId: 5,
+      params: {},
+      bubbles: true,
+    });
+
+    expect(await clientWs.waitForTotalMessageCount(2, 1)).toEqual([
+      {
+        type: "childrenRemoved",
+        nodeId: 5,
+        removedNodes: [6],
       },
     ]);
   });
