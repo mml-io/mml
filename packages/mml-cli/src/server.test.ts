@@ -50,7 +50,13 @@ vi.mock("node:module", () => {
 import enableWs from "express-ws";
 import * as fs from "fs";
 
-import { clientPage, createServer, normalizeUrlPath } from "./server.js";
+import {
+  clientPage,
+  createServer,
+  detectFormat,
+  fileContentsToHtml,
+  normalizeUrlPath,
+} from "./server.js";
 
 describe("normalizeUrlPath", () => {
   test("returns path unchanged if it already starts with /", () => {
@@ -71,6 +77,82 @@ describe("normalizeUrlPath", () => {
 
   test("does not double-prepend /", () => {
     expect(normalizeUrlPath("/already/slashed")).toBe("/already/slashed");
+  });
+});
+
+describe("detectFormat", () => {
+  test("returns 'js' for .js files", () => {
+    expect(detectFormat("app.js")).toBe("js");
+  });
+
+  test("returns 'js' for paths ending with .js", () => {
+    expect(detectFormat("/some/path/bundle.js")).toBe("js");
+  });
+
+  test("returns 'html' for .html files", () => {
+    expect(detectFormat("index.html")).toBe("html");
+  });
+
+  test("returns 'html' for paths ending with .html", () => {
+    expect(detectFormat("/some/path/doc.html")).toBe("html");
+  });
+
+  test("returns 'html' for .htm files", () => {
+    expect(detectFormat("index.htm")).toBe("html");
+  });
+
+  test("returns 'html' for paths ending with .htm", () => {
+    expect(detectFormat("/some/path/doc.htm")).toBe("html");
+  });
+
+  test("returns null for .txt files", () => {
+    expect(detectFormat("readme.txt")).toBeNull();
+  });
+
+  test("returns null for .mjs files", () => {
+    expect(detectFormat("module.mjs")).toBeNull();
+  });
+
+  test("returns null for .jsx files", () => {
+    expect(detectFormat("component.jsx")).toBeNull();
+  });
+
+  test("returns null for files with no extension", () => {
+    expect(detectFormat("Makefile")).toBeNull();
+  });
+});
+
+describe("fileContentsToHtml", () => {
+  test("wraps content in script tags for js format", () => {
+    expect(fileContentsToHtml("const x = 1;", "js")).toBe(
+      "<body><script>\nconst x = 1;\n</script></body>",
+    );
+  });
+
+  test("returns content unchanged for html format", () => {
+    expect(fileContentsToHtml("<m-cube></m-cube>", "html")).toBe("<m-cube></m-cube>");
+  });
+
+  test("handles empty content for js format", () => {
+    expect(fileContentsToHtml("", "js")).toBe("<body><script>\n\n</script></body>");
+  });
+
+  test("handles empty content for html format", () => {
+    expect(fileContentsToHtml("", "html")).toBe("");
+  });
+
+  test("escapes </script in js content to prevent premature tag closing", () => {
+    const content = 'document.write("</script><script>alert(1)");';
+    const result = fileContentsToHtml(content, "js");
+    expect(result).not.toContain("</script><script>");
+    expect(result).toContain("<\\/script>");
+  });
+
+  test("escapes </script case-insensitively", () => {
+    const content = 'x = "</Script>";';
+    const result = fileContentsToHtml(content, "js");
+    expect(result).not.toContain("</Script>");
+    expect(result).toContain("<\\/Script>");
   });
 });
 
