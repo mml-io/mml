@@ -1,3 +1,4 @@
+import { IDocumentFactory, IElementLike, isPortalElement } from "./DocumentInterface";
 import { DOMSanitizer } from "./DOMSanitizer";
 import { NetworkedDOMWebsocketOptions } from "./NetworkedDOMWebsocket";
 
@@ -138,7 +139,14 @@ export function remapAttributeName(attrName: string): string {
 export function createElementWithSVGSupport(
   tag: string,
   options: NetworkedDOMWebsocketOptions = {},
-): Element {
+  doc?: IDocumentFactory,
+): IElementLike {
+  if (!doc && typeof document === "undefined") {
+    throw new Error(
+      "createElementWithSVGSupport requires a document factory (IDocumentFactory) in non-browser environments",
+    );
+  }
+  const docFactory: IDocumentFactory = doc ?? document;
   let filteredTag = tag.toLowerCase();
 
   if (ALWAYS_DISALLOWED_TAGS.has(filteredTag.toLowerCase())) {
@@ -154,7 +162,10 @@ export function createElementWithSVGSupport(
   if (svgTagMapping) {
     filteredTag = svgTagMapping;
     const xmlns = "http://www.w3.org/2000/svg";
-    return document.createElementNS(xmlns, filteredTag);
+    if (docFactory.createElementNS) {
+      return docFactory.createElementNS(xmlns, filteredTag);
+    }
+    return docFactory.createElement(filteredTag);
   } else {
     if (options.tagPrefix) {
       if (!tag.toLowerCase().startsWith(options.tagPrefix.toLowerCase())) {
@@ -163,14 +174,14 @@ export function createElementWithSVGSupport(
           : `x-${tag}`;
       }
     }
-    return document.createElement(filteredTag);
+    return docFactory.createElement(filteredTag);
   }
 }
 
 /**
  * Sets attributes on an element with proper SVG attribute name mapping
  */
-export function setElementAttribute(element: Element, key: string, value: string): void {
+export function setElementAttribute(element: IElementLike, key: string, value: string): void {
   if (DOMSanitizer.shouldAcceptAttribute(key)) {
     const remappedKey = remapAttributeName(key);
     element.setAttribute(remappedKey, value);
@@ -180,21 +191,19 @@ export function setElementAttribute(element: Element, key: string, value: string
 /**
  * Gets the target element for children operations, handling portal elements
  */
-export function getChildrenTarget(parent: Element): Element {
-  let targetForChildren = parent;
-  if ((parent as any).getPortalElement) {
-    targetForChildren = (parent as any).getPortalElement();
+export function getChildrenTarget(parent: IElementLike): IElementLike {
+  if (isPortalElement(parent)) {
+    return parent.getPortalElement();
   }
-  return targetForChildren;
+  return parent;
 }
 
 /**
  * Gets the target element for removal operations, handling portal elements
  */
-export function getRemovalTarget(parent: Element): Element {
-  let targetForRemoval = parent;
-  if ((parent as any).getPortalElement) {
-    targetForRemoval = (parent as any).getPortalElement();
+export function getRemovalTarget(parent: IElementLike): IElementLike {
+  if (isPortalElement(parent)) {
+    return parent.getPortalElement();
   }
-  return targetForRemoval;
+  return parent;
 }

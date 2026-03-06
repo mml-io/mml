@@ -1,7 +1,9 @@
+import { IElementLike } from "@mml-io/networked-dom-web";
+
 // Returns true if a new animation was applied, false if the animation was cleared or unchanged.
-export function applyCharacterAnimation(mmlRoot: Element, animation: string): boolean {
+export function applyCharacterAnimation(mmlRoot: IElementLike, animation: string): boolean {
   // If the root tag is not an m-character, we don't have a character to animate
-  if (!mmlRoot || mmlRoot.tagName.toString() !== "M-CHARACTER") {
+  if (!mmlRoot || mmlRoot.nodeName.toString() !== "M-CHARACTER") {
     return false;
   }
 

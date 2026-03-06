@@ -1,3 +1,5 @@
+import { IElementLike } from "@mml-io/networked-dom-web";
+
 import { DebugHelper } from "../debug-helper";
 import {
   Animation,
@@ -137,7 +139,7 @@ export type IMMLScene<G extends GraphicsAdapter = GraphicsAdapter> = {
   updateChatProbe?: (chatProbe: ChatProbe<G>) => void;
   removeChatProbe?: (chatProbe: ChatProbe<G>) => void;
 
-  getOverlayElement?: () => HTMLElement | null;
+  getOverlayElement?: () => IElementLike | null;
 
   getUserPositionAndRotation(): PositionAndRotation;
 

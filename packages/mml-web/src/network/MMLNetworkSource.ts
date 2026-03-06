@@ -1,18 +1,26 @@
-import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
+import {
+  IDocumentFactory,
+  IElementLike,
+  INodeLike,
+  NetworkedDOMWebsocket,
+  NetworkedDOMWebsocketStatus,
+} from "@mml-io/networked-dom-web";
 
 import { createWrappedScene } from "../frame";
 import { LoadingProgressManager } from "../loading";
-import { fetchRemoteStaticMML, RemoteDocumentWrapper } from "../remote-document";
+import { DocumentSource, fetchRemoteStaticMML, RemoteDocumentWrapper } from "../remote-document";
 import { IMMLScene } from "../scene";
+import { asHTMLElement } from "../utils/dom-compat";
 
 export type MMLNetworkSourceOptions = {
   url: string;
   connectionToken?: string | null;
   mmlScene: IMMLScene;
   statusUpdated: (status: NetworkedDOMWebsocketStatus) => void;
-  windowTarget: Window;
-  targetForWrappers: HTMLElement;
+  windowTarget: DocumentSource;
+  targetForWrappers: INodeLike;
   allowOverlay?: boolean;
+  documentFactory?: IDocumentFactory;
 };
 
 export class MMLNetworkSource {
@@ -28,8 +36,8 @@ export class MMLNetworkSource {
   }
 
   private init() {
-    let overriddenHandler: ((element: HTMLElement, event: CustomEvent) => void) | null = null;
-    const eventHandler = (element: HTMLElement, event: CustomEvent) => {
+    let overriddenHandler: ((element: IElementLike, event: CustomEvent) => void) | null = null;
+    const eventHandler = (element: IElementLike, event: CustomEvent) => {
       if (!overriddenHandler) {
         throw new Error("overriddenHandler not set");
       }
@@ -47,7 +55,7 @@ export class MMLNetworkSource {
       wrappedScene,
       eventHandler,
     );
-    this.options.targetForWrappers.append(this.remoteDocumentWrapper.remoteDocument);
+    this.options.targetForWrappers.appendChild(this.remoteDocumentWrapper.remoteDocument);
 
     let sceneLoadingProgressManager: LoadingProgressManager | null = null;
     if (this.options.mmlScene.getLoadingProgressManager) {
@@ -84,20 +92,34 @@ export class MMLNetworkSource {
           allowSVGElements: this.options.allowOverlay,
           connectionToken: this.options.connectionToken ?? null,
         },
+        this.options.documentFactory,
       );
       this.websocket = websocket;
-      overriddenHandler = (element: HTMLElement, event: CustomEvent) => {
+      overriddenHandler = (element: IElementLike, event: CustomEvent) => {
         websocket.handleEvent(element, event);
       };
     } else {
-      fetchRemoteStaticMML(this.options.url)
-        .then((remoteDocumentBody) => {
-          this.remoteDocumentWrapper.remoteDocument.append(remoteDocumentBody);
-          loadingProgressManager?.setInitialLoad(true);
-        })
-        .catch((err) => {
-          loadingProgressManager?.setInitialLoad(err);
-        });
+      if (this.options.documentFactory) {
+        console.error(
+          "Static MML (non-websocket) loading is not supported in virtual mode. URL:",
+          this.options.url,
+        );
+        loadingProgressManager?.setInitialLoad(
+          new Error("Static MML loading is not supported in virtual mode"),
+        );
+      } else {
+        fetchRemoteStaticMML(this.options.url)
+          .then((remoteDocumentBody) => {
+            // Static HTML fetching only runs in DOM mode where remoteDocument extends HTMLElement at runtime
+            asHTMLElement(this.remoteDocumentWrapper.remoteDocument).append(
+              remoteDocumentBody as unknown as Node,
+            );
+            loadingProgressManager?.setInitialLoad(true);
+          })
+          .catch((err) => {
+            loadingProgressManager?.setInitialLoad(err);
+          });
+      }
       overriddenHandler = () => {
         // Do nothing
       };

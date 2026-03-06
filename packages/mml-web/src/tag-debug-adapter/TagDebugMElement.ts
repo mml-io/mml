@@ -2,6 +2,7 @@ import { MMLColor } from "../color";
 import { MElement } from "../elements";
 import { MElementGraphics } from "../graphics";
 import { IMMLScene } from "../scene";
+import { asNode } from "../utils/dom-compat";
 import { TagDebugGraphicsAdapter } from "./StandaloneTagDebugAdapter";
 import { TagAdapterThemeColors } from "./TagAdapterThemeColors";
 import { TagDebugAttribute } from "./TagDebugAttribute";
@@ -134,7 +135,8 @@ export class TagDebugMElement implements MElementGraphics<TagDebugGraphicsAdapte
       this.createAttributeElement(attribute.name, attribute.value);
     }
 
-    this.mutationObserver.observe(mElement, { attributes: true });
+    // In DOM mode, MElement extends HTMLElement at runtime via overwriteSuperclass
+    this.mutationObserver.observe(asNode(mElement), { attributes: true });
   }
 
   private createAttributeElement(attributeName: string, value: string | null): TagDebugAttribute {

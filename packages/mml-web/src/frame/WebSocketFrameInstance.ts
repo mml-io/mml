@@ -1,11 +1,17 @@
-import { NetworkedDOMWebsocket, NetworkedDOMWebsocketStatus } from "@mml-io/networked-dom-web";
+import {
+  NetworkedDOMWebsocket,
+  NetworkedDOMWebsocketStatus,
+  VIRTUAL_DOCUMENT_BRAND,
+} from "@mml-io/networked-dom-web";
 
 import { consumeEventEventName, MElement } from "../elements";
 import { GraphicsAdapter } from "../graphics";
 import { LoadingProgressManager } from "../loading";
 import { MMLNetworkSource } from "../network";
-import { RemoteDocumentWrapper } from "../remote-document";
+import { DocumentSource, RemoteDocumentWrapper } from "../remote-document";
+import { getGlobalWindow } from "../runtime-env";
 import { IMMLScene } from "../scene";
+import { VirtualCustomEvent } from "../virtual-dom";
 import { createWrappedScene } from "./CreateWrappedScene";
 
 export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter> {
@@ -21,8 +27,10 @@ export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter>
     this.src = src;
     this.scene = scene;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const windowTarget = targetElement.ownerDocument.defaultView!;
+    const isVirtual = (targetElement.ownerDocument as any)?.[VIRTUAL_DOCUMENT_BRAND] === true;
+    const windowTarget = isVirtual
+      ? targetElement.ownerDocument
+      : (targetElement.ownerDocument?.defaultView ?? getGlobalWindow() ?? null);
 
     let overriddenHandler: ((element: MElement<G>, event: CustomEvent) => void) | null = null;
     const eventHandler = (element: MElement<G>, event: CustomEvent) => {
@@ -47,7 +55,7 @@ export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter>
 
     this.remoteDocumentWrapper = new RemoteDocumentWrapper(
       websocketAddress,
-      windowTarget,
+      windowTarget as DocumentSource,
       wrappedScene,
       () => {
         // Events targeting static MML frames should not be sent
@@ -58,7 +66,7 @@ export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter>
 
     this.remoteDocumentWrapper.remoteDocument.addEventListener(
       consumeEventEventName,
-      (wrappedEvent: CustomEvent) => {
+      (wrappedEvent: CustomEvent | VirtualCustomEvent) => {
         const { originalEvent, element } = wrappedEvent.detail;
         eventHandler(element, originalEvent);
       },
@@ -100,7 +108,11 @@ export class WebSocketFrameInstance<G extends GraphicsAdapter = GraphicsAdapter>
         return url.host;
       }
     }
-    return window.location.host;
+    const win = getGlobalWindow();
+    if (win) {
+      return win.location.host;
+    }
+    throw new Error("No document host found and window is not available");
   }
 
   dispose() {

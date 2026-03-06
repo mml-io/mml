@@ -4,10 +4,11 @@ import { LogMessage } from "@mml-io/observable-dom-common";
 
 import { formatHTML, htmlStringWithFilters } from "./test-util";
 import { TestCaseNetworkedDOMClient } from "./TestCaseNetworkedDOMClient";
+import { TestCaseNetworkedDOMClientVirtual } from "./TestCaseNetworkedDOMClientVirtual";
 
 export class TestCaseNetworkedDOMDocument {
   public doc: EditableNetworkedDOM;
-  private clients: TestCaseNetworkedDOMClient[] = [];
+  private clients: (TestCaseNetworkedDOMClient | TestCaseNetworkedDOMClientVirtual)[] = [];
 
   constructor(ignoreTextNodes = true) {
     this.doc = new EditableNetworkedDOM(
@@ -22,6 +23,13 @@ export class TestCaseNetworkedDOMDocument {
 
   createClient(useV01 = false) {
     const testClient = new TestCaseNetworkedDOMClient(useV01);
+    this.doc.addWebSocket(testClient.fakeWebSocket.serverSideWebsocket as unknown as WebSocket);
+    this.clients.push(testClient);
+    return testClient;
+  }
+
+  createVirtualClient(useV01 = false) {
+    const testClient = new TestCaseNetworkedDOMClientVirtual(useV01);
     this.doc.addWebSocket(testClient.fakeWebSocket.serverSideWebsocket as unknown as WebSocket);
     this.clients.push(testClient);
     return testClient;

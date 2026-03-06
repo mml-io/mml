@@ -4,17 +4,20 @@ import * as THREE from "three";
 import { vi } from "vitest";
 
 import { Character } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-character [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-character", () => {
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Character>(
+    const { scene, element } = await ctx.createSceneAttachedElement<Character>(
       "m-character",
       "ws://localhost:8080",
     );

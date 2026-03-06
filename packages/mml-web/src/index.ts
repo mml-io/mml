@@ -17,13 +17,16 @@ export * from "./network";
 export * from "./position";
 export * from "./prompt-ui";
 export * from "./remote-document";
+export * from "./runtime-env";
 export * from "./scene";
 export * from "./status-ui";
 export * from "./tag-debug-adapter";
 export * from "./time";
 export * from "./utils/calculateContentSize";
+export * from "./utils/dom-compat";
 export * from "./utils/EventHandlerCollection";
 export * from "./video";
+export * from "./virtual-dom";
 export {
   NetworkedDOMWebsocket,
   NetworkedDOMWebsocketStatus,

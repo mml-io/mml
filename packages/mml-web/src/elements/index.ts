@@ -20,6 +20,7 @@ export * from "./Plane";
 export * from "./PositionProbe";
 export * from "./Prompt";
 export * from "./register-custom-elements";
+export * from "./register-virtual-elements";
 export * from "./RemoteDocument";
 export * from "./Sphere";
 export * from "./TransformableElement";

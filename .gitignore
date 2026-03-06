@@ -8,3 +8,4 @@ coverage/
 .nx/
 __diff_output__
 .turbo
+.playwright-mcp/

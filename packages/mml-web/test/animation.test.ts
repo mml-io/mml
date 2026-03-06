@@ -4,21 +4,24 @@ import * as THREE from "three";
 import { vi } from "vitest";
 
 import { Animation, Model } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-animation [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-animation", () => {
   test("test attachment as child of m-model", async () => {
-    const { remoteDocument } = await createTestScene();
+    const { remoteDocument } = await ctx.createTestScene();
 
     // Create a model element first
-    const modelElement = document.createElement("m-model") as Model;
-    const animationElement = document.createElement("m-animation") as Animation;
+    const modelElement = ctx.createElement("m-model") as Model;
+    const animationElement = ctx.createElement("m-animation") as Animation;
 
     // Set up spy before adding to DOM
     const addSideEffectChildSpy = vi.spyOn(modelElement, "addSideEffectChild");
@@ -37,11 +40,11 @@ describe("m-animation", () => {
   });
 
   test("animation attributes work correctly", async () => {
-    const { remoteDocument } = await createTestScene();
+    const { remoteDocument } = await ctx.createTestScene();
 
     // Create model and animation
-    const modelElement = document.createElement("m-model") as Model;
-    const animationElement = document.createElement("m-animation") as Animation;
+    const modelElement = ctx.createElement("m-model") as Model;
+    const animationElement = ctx.createElement("m-animation") as Animation;
 
     modelElement.appendChild(animationElement);
     remoteDocument.appendChild(modelElement);
@@ -68,10 +71,10 @@ describe("m-animation", () => {
   });
 
   test("animation loading with parent model", async () => {
-    const { remoteDocument } = await createTestScene();
+    const { remoteDocument } = await ctx.createTestScene();
 
-    const modelElement = document.createElement("m-model") as Model;
-    const animationElement = document.createElement("m-animation") as Animation;
+    const modelElement = ctx.createElement("m-model") as Model;
+    const animationElement = ctx.createElement("m-animation") as Animation;
 
     // Mock the model loader
     const testModelNode = new THREE.Group();

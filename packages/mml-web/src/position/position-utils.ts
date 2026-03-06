@@ -2,6 +2,7 @@ import { MElement, TransformableElement } from "../elements";
 import { GraphicsAdapter } from "../graphics";
 import { degToRad, EulXYZ, Matr4, Quat, radToDeg, Vect3 } from "../math";
 import { PositionAndRotation } from "../scene";
+import { VirtualNode } from "../virtual-dom";
 
 const tempContainerMatrix = new Matr4();
 const tempTargetMatrix = new Matr4();
@@ -21,7 +22,7 @@ export function getRelativePositionAndRotationRelativeToObject(
 
   tempContainerMatrix.identity();
   const tempMatr4 = new Matr4();
-  for (let obj: ParentNode | null = container; obj; obj = obj.parentNode) {
+  for (let obj: VirtualNode | ParentNode | null = container; obj; obj = obj.parentNode) {
     if (TransformableElement.isTransformableElement(obj)) {
       obj.calculateLocalMatrix(tempMatr4);
       tempContainerMatrix.premultiply(tempMatr4);

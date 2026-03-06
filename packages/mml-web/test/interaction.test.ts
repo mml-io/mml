@@ -3,22 +3,25 @@ import * as THREE from "three";
 import { vi } from "vitest";
 
 import { Interaction } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-interaction [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-interaction", () => {
   test("observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-interaction", Interaction);
     expect(schema.name).toEqual(Interaction.tagName);
   });
 
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Interaction>("m-interaction");
+    const { scene, element } = await ctx.createSceneAttachedElement<Interaction>("m-interaction");
     expect(
       (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
         .children[0 /* root container */].children[0 /* attachment container */]
@@ -27,8 +30,8 @@ describe("m-interaction", () => {
   });
 
   test("interaction - add and remove", async () => {
-    const { scene, remoteDocument } = await createTestScene();
-    const element = document.createElement("m-interaction") as Interaction;
+    const { scene, remoteDocument } = await ctx.createTestScene();
+    const element = ctx.createElement("m-interaction") as Interaction;
     expect(Array.from((scene as any).interactions)).toEqual([]);
     const addInteractionSpy = vi.spyOn(scene, "addInteraction");
     const removeInteractionSpy = vi.spyOn(scene, "removeInteraction");
@@ -47,8 +50,8 @@ describe("m-interaction", () => {
   });
 
   test("interaction - update", async () => {
-    const { scene, remoteDocument } = await createTestScene();
-    const element = document.createElement("m-interaction") as Interaction;
+    const { scene, remoteDocument } = await ctx.createTestScene();
+    const element = ctx.createElement("m-interaction") as Interaction;
     expect(Array.from((scene as any).interactions)).toEqual([]);
     const addInteractionSpy = vi.spyOn(scene, "addInteraction");
     const updateInteractionSpy = vi.spyOn(scene, "updateInteraction");
@@ -68,15 +71,15 @@ describe("m-interaction", () => {
   });
 
   test("interaction - update from ancestor", async () => {
-    const { element, scene } = await createSceneAttachedElement<Interaction>("m-group");
+    const { element, scene } = await ctx.createSceneAttachedElement<Interaction>("m-group");
 
     const addInteractionSpy = vi.spyOn(scene, "addInteraction");
     const updateInteractionSpy = vi.spyOn(scene, "updateInteraction");
 
-    const innerGroup = document.createElement("m-group");
+    const innerGroup = ctx.createElement("m-group");
     element.appendChild(innerGroup);
 
-    const mInteraction = document.createElement("m-interaction") as Interaction;
+    const mInteraction = ctx.createElement("m-interaction") as Interaction;
     mInteraction.setAttribute("x", "1");
     mInteraction.setAttribute("y", "2");
     mInteraction.setAttribute("z", "3");

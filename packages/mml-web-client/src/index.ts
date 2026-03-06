@@ -8,11 +8,15 @@ import {
   MMLScene,
   NetworkedDOMWebsocketStatus,
   NetworkedDOMWebsocketStatusToString,
+  registerCustomElementsToVirtualDocument,
   registerCustomElementsToWindow,
   RemoteDocumentWrapper,
   StandaloneGraphicsAdapter,
   StandaloneTagDebugAdapter,
   StatusUI,
+  VirtualDocument,
+  VirtualHTMLElement,
+  VirtualNode,
 } from "@mml-io/mml-web";
 import {
   StandaloneThreeJSAdapter,
@@ -27,6 +31,7 @@ declare global {
     "mml-web-client": {
       mmlScene: MMLScene<StandaloneGraphicsAdapter>;
       remoteDocumentWrapper: RemoteDocumentWrapper<GraphicsAdapter>;
+      virtualRoot: VirtualHTMLElement | null;
     };
   }
 }
@@ -49,6 +54,9 @@ declare global {
   }
 
   const urlSearchParams = new URLSearchParams(window.location.search);
+
+  const useVirtual =
+    scriptUrl.searchParams.get("virtual") === "true" || urlSearchParams.get("virtual") === "true";
 
   const useIframe =
     scriptUrl.searchParams.get("iframe") === "true" || urlSearchParams.get("iframe") === "true";
@@ -79,10 +87,17 @@ declare global {
 
     fullScreenMMLScene.init(graphicsAdapter);
 
-    let targetForWrappers: HTMLElement;
-    let windowTarget: Window;
+    let targetForWrappers: HTMLElement | VirtualNode;
+    let windowTarget: Window | VirtualDocument;
+    let virtualRoot: VirtualHTMLElement | null = null;
 
-    if (useIframe) {
+    if (useVirtual) {
+      const virtualDoc = new VirtualDocument();
+      registerCustomElementsToVirtualDocument(virtualDoc);
+      virtualRoot = virtualDoc.createElement("div");
+      windowTarget = virtualDoc;
+      targetForWrappers = virtualRoot;
+    } else if (useIframe) {
       const { iframeWindow, iframeBody } = await IframeWrapper.create();
       windowTarget = iframeWindow;
       targetForWrappers = iframeBody;
@@ -90,7 +105,9 @@ declare global {
       targetForWrappers = document.body;
       windowTarget = window;
     }
-    registerCustomElementsToWindow(windowTarget);
+    if (!useVirtual) {
+      registerCustomElementsToWindow(windowTarget as Window);
+    }
 
     const statusUI = new StatusUI();
 
@@ -109,7 +126,12 @@ declare global {
       windowTarget,
       targetForWrappers,
       allowOverlay,
+      documentFactory: useVirtual ? (windowTarget as VirtualDocument) : undefined,
     });
+
+    if (virtualRoot) {
+      virtualRoot.setRootConnected(true);
+    }
 
     const defineGlobals = scriptUrl.searchParams.get("defineGlobals") === "true";
     if (defineGlobals) {
@@ -117,6 +139,7 @@ declare global {
       window["mml-web-client"] = {
         mmlScene: fullScreenMMLScene,
         remoteDocumentWrapper: mmlNetworkSource.remoteDocumentWrapper,
+        virtualRoot: virtualRoot ?? null,
       };
     }
   });

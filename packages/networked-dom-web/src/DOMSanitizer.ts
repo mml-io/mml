@@ -1,63 +1,106 @@
+import { IDocumentFactory, IElementLike, INodeLike, isElementLike } from "./DocumentInterface";
+
 export type DOMSanitizerOptions = {
   tagPrefix?: string; // e.g. "m-" to restrict to only custom elements with a tag name starting with "m-"
   replacementTagPrefix?: string; // e.g. "x-" to replace non-prefixed tags with a new prefix (e.g. "div" -> "x-div")
 };
 
 export class DOMSanitizer {
-  static sanitise(node: HTMLElement, options: DOMSanitizerOptions = {}) {
-    if (node.getAttributeNames) {
-      for (const attr of node.getAttributeNames()) {
-        if (!DOMSanitizer.IsValidAttributeName(attr)) {
-          node.removeAttribute(attr);
-        }
-      }
-    }
+  /** Tags whose content and attributes are always stripped. */
+  static readonly BLOCKED_TAGS = new Set(["script", "object", "iframe"]);
 
-    if (node instanceof HTMLElement) {
-      if (options.tagPrefix) {
-        const tag = node.nodeName.toLowerCase();
-        if (!tag.startsWith(options.tagPrefix.toLowerCase())) {
-          node = DOMSanitizer.replaceNodeTagName(
-            node,
-            options.replacementTagPrefix ? options.replacementTagPrefix + tag : `x-${tag}`,
-          );
-        }
-      }
-    }
+  /**
+   * Returns true if a tag with the given name should be stripped of all
+   * content and attributes during sanitisation.
+   */
+  static isBlockedTag(tagName: string): boolean {
+    return DOMSanitizer.BLOCKED_TAGS.has(tagName.toLowerCase());
+  }
 
-    if (node.nodeName === "SCRIPT" || node.nodeName === "OBJECT" || node.nodeName === "IFRAME") {
-      // set contents to empty string
-      node.innerHTML = "";
-      DOMSanitizer.stripAllAttributes(node);
+  /**
+   * Given a tag name and sanitisation options, returns the sanitised tag name.
+   * Non-prefixed tags are renamed (e.g. "div" → "x-div"). Returns null for
+   * blocked tags that should be skipped entirely.
+   */
+  static sanitiseTagName(tagName: string, options: DOMSanitizerOptions): string | null {
+    const tag = tagName.toLowerCase();
+    if (DOMSanitizer.isBlockedTag(tag)) {
+      return null;
+    }
+    if (options.tagPrefix && !tag.startsWith(options.tagPrefix.toLowerCase())) {
+      return (options.replacementTagPrefix ?? "x-") + tag;
+    }
+    return tag;
+  }
+
+  /**
+   * Sanitises a DOM node in-place. When tag replacement occurs (via tagPrefix option),
+   * the returned node may be a different object than the input node.
+   */
+  static sanitise(
+    node: INodeLike,
+    options: DOMSanitizerOptions = {},
+    doc?: IDocumentFactory,
+  ): INodeLike {
+    // Check blocked tags before any renaming so the original tag name is used
+    if (DOMSanitizer.isBlockedTag(node.nodeName)) {
+      if (isElementLike(node)) {
+        node.innerHTML = "";
+        DOMSanitizer.stripAllAttributes(node);
+      }
     } else {
-      if (node.getAttributeNames) {
-        for (const attr of node.getAttributeNames()) {
+      if (isElementLike(node)) {
+        let element: IElementLike = node;
+        for (const attr of element.getAttributeNames()) {
+          if (!DOMSanitizer.IsValidAttributeName(attr)) {
+            element.removeAttribute(attr);
+          }
+        }
+
+        if (options.tagPrefix) {
+          const tag = element.nodeName.toLowerCase();
+          if (!tag.startsWith(options.tagPrefix.toLowerCase())) {
+            element = DOMSanitizer.replaceNodeTagName(
+              element,
+              (options.replacementTagPrefix ?? "x-") + tag,
+              doc,
+            );
+            node = element;
+          }
+        }
+
+        for (const attr of element.getAttributeNames()) {
           if (!DOMSanitizer.shouldAcceptAttribute(attr)) {
-            node.removeAttribute(attr);
+            element.removeAttribute(attr);
           }
         }
       }
       for (let i = 0; i < node.childNodes.length; i++) {
-        DOMSanitizer.sanitise(node.childNodes[i] as HTMLElement, options);
+        DOMSanitizer.sanitise(node.childNodes[i], options, doc);
       }
     }
     return node;
   }
 
-  static replaceNodeTagName(node: HTMLElement, newTagName: string) {
-    const replacementNode = document.createElement(newTagName);
-    let index;
+  static replaceNodeTagName(node: IElementLike, newTagName: string, doc?: IDocumentFactory) {
+    if (!doc && typeof document === "undefined") {
+      throw new Error(
+        "DOMSanitizer.replaceNodeTagName requires a document factory (IDocumentFactory) in non-browser environments",
+      );
+    }
+    const docFactory: IDocumentFactory = doc ?? document;
+    const replacementNode = docFactory.createElement(newTagName);
     while (node.firstChild) {
       replacementNode.appendChild(node.firstChild);
     }
-    for (index = node.attributes.length - 1; index >= 0; --index) {
+    for (let index = node.attributes.length - 1; index >= 0; --index) {
       replacementNode.setAttribute(node.attributes[index].name, node.attributes[index].value);
     }
     node.parentNode?.replaceChild(replacementNode, node);
     return replacementNode;
   }
 
-  static stripAllAttributes(node: HTMLElement) {
+  static stripAllAttributes(node: IElementLike) {
     if (node.getAttributeNames) {
       for (const attr of node.getAttributeNames()) {
         node.removeAttribute(attr);

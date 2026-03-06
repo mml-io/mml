@@ -3,10 +3,18 @@ import { afterEach } from "vitest";
 import { formatHTML } from "./test-util";
 import { TestCaseNetworkedDOMDocument } from "./TestCaseNetworkedDOMDocument";
 
-describe.each([{ version: 0.1 }, { version: 0.2 }])(
-  `EditableNetworkedDOM <> NetworkedDOMWebsocket - $version`,
-  ({ version }) => {
+describe.each([
+  { version: 0.1, virtual: false },
+  { version: 0.2, virtual: false },
+  { version: 0.1, virtual: true },
+  { version: 0.2, virtual: true },
+])(
+  `EditableNetworkedDOM <> NetworkedDOMWebsocket - v$version virtual=$virtual`,
+  ({ version, virtual }) => {
     const isV01 = version === 0.1;
+
+    const createClient = (testCase: TestCaseNetworkedDOMDocument) =>
+      virtual ? testCase.createVirtualClient(isV01) : testCase.createClient(isV01);
 
     afterEach(() => {
       // Clean up DOM to prevent ID collisions between tests
@@ -15,7 +23,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("simple change on reload", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(`<m-cube></m-cube>`);
@@ -48,7 +56,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("multiple element additions", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(`<m-cube color="red" z="2" id="c1">
@@ -82,7 +90,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("multiple element additions after removal", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(`
@@ -119,9 +127,9 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("visible-to", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
-      const client2 = testCase.createClient(isV01);
+      const client2 = createClient(testCase);
       await client2.onConnectionOpened();
 
       testCase.doc.load(`
@@ -176,7 +184,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       );
 
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#c1")!,
+        client1.querySelector("#c1")!,
         new CustomEvent("click"),
       );
 
@@ -219,9 +227,9 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("visible-to with dynamic child addition", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
-      const client2 = testCase.createClient(isV01);
+      const client2 = createClient(testCase);
       await client2.onConnectionOpened();
 
       testCase.doc.load(`
@@ -270,7 +278,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
       // Trigger the addition of a child to the visible-to parent
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#c1")!,
+        client1.querySelector("#c1")!,
         new CustomEvent("click"),
       );
 
@@ -320,9 +328,9 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("visible-to with cloned element using innerHTML", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
-      const client2 = testCase.createClient(isV01);
+      const client2 = createClient(testCase);
       await client2.onConnectionOpened();
 
       testCase.doc.load(`
@@ -403,7 +411,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
       // Trigger the cloning operation
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#c1")!,
+        client1.querySelector("#c1")!,
         new CustomEvent("click"),
       );
 
@@ -479,7 +487,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       // Now trigger client 2's cloning operation
       // Use attribute selector as workaround for jsdom ID indexing issue with duplicate IDs
       client2.networkedDOMWebsocket.handleEvent(
-        client2.clientElement.querySelector('[id="c1"]')!,
+        client2.querySelector('[id="c1"]')!,
         new CustomEvent("dblclick"),
       );
 
@@ -575,9 +583,9 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("multiple visible-to element addition and removal", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
-      const client2 = testCase.createClient(isV01);
+      const client2 = createClient(testCase);
       await client2.onConnectionOpened();
 
       testCase.doc.load(`<m-cube id="trigger"></m-cube>
@@ -629,7 +637,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
       // Client 1 clicks the trigger to create holder
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#trigger")!,
+        client1.querySelector("#trigger")!,
         new CustomEvent("click"),
       );
 
@@ -659,7 +667,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
       // Client 1 clicks the holder to create child
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#holder-1")!,
+        client1.querySelector("#holder-1")!,
         new CustomEvent("click"),
       );
 
@@ -682,7 +690,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
       // Client 1 clicks the child to remove it
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#child-1")!,
+        client1.querySelector("#child-1")!,
         new CustomEvent("click"),
       );
 
@@ -704,7 +712,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       // Client 2 clicks the trigger to create their holder
       // Use attribute selector as workaround for jsdom ID indexing issue with duplicate IDs
       client2.networkedDOMWebsocket.handleEvent(
-        client2.clientElement.querySelector('[id="trigger"]')!,
+        client2.querySelector('[id="trigger"]')!,
         new CustomEvent("click"),
       );
 
@@ -725,7 +733,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
       // Client 2 clicks their holder to create child
       client2.networkedDOMWebsocket.handleEvent(
-        client2.clientElement.querySelector("#holder-2")!,
+        client2.querySelector("#holder-2")!,
         new CustomEvent("click"),
       );
 
@@ -748,7 +756,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
       // Client 2 clicks their child to remove it - this should trigger the bug
       client2.networkedDOMWebsocket.handleEvent(
-        client2.clientElement.querySelector("#child-2")!,
+        client2.querySelector("#child-2")!,
         new CustomEvent("click"),
       );
 
@@ -795,8 +803,8 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("hidden-from", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
-      const client2 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
+      const client2 = createClient(testCase);
       await client1.onConnectionOpened();
       await client2.onConnectionOpened();
 
@@ -874,7 +882,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       );
 
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#c1")!,
+        client1.querySelector("#c1")!,
         new CustomEvent("click"),
       );
 
@@ -951,7 +959,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
       );
 
       client1.networkedDOMWebsocket.handleEvent(
-        client1.clientElement.querySelector("#c1")!,
+        client1.querySelector("#c1")!,
         new CustomEvent("click"),
       );
 
@@ -1012,7 +1020,7 @@ describe.each([{ version: 0.1 }, { version: 0.2 }])(
 
     test("element addition ordering", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(`
@@ -1045,7 +1053,7 @@ setTimeout(() => {
 
     test("child addition", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(`
@@ -1078,7 +1086,7 @@ setTimeout(() => {
 
     test("element insertion ordering", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(`
@@ -1131,7 +1139,7 @@ setTimeout(() => {
 
     test("multiple element creations with removal of previous sibling", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(`
@@ -1182,7 +1190,7 @@ setTimeout(() => {
 
     test("add child to node with existing children", async () => {
       const testCase = new TestCaseNetworkedDOMDocument();
-      const client1 = testCase.createClient(isV01);
+      const client1 = createClient(testCase);
       await client1.onConnectionOpened();
 
       testCase.doc.load(`<m-model></m-model>`);

@@ -35,16 +35,27 @@ export function calculateStaticVirtualDOMDiff(
 
   const nodeIdRemappings: Array<NodeMapping> = [];
   const virtualDOMDiffs: Array<rfc6902.Operation> = [];
+
+  // Maintain a running copy of the state so that paths adjusted by prior
+  // array add/remove operations resolve correctly when extracting nodeId
+  // remappings. Without this, a path like .../childNodes/25/nodeId (shifted
+  // by a prior add at index 23) would be looked up in the original unmodified
+  // state, resolving to the wrong node.
+  const runningState = JSON.parse(JSON.stringify(originalState));
   for (const diff of jsonPatchDiffs) {
     if (diff.op === "replace" && diff.path.endsWith("/nodeId")) {
       const pointer = rfc6902.Pointer.fromJSON(diff.path);
-      const originalValue = pointer.get(originalState);
+      const originalValue = pointer.get(runningState);
       nodeIdRemappings.push({
         internalNodeId: diff.value,
         clientFacingNodeId: originalValue,
       });
+      // Apply the nodeId replacement to the running state
+      rfc6902.applyPatch(runningState, [diff]);
     } else {
       virtualDOMDiffs.push(diff);
+      // Apply the structural change to the running state
+      rfc6902.applyPatch(runningState, [diff]);
     }
   }
 

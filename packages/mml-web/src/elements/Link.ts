@@ -1,6 +1,7 @@
 import { AttributeHandler } from "../attributes";
 import { OrientedBoundingBox } from "../bounding-box";
 import { GraphicsAdapter, LinkGraphics } from "../graphics";
+import { getGlobalWindow } from "../runtime-env";
 import { TransformableElement } from "./TransformableElement";
 
 export type MLinkProps = {
@@ -37,9 +38,14 @@ export class Link<G extends GraphicsAdapter = GraphicsAdapter> extends Transform
    not a "javascript:alert('foo')" URL or something other than a navigable URL.
   */
   static isAcceptableHref(href: string): boolean {
-    const url = new URL(href, window.location.href);
-    if (url.protocol === "http:" || url.protocol === "https:") {
-      return true;
+    const base = getGlobalWindow()?.location.href ?? "https://localhost/";
+    try {
+      const url = new URL(href, base);
+      if (url.protocol === "http:" || url.protocol === "https:") {
+        return true;
+      }
+    } catch {
+      // Malformed URL
     }
     return false;
   }

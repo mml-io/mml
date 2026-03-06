@@ -4,7 +4,7 @@ import {
 } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
-import { configureWindowForMML, Cube, getGlobalMMLScene, Group } from "../build/index";
+import { configureWindowForMML, Cube, getGlobalMMLScene, Group, VirtualNode } from "../build/index";
 
 describe("m-element direct page attachment", () => {
   beforeAll(() => {
@@ -19,14 +19,15 @@ describe("m-element direct page attachment", () => {
     document.body.innerHTML = "";
   });
   test("test attachment via div", () => {
-    const group = document.createElement("m-group") as Group;
-    document.body.append(group);
+    // After configureWindowForMML, MML elements extend HTMLElement at runtime
+    const group = document.createElement("m-group") as unknown as Group;
+    document.body.append(group as unknown as Node);
 
     const div = document.createElement("div");
-    group.append(div);
+    group.append(div as unknown as VirtualNode);
 
-    const cube = document.createElement("m-cube") as Cube;
-    div.append(cube);
+    const cube = document.createElement("m-cube") as unknown as Cube;
+    div.append(cube as unknown as Node);
 
     const groupContainer = group.getContainer() as THREE.Object3D;
     let cubeContainer = cube.getContainer() as THREE.Object3D;
@@ -85,12 +86,12 @@ describe("m-element direct page attachment", () => {
     });
 
     // Create a second group that has a different position and move the div to it. The cube should move with the div
-    const secondGroup = document.createElement("m-group") as Group;
-    document.body.append(secondGroup);
+    const secondGroup = document.createElement("m-group") as unknown as Group;
+    document.body.append(secondGroup as unknown as Node);
     secondGroup.setAttribute("x", "100");
     secondGroup.setAttribute("y", "200");
     secondGroup.setAttribute("z", "300");
-    secondGroup.append(div);
+    secondGroup.append(div as unknown as VirtualNode);
 
     // Get new references as the instances have been removed and recreated
     cubeContainer = cube.getContainer() as THREE.Object3D;
@@ -104,7 +105,7 @@ describe("m-element direct page attachment", () => {
     });
 
     // Remove the div from the group and it should also remove the cube from the scene
-    secondGroup.removeChild(div);
+    secondGroup.removeChild(div as unknown as VirtualNode);
     expect(cubeContainer.parent).toBeNull();
   });
 });

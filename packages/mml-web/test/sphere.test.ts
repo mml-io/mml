@@ -1,23 +1,26 @@
 import { StandaloneThreeJSAdapter } from "@mml-io/mml-web-threejs-standalone";
 import * as THREE from "three";
 
-import { registerCustomElementsToWindow } from "../build/index";
 import { Sphere } from "../build/index";
-import { createSceneAttachedElement } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-sphere [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-sphere", () => {
   test("observes the schema-specified attributes", () => {
     const schema = testElementSchemaMatchesObservedAttributes("m-sphere", Sphere);
     expect(schema.name).toEqual(Sphere.tagName);
   });
 
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Sphere>("m-sphere");
+    const { scene, element } = await ctx.createSceneAttachedElement<Sphere>("m-sphere");
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
       .children[0 /* element container */];
@@ -27,7 +30,7 @@ describe("m-sphere", () => {
   });
 
   test("sx, sy, sz", async () => {
-    const { scene, element } = await createSceneAttachedElement<Sphere>("m-sphere");
+    const { scene, element } = await ctx.createSceneAttachedElement<Sphere>("m-sphere");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -60,7 +63,7 @@ describe("m-sphere", () => {
   });
 
   test("radius", async () => {
-    const { scene, element } = await createSceneAttachedElement<Sphere>("m-sphere");
+    const { scene, element } = await ctx.createSceneAttachedElement<Sphere>("m-sphere");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -87,7 +90,7 @@ describe("m-sphere", () => {
   });
 
   test("radius and scale", async () => {
-    const { scene, element } = await createSceneAttachedElement<Sphere>("m-sphere");
+    const { scene, element } = await ctx.createSceneAttachedElement<Sphere>("m-sphere");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -110,7 +113,7 @@ describe("m-sphere", () => {
   });
 
   test("color", async () => {
-    const { scene, element } = await createSceneAttachedElement<Sphere>("m-sphere");
+    const { scene, element } = await ctx.createSceneAttachedElement<Sphere>("m-sphere");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]

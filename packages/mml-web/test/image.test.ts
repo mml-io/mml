@@ -4,17 +4,20 @@ import * as THREE from "three";
 import { vi } from "vitest";
 
 import { Image } from "../build/index";
-import { registerCustomElementsToWindow } from "../build/index";
-import { createSceneAttachedElement, createTestScene } from "./scene-test-utils";
 import { testElementSchemaMatchesObservedAttributes } from "./schema-utils";
+import { createModeContext, ModeContext } from "./test-mode-utils";
 
-beforeAll(() => {
-  registerCustomElementsToWindow(window);
-});
+describe.each(["virtual", "dom"] as const)("m-image [%s mode]", (mode) => {
+  let ctx: ModeContext;
+  beforeAll(async () => {
+    ctx = await createModeContext(mode);
+  });
+  afterAll(() => {
+    ctx.cleanup();
+  });
 
-describe("m-image", () => {
   test("test attachment to scene", async () => {
-    const { scene, element } = await createSceneAttachedElement<Image>("m-image");
+    const { scene, element } = await ctx.createSceneAttachedElement<Image>("m-image");
 
     const container = (scene.getGraphicsAdapter() as StandaloneThreeJSAdapter).getThreeScene()
       .children[0 /* root container */].children[0 /* attachment container */]
@@ -65,7 +68,7 @@ describe("m-image", () => {
   });
 
   test("images default to a width of 1 and use the source image aspect ratio", async () => {
-    const { element: image, scene } = await createSceneAttachedElement<Image>("m-image");
+    const { element: image, scene } = await ctx.createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
@@ -110,7 +113,7 @@ describe("m-image", () => {
   });
 
   test("setting height but not width preserves image aspect ratio", async () => {
-    const { element: image, scene } = await createSceneAttachedElement<Image>("m-image");
+    const { element: image, scene } = await ctx.createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
@@ -155,7 +158,7 @@ describe("m-image", () => {
   });
 
   test("setting width but not height preserves image aspect ratio", async () => {
-    const { element: image, scene } = await createSceneAttachedElement<Image>("m-image");
+    const { element: image, scene } = await ctx.createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
@@ -200,8 +203,8 @@ describe("m-image", () => {
   });
 
   test("collider is updated", async () => {
-    const { scene, remoteDocument } = await createTestScene();
-    const image = document.createElement("m-image") as Image;
+    const { scene, remoteDocument } = await ctx.createTestScene();
+    const image = ctx.createElement("m-image") as Image;
     expect(Array.from((scene as any).colliders)).toEqual([]);
     const addColliderSpy = vi.spyOn(scene, "addCollider");
     const updateColliderSpy = vi.spyOn(scene, "updateCollider");
@@ -268,7 +271,7 @@ describe("m-image", () => {
   });
 
   test("setting width and height ignores aspect ratio", async () => {
-    const { element: image, scene } = await createSceneAttachedElement<Image>("m-image");
+    const { element: image, scene } = await ctx.createSceneAttachedElement<Image>("m-image");
     const originalImageWidth = 200;
     const originalImageHeight = 100;
 
