@@ -29,7 +29,7 @@
     "wait-for-ports": "npx wait-on http://localhost:7079/mml-logo.html -t 90000 --httpTimeout 5000 --interval 500"
   },
   "dependencies": {
-    "@mml-io/mml-cli": "^0.25.0",
+    "@mml-io/mml-cli": "^0.26.0",
     "@napi-rs/canvas": "0.1.88",
     "pixelmatch": "7.1.0",
     "pngjs": "7.0.0",
@@ -40,5 +40,5 @@
     "@types/pngjs": "6.0.5",
     "@types/puppeteer": "7.0.4"
   },
-  "version": "0.25.0"
+  "version": "0.26.0"
 }

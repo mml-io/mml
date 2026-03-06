@@ -1,6 +1,6 @@
 {
   "name": "@mml-io/observable-dom",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mml-io/mml.git",
@@ -24,7 +24,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@mml-io/observable-dom-common": "^0.25.0",
+    "@mml-io/observable-dom-common": "^0.26.0",
     "canvas": "npm:@napi-rs/canvas@0.1.88",
     "jsdom": "27.4.0",
     "node-fetch": "3.3.2"
