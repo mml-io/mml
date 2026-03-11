@@ -14,12 +14,56 @@ export const consumeEventEventName = "consume-event";
 export abstract class MElement<
   G extends GraphicsAdapter = GraphicsAdapter,
 > extends VirtualHTMLElement {
-  // This allows switching which document this HTMLElement subclass extends so that it can be placed into iframes
-  static overwriteSuperclass(newSuperclass: { new (): any; prototype: any }) {
+  /**
+   * Switches MElement's superclass to extend a target window's HTMLElement so that
+   * MML elements can be placed into iframes. Also stores a reference to the target
+   * window so that events can be created using its constructors (native dispatchEvent
+   * rejects cross-realm Event objects).
+   */
+  static overwriteSuperclass(
+    newSuperclass: { new (): HTMLElement; prototype: HTMLElement },
+    targetWindow: Window & typeof globalThis,
+  ) {
     Object.setPrototypeOf(MElement, newSuperclass);
     Object.setPrototypeOf(MElement.prototype, newSuperclass.prototype);
-    // Invalidate cached base dispatchEvent since the prototype chain has changed
+    // Invalidate cached dispatchEvent since the prototype chain has changed
     MElement.cachedBaseDispatchEvent = null;
+    MElement._isDOMMode = true;
+    MElement._domModeWindow = targetWindow;
+  }
+
+  /**
+   * Resets MElement back to virtual (non-DOM) mode by restoring VirtualHTMLElement as
+   * the superclass and clearing the DOM mode window reference.
+   * @internal
+   */
+  static resetToVirtualMode() {
+    Object.setPrototypeOf(MElement, VirtualHTMLElement);
+    Object.setPrototypeOf(MElement.prototype, VirtualHTMLElement.prototype);
+    MElement.cachedBaseDispatchEvent = null;
+    MElement._isDOMMode = false;
+    MElement._domModeWindow = null;
+  }
+
+  /**
+   * Whether MElement has been switched to DOM mode via overwriteSuperclass.
+   * Used instead of `instanceof Element` checks which fail across iframe boundaries
+   * (cross-realm instanceof returns false).
+   * @internal
+   */
+  private static _isDOMMode = false;
+  static get isDOMMode(): boolean {
+    return MElement._isDOMMode;
+  }
+
+  /**
+   * The target window for DOM mode. Used to create events in the correct realm
+   * so that native dispatchEvent accepts them.
+   * @internal
+   */
+  private static _domModeWindow: (Window & typeof globalThis) | null = null;
+  static get domModeWindow(): (Window & typeof globalThis) | null {
+    return MElement._domModeWindow;
   }
 
   /**
@@ -55,7 +99,11 @@ export abstract class MElement<
   }
 
   static getMElementFromObject(object: unknown): MElement<GraphicsAdapter> | null {
-    return (object as any)[MELEMENT_PROPERTY_NAME] || null;
+    return (
+      ((object as Record<string, unknown>)[MELEMENT_PROPERTY_NAME] as
+        | MElement<GraphicsAdapter>
+        | undefined) ?? null
+    );
   }
 
   public abstract isClickable(): boolean;
@@ -265,10 +313,10 @@ export abstract class MElement<
     element: MElement | VirtualHTMLElement,
     originalEvent: Event | VirtualCustomEvent,
   ): CustomEvent | VirtualCustomEvent {
-    // Use instanceof Element to reliably detect DOM mode. Element covers both
-    // HTMLElement and SVGElement (overlay portals may contain SVG content).
-    if (typeof Element !== "undefined" && element instanceof Element) {
-      return new CustomEvent(consumeEventEventName, {
+    // In DOM mode, create the CustomEvent using the target window's constructor so that
+    // it belongs to the same realm as native dispatchEvent (which rejects cross-realm events).
+    if (MElement.isDOMMode && MElement.domModeWindow) {
+      return new MElement.domModeWindow.CustomEvent(consumeEventEventName, {
         bubbles: false,
         detail: { element, originalEvent },
       });
@@ -282,15 +330,7 @@ export abstract class MElement<
   dispatchEvent(event: Event | VirtualCustomEvent): boolean {
     const remoteDocument = this.getInitiatedRemoteDocument();
     if (remoteDocument) {
-      // Only send the consume-event for the element on which dispatchEvent was originally called.
-      // In virtual mode, event bubbling explicitly calls parent.dispatchEvent(event) on each
-      // ancestor, which would create duplicate consume-events. In real DOM mode, the browser
-      // handles bubbling internally without calling dispatchEvent on parents. This flag ensures
-      // parity: only one consume-event per original dispatch, letting the server handle bubbling.
-      if (!(event as any).__mml_consumed) {
-        (event as any).__mml_consumed = true;
-        remoteDocument.dispatchEvent(MElement.createConsumeEvent(this, event));
-      }
+      remoteDocument.dispatchEvent(MElement.createConsumeEvent(this, event));
       return super.dispatchEvent(event);
     } else {
       const win = getGlobalWindow();
