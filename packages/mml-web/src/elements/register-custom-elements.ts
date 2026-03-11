@@ -6,7 +6,7 @@ export function registerCustomElementsToWindow(targetWindow: Window) {
   const targetHTMLElement = (targetWindow as unknown as { HTMLElement: typeof HTMLElement })[
     "HTMLElement"
   ];
-  MElement.overwriteSuperclass(targetHTMLElement);
+  MElement.overwriteSuperclass(targetHTMLElement, targetWindow as Window & typeof globalThis);
   // After overwriteSuperclass, MML element classes extend HTMLElement at runtime
   for (const Element of MML_ELEMENTS) {
     targetWindow.customElements.define(

@@ -145,13 +145,13 @@ export class VirtualHTMLElement extends VirtualNode implements VirtualLifecycleC
     }
   }
 
-  dispatchEvent(event: VirtualEvent | Event): boolean {
+  /**
+   * Invokes only this node's listeners for the event, without bubbling.
+   * Returns whether propagation was stopped.
+   */
+  private _dispatchToLocalListeners(event: VirtualEvent | Event): boolean {
     const type: string = event.type;
     const isVirtual = event instanceof VirtualEvent;
-
-    if (isVirtual && (event as VirtualEvent).target === null) {
-      (event as VirtualEvent).target = this;
-    }
 
     const listeners = this._eventListeners.get(type);
     let immediateStopped = false;
@@ -182,14 +182,29 @@ export class VirtualHTMLElement extends VirtualNode implements VirtualLifecycleC
     } else if (event instanceof Event) {
       propagationStopped = event.cancelBubble;
     }
-    // Bubble
-    const bubbles = event.bubbles;
-    if (bubbles && !propagationStopped && this.parentNode) {
-      const parent = this.parentNode;
-      if (parent instanceof VirtualHTMLElement) {
-        parent.dispatchEvent(event);
+    return propagationStopped;
+  }
+
+  dispatchEvent(event: VirtualEvent | Event): boolean {
+    const isVirtual = event instanceof VirtualEvent;
+
+    if (isVirtual && (event as VirtualEvent).target === null) {
+      (event as VirtualEvent).target = this;
+    }
+
+    let propagationStopped = this._dispatchToLocalListeners(event);
+
+    // Bubble up the tree, calling listeners directly (not dispatchEvent) on ancestors.
+    // Stop at any non-VirtualHTMLElement node, matching the original recursive behavior.
+    if (event.bubbles && !propagationStopped) {
+      let ancestor = this.parentNode;
+      while (ancestor instanceof VirtualHTMLElement) {
+        propagationStopped = ancestor._dispatchToLocalListeners(event);
+        if (propagationStopped) break;
+        ancestor = ancestor.parentNode;
       }
     }
+
     if (isVirtual) {
       return !(event as VirtualEvent).isDefaultPrevented;
     }
