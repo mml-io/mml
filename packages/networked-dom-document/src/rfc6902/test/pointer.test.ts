@@ -41,4 +41,48 @@ describe("Pointer", () => {
     Pointer.fromJSON("/obj/c").set(input, "C");
     expect(input.obj.c).toEqual("C"); // should add object value in-place
   });
+
+  test("root pointer evaluates and stringifies correctly", () => {
+    const pointer = Pointer.fromJSON("");
+    expect(pointer.toString()).toBe("");
+    expect(pointer.evaluate(example)).toEqual({ parent: null, key: "", value: example });
+  });
+
+  test("throws for invalid pointer path missing root slash", () => {
+    expect(() => Pointer.fromJSON("arr/1")).toThrow("Invalid JSON Pointer: arr/1");
+  });
+
+  test("escapes and unescapes tokens in toString / fromJSON", () => {
+    const input = { "a/b": { "~key": 123 } };
+    const pointer = Pointer.fromJSON("/a~1b/~0key");
+    expect(pointer.get(input)).toBe(123);
+    expect(pointer.toString()).toBe("/a~1b/~0key");
+  });
+
+  test("evaluate ignores prototype poisoning tokens", () => {
+    const input = { safe: true } as any;
+    const protoPointer = Pointer.fromJSON("/__proto__/polluted");
+    const result = protoPointer.evaluate(input);
+
+    expect(result.parent).toEqual(input);
+    expect(result.key).toBe("polluted");
+    expect(result.value).toBeUndefined();
+    expect(({} as any).polluted).toBeUndefined();
+  });
+
+  test("set no-ops when intermediate path does not exist", () => {
+    const input: any = { obj: undefined };
+    Pointer.fromJSON("/obj/missing").set(input, "value");
+    expect(input).toEqual({ obj: undefined });
+  });
+
+  test("push and add behave as mutable vs immutable operations", () => {
+    const base = new Pointer([""]);
+    base.push("obj");
+    expect(base.toString()).toBe("/obj");
+
+    const extended = base.add("a/b");
+    expect(base.toString()).toBe("/obj");
+    expect(extended.toString()).toBe("/obj/a~1b");
+  });
 });

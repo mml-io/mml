@@ -13,7 +13,7 @@ afterEach(() => {
 
 describe("end to end - v0.2", () => {
   test("client snapshot and diff on reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load("<m-cube></m-cube>");
 
@@ -69,7 +69,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("client snapshot and larger diff on reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load("<m-cube></m-cube>");
 
@@ -147,7 +147,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("client sends event and observes state change", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube id="clickable-cube" color="red"></m-cube>
@@ -224,7 +224,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("simple nested removal", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube color="red" z="2" id="c1">
@@ -310,7 +310,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("simple nested re-addition", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube color="red" z="2" id="c1">
@@ -420,7 +420,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("appending child element to ancestor", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube color="red" z="2" id="c1">
@@ -553,7 +553,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("multiple element additions", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube color="red" z="2" id="c1">
@@ -701,7 +701,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("multiple element creations with removal of previous sibling", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-group id="holder">
@@ -830,7 +830,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("multiple element additions after removal", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube color="red" z="2" id="c1">
@@ -960,7 +960,7 @@ describe("end to end - v0.2", () => {
   });
 
   test("child addition", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <script>
@@ -1054,7 +1054,7 @@ setTimeout(() => {
   });
 
   test("element insertion ordering", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube color="red" z="2" id="c1">
@@ -1267,7 +1267,7 @@ setTimeout(() => {
   });
 
   test("multiple element attribute changes observation", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <script>
@@ -1326,7 +1326,7 @@ setTimeout(() => {
     /* This test checks that regardless of the order of attribute changes still
         results in an eventually-consistent client view.
      */
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <script>

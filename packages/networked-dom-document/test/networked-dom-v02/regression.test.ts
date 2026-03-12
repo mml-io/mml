@@ -23,7 +23,7 @@ describe("regression tests - v0.2", () => {
    This is a test added to fix an issue discovered with remapping ids on
    reload and is kept as a regression test.
   */
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `<m-plane id="plane"></m-plane>
@@ -257,7 +257,7 @@ describe("regression tests - v0.2", () => {
   });
 
   test("visible-to toggle does not duplicate children", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube id="open-cube"></m-cube>
@@ -387,7 +387,7 @@ openCube.addEventListener("click", () => {
      * the same synchronous handler). This is the pattern from the original
      * m-overlay-hierarchy-test.html crash.
      */
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube id="grandparent">
@@ -447,7 +447,7 @@ openCube.addEventListener("click", () => {
      * When a parent is removed before its children are individually removed,
      * mutations for the children reference already-deleted parents.
      */
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube id="container">
@@ -610,7 +610,7 @@ openCube.addEventListener("click", () => {
       return observableDOM;
     };
 
-    const doc = new EditableNetworkedDOM("file://test.html", mockFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", mockFactory);
     currentDoc = doc;
     doc.load("<!-- mock -->");
 

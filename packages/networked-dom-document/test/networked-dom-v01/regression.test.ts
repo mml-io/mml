@@ -18,7 +18,7 @@ describe("regression tests - v0.1", () => {
    This is a test added to fix an issue discovered with remapping ids on
    reload and is kept as a regression test.
   */
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `<m-plane id="plane"></m-plane>
@@ -264,7 +264,7 @@ describe("regression tests - v0.1", () => {
   });
 
   test("visible-to toggle does not duplicate children", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube id="open-cube"></m-cube>

@@ -19,7 +19,7 @@ describe("connected event token field - v0.2", () => {
     const loggedMessages: Array<LogMessage> = [];
 
     const doc = new EditableNetworkedDOM(
-      "file://test.html",
+      "file:///test.html",
       LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {
@@ -83,7 +83,7 @@ describe("connected event token field - v0.2", () => {
     const loggedMessages: Array<LogMessage> = [];
 
     const doc = new EditableNetworkedDOM(
-      "file://test.html",
+      "file:///test.html",
       LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {
@@ -147,7 +147,7 @@ describe("connected event token field - v0.2", () => {
     const loggedMessages: Array<LogMessage> = [];
 
     const doc = new EditableNetworkedDOM(
-      "file://test.html",
+      "file:///test.html",
       LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {
@@ -258,7 +258,7 @@ describe("connected event token field - v0.2", () => {
     const loggedMessages: Array<LogMessage> = [];
 
     const doc = new EditableNetworkedDOM(
-      "file://test.html",
+      "file:///test.html",
       LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {
@@ -326,7 +326,7 @@ describe("connected event token field - v0.2", () => {
     const loggedMessages: Array<LogMessage> = [];
 
     const doc = new EditableNetworkedDOM(
-      "file://test.html",
+      "file:///test.html",
       LocalObservableDOMFactory,
       true,
       (logMessage: LogMessage) => {

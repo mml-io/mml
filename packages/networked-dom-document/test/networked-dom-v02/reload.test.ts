@@ -13,7 +13,7 @@ afterEach(() => {
 
 describe("reloading - v0.2", () => {
   test("add-within-group-on-reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube color="red"></m-cube>
@@ -151,7 +151,7 @@ describe("reloading - v0.2", () => {
   });
 
   test("move-to-within-group-on-reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-plane color="blue" width="20" height="20" rx="-90"></m-plane>
@@ -317,7 +317,7 @@ describe("reloading - v0.2", () => {
   });
 
   test("remapping-on-reload-and-click", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `
@@ -481,7 +481,7 @@ describe("reloading - v0.2", () => {
   });
 
   test("should not send hidden elements on reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-group id="one" visible-to="0">
@@ -587,7 +587,7 @@ describe("reloading - v0.2", () => {
   });
 
   test("svg elements with self-closing tags", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory, false);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory, false);
     currentDoc = doc;
     doc.load(`
 <m-overlay anchor="center">
