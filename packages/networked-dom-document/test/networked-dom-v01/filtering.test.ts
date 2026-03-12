@@ -14,7 +14,7 @@ afterEach(() => {
 
 describe("filtering - v0.1", () => {
   test("filters onclick on reloads", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube onclick="alert('in-first')" color="red"></m-cube>
@@ -87,7 +87,7 @@ describe("filtering - v0.1", () => {
   });
 
   test("filters onclick on mutation", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(`
 <m-cube onclick="this.setAttribute('onclick','doSomething()');" color="red"></m-cube>

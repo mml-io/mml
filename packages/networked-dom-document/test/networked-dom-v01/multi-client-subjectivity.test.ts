@@ -14,7 +14,7 @@ afterEach(() => {
 
 describe("multi-client subjectivity - v0.1", () => {
   test("multi-client subjectivity on load - visible-to", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `
@@ -184,7 +184,7 @@ describe("multi-client subjectivity - v0.1", () => {
   });
 
   test("multi-client subjectivity on load - hidden-from", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `
@@ -354,7 +354,7 @@ describe("multi-client subjectivity - v0.1", () => {
   });
 
   test("multi-client subjectivity with reload", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `
@@ -522,7 +522,7 @@ describe("multi-client subjectivity - v0.1", () => {
   });
 
   test("multi-client subjectivity with reload and change connections", async () => {
-    const doc = new EditableNetworkedDOM("file://test.html", LocalObservableDOMFactory);
+    const doc = new EditableNetworkedDOM("file:///test.html", LocalObservableDOMFactory);
     currentDoc = doc;
     doc.load(
       `
